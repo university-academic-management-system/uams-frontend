@@ -24,6 +24,23 @@ const UniversityPage: React.FC = () => {
     status: "active",
   });
   const [formErrors, setFormErrors] = useState<string | null>(null);
+  
+  // Action dropdown and modal states
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    contactPerson: "",
+    email: "",
+    phone: "",
+    address: "",
+    status: "active",
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleFormChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -107,6 +124,99 @@ const UniversityPage: React.FC = () => {
       }
     }
   };
+
+  // Action handlers for dropdown menu
+  const handleViewClick = (uni: University) => {
+    setSelectedUniversity(uni);
+    setShowViewModal(true);
+    setOpenDropdown(null);
+  };
+
+  const handleEditClick = (uni: University) => {
+    setSelectedUniversity(uni);
+    setEditFormData({
+      name: uni.name,
+      contactPerson: uni.contact_person,
+      email: uni.email,
+      phone: uni.phone,
+      address: uni.address || "",
+      status: uni.status,
+    });
+    setShowEditModal(true);
+    setOpenDropdown(null);
+  };
+
+  const handleDeleteClick = (uni: University) => {
+    setSelectedUniversity(uni);
+    setShowDeleteModal(true);
+    setOpenDropdown(null);
+  };
+
+  const handleToggleStatus = async (uni: University) => {
+    setOpenDropdown(null);
+    try {
+      if (uni.status === "active") {
+        await universityService.suspend(uni.id);
+      } else {
+        await universityService.activate(uni.id);
+      }
+      // Refresh universities list
+      const updatedList = await universityService.getAll();
+      setUniversities(Array.isArray(updatedList) ? updatedList : []);
+    } catch (err) {
+      console.error("Error toggling status:", err);
+    }
+  };
+
+  const handleEditSubmit = async () => {
+    if (!selectedUniversity) return;
+    setIsUpdating(true);
+    try {
+      await universityService.update(selectedUniversity.id, {
+        name: editFormData.name,
+        contact_person: editFormData.contactPerson,
+        email: editFormData.email,
+        phone: editFormData.phone,
+        address: editFormData.address,
+        status: editFormData.status as 'active' | 'pending' | 'suspended',
+      });
+      // Refresh universities list
+      const updatedList = await universityService.getAll();
+      setUniversities(Array.isArray(updatedList) ? updatedList : []);
+      setShowEditModal(false);
+      setSelectedUniversity(null);
+    } catch (err) {
+      console.error("Error updating university:", err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedUniversity) return;
+    setIsDeleting(true);
+    try {
+      await universityService.delete(selectedUniversity.id);
+      // Refresh universities list
+      const updatedList = await universityService.getAll();
+      setUniversities(Array.isArray(updatedList) ? updatedList : []);
+      setShowDeleteModal(false);
+      setSelectedUniversity(null);
+    } catch (err) {
+      console.error("Error deleting university:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdown(null);
+    if (openDropdown !== null) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [openDropdown]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -808,8 +918,12 @@ const UniversityPage: React.FC = () => {
                       {uni.status}
                     </span>
                   </td>
-                  <td style={{ padding: "16px", textAlign: "center" }}>
+                  <td style={{ padding: "16px", textAlign: "center", position: "relative" }}>
                     <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenDropdown(openDropdown === uni.id ? null : uni.id);
+                      }}
                       style={{
                         backgroundColor: "transparent",
                         borderRadius: "6px",
@@ -834,6 +948,147 @@ const UniversityPage: React.FC = () => {
                     >
                       <span style={{ fontSize: "20px" }}>⋯</span>
                     </button>
+                    
+                    {/* Dropdown Menu */}
+                    {openDropdown === uni.id && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          position: "absolute",
+                          top: "100%",
+                          right: "16px",
+                          backgroundColor: "white",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                          border: "1px solid #e5e7eb",
+                          zIndex: 50,
+                          minWidth: "160px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <button
+                          onClick={() => handleViewClick(uni)}
+                          style={{
+                            width: "100%",
+                            padding: "10px 16px",
+                            backgroundColor: "white",
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            fontSize: "14px",
+                            color: "#374151",
+                            transition: "background-color 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#f3f4f6";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "white";
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleEditClick(uni)}
+                          style={{
+                            width: "100%",
+                            padding: "10px 16px",
+                            backgroundColor: "white",
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            fontSize: "14px",
+                            color: "#374151",
+                            transition: "background-color 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#f3f4f6";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "white";
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleStatus(uni)}
+                          style={{
+                            width: "100%",
+                            padding: "10px 16px",
+                            backgroundColor: "white",
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            fontSize: "14px",
+                            color: uni.status === "active" ? "#f59e0b" : "#22c55e",
+                            transition: "background-color 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#f3f4f6";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "white";
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            {uni.status === "active" ? (
+                              <path d="M4.93 4.93l14.14 14.14"></path>
+                            ) : (
+                              <path d="M9 12l2 2 4-4"></path>
+                            )}
+                          </svg>
+                          {uni.status === "active" ? "Suspend" : "Activate"}
+                        </button>
+                        {uni.status !== "active" && (
+                          <>
+                            <div style={{ height: "1px", backgroundColor: "#e5e7eb" }}></div>
+                            <button
+                              onClick={() => handleDeleteClick(uni)}
+                              style={{
+                                width: "100%",
+                                padding: "10px 16px",
+                                backgroundColor: "white",
+                                border: "none",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "10px",
+                                fontSize: "14px",
+                                color: "#ef4444",
+                                transition: "background-color 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "#fef2f2";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "white";
+                              }}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              </svg>
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -1417,6 +1672,383 @@ const UniversityPage: React.FC = () => {
                 }}
               >
                 {isSubmitting ? "Adding..." : "Add University"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {showViewModal && selectedUniversity && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: isMobile ? "16px" : "0",
+          }}
+          onClick={() => setShowViewModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: isMobile ? "20px" : "32px",
+              width: "100%",
+              maxWidth: "512px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              position: "relative",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "24px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#1273D4", margin: 0 }}>University Details</h2>
+              <button 
+                onClick={() => setShowViewModal(false)}
+                style={{
+                  padding: isMobile ? "6px 8px" : "3px 7px",
+                  borderRadius: "6px",
+                  backgroundColor: "#1273D4",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  color: "white"
+                }}
+                onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                      "#2563eb";
+                }}
+                onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                      "#1273D4";
+                }}
+              >
+                <CloseIcon w={12} h={12} />
+              </button>
+            </div>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {[
+                { label: "University Name", value: selectedUniversity.name },
+                { label: "Code", value: selectedUniversity.code },
+                { label: "Contact Person", value: selectedUniversity.contact_person },
+                { label: "Email", value: selectedUniversity.email },
+                { label: "Phone", value: selectedUniversity.phone },
+                { label: "Address", value: selectedUniversity.address || "N/A" },
+                { label: "Status", value: selectedUniversity.status, isStatus: true }
+              ].map((item, index) => (
+                <div key={index} style={{ borderBottom: index < 6 ? "1px solid #f3f4f6" : "none", paddingBottom: index < 6 ? "12px" : "0" }}>
+                  <p style={{ color: "#6b7280", fontSize: "12px", marginBottom: "4px", textTransform: "uppercase", fontWeight: 600 }}>{item.label}</p>
+                  {item.isStatus ? (
+                     <span
+                      style={{
+                        padding: "4px 12px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        color: "white",
+                        backgroundColor: item.value === "active" ? "#22c55e" : item.value === "pending" ? "#f59e0b" : "#9ca3af",
+                        display: "inline-block",
+                        textTransform: "capitalize"
+                      }}
+                    >
+                      {item.value}
+                    </span>
+                  ) : (
+                    <p style={{ color: "#111827", fontWeight: 500, fontSize: "15px", margin: 0 }}>{item.value}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && selectedUniversity && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: isMobile ? "16px" : "0",
+          }}
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: isMobile ? "20px" : "32px",
+              width: "100%",
+              maxWidth: "512px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              position: "relative",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "24px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#1273D4", margin: 0 }}>Edit University</h2>
+              <button 
+                onClick={() => setShowEditModal(false)}
+                style={{
+                  padding: isMobile ? "6px 8px" : "2px 7px",
+                  borderRadius: "6px",
+                  backgroundColor: "#1273D4",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  color: "white"
+                }}
+                onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                      "#2563eb";
+                }}
+                onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                      "#1273D4";
+                }}
+              >
+                <CloseIcon w={12} h={12} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
+                  University Name
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
+                  Contact Person
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.contactPerson}
+                  onChange={(e) => setEditFormData({ ...editFormData, contactPerson: e.target.value })}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
+                  Phone
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
+                  Address
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.address}
+                  onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
+                  Status
+                </label>
+                <select
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none", backgroundColor: "white" }}
+                >
+                  <option value="active">Active</option>
+                  <option value="pending">Pending</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "16px" }}>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    backgroundColor: "white",
+                    border: "1px solid #e5e7eb",
+                    color: "#374151",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditSubmit}
+                  disabled={isUpdating}
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    backgroundColor: "#2563eb",
+                    border: "none",
+                    color: "white",
+                    cursor: isUpdating ? "not-allowed" : "pointer",
+                    opacity: isUpdating ? 0.7 : 1,
+                  }}
+                >
+                  {isUpdating ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && selectedUniversity && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: "16px",
+          }}
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              width: "100%",
+              maxWidth: "400px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ 
+              width: "48px", 
+              height: "48px", 
+              backgroundColor: "#fee2e2", 
+              borderRadius: "50%", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              margin: "0 auto 16px"
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </div>
+            
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", marginBottom: "8px" }}>Delete University</h3>
+            <p style={{ color: "#6b7280", fontSize: "14px", marginBottom: "24px", lineHeight: "1.5" }}>
+              Are you sure you want to delete <strong>{selectedUniversity.name}</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  padding: "8px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  color: "#374151",
+                  cursor: "pointer",
+                  width: "100%",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f3f4f6";
+                  e.currentTarget.style.borderColor = "#d1d5db";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                style={{
+                  padding: "8px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  backgroundColor: "#ef4444",
+                  border: "none",
+                  color: "white",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  opacity: isDeleting ? 0.7 : 1,
+                  width: "100%",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDeleting) {
+                    e.currentTarget.style.backgroundColor = "#dc2626";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isDeleting) {
+                    e.currentTarget.style.backgroundColor = "#ef4444";
+                  }
+                }}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

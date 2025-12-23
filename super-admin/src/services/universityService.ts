@@ -34,6 +34,16 @@ export const universityService = {
     return apiClient.delete(`/super-admin/universities/${id}`);
   },
 
+  activate: async (id: string) => {
+    const response = await apiClient.patch<University>(`/super-admin/universities/${id}/activate`);
+    return response.data;
+  },
+
+  suspend: async (id: string) => {
+    const response = await apiClient.patch<University>(`/super-admin/universities/${id}/suspend`);
+    return response.data;
+  },
+
   search: async (query: string) => {
     const response = await apiClient.get<University[]>('/super-admin/universities/search', {
       params: { q: query },
