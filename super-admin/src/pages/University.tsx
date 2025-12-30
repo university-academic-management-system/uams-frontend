@@ -41,6 +41,10 @@ const UniversityPage: React.FC = () => {
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Success Modal State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdUniName, setCreatedUniName] = useState("");
 
   const handleFormChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -105,6 +109,9 @@ const UniversityPage: React.FC = () => {
         setUniversities(Array.isArray(updatedList) ? updatedList : []);
         
         setShowModal(false);
+        setCreatedUniName(formData.name);
+        setShowSuccessModal(true);
+        
         // Reset form
         setFormData({
           slug: "",
@@ -711,6 +718,7 @@ const UniversityPage: React.FC = () => {
             boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
             border: "1px solid #f3f4f6",
             overflowX: "auto",
+            minHeight: "400px",
           }}
         >
           <table
@@ -831,7 +839,7 @@ const UniversityPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedUniversities.map((uni) => (
+              {paginatedUniversities.map((uni, index) => (
                 <tr
                   key={uni.id}
                   style={{
@@ -865,6 +873,7 @@ const UniversityPage: React.FC = () => {
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                     }}
+                    title={uni.name}
                   >
                     {uni.name}
                   </td>
@@ -877,6 +886,7 @@ const UniversityPage: React.FC = () => {
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                     }}
+                    title={uni.contact_person}
                   >
                     {uni.contact_person}
                   </td>
@@ -889,6 +899,7 @@ const UniversityPage: React.FC = () => {
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                     }}
+                    title={uni.email}
                   >
                     {uni.email}
                   </td>
@@ -918,7 +929,7 @@ const UniversityPage: React.FC = () => {
                       {uni.status}
                     </span>
                   </td>
-                  <td style={{ padding: "16px", textAlign: "center", position: "relative" }}>
+                  <td style={{ padding: "16px", textAlign: "center", position: "relative", zIndex: openDropdown === uni.id ? 20 : "auto" }}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -955,12 +966,15 @@ const UniversityPage: React.FC = () => {
                         onClick={(e) => e.stopPropagation()}
                         style={{
                           position: "absolute",
-                          top: "100%",
+                          top: paginatedUniversities.length > 2 && index >= paginatedUniversities.length - 2 ? "auto" : "100%",
+                          bottom: paginatedUniversities.length > 2 && index >= paginatedUniversities.length - 2 ? "100%" : "auto",
+                          marginTop: paginatedUniversities.length > 2 && index >= paginatedUniversities.length - 2 ? "0" : "6px",
+                          marginBottom: paginatedUniversities.length > 2 && index >= paginatedUniversities.length - 2 ? "6px" : "0",
                           right: "16px",
                           backgroundColor: "white",
                           borderRadius: "8px",
-                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                          border: "1px solid #e5e7eb",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                          border: "1px solid #f3f4f6",
                           zIndex: 50,
                           minWidth: "160px",
                           overflow: "hidden",
@@ -2051,6 +2065,83 @@ const UniversityPage: React.FC = () => {
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: "16px",
+          }}
+          onClick={() => setShowSuccessModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              width: "100%",
+              maxWidth: "400px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ 
+              width: "48px", 
+              height: "48px", 
+              backgroundColor: "#dcfce7", 
+              borderRadius: "50%", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              margin: "0 auto 16px"
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", marginBottom: "8px" }}>Success!</h3>
+            <p style={{ color: "#6b7280", fontSize: "14px", marginBottom: "24px", lineHeight: "1.5" }}>
+              University <strong>{createdUniName}</strong> has been created successfully.
+            </p>
+
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              style={{
+                width: "100%",
+                padding: "8px 20px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: 500,
+                backgroundColor: "#2563eb",
+                border: "none",
+                color: "white",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1d4ed8";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#2563eb";
+              }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
