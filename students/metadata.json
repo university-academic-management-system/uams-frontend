@@ -1,0 +1,8 @@
+{
+  "name": "EduFlow - Premium Student Portal",
+  "description": "A comprehensive student management platform for course tracking, performance analytics, and administrative management",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

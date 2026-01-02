@@ -1,19 +1,22 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Provider } from './components/ui/provider.tsx'
-import { RouterProvider } from 'react-router'
-import appRoutes from './routes/AppRoutes.tsx'
 
-const queryClient = new QueryClient()
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Provider>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={appRoutes} />
-      </QueryClientProvider>
-    </Provider>
-  </StrictMode>
-)
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <ChakraProvider value={defaultSystem}>
+        <App />
+      </ChakraProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
