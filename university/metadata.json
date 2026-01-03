@@ -1,0 +1,7 @@
+{
+  "name": "UniEdu - Smart Learning Platform",
+  "description": "A modern educational platform featuring a secure login system and an integrated Study Buddy.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
