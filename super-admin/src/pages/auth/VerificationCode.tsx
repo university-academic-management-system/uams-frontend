@@ -1,20 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { authService } from "../../services/authService";
 import Toast from "../../components/Toast";
 
-interface VerificationCodeProps {
-  email?: string;
-  onCodeVerified?: (code: string) => void;
-  onResendCode?: () => void;
-  onBackClick?: () => void;
-}
-
-const VerificationCode: React.FC<VerificationCodeProps> = ({
-  email = "youremail@provider.com",
-  onCodeVerified,
-  onResendCode,
-  onBackClick,
-}) => {
+const VerificationCode: React.FC = () => {
+  const navigate = useNavigate();
+  const email = sessionStorage.getItem("resetEmail") || "youremail@provider.com";
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -74,10 +65,11 @@ const VerificationCode: React.FC<VerificationCodeProps> = ({
       const response = await authService.verifyCode(email, fullCode);
       console.log("Code verified:", fullCode);
       setToast({ message: "Code verified successfully!", type: "success" });
-      // Pass the reset token from the response to the parent
+      // Store the reset token in sessionStorage for reset-password page
       const resetToken = response.resetToken || response.token || fullCode;
+      sessionStorage.setItem("resetToken", resetToken);
       setTimeout(() => {
-        onCodeVerified?.(resetToken);
+        navigate("/reset-password");
       }, 1000);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Invalid or expired verification code. Please try again.";
@@ -98,7 +90,6 @@ const VerificationCode: React.FC<VerificationCodeProps> = ({
       await authService.resendCode(email);
       console.log("Verification code resent to:", email);
       setToast({ message: "A new verification code has been sent to your email.", type: "success" });
-      onResendCode?.();
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Failed to resend code. Please try again.";
       setError(errorMessage);

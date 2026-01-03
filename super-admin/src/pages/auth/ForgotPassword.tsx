@@ -1,16 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { authService } from "../../services/authService";
 import Toast from "../../components/Toast";
 
-interface ForgotPasswordProps {
-  onBackToLogin?: () => void;
-  onSendCode?: (email: string) => void;
-}
-
-const ForgotPassword: React.FC<ForgotPasswordProps> = ({
-  onBackToLogin,
-  onSendCode,
-}) => {
+const ForgotPassword: React.FC = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,9 +33,11 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
         message: "A verification code has been sent to your email. It may take a minute to arrive.", 
         type: "success" 
       });
+      // Store email in sessionStorage for verification page
+      sessionStorage.setItem("resetEmail", email);
       // Delay navigation to let user see the toast
       setTimeout(() => {
-        onSendCode?.(email);
+        navigate("/verification");
       }, 1500);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Failed to send verification code. Please try again.";
@@ -287,7 +283,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             <div style={{ textAlign: "center" }}>
               <button
                 type="button"
-                onClick={onBackToLogin}
+                onClick={() => navigate("/login")}
                 style={{
                   background: "none",
                   border: "none",

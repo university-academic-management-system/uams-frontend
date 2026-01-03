@@ -1,10 +1,13 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
-interface ResetSuccessProps {
-  onContinue?: () => void;
-}
+const ResetSuccess: React.FC = () => {
+  const navigate = useNavigate();
 
-const ResetSuccess: React.FC<ResetSuccessProps> = ({ onContinue }) => {
+  const handleContinue = () => {
+    navigate("/login");
+  };
+
   return (
     <div
       style={{
@@ -85,7 +88,7 @@ const ResetSuccess: React.FC<ResetSuccessProps> = ({ onContinue }) => {
 
         {/* Continue Button */}
         <button
-          onClick={onContinue}
+          onClick={handleContinue}
           style={{
             width: "100%",
             padding: "12px 16px",

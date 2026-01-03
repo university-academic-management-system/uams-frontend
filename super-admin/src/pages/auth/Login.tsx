@@ -1,15 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { authService } from "../../services/authService";
 
-interface LoginProps {
-  onLoginSuccess?: () => void;
-  onForgotPasswordClick?: () => void;
-}
-
-const Login: React.FC<LoginProps> = ({
-  onLoginSuccess,
-  onForgotPasswordClick,
-}) => {
+const Login: React.FC = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +25,7 @@ const Login: React.FC<LoginProps> = ({
     try {
       await authService.login({ email, password });
       console.log("Login successful", { email, rememberMe });
-      onLoginSuccess?.();
+      navigate("/dashboard");
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Login failed. Please check your credentials.";
       setError(errorMessage);
@@ -365,7 +359,7 @@ const Login: React.FC<LoginProps> = ({
           <div style={{ textAlign: "center" }}>
             <button
               type="button"
-              onClick={onForgotPasswordClick}
+              onClick={() => navigate("/forgot-password")}
               style={{
                 background: "none",
                 border: "none",

@@ -1,14 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { authService } from "../../services/authService";
 import Toast from "../../components/Toast";
 
-interface ResetPasswordProps {
-  resetToken?: string;
-  onPasswordReset?: () => void;
-}
-
-const ResetPassword: React.FC<ResetPasswordProps> = ({ resetToken = "", onPasswordReset }) => {
+const ResetPassword: React.FC = () => {
+  const navigate = useNavigate();
+  const resetToken = sessionStorage.getItem("resetToken") || "";
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -65,8 +63,11 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ resetToken = "", onPasswo
       });
       console.log("Password reset successful");
       setToast({ message: "Password reset successfully!", type: "success" });
+      // Clear session storage
+      sessionStorage.removeItem("resetEmail");
+      sessionStorage.removeItem("resetToken");
       setTimeout(() => {
-        onPasswordReset?.();
+        navigate("/reset-success");
       }, 1500);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Failed to reset password. Please try again.";
