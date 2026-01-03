@@ -20,18 +20,7 @@ import {
   X,
 } from "lucide-react";
 import ChatBot from "./ChatBot";
-
-interface DashboardProps {
-  authData: {
-    token: string;
-    role: string;
-    tenantId: string;
-    universityId: string;
-    facultyId: string | null;
-    departmentId: string | null;
-  };
-  onLogout: () => void;
-}
+import { useAuth } from "../context/AuthProvider";
 
 const SimpleLineChart = ({
   data,
@@ -91,20 +80,21 @@ const SimpleLineChart = ({
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ authData, onLogout }) => {
+const Dashboard: React.FC = () => {
+  const { authData, logout } = useAuth();
   const [showChat, setShowChat] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
+  if (!authData) return null;
+
   // Get user email/username from authData or localStorage
   const getUserEmail = () => {
-    // You might want to store email in localStorage or get it from authData
     return localStorage.getItem("userEmail") || "admin@uniedu.com";
   };
 
   const getUserDisplayName = () => {
-    // You can customize this based on your user data
     return authData.role === "ADMIN"
       ? "Uni Admin"
       : authData.role === "FACULTY"
@@ -137,8 +127,7 @@ const Dashboard: React.FC<DashboardProps> = ({ authData, onLogout }) => {
     location.pathname === path || location.pathname.startsWith(path + "/");
 
   const handleLogout = () => {
-    onLogout();
-    // Optionally navigate to login page
+    logout();
     navigate("/login");
   };
 

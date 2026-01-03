@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      base: '/super-admin/',
       server: {
         allowedHosts: ["a1dd3159869e.ngrok-free.app"],
         // port: 3000,

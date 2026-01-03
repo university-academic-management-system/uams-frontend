@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { User, Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { AuthData } from "../components/types";
+import { useAuth } from "../context/AuthProvider";
 
-interface LoginProps {
-  onLogin: (authData: AuthData) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +44,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       };
 
       // Call parent with auth data
-      onLogin(authData);
+      login(authData);
+      navigate("/dashboard");
     } catch (err: any) {
       // Clear temporary email on error
       localStorage.removeItem("loginEmail");

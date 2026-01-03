@@ -3,6 +3,7 @@ import { User, Eye, EyeOff, GraduationCap } from "lucide-react";
 import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { AuthData } from "../components/types";
+import { useAuth } from "../context/AuthProvider";
 
 interface LoginResponse {
   token: string;
@@ -14,11 +15,8 @@ interface LoginResponse {
   email?: string;
 }
 
-interface LoginPageProps {
-  onLogin: (data: AuthData) => void;
-}
-
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+const LoginPage: React.FC = () => {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -51,8 +49,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         email: data.email || email,
       };
 
-      // Call parent with all data
-      onLogin(loginData);
+      // Call auth context login
+      login(loginData);
       navigate("/dashboard");
     } catch (err: any) {
       // Clear temporary email on error
