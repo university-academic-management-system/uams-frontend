@@ -286,7 +286,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
 
   return (
     <div className="space-y-6 lg:space-y-10 animate-in fade-in duration-500">
-      <div className="bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-10 border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-10 border border-gray-100 shadow-sm">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
           
           {/* Registration Form Column */}
@@ -347,32 +347,39 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                     
                     {/* Dropdown Menu */}
                     {showDropdown && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-lg z-40 max-h-64 overflow-y-auto">
-                        {filteredCourses.length > 0 ? (
-                          <div className="p-2">
-                            {filteredCourses.map(course => (
-                              <label key={course.id} className="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
-                                <input 
-                                  type="checkbox" 
-                                  className={checkboxClasses}
-                                  checked={selectedCoursesInDropdown.includes(course.id)}
-                                  onChange={() => handleSelectCourse(course.id)}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                <div className="ml-3 flex-1">
-                                  <p className="text-[12px] font-bold text-[#1e293b]">{course.code}</p>
-                                  <p className="text-[11px] text-gray-400 truncate">{course.title}</p>
-                                </div>
-                                <span className="text-[11px] font-bold text-gray-400 ml-2">{course.creditUnits} units</span>
-                              </label>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="p-6 text-center text-gray-400 text-[12px]">No courses found</div>
-                        )}
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-lg z-40 overflow-hidden">
+                        {/* Scrollable course list */}
+                        <div className="max-h-60 overflow-y-auto">
+                          {filteredCourses.length > 0 ? (
+                            <div className="p-2">
+                              {filteredCourses.map(course => (
+                                <label key={course.id} className="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
+                                  <input 
+                                    type="checkbox" 
+                                    className={checkboxClasses}
+                                    checked={selectedCoursesInDropdown.includes(course.id)}
+                                    onChange={() => handleSelectCourse(course.id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <div className="ml-3 flex-1">
+                                    <p className="text-[12px] font-bold text-[#1e293b]">{course.code}</p>
+                                    <p className="text-[11px] text-gray-400 truncate">{course.title}</p>
+                                  </div>
+                                  <span className="text-[11px] font-bold text-gray-400 ml-2">{course.creditUnits} units</span>
+                                </label>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="p-6 text-center text-gray-400 text-[12px]">No courses found</div>
+                          )}
+                        </div>
                         
-                        {filteredCourses.length > 0 && (
-                          <div className="border-t border-gray-100 p-3 flex justify-end gap-2 bg-gray-50">
+                        {/* Sticky footer buttons - always visible */}
+                        <div className="border-t border-gray-100 p-3 flex justify-between items-center bg-gray-50 rounded-b-xl">
+                          <span className="text-[11px] font-bold text-gray-400">
+                            {selectedCoursesInDropdown.length} selected
+                          </span>
+                          <div className="flex gap-2">
                             <button 
                               onClick={() => {
                                 setShowDropdown(false);
@@ -391,7 +398,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                               Add Selected
                             </button>
                           </div>
-                        )}
+                        </div>
                       </div>
                     )}
                     
