@@ -33,7 +33,7 @@ const PaymentsNew: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const labelMap: Record<string, string> = {
-    registration: 'Course Registration',
+    registration: 'ID Card',
     transcript: 'Transcript Processing',
     other: 'Other Payment',
   };

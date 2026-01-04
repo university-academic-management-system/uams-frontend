@@ -4,7 +4,7 @@ import {
   Badge, Spacer,
   useBreakpointValue, Stack
 } from '@chakra-ui/react';
-import { Search, Filter, FileText, Plus, ChevronLeft, ChevronRight, X, BookOpen, CreditCard, CheckCircle2, XCircle, Clock, Download } from 'lucide-react';
+import { Search, Filter, FileText, Plus, ChevronLeft, ChevronRight, X, BookOpen, IdCard, CreditCard, CheckCircle2, XCircle, Clock, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAssetPath } from '../utils/assetPath';
 
@@ -30,7 +30,7 @@ const createSample = (n = 20) => Array.from({ length: n }).map((_, i) => {
     id: String(i + 1),
     transactionId: uuid,
     from: 'Grace Hopkins',
-    paymentFor: i % 3 === 0 ? 'Course Registration' : (i % 3 === 1 ? 'School fees' : 'Departmental dues'),
+    paymentFor: i % 3 === 0 ? 'ID Card' : (i % 3 === 1 ? 'School fees' : 'Departmental dues'),
     amount: i % 3 === 0 ? '₦230,000' : (i % 3 === 1 ? '₦340,000' : '₦45,000'),
     method: i % 4 === 0 ? 'Bank transfer' : (i % 3 === 0 ? 'Mastercard ****7845' : 'VISA ****7345'),
     date: `23-08-2025`,
@@ -169,8 +169,8 @@ const MakePaymentModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ 
             alignItems="center"
           >
              <Box mx="auto" display="flex" alignItems="center" gap={3}>
-                <BookOpen size={20} color="#64748B" />
-                <Text fontSize="md">Pay for Course Registration</Text>
+                <IdCard size={20} color="#64748B" />
+                <Text fontSize="md">Pay for ID Card</Text>
              </Box>
           </Button>
 

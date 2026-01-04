@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getStoredUser } from '../services/authService';
 import {
   getLevels,
   getSemesters,
@@ -10,6 +11,10 @@ import {
   getRegistrations,
   getDepartmentCourses,
   addCourseToCart,
+  getCourseCart,
+  removeCourseFromCart,
+  bulkRegisterCourses,
+  initRegistrationFeePayment,
 } from '../services/registrationService';
 import type {
   Level,
@@ -127,6 +132,9 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isCartConfirmed, setIsCartConfirmed] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [paymentReference, setPaymentReference] = useState<string | null>(null);
 
   // Fetch department courses on mount
   useEffect(() => {
@@ -137,6 +145,25 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
       setIsLoadingCourses(false);
     };
     fetchData();
+  }, []);
+
+  // Fetch cart on mount to populate previewer
+  useEffect(() => {
+    const fetchCart = async () => {
+      const cartItems = await getCourseCart();
+      if (cartItems.length > 0) {
+        // Convert cart items to DepartmentCourse format for previewer
+        const cartCourses = cartItems.map(item => ({
+          id: item.course.id,
+          code: item.course.code,
+          title: item.course.title,
+          creditUnits: item.course.creditUnits,
+        }));
+        setPreviewedCourses(cartCourses);
+        setIsCartConfirmed(true); // Enable buttons if cart already has items
+      }
+    };
+    fetchCart();
   }, []);
 
   // Set defaults from student profile when available
@@ -183,8 +210,24 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
     setSearchQuery('');
   };
 
-  const handleRemoveCourse = (courseId: string) => {
-    setPreviewedCourses(prev => prev.filter(course => course.id !== courseId));
+  const handleRemoveCourse = async (courseId: string) => {
+    // Call API to remove from cart
+    const result = await removeCourseFromCart(courseId);
+    
+    if (result.success) {
+      // Remove from previewer on success
+      setPreviewedCourses(prev => prev.filter(course => course.id !== courseId));
+      
+      // If no courses left, disable the buttons
+      const remainingCourses = previewedCourses.filter(course => course.id !== courseId);
+      if (remainingCourses.length === 0) {
+        setIsCartConfirmed(false);
+      }
+    } else {
+      // Show error message if removal failed
+      setCartMessage({ type: 'error', text: result.message });
+      setTimeout(() => setCartMessage(null), 7000);
+    }
   };
 
   // Handle adding previewed courses to cart via API
@@ -201,6 +244,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
     
     if (result.success) {
       setCartMessage({ type: 'success', text: result.message });
+      setIsCartConfirmed(true);
       // Auto-dismiss success message after 7 seconds
       setTimeout(() => setCartMessage(null), 7000);
     } else {
@@ -218,6 +262,8 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
       });
       
       setCartMessage({ type: 'error', text: errorMessage });
+      // Clear previewer since API failed - courses weren't added to cart
+      setPreviewedCourses([]);
       // Auto-dismiss error message after 7 seconds
       setTimeout(() => setCartMessage(null), 7000);
     }
@@ -225,6 +271,81 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
 
   const totalUnits = previewedCourses.reduce((sum, course) => sum + course.creditUnits, 0);
   const registeredCourses = registrationData?.courses || [];
+
+  // Handle course registration
+  const handleRegisterCourses = async () => {
+    // Get levelId and sessionId from stored user profile
+    const storedUser = getStoredUser();
+    const levelId = storedUser?.profile?.levelId;
+    const sessionId = storedUser?.profile?.sessionId;
+
+    if (!levelId || !sessionId) {
+      alert('Unable to retrieve your level or session information. Please log in again.');
+      return;
+    }
+
+    // Get payment reference from localStorage (set after payment)
+    const paymentRef = localStorage.getItem('pendingPaymentReference');
+    if (!paymentRef) {
+      alert('Payment reference not found. Please complete payment first.');
+      return;
+    }
+
+    setIsRegistering(true);
+
+    const registrationData = {
+      paymentReference: paymentRef,
+      levelId,
+      sessionId,
+      totalCredits: totalUnits,
+      totalAmount: 5000,
+    };
+
+    const result = await bulkRegisterCourses(registrationData);
+    setIsRegistering(false);
+
+    if (result.success) {
+      alert(`Success! ${result.message}`);
+      setShowConfirmation(false);
+      // Clear the payment reference after successful registration
+      localStorage.removeItem('pendingPaymentReference');
+      // Clear cart after successful registration
+      setPreviewedCourses([]);
+      setIsCartConfirmed(false);
+    } else {
+      alert(`Error: ${result.message}`);
+    }
+  };
+
+  // Handle payment initialization
+  const handlePayRegistrationFee = async () => {
+    const storedUser = getStoredUser();
+    const sessionId = storedUser?.profile?.sessionId;
+
+    if (!sessionId) {
+      alert('Unable to retrieve your session information. Please log in again.');
+      return;
+    }
+
+    const callbackUrl = import.meta.env.VITE_CALLBACK_URL|| 'http://localhost:3000/students/registration/courses';
+    const amount = 5000;
+
+    console.log('Callback URL from env:', import.meta.env.VITE_CALLBACK_URL);
+    console.log('Final callback URL:', callbackUrl);
+
+    const result = await initRegistrationFeePayment(sessionId, amount, callbackUrl);
+
+    if (result.success && result.data) {
+      // Store the payment reference for later use
+      setPaymentReference(result.data.reference);
+      localStorage.setItem('pendingPaymentReference', result.data.reference);
+      
+      // Redirect to Paystack
+      window.location.href = result.data.authorizationUrl;
+    } else {
+      alert(`Error: ${result.message}`);
+    }
+  };
 
   // Confirmation Modal
   if (showConfirmation) {
@@ -268,15 +389,12 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
               Cancel
             </button>
             <button
-              onClick={() => {
-                setShowConfirmation(false);
-                if (selectedSemester) {
-                  navigate(`/payments/new?type=registration&semesterId=${selectedSemester}`);
-                }
-              }}
-              className="flex-1 bg-[#22c55e] text-white px-6 py-3 rounded-lg text-[13px] font-bold hover:bg-green-600 transition-all shadow-md"
+              onClick={handleRegisterCourses}
+              disabled={isRegistering}
+              className="flex-1 bg-[#22c55e] text-white px-6 py-3 rounded-lg text-[13px] font-bold hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md flex items-center justify-center gap-2"
             >
-              Confirm & Proceed to Payment
+              {isRegistering && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isRegistering ? 'Registering...' : 'Confirm & Proceed to Register'}
             </button>
           </div>
         </div>
@@ -433,10 +551,11 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                 {isAddingToCart ? 'Adding...' : 'Confirm Courses'}
               </button>
               <button 
-                onClick={() => setPreviewedCourses([])}
-                className="bg-[#f1f5f9] text-[#64748b] px-6 py-2.5 rounded-lg text-[11px] font-bold hover:bg-gray-200 transition-colors"
+                onClick={handlePayRegistrationFee}
+                disabled={!isCartConfirmed}
+                className="bg-[#f97316] text-white px-6 py-2.5 rounded-lg text-[11px] font-bold hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                Remove All
+                Pay Registration Fee
               </button>
             </div>
 
@@ -454,7 +573,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
             <div className="flex space-x-4 pt-6">
               <button 
                 onClick={() => setShowConfirmation(true)}
-                disabled={previewedCourses.length === 0}
+                disabled={!isCartConfirmed}
                 className="bg-[#22c55e] text-white px-10 py-3 rounded-lg text-[12px] font-bold hover:bg-green-600 disabled:bg-gray-300 transition-colors shadow-sm"
               >
                 Register Courses
