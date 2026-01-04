@@ -16,6 +16,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { Search, Plus, ChevronLeft, Send, ChevronDown } from 'lucide-react';
+import { getAssetPath } from '../utils/assetPath';
 
 const TableCheckbox = () => (
   <Checkbox.Root colorPalette="blue" size="sm">
@@ -470,7 +471,7 @@ const ApplicationDetail = ({ onBack }: { onBack: () => void }) => (
             p={2}
             mr={2}
           />
-          <Image src="/assets/Paperclip.png" alt="Attach" boxSize="18px" cursor="pointer" />
+          <Image src={getAssetPath('assets/Paperclip.png')} alt="Attach" boxSize="18px" cursor="pointer" />
         </Box>
       </Box>
     </Box>

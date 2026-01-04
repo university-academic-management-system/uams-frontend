@@ -15,11 +15,12 @@ import {
 import authService from '../services/authService';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { NavigationItem } from '../types';
+import { getAssetPath } from '../utils/assetPath';
 
 const Logo = ({ collapsed }: { collapsed?: boolean }) => (
   <Flex align="center" justify={collapsed ? "center" : "start"} w={collapsed ? "full" : "auto"}>
     <Image 
-      src="/assets/logos.png" 
+      src={getAssetPath('assets/logos.png')} 
       alt="UniEdu Logo" 
       h={{ base: '10', lg: '12' }}
       w={collapsed ? '10' : 'auto'}
@@ -186,12 +187,12 @@ const MainLayout: React.FC = () => {
           '&::-webkit-scrollbar-track': { background: 'transparent' },
           '&::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '2px' },
         }}>
-          <SidebarItem iconSrc="/assets/House (1).png" label="Dashboard" active={activeTab === 'dashboard'} onClick={() => { navigate('/dashboard'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
-          <SidebarItem iconSrc="/assets/BookOpen (1).png" label="Courses" active={activeTab === 'courses'} onClick={() => { navigate('/courses/results'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
-          <SidebarItem iconSrc="/assets/Books (1).png" label="Registration" active={activeTab === 'registration'} onClick={() => { navigate('/registration'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
-          <SidebarItem iconSrc="/assets/CalendarDots (1).png" label="Schedule" active={activeTab === 'schedule'} onClick={() => { navigate('/schedule'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
-          <SidebarItem iconSrc="/assets/Money (1).png" label="Payments" active={activeTab === 'payments'} onClick={() => { navigate('/payments'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
-          <SidebarItem iconSrc="/assets/305ae6c7f315bb219eb3b785a763838d55d71e73 (1).png" label="Settings" active={activeTab === 'settings'} onClick={() => { navigate('/settings'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/House (1).png')} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => { navigate('/dashboard'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/BookOpen (1).png')} label="Courses" active={activeTab === 'courses'} onClick={() => { navigate('/courses/results'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/Books (1).png')} label="Registration" active={activeTab === 'registration'} onClick={() => { navigate('/registration'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/CalendarDots (1).png')} label="Schedule" active={activeTab === 'schedule'} onClick={() => { navigate('/schedule'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/Money (1).png')} label="Payments" active={activeTab === 'payments'} onClick={() => { navigate('/payments'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/305ae6c7f315bb219eb3b785a763838d55d71e73 (1).png')} label="Settings" active={activeTab === 'settings'} onClick={() => { navigate('/settings'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
         </Box>
 
         <Box p={isSidebarCollapsed ? 4 : 6} borderTop="1px" borderColor="gray.100">

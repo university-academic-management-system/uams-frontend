@@ -70,6 +70,8 @@ const router = createBrowserRouter([
     path: "*",
     element: <Navigate to="/" replace />,
   },
-]);
+], {
+  basename: "/students"
+});
 
 export default router;

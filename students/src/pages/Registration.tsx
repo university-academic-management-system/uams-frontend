@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   getLevels,
@@ -8,13 +8,8 @@ import {
   getSessions,
   getStudentProfile,
   getRegistrations,
-  addCourseToCart,
-  confirmCourseRegistration,
-  removeCourseFromCart,
   getDepartmentCourses,
-  validateCartCourses,
-  getCourseCart,
-  CartItem,
+  addCourseToCart,
 } from '../services/registrationService';
 import type {
   Level,
@@ -99,6 +94,15 @@ interface CoursesRegViewProps {
   isLoading: boolean;
 }
 
+const FormRow = ({ label, children }: { label: string, children: React.ReactNode }) => (
+  <div className="grid grid-cols-12 items-center gap-4">
+    <label className="col-span-12 sm:col-span-3 text-[13px] font-bold text-[#1e293b]">{label}</label>
+    <div className="col-span-12 sm:col-span-9 relative">
+      {children}
+    </div>
+  </div>
+);
+
 const CoursesRegView: React.FC<CoursesRegViewProps> = ({
   levels,
   semesters,
@@ -111,29 +115,25 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
   const [selectedLevel, setSelectedLevel] = useState<string>('');
   const [selectedSemester, setSelectedSemester] = useState<string>('');
   const [selectedSession, setSelectedSession] = useState<string>('');
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [carryOver, setCarryOver] = useState<string>('');
-  const [isAddingCourse, setIsAddingCourse] = useState(false);
-  const [isRemovingCourse, setIsRemovingCourse] = useState(false);
-  const [cartMessage, setCartMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [registerMessage, setRegisterMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
-  const [validateMessage, setValidateMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  // New multi-select states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedCoursesInDropdown, setSelectedCoursesInDropdown] = useState<string[]>([]);
+  const [previewedCourses, setPreviewedCourses] = useState<DepartmentCourse[]>([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  
   const [departmentCourses, setDepartmentCourses] = useState<DepartmentCourse[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
-  const [cartCourses, setCartCourses] = useState<CartItem[]>([]);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Fetch department courses and cart on mount
+  // Fetch department courses on mount
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingCourses(true);
-      const [courses, cartItems] = await Promise.all([
-        getDepartmentCourses(),
-        getCourseCart(),
-      ]);
+      const courses = await getDepartmentCourses();
       setDepartmentCourses(courses);
-      setCartCourses(cartItems);
       setIsLoadingCourses(false);
     };
     fetchData();
@@ -142,11 +142,9 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
   // Set defaults from student profile when available
   useEffect(() => {
     if (studentProfile) {
-      // Use the level field from profile (e.g., "500")
       setSelectedLevel(studentProfile.level || studentProfile.Level?.code || '');
     }
   }, [studentProfile]);
-
 
   // Set current session as default
   useEffect(() => {
@@ -158,49 +156,151 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
     }
   }, [sessions, selectedSession]);
 
-  // Auto-dismiss messages after 7 seconds
-  useEffect(() => {
-    if (cartMessage) {
-      const timer = setTimeout(() => setCartMessage(null), 7000);
-      return () => clearTimeout(timer);
+  // Filter courses based on search
+  const filteredCourses = departmentCourses.filter(
+    course => 
+      course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSelectCourse = (courseCode: string) => {
+    setSelectedCoursesInDropdown(prev =>
+      prev.includes(courseCode)
+        ? prev.filter(code => code !== courseCode)
+        : [...prev, courseCode]
+    );
+  };
+
+  const handleAddCourses = () => {
+    const coursesToAdd = departmentCourses.filter(course =>
+      selectedCoursesInDropdown.includes(course.id) &&
+      !previewedCourses.some(p => p.id === course.id)
+    );
+    
+    setPreviewedCourses(prev => [...prev, ...coursesToAdd]);
+    setSelectedCoursesInDropdown([]);
+    setShowDropdown(false);
+    setSearchQuery('');
+  };
+
+  const handleRemoveCourse = (courseId: string) => {
+    setPreviewedCourses(prev => prev.filter(course => course.id !== courseId));
+  };
+
+  // Handle adding previewed courses to cart via API
+  const handleConfirmCourses = async () => {
+    if (previewedCourses.length === 0) return;
+    
+    setIsAddingToCart(true);
+    setCartMessage(null);
+    
+    const courseIds = previewedCourses.map(course => course.id);
+    const result = await addCourseToCart(courseIds);
+    
+    setIsAddingToCart(false);
+    
+    if (result.success) {
+      setCartMessage({ type: 'success', text: result.message });
+      // Auto-dismiss success message after 7 seconds
+      setTimeout(() => setCartMessage(null), 7000);
+    } else {
+      // Replace course IDs in error message with course names for better UX
+      let errorMessage = result.message;
+      
+      // Find and replace any course ID with its name/code
+      [...previewedCourses, ...departmentCourses].forEach(course => {
+        if (errorMessage.includes(course.id)) {
+          errorMessage = errorMessage.replace(
+            course.id, 
+            `"${course.code} - ${course.title}"`
+          );
+        }
+      });
+      
+      setCartMessage({ type: 'error', text: errorMessage });
+      // Auto-dismiss error message after 7 seconds
+      setTimeout(() => setCartMessage(null), 7000);
     }
-  }, [cartMessage]);
+  };
 
-  useEffect(() => {
-    if (validateMessage) {
-      const timer = setTimeout(() => setValidateMessage(null), 7000);
-      return () => clearTimeout(timer);
-    }
-  }, [validateMessage]);
-
-  useEffect(() => {
-    if (registerMessage) {
-      const timer = setTimeout(() => setRegisterMessage(null), 7000);
-      return () => clearTimeout(timer);
-    }
-  }, [registerMessage]);
-
-
+  const totalUnits = previewedCourses.reduce((sum, course) => sum + course.creditUnits, 0);
   const registeredCourses = registrationData?.courses || [];
 
-  return (
-    <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-500">
-      <div className="grid grid-cols-12 gap-6 lg:gap-8">
-        {/* Registration Form */}
-        <div className="col-span-12 lg:col-span-5 bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-10 border border-gray-100 shadow-sm space-y-6">
-          <h2 className="text-lg lg:text-xl font-bold text-[#1e293b] mb-6">Course Registration</h2>
-          
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-              <span className="ml-2 text-gray-500 text-sm">Loading...</span>
+  // Confirmation Modal
+  if (showConfirmation) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-[24px] lg:rounded-[32px] w-full max-w-2xl p-6 lg:p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+          <h2 className="text-2xl font-black text-[#1e293b] mb-8">Confirm Course Registration</h2>
+
+          {/* Courses List */}
+          <div className="bg-[#f8fafc] rounded-[20px] p-6 mb-8 max-h-64 overflow-y-auto">
+            <h3 className="text-[14px] font-bold text-[#1e293b] mb-4">Selected Courses ({previewedCourses.length})</h3>
+            <div className="space-y-3">
+              {previewedCourses.map((course) => (
+                <div key={course.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100">
+                  <div>
+                    <p className="text-[12px] font-bold text-gray-400">{course.code}</p>
+                    <p className="text-[13px] font-bold text-[#1e293b]">{course.title}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[12px] font-bold text-gray-400">{course.creditUnits} units</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Level Select */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 sm:gap-4">
-                <label className="text-[13px] font-bold text-[#1e293b]">Current Level</label>
-                <div className="sm:col-span-2 relative">
+          </div>
+
+          {/* Summary */}
+          <div className="space-y-3 mb-8 pb-8 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <p className="text-[14px] font-bold text-gray-400">Total Units:</p>
+              <p className="text-[14px] font-bold text-[#1e293b]">{totalUnits} units</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setShowConfirmation(false)}
+              className="flex-1 bg-white border border-gray-200 text-[#1e293b] px-6 py-3 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setShowConfirmation(false);
+                if (selectedSemester) {
+                  navigate(`/payments/new?type=registration&semesterId=${selectedSemester}`);
+                }
+              }}
+              className="flex-1 bg-[#22c55e] text-white px-6 py-3 rounded-lg text-[13px] font-bold hover:bg-green-600 transition-all shadow-md"
+            >
+              Confirm & Proceed to Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 lg:space-y-10 animate-in fade-in duration-500">
+      <div className="bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-10 border border-gray-100 shadow-sm overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+          
+          {/* Registration Form Column */}
+          <div className="space-y-8">
+            <h2 className="text-xl font-bold text-[#1e293b]">Course Registration</h2>
+            
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                <span className="ml-2 text-gray-500 text-sm">Loading...</span>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <FormRow label="Current Level">
                   <select 
                     value={selectedLevel}
                     onChange={(e) => setSelectedLevel(e.target.value)}
@@ -213,14 +313,10 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600" size={14} />
-                </div>
-              </div>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" size={14} />
+                </FormRow>
 
-              {/* Semester Select */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 sm:gap-4">
-                <label className="text-[13px] font-bold text-[#1e293b]">Semester</label>
-                <div className="sm:col-span-2 relative">
+                <FormRow label="Semester">
                   <select 
                     value={selectedSemester}
                     onChange={(e) => setSelectedSemester(e.target.value)}
@@ -233,216 +329,178 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600" size={14} />
-                </div>
-              </div>
-              {/* Divider */}
-              <div className="border-t border-gray-100 my-2"></div>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" size={14} />
+                </FormRow>
 
-              {/* Add Course */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 sm:gap-4">
-                <label className="text-[13px] font-bold text-[#1e293b]">Add Course</label>
-                <div className="sm:col-span-2 relative">
-                  <select 
-                    value={selectedCourse}
-                    onChange={(e) => setSelectedCourse(e.target.value)}
-                    className="w-full bg-white border border-gray-200 rounded-lg py-2.5 px-4 text-[13px] text-gray-800 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-100"
-                    disabled={isLoadingCourses}
-                  >
-                    <option value="">{isLoadingCourses ? 'Loading courses...' : 'Select a course'}</option>
-                    {departmentCourses.map((course) => (
-                      <option key={course.id} value={course.id}>
-                        {course.code} - {course.title} ({course.creditUnits} units)
-                      </option>
+                <FormRow label="Add Course">
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder={isLoadingCourses ? "Loading courses..." : "Search Course Name or Code"}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onClick={() => setShowDropdown(true)}
+                      disabled={isLoadingCourses}
+                      className="w-full bg-[#f8fafc] border border-gray-100 rounded-xl py-2.5 px-4 text-[13px] font-bold text-[#1e293b] focus:outline-none placeholder:text-gray-300 cursor-pointer disabled:opacity-50" 
+                    />
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={14} />
+                    
+                    {/* Dropdown Menu */}
+                    {showDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-lg z-40 max-h-64 overflow-y-auto">
+                        {filteredCourses.length > 0 ? (
+                          <div className="p-2">
+                            {filteredCourses.map(course => (
+                              <label key={course.id} className="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
+                                <input 
+                                  type="checkbox" 
+                                  className={checkboxClasses}
+                                  checked={selectedCoursesInDropdown.includes(course.id)}
+                                  onChange={() => handleSelectCourse(course.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <div className="ml-3 flex-1">
+                                  <p className="text-[12px] font-bold text-[#1e293b]">{course.code}</p>
+                                  <p className="text-[11px] text-gray-400 truncate">{course.title}</p>
+                                </div>
+                                <span className="text-[11px] font-bold text-gray-400 ml-2">{course.creditUnits} units</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-6 text-center text-gray-400 text-[12px]">No courses found</div>
+                        )}
+                        
+                        {filteredCourses.length > 0 && (
+                          <div className="border-t border-gray-100 p-3 flex justify-end gap-2 bg-gray-50">
+                            <button 
+                              onClick={() => {
+                                setShowDropdown(false);
+                                setSelectedCoursesInDropdown([]);
+                                setSearchQuery('');
+                              }}
+                              className="px-4 py-1.5 text-[11px] font-bold text-gray-400 hover:bg-gray-200 rounded-lg transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              onClick={handleAddCourses}
+                              disabled={selectedCoursesInDropdown.length === 0}
+                              className="px-4 py-1.5 text-[11px] font-bold text-white bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 rounded-lg transition-colors"
+                            >
+                              Add Selected
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Overlay to close dropdown */}
+                    {showDropdown && (
+                      <div 
+                        className="fixed inset-0 z-30"
+                        onClick={() => setShowDropdown(false)}
+                      />
+                    )}
+                  </div>
+                </FormRow>
+
+                <FormRow label="Carry Over">
+                  <select className="w-full bg-[#f8fafc] border border-gray-100 rounded-xl py-2.5 px-4 text-[13px] font-bold text-gray-400 appearance-none focus:outline-none">
+                    <option>Yes/No</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" size={14} />
+                </FormRow>
+              </div>
+            )}
+
+            <div className="flex space-x-3">
+              <button 
+                onClick={handleConfirmCourses}
+                disabled={previewedCourses.length === 0 || isAddingToCart}
+                className="bg-[#3b82f6] text-white px-6 py-2.5 rounded-lg text-[11px] font-bold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {isAddingToCart && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isAddingToCart ? 'Adding...' : 'Confirm Courses'}
+              </button>
+              <button 
+                onClick={() => setPreviewedCourses([])}
+                className="bg-[#f1f5f9] text-[#64748b] px-6 py-2.5 rounded-lg text-[11px] font-bold hover:bg-gray-200 transition-colors"
+              >
+                Remove All
+              </button>
+            </div>
+
+            {/* Cart Message */}
+            {cartMessage && (
+              <div className={`mt-2 p-3 rounded-lg text-[12px] font-medium ${
+                cartMessage.type === 'success' 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {cartMessage.text}
+              </div>
+            )}
+
+            <div className="flex space-x-4 pt-6">
+              <button 
+                onClick={() => setShowConfirmation(true)}
+                disabled={previewedCourses.length === 0}
+                className="bg-[#22c55e] text-white px-10 py-3 rounded-lg text-[12px] font-bold hover:bg-green-600 disabled:bg-gray-300 transition-colors shadow-sm"
+              >
+                Register Courses
+              </button>
+              <button className="bg-white border border-gray-200 text-[#1e293b] px-10 py-3 rounded-lg text-[12px] font-bold hover:bg-gray-50 transition-all min-w-[120px]">Cancel</button>
+            </div>
+          </div>
+
+          {/* Previewer Column */}
+          <div className="bg-[#fcfdfe] rounded-[24px] p-6 lg:p-8 border border-gray-100 flex flex-col min-h-[400px]">
+            <h2 className="text-sm lg:text-base font-bold text-[#1e293b] mb-2">Courses Previewer</h2>
+            <p className="text-[12px] text-gray-400 mb-6">{previewedCourses.length} course(s) selected</p>
+            <div className="overflow-x-auto flex-1">
+              {previewedCourses.length > 0 ? (
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-gray-50">
+                      <th className="px-3 py-3 font-bold text-gray-400 uppercase text-[10px] tracking-wider">Code</th>
+                      <th className="px-3 py-3 font-bold text-gray-400 uppercase text-[10px] tracking-wider">Course Title</th>
+                      <th className="px-3 py-3 font-bold text-gray-400 uppercase text-[10px] tracking-wider text-right">Unit</th>
+                      <th className="px-3 py-3 font-bold text-gray-400 uppercase text-[10px] tracking-wider text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {previewedCourses.map((course) => (
+                      <tr key={course.id} className="hover:bg-white transition-colors">
+                        <td className="px-3 py-3.5 font-bold text-gray-400 text-[11px]">{course.code}</td>
+                        <td className="px-3 py-3.5 font-bold text-[#1e293b] text-[11px] truncate max-w-[180px]">{course.title}</td>
+                        <td className="px-3 py-3.5 font-bold text-gray-400 text-[11px] text-right">{course.creditUnits}</td>
+                        <td className="px-3 py-3.5 text-center">
+                          <button 
+                            onClick={() => handleRemoveCourse(course.id)}
+                            className="text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
                     ))}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                </div>
-              </div>
-
-              {/* Carry Over */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 sm:gap-4">
-                <label className="text-[13px] font-bold text-[#1e293b]">Carry Over</label>
-                <div className="sm:col-span-2 relative">
-                  <select 
-                    value={carryOver}
-                    onChange={(e) => setCarryOver(e.target.value)}
-                    className="w-full bg-white border border-gray-200 rounded-lg py-2.5 px-4 text-[13px] text-gray-800 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-100"
-                  >
-                    <option value="">Yes/No</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                </div>
-              </div>
-
-              {/* Add Course / Remove Course Buttons */}
-              <div className="flex space-x-3 pt-2">
-                <button 
-                  onClick={async () => {
-                    if (!selectedCourse) {
-                      setCartMessage({ type: 'error', text: 'Please select a course' });
-                      return;
-                    }
-                    setIsAddingCourse(true);
-                    setCartMessage(null);
-                    const result = await addCourseToCart(selectedCourse);
-                    setCartMessage({ type: result.success ? 'success' : 'error', text: result.message });
-                    if (result.success) {
-                      // Refetch cart to get the updated list
-                      const updatedCart = await getCourseCart();
-                      setCartCourses(updatedCart);
-                      setSelectedCourse('');
-                    }
-                    setIsAddingCourse(false);
-                  }}
-                  disabled={isAddingCourse}
-                  className="px-5 py-2 bg-white border border-gray-200 rounded-lg text-[12px] font-bold text-[#1e293b] hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                  {isAddingCourse ? 'Adding...' : 'Add Course'}
-                </button>
-                <button 
-                  onClick={async () => {
-                    if (!selectedCourse) {
-                      setCartMessage({ type: 'error', text: 'Please select a course to remove' });
-                      return;
-                    }
-                    setIsRemovingCourse(true);
-                    setCartMessage(null);
-                    const result = await removeCourseFromCart(selectedCourse);
-                    setCartMessage({ type: result.success ? 'success' : 'error', text: result.message });
-                    if (result.success) {
-                      // Refetch cart to get the updated list
-                      const updatedCart = await getCourseCart();
-                      setCartCourses(updatedCart);
-                      setSelectedCourse('');
-                    }
-                    setIsRemovingCourse(false);
-                  }}
-                  disabled={isRemovingCourse}
-                  className="px-5 py-2 bg-gray-100 border border-gray-200 rounded-lg text-[12px] font-bold text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                >
-                  {isRemovingCourse ? 'Removing...' : 'Remove Course'}
-                </button>
-              </div>
-
-              {/* Cart Message */}
-              {cartMessage && (
-                <div className={`mt-3 p-3 rounded-lg text-[12px] font-medium ${cartMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                  {cartMessage.text}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-300 text-[12px] font-bold">
+                  Select courses to preview
                 </div>
               )}
             </div>
-          )}
-
-          {/* Main Action Buttons */}
-          <div className="flex flex-col space-y-3 pt-6 mt-4 border-t border-gray-100">
-            <div className="flex space-x-3">
-              <button 
-                onClick={async () => {
-                  setIsValidating(true);
-                  setValidateMessage(null);
-                  const result = await validateCartCourses();
-                  setValidateMessage({ type: result.success ? 'success' : 'error', text: result.message });
-                  setIsValidating(false);
-                }}
-                disabled={isValidating}
-                className="px-6 py-3 bg-gray-100 border border-gray-200 text-gray-500 rounded-lg text-[12px] font-bold hover:bg-gray-50 transition-colors"
-              >
-                {isValidating ? 'Validating...' : 'Validate Courses'}
-              </button>
-              <button 
-                onClick={async () => {
-                  if (!selectedSemester) {
-                    setRegisterMessage({ type: 'error', text: 'Please select a semester' });
-                    return;
-                  }
-                  setIsRegistering(true);
-                  setRegisterMessage(null);
-                  const result = await confirmCourseRegistration(selectedSemester);
-                  setRegisterMessage({ type: result.success ? 'success' : 'error', text: result.message });
-                  setIsRegistering(false);
-                }}
-                disabled={isRegistering}
-                className="px-6 py-3 bg-[#22c55e] text-white rounded-lg text-[12px] font-bold hover:bg-green-600 transition-colors shadow-sm disabled:opacity-50"
-              >
-                {isRegistering ? 'Registering...' : 'Register Courses'}
-              </button>
-              <button 
-                onClick={() => {
-                  if (!selectedSemester) {
-                    setRegisterMessage({ type: 'error', text: 'Please select a semester' });
-                    return;
-                  }
-                  navigate(`/payments/new?type=registration&semesterId=${selectedSemester}`);
-                }}
-                className="px-6 py-3 bg-[#0052EA] text-white rounded-lg text-[12px] font-bold hover:bg-blue-700 transition-colors shadow-sm"
-              >
-                Pay Now
-              </button>
-            </div>
-            {validateMessage && (
-              <div className={`p-3 rounded-lg text-[12px] font-medium ${validateMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                {validateMessage.text}
-              </div>
-            )}
-            {registerMessage && (
-              <div className={`p-3 rounded-lg text-[12px] font-medium ${registerMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                {registerMessage.text}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Courses Previewer Table */}
-        <div className="col-span-12 lg:col-span-7 bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 border border-gray-100 shadow-sm flex flex-col min-h-[400px]">
-          <h2 className="text-base font-bold text-[#1e293b] mb-6">Courses Previewer</h2>
-          <div className="overflow-x-auto -mx-6 px-6">
-            <table className="w-full text-left min-w-[500px]">
-              <thead>
-                <tr className="border-b border-gray-50">
-                  <th className="px-4 py-3 w-8">
-                    <input type="checkbox" className={checkboxClasses} />
-                  </th>
-                  <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px]">Code</th>
-                  <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px]">Course Title</th>
-                  <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px] text-right">Unit</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={4} className="text-center py-8">
-                      <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto" />
-                    </td>
-                  </tr>
-                ) : cartCourses.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="text-center py-8 text-gray-400 text-sm">
-                      No courses in cart. Select a course and click "Add Course".
-                    </td>
-                  </tr>
-                ) : (
-                  cartCourses.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <input type="checkbox" className={checkboxClasses} defaultChecked />
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-500 text-[11px]">{item.course.code}</td>
-                      <td className="px-4 py-3 font-medium text-[#1e293b] text-[11px]">{item.course.title}</td>
-                      <td className="px-4 py-3 font-bold text-gray-500 text-[11px] text-right">{item.course.creditUnits}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
 
       {/* Table: Registered Courses */}
-      <div className="bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 border border-gray-100 shadow-sm">
+      <div className="bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-10 border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
             <h2 className="text-base lg:text-lg font-bold text-[#1e293b]">Registered Courses</h2>
@@ -456,7 +514,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
             <select 
               value={selectedSession}
               onChange={(e) => setSelectedSession(e.target.value)}
-              className="w-full bg-[#f8fafc] border border-gray-100 text-[10px] font-bold rounded-lg pl-3 pr-8 py-2 text-gray-500 uppercase appearance-none cursor-pointer"
+              className="w-full sm:w-auto bg-[#f8fafc] border border-gray-100 text-[10px] font-bold rounded-lg pl-3 pr-10 py-2.5 text-gray-400 uppercase appearance-none cursor-pointer"
             >
               <option value="">Select Session</option>
               {sessions?.map((session) => (
@@ -465,25 +523,25 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={12} />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={12} />
           </div>
         </div>
-        <div className="overflow-x-auto -mx-6 px-6">
-          <table className="w-full text-left min-w-[800px]">
+        <div className="overflow-x-auto -mx-6 lg:mx-0 px-6 lg:px-0">
+          <table className="w-full text-left min-w-[900px]">
             <thead>
               <tr className="border-b border-gray-50">
-                <th className="px-4 py-3 w-8">
+                <th className="px-4 py-4 w-12 text-center">
                   <input type="checkbox" className={checkboxClasses} />
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px]">Code</th>
-                <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px]">Course Title</th>
-                <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px]">Type</th>
-                <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px]">Unit</th>
-                <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px]">Lecturer(s)</th>
-                <th className="px-4 py-3 font-bold text-gray-400 uppercase text-[10px]">Status</th>
+                <th className="px-4 py-4 font-bold text-gray-400 uppercase text-[10px] tracking-wider">Code</th>
+                <th className="px-4 py-4 font-bold text-gray-400 uppercase text-[10px] tracking-wider">Course Title</th>
+                <th className="px-4 py-4 font-bold text-gray-400 uppercase text-[10px] tracking-wider">Type</th>
+                <th className="px-4 py-4 font-bold text-gray-400 uppercase text-[10px] tracking-wider">Unit</th>
+                <th className="px-4 py-4 font-bold text-gray-400 uppercase text-[10px] tracking-wider">Course Lecturer(s)</th>
+                <th className="px-4 py-4 font-bold text-gray-400 uppercase text-[10px] tracking-wider">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50/50">
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="text-center py-8">
@@ -499,14 +557,14 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
               ) : (
                 registeredCourses.map((course) => (
                   <tr key={course.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 text-center">
                       <input type="checkbox" className={checkboxClasses} />
                     </td>
                     <td className="px-4 py-4 font-bold text-gray-400 text-[11px]">{course.code}</td>
                     <td className="px-4 py-4 font-bold text-[#1e293b] text-[11px]">{course.title}</td>
-                    <td className="px-4 py-4 text-gray-500 font-medium text-[11px]">{course.type}</td>
-                    <td className="px-4 py-4 text-gray-500 font-bold text-[11px]">{course.creditUnits}</td>
-                    <td className="px-4 py-4 text-gray-500 font-medium text-[11px]">{course.lecturer}</td>
+                    <td className="px-4 py-4 text-gray-400 font-medium text-[11px]">{course.type}</td>
+                    <td className="px-4 py-4 text-gray-400 font-bold text-[11px]">{course.creditUnits}</td>
+                    <td className="px-4 py-4 text-gray-400 font-medium text-[11px]">{course.lecturer}</td>
                     <td className="px-4 py-4">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                         course.status === 'registered' 
@@ -585,8 +643,8 @@ const Registration: React.FC = () => {
   })();
 
   return (
-    <div className="p-4 lg:p-8 max-w-[1600px] mx-auto space-y-8 lg:space-y-10">
-      <div className="flex justify-center overflow-x-auto -mx-4 px-4 py-2">
+    <div className="p-4 lg:p-6 max-w-[1600px] mx-auto space-y-4 lg:space-y-6">
+      <div className="flex justify-center overflow-x-auto -mx-4 px-4 py-1">
         <div className="bg-white p-1 rounded-[20px] border border-gray-100 flex shadow-sm shrink-0">
           {(['courses', 'transcript', 'other'] as const).map((tab) => (
             <button

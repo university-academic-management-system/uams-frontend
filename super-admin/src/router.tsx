@@ -82,6 +82,8 @@ const router = createBrowserRouter([
     path: "*",
     element: <Navigate to="/" replace />,
   },
-]);
+], {
+  basename: "/super-admin"
+});
 
 export default router;

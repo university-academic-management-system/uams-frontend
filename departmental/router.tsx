@@ -77,6 +77,8 @@ const router = createBrowserRouter([
     path: "*",
     element: <Navigate to="/dashboard" replace />,
   },
-]);
+], {
+  basename: "/department-admin"
+});
 
 export default router;

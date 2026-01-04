@@ -6,6 +6,7 @@ import {
 } from '@chakra-ui/react';
 import { Search, Filter, FileText, Plus, ChevronLeft, ChevronRight, X, BookOpen, CreditCard, CheckCircle2, XCircle, Clock, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getAssetPath } from '../utils/assetPath';
 
 type Payment = {
   id: string;
@@ -41,10 +42,10 @@ const sampleData = createSample(37);
 
 // Map payment method string -> asset image
 const getMethodIcon = (method: string) => {
-  if (/VISA/i.test(method)) return '/assets/dbe6fcea94b57473b3ac92ebfd373581c53ffdf8 (2).png';
-  if (/Mastercard/i.test(method)) return '/assets/10b571fd0d881b731c970262e0cc1b5bfad7c107 (1).png';
-  if (/Bank/i.test(method) || /transfer/i.test(method)) return '/assets/3b543946b234ab5b1742eccf85f0c75277b92ddd (1).png';
-  return '/assets/3b543946b234ab5b1742eccf85f0c75277b92ddd (1).png';
+  if (/VISA/i.test(method)) return getAssetPath('assets/dbe6fcea94b57473b3ac92ebfd373581c53ffdf8 (2).png');
+  if (/Mastercard/i.test(method)) return getAssetPath('assets/10b571fd0d881b731c970262e0cc1b5bfad7c107 (1).png');
+  if (/Bank/i.test(method) || /transfer/i.test(method)) return getAssetPath('assets/3b543946b234ab5b1742eccf85f0c75277b92ddd (1).png');
+  return getAssetPath('assets/3b543946b234ab5b1742eccf85f0c75277b92ddd (1).png');
 };
 
 function useLocalOutsideClick(ref: React.RefObject<HTMLElement>, handler: () => void) {

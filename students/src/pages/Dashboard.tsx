@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { Clock } from 'lucide-react';
 import authService from '../services/authService';
+import { getAssetPath } from '../utils/assetPath';
 
 const performanceData = [
   { name: 'Yr 1', value: 50 },
@@ -96,7 +97,7 @@ const Dashboard: React.FC = () => {
             {/* Decorative Background Shapes */}
             <div className="absolute top-0 right-0 h-full w-1/2 flex items-center justify-end">
               <img 
-                src="/assets/60664c15bdd0a28d19bcb5d0502ee7e0aec005d3 (1).png" 
+                src={getAssetPath('assets/60664c15bdd0a28d19bcb5d0502ee7e0aec005d3 (1).png')} 
                 alt="Welcome 3D Illustration" 
                 className="h-full w-full object-contain object-right"
               />
