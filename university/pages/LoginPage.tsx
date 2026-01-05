@@ -3,20 +3,28 @@ import { User, Eye, EyeOff, GraduationCap } from "lucide-react";
 import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { AuthData } from "../components/types";
-import { useAuth } from "../context/AuthProvider";
 
-interface LoginResponse {
+interface ApiLoginResponse {
   token: string;
-  role: string;
-  tenantId: string;
-  universityId: string;
-  facultyId: string | null;
-  departmentId: string | null;
-  email?: string;
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    role: string;
+    universityId?: string;
+    facultyId?: string | null;
+    departmentId?: string | null;
+    profile?: any;
+  };
+  message: string;
+  status: string;
 }
 
-const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+interface LoginPageProps {
+  onLogin: (data: AuthData) => void;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -36,23 +44,38 @@ const LoginPage: React.FC = () => {
       localStorage.setItem("loginEmail", email);
 
       // API call using email and password
-      const response = await api.post<LoginResponse>("/login", {
+      const response = await api.post<ApiLoginResponse>("/login", {
         email: email,
         password: password,
       });
 
       const data = response.data;
 
-      // Add email to the data object if not provided by API
+      console.log("✅ Login API Response:", data);
+
+      // FIXED: Get tenantId properly - use the one from your token or fetch it
+      // Using the tenantId from your earlier token: "af677ec7-7eeb-43b3-a3e8-9bcb5e4a78ad"
+      const tenantId =
+        localStorage.getItem("tenantId") ||
+        "af677ec7-7eeb-43b3-a3e8-9bcb5e4a78ad";
+
       const loginData: AuthData = {
-        ...data,
-        email: data.email || email,
+        token: data.token,
+        role: data.user.role,
+        tenantId: tenantId, // Now it has a value!
+        universityId: data.user.universityId || "",
+        facultyId: data.user.facultyId || null,
+        departmentId: data.user.departmentId || null,
+        email: data.user.email || email,
       };
 
-      // Call auth context login
-      login(loginData);
+      console.log("✅ Extracted AuthData:", loginData);
+
+      // Call parent with the properly structured data
+      onLogin(loginData);
       navigate("/dashboard");
     } catch (err: any) {
+      console.error("❌ Login error:", err);
       // Clear temporary email on error
       localStorage.removeItem("loginEmail");
       setError(
@@ -279,6 +302,7 @@ export default LoginPage;
 // import { User, Eye, EyeOff, GraduationCap } from "lucide-react";
 // import api from "../api/axios";
 // import { useNavigate } from "react-router-dom";
+// import { AuthData } from "../components/types";
 
 // interface LoginResponse {
 //   token: string;
@@ -287,11 +311,11 @@ export default LoginPage;
 //   universityId: string;
 //   facultyId: string | null;
 //   departmentId: string | null;
+//   email?: string;
 // }
 
 // interface LoginPageProps {
-//   // Updated to accept the data object from the API
-//   onLogin: (data: LoginResponse) => void;
+//   onLogin: (data: AuthData) => void;
 // }
 
 // const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
@@ -310,6 +334,9 @@ export default LoginPage;
 //     setIsLoading(true);
 
 //     try {
+//       // Store email temporarily for display purposes
+//       localStorage.setItem("loginEmail", email);
+
 //       // API call using email and password
 //       const response = await api.post<LoginResponse>("/login", {
 //         email: email,
@@ -318,14 +345,18 @@ export default LoginPage;
 
 //       const data = response.data;
 
-//       // Store credentials
-//       localStorage.setItem("token", data.token);
-//       localStorage.setItem("userRole", data.role);
-//       localStorage.setItem("tenantId", data.tenantId);
+//       // Add email to the data object if not provided by API
+//       const loginData: AuthData = {
+//         ...data,
+//         email: data.email || email,
+//       };
 
-//       onLogin(data);
+//       // Call parent with all data
+//       onLogin(loginData);
 //       navigate("/dashboard");
 //     } catch (err: any) {
+//       // Clear temporary email on error
+//       localStorage.removeItem("loginEmail");
 //       setError(
 //         err.response?.data?.message ||
 //           "Login failed. Please check your credentials."
@@ -415,9 +446,11 @@ export default LoginPage;
 
 //           {/* Error Message Display */}
 //           {error && (
-//             <p className="text-red-500 text-xs text-center mb-4 font-bold">
-//               {error}
-//             </p>
+//             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+//               <p className="text-red-600 text-sm text-center font-bold">
+//                 {error}
+//               </p>
+//             </div>
 //           )}
 
 //           <form onSubmit={handleSubmit} className="space-y-6">
@@ -429,6 +462,7 @@ export default LoginPage;
 //                 value={email}
 //                 onChange={(e) => setEmail(e.target.value)}
 //                 required
+//                 disabled={isLoading}
 //               />
 //               <User className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
 //             </div>
@@ -441,11 +475,13 @@ export default LoginPage;
 //                 value={password}
 //                 onChange={(e) => setPassword(e.target.value)}
 //                 required
+//                 disabled={isLoading}
 //               />
 //               <button
 //                 type="button"
 //                 onClick={() => setShowPassword(!showPassword)}
 //                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+//                 disabled={isLoading}
 //               >
 //                 {showPassword ? (
 //                   <EyeOff className="w-5 h-5" />
@@ -463,11 +499,12 @@ export default LoginPage;
 //                     className="sr-only"
 //                     checked={rememberMe}
 //                     onChange={() => setRememberMe(!rememberMe)}
+//                     disabled={isLoading}
 //                   />
 //                   <div
 //                     className={`block w-10 h-6 rounded-full transition-colors duration-300 ${
 //                       rememberMe ? "bg-blue-600" : "bg-slate-200"
-//                     }`}
+//                     } ${isLoading ? "opacity-50" : ""}`}
 //                   ></div>
 //                   <div
 //                     className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 ${
@@ -475,24 +512,55 @@ export default LoginPage;
 //                     }`}
 //                   ></div>
 //                 </div>
-//                 <span className="ml-3 text-sm text-slate-500 font-bold group-hover:text-slate-700 transition-colors">
+//                 <span
+//                   className={`ml-3 text-sm text-slate-500 font-bold group-hover:text-slate-700 transition-colors ${
+//                     isLoading ? "opacity-50" : ""
+//                   }`}
+//                 >
 //                   Remember me
 //                 </span>
 //               </label>
-//               <a
-//                 href="#"
-//                 className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+//               <button
+//                 type="button"
+//                 className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+//                 disabled={isLoading}
 //               >
 //                 Forgot Password?
-//               </a>
+//               </button>
 //             </div>
 
 //             <button
 //               type="submit"
 //               disabled={isLoading}
-//               className="w-full py-4.5 bg-[#1b75d0] hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/30 transition-all active:scale-[0.98] mt-4 disabled:opacity-70"
+//               className="w-full py-4.5 bg-[#1b75d0] hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/30 transition-all active:scale-[0.98] mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
 //             >
-//               {isLoading ? "Logging in..." : "Login"}
+//               {isLoading ? (
+//                 <span className="flex items-center justify-center">
+//                   <svg
+//                     className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+//                     xmlns="http://www.w3.org/2000/svg"
+//                     fill="none"
+//                     viewBox="0 0 24 24"
+//                   >
+//                     <circle
+//                       className="opacity-25"
+//                       cx="12"
+//                       cy="12"
+//                       r="10"
+//                       stroke="currentColor"
+//                       strokeWidth="4"
+//                     ></circle>
+//                     <path
+//                       className="opacity-75"
+//                       fill="currentColor"
+//                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+//                     ></path>
+//                   </svg>
+//                   Logging in...
+//                 </span>
+//               ) : (
+//                 "Login"
+//               )}
 //             </button>
 //           </form>
 

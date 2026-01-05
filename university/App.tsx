@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./components/Dashboard";
-import AccountsView from "./components/AccountsView";
 import StudentsPage from "./pages/StudentsPage";
 import StaffView from "./components/StaffView";
 import PaymentsView from "./components/PaymentsView";
@@ -23,105 +22,80 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load persisted session if present
-    try {
-      const raw = localStorage.getItem(SESSION_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as UserSession;
+    console.log("🔄 App.tsx - useEffect loading session");
 
-        // Check if we have a valid token in localStorage (additional safety check)
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("userRole");
+    const loadSession = () => {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as UserSession;
 
-        if (parsed?.isLoggedIn && parsed.authData && token && role) {
-          setSession(parsed);
+          if (parsed?.isLoggedIn && parsed.authData?.role) {
+            console.log("✅ Loaded valid session from localStorage");
+            console.log("✅ Role:", parsed.authData.role);
+            setSession(parsed);
+          } else {
+            console.warn("⚠️ Invalid session in localStorage, clearing...");
+            clearSession();
+          }
         } else {
-          // Clear invalid session
-          localStorage.removeItem(SESSION_KEY);
-          localStorage.removeItem("token");
-          localStorage.removeItem("userRole");
-          localStorage.removeItem("tenantId");
-          localStorage.removeItem("universityId");
-          localStorage.removeItem("facultyId");
-          localStorage.removeItem("departmentId");
-          localStorage.removeItem("userEmail");
+          console.log("ℹ️ No session in localStorage");
         }
-      } else {
-        // Also check for legacy localStorage items
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("userRole");
-        const tenantId = localStorage.getItem("tenantId");
-
-        if (token && role && tenantId) {
-          const authData: AuthData = {
-            token,
-            role,
-            tenantId,
-            universityId: localStorage.getItem("universityId") || "",
-            facultyId: localStorage.getItem("facultyId") || null,
-            departmentId: localStorage.getItem("departmentId") || null,
-            email: localStorage.getItem("userEmail") || undefined,
-          };
-
-          const sessionData: UserSession = {
-            authData,
-            isLoggedIn: true,
-          };
-
-          setSession(sessionData);
-          localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        }
+      } catch (e) {
+        console.error("❌ Error loading session:", e);
+        clearSession();
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.error("Error loading session:", e);
-      // Clear corrupted data
+    };
+
+    const clearSession = () => {
       localStorage.removeItem(SESSION_KEY);
       localStorage.removeItem("token");
       localStorage.removeItem("userRole");
       localStorage.removeItem("tenantId");
-    } finally {
-      setLoading(false);
-    }
+      localStorage.removeItem("universityId");
+      localStorage.removeItem("facultyId");
+      localStorage.removeItem("departmentId");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("loginEmail");
+    };
+
+    loadSession();
   }, []);
 
-  const handleLogin = (data: AuthData) => {
-    // Store all data in localStorage
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("userRole", data.role);
-    localStorage.setItem("tenantId", data.tenantId);
+  // FIXED: Accept AuthData instead of ApiLoginResponse
+  const handleLogin = (authData: AuthData) => {
+    console.log("✅ App.tsx - handleLogin called with AuthData:", authData);
 
-    if (data.universityId) {
-      localStorage.setItem("universityId", data.universityId);
+    // Store in localStorage
+    localStorage.setItem("token", authData.token);
+    localStorage.setItem("userRole", authData.role);
+    localStorage.setItem("tenantId", authData.tenantId || "");
+    localStorage.setItem("universityId", authData.universityId);
+    localStorage.setItem("userEmail", authData.email || "");
+
+    if (authData.facultyId) {
+      localStorage.setItem("facultyId", authData.facultyId);
     }
-    if (data.facultyId) {
-      localStorage.setItem("facultyId", data.facultyId);
-    }
-    if (data.departmentId) {
-      localStorage.setItem("departmentId", data.departmentId);
-    }
-    if (data.email) {
-      localStorage.setItem("userEmail", data.email);
-    } else {
-      // Store the email from login form if not in response
-      const email = localStorage.getItem("loginEmail");
-      if (email) {
-        localStorage.setItem("userEmail", email);
-        localStorage.removeItem("loginEmail");
-      }
+    if (authData.departmentId) {
+      localStorage.setItem("departmentId", authData.departmentId);
     }
 
-    // Create session object
+    // Create session
     const sessionData: UserSession = {
-      authData: data,
+      authData,
       isLoggedIn: true,
     };
 
-    // Store in session storage
+    console.log("✅ Storing session data:", sessionData);
     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
     setSession(sessionData);
   };
 
   const handleLogout = () => {
+    console.log("🚪 Logging out...");
+
     // Clear all auth data
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem("token");
@@ -165,14 +139,24 @@ const App: React.FC = () => {
           path="/dashboard/*"
           element={
             session.isLoggedIn && session.authData ? (
-              <Dashboard authData={session.authData} onLogout={handleLogout} />
+              <>
+                {console.log(
+                  "🚀 Rendering Dashboard with authData:",
+                  session.authData
+                )}
+                {console.log("🚀 authData.role:", session.authData?.role)}
+                <Dashboard
+                  authData={session.authData}
+                  onLogout={handleLogout}
+                />
+              </>
             ) : (
               <Navigate to="/login" replace />
             )
           }
         >
           <Route index element={<DashboardHome />} />
-          <Route path="admin" element={<AccountsPage />} />
+          <Route path="accounts" element={<AccountsPage />} />
           <Route path="students" element={<StudentsPage />} />
           <Route path="staff" element={<StaffView />} />
           <Route path="payments" element={<PaymentsView />} />
@@ -202,25 +186,25 @@ export default App;
 // import { Routes, Route, Navigate } from "react-router-dom";
 // import LoginPage from "./pages/LoginPage";
 // import Dashboard from "./components/Dashboard";
-// import AccountsView from "./components/AccountsView";
-// // import StudentsView from "./components/StudentsView";
+// // import AccountsView from "./components/AccountsView";
 // import StudentsPage from "./pages/StudentsPage";
 // import StaffView from "./components/StaffView";
 // import PaymentsView from "./components/PaymentsView";
 // import RolesPermissionsView from "./components/RolesPermissionsView";
 // import AnnouncementsView from "./components/AnnouncementsView";
-// import AccountsPage from "./pages/AccountPage";
+// import AccountPage from "./pages/AccountPage";
 // import SettingsView from "./components/SettingsView";
-// import { UserSession } from "./types";
+// import { UserSession, AuthData } from "./components/types";
 // import DashboardHome from "./components/DashboardHome";
 
 // const SESSION_KEY = "u_university_session";
 
 // const App: React.FC = () => {
 //   const [session, setSession] = useState<UserSession>({
-//     username: "",
+//     authData: null,
 //     isLoggedIn: false,
 //   });
+//   const [loading, setLoading] = useState(true);
 
 //   useEffect(() => {
 //     // Load persisted session if present
@@ -228,41 +212,170 @@ export default App;
 //       const raw = localStorage.getItem(SESSION_KEY);
 //       if (raw) {
 //         const parsed = JSON.parse(raw) as UserSession;
-//         if (parsed?.isLoggedIn) setSession(parsed);
+
+//         // Check if we have a valid token in localStorage (additional safety check)
+//         const token = localStorage.getItem("token");
+//         const role = localStorage.getItem("userRole");
+
+//         if (parsed?.isLoggedIn && parsed.authData && token && role) {
+//           setSession(parsed);
+//         } else {
+//           // Clear invalid session
+//           localStorage.removeItem(SESSION_KEY);
+//           localStorage.removeItem("token");
+//           localStorage.removeItem("userRole");
+//           localStorage.removeItem("tenantId");
+//           localStorage.removeItem("universityId");
+//           localStorage.removeItem("facultyId");
+//           localStorage.removeItem("departmentId");
+//           localStorage.removeItem("userEmail");
+//         }
+//       } else {
+//         // Also check for legacy localStorage items
+//         const token = localStorage.getItem("token");
+//         const role = localStorage.getItem("userRole");
+//         const tenantId = localStorage.getItem("tenantId");
+
+//         if (token && role && tenantId) {
+//           const authData: AuthData = {
+//             token,
+//             role,
+//             tenantId,
+//             universityId: localStorage.getItem("universityId") || "",
+//             facultyId: localStorage.getItem("facultyId") || null,
+//             departmentId: localStorage.getItem("departmentId") || null,
+//             email: localStorage.getItem("userEmail") || undefined,
+//           };
+
+//           const sessionData: UserSession = {
+//             authData,
+//             isLoggedIn: true,
+//           };
+
+//           setSession(sessionData);
+//           localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+//         }
 //       }
 //     } catch (e) {
-//       // ignore
+//       console.error("Error loading session:", e);
+//       // Clear corrupted data
+//       localStorage.removeItem(SESSION_KEY);
+//       localStorage.removeItem("token");
+//       localStorage.removeItem("userRole");
+//       localStorage.removeItem("tenantId");
+//     } finally {
+//       setLoading(false);
 //     }
 //   }, []);
 
-//   const handleLogin = (username: string, remember = false) => {
-//     const s = { username, isLoggedIn: true } as UserSession;
-//     setSession(s);
-//     if (remember) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+//   const handleLogin = (data: AuthData) => {
+//     // Store all data in localStorage
+//     localStorage.setItem("token", data.token);
+//     localStorage.setItem("userRole", data.role);
+//     localStorage.setItem("tenantId", data.tenantId);
+
+//     if (data.universityId) {
+//       localStorage.setItem("universityId", data.universityId);
+//     }
+//     if (data.facultyId) {
+//       localStorage.setItem("facultyId", data.facultyId);
+//     }
+//     if (data.departmentId) {
+//       localStorage.setItem("departmentId", data.departmentId);
+//     }
+//     if (data.email) {
+//       localStorage.setItem("userEmail", data.email);
+//     } else {
+//       // Store the email from login form if not in response
+//       const email = localStorage.getItem("loginEmail");
+//       if (email) {
+//         localStorage.setItem("userEmail", email);
+//         localStorage.removeItem("loginEmail");
+//       }
+//     }
+
+//     // Create session object
+//     const sessionData: UserSession = {
+//       authData: data,
+//       isLoggedIn: true,
+//     };
+
+//     // Store in session storage
+//     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+//     setSession(sessionData);
 //   };
 
 //   const handleLogout = () => {
-//     setSession({ username: "", isLoggedIn: false });
+//     // Clear all auth data
 //     localStorage.removeItem(SESSION_KEY);
+//     localStorage.removeItem("token");
+//     localStorage.removeItem("userRole");
+//     localStorage.removeItem("tenantId");
+//     localStorage.removeItem("universityId");
+//     localStorage.removeItem("facultyId");
+//     localStorage.removeItem("departmentId");
+//     localStorage.removeItem("userEmail");
+//     localStorage.removeItem("loginEmail");
+
+//     setSession({ authData: null, isLoggedIn: false });
 //   };
+
+//   if (loading) {
+//     return (
+//       <div className="flex items-center justify-center min-h-screen bg-slate-50">
+//         <div className="text-center">
+//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+//           <p className="text-sm text-slate-500">Loading application...</p>
+//         </div>
+//       </div>
+//     );
+//   }
 
 //   return (
 //     <div className="min-h-screen">
 //       <Routes>
-//         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-
+//         <Route
+//           path="/login"
+//           element={
+//             session.isLoggedIn ? (
+//               <Navigate to="/dashboard" replace />
+//             ) : (
+//               <LoginPage onLogin={handleLogin} />
+//             )
+//           }
+//         />
+//         // In your App.tsx, replace the Dashboard route with this:
 //         <Route
 //           path="/dashboard/*"
 //           element={
-//             session.isLoggedIn ? (
-//               <Dashboard username={session.username} onLogout={handleLogout} />
-//             ) : (
-//               <Navigate to="/login" replace />
-//             )
+//             session.isLoggedIn && session.authData
+//               ? (() => {
+//                   console.log("🚀 App.tsx - Rendering Dashboard");
+//                   console.log("🚀 session.isLoggedIn:", session.isLoggedIn);
+//                   console.log("🚀 session.authData:", session.authData);
+//                   console.log(
+//                     "🚀 session.authData.role:",
+//                     session.authData?.role
+//                   );
+//                   return (
+//                     <Dashboard
+//                       authData={session.authData!}
+//                       onLogout={handleLogout}
+//                     />
+//                   );
+//                 })()
+//               : (() => {
+//                   console.log(
+//                     "❌ App.tsx - Not logged in, redirecting to login"
+//                   );
+//                   console.log("❌ session.isLoggedIn:", session.isLoggedIn);
+//                   console.log("❌ session.authData:", session.authData);
+//                   return <Navigate to="/login" replace />;
+//                 })()
 //           }
 //         >
 //           <Route index element={<DashboardHome />} />
-//           <Route path="admin" element={<AccountsPage />} />
+//           <Route path="accounts" element={<AccountPage />} />
 //           <Route path="students" element={<StudentsPage />} />
 //           <Route path="staff" element={<StaffView />} />
 //           <Route path="payments" element={<PaymentsView />} />
@@ -270,7 +383,6 @@ export default App;
 //           <Route path="announcements" element={<AnnouncementsView />} />
 //           <Route path="settings" element={<SettingsView />} />
 //         </Route>
-
 //         <Route
 //           path="/"
 //           element={

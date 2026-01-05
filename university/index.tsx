@@ -1,9 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider } from "react-router-dom";
-import router from "./router";
-import { AuthProvider } from "./context/AuthProvider";
-import "./index.css";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -13,8 +11,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );
