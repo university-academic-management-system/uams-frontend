@@ -1,4 +1,4 @@
-# work in progress WIP
+# work in progress (WIP)
 
 # UniEdu Dashboard
 
