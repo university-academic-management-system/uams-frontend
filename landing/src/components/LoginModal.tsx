@@ -35,6 +35,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle login logic here
+    // where is the login code?
     console.log({ email, password, selectedType, rememberMe });
   };
 
