@@ -40,4 +40,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./super-admin/dist/
-          server-dir: /public_html/super-admin/   # adjust if needed
+          server-dir: /super-admin/   # adjust if needed
