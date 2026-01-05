@@ -5,7 +5,7 @@ on:
     branches:
       - main   # or your deploy branch
     paths:
-      - 'departments/**'   # only run when student app changes
+      - 'departmental/**'   # only run when student app changes
 
 jobs:
   deploy:
@@ -26,7 +26,7 @@ jobs:
 
       - name: Build project
         run: npm run build
-        working-directory: ./departments
+        working-directory: ./departmental
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_CALLBACK_URL: ${{ vars.VITE_CALLBACK_URL }}
@@ -39,5 +39,5 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./departments/dist/
+          local-dir: ./departmental/dist/
           server-dir: /departments/   # adjust if needed
