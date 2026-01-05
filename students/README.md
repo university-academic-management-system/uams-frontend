@@ -1,4 +1,4 @@
-# this app is not complete
+# this app is not complete, keep working on it
 
 
 <div align="center">
