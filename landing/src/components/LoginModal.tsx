@@ -36,6 +36,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     e.preventDefault();
     // Handle login logic here
     // where is the login code?
+    //this landing page is not complete
     console.log({ email, password, selectedType, rememberMe });
   };
 
