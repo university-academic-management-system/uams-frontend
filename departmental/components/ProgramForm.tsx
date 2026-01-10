@@ -1,16 +1,9 @@
+// ProgramForm.tsx - UPDATED VERSION
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
 import FormFieldHorizontal from "./FormFieldHorizontal";
-import {
-  PROGRAM_TYPES,
-  LEVEL_OPTIONS,
-  DURATION_OPTIONS,
-} from "../utils/constants";
-import {
-  getCurrentDepartmentId,
-  getCurrentUniversityId,
-  getCurrentTenantId,
-} from "../utils/auth";
+import { PROGRAM_TYPES, DURATION_OPTIONS } from "../utils/constants";
+import { getCurrentDepartmentId, getCurrentUniversityId } from "../utils/auth";
 
 interface ProgramFormProps {
   onSubmit: (data: any) => Promise<void>;
@@ -22,7 +15,6 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
     name: "",
     code: "",
     type: "UG" as "UG" | "PGD" | "Masters" | "PhD",
-    levelId: "",
     duration: 4,
     description: "",
   });
@@ -33,64 +25,37 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const getLevelIdByName = (name: string): string => {
-    const level = LEVEL_OPTIONS.find((l) => l.name === name);
-    return level?.id || "";
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
       setError(null);
 
-      // Get IDs from auth token
       const departmentId = getCurrentDepartmentId();
       const universityId = getCurrentUniversityId();
-      const tenantId = getCurrentTenantId();
 
-      if (!departmentId || !universityId || !tenantId) {
+      if (!departmentId || !universityId) {
         throw new Error("Authentication error: Missing required IDs in token");
       }
 
-      // Get level ID from selected level name
-      const levelId = getLevelIdByName(formData.levelId);
-      if (!levelId) {
-        throw new Error("Please select a valid level");
-      }
+      if (!formData.name.trim()) throw new Error("Program name is required");
+      if (!formData.code.trim()) throw new Error("Program code is required");
 
-      // Validate required fields
-      if (!formData.name.trim()) {
-        throw new Error("Program name is required");
-      }
-      if (!formData.code.trim()) {
-        throw new Error("Program code is required");
-      }
-      if (!formData.type) {
-        throw new Error("Program type is required");
-      }
-
-      // Prepare data for API - ALL IDs come from token
       const dataToSend = {
         name: formData.name.trim(),
         code: formData.code.trim(),
-        departmentId: departmentId, // From token
-        levelId: levelId, // Converted from level name
-        type: formData.type, // UG, PGD, Masters, PhD
-        duration: Number(formData.duration), // Convert to number
-        description: formData.description.trim() || "", // Default to empty string if not provided
-        universityId: universityId, // From token
-        tenantId: tenantId, // From token (important!)
+        type: formData.type, // This should be "UG", "PG", etc.
+        duration: Number(formData.duration),
+        description: formData.description.trim() || "",
+        departmentId,
+        universityId,
       };
 
-      console.log("Sending program data:", dataToSend);
+      console.log("📤 Submitting program data:", dataToSend); // Debug log
 
       await onSubmit(dataToSend);
     } catch (err: any) {
-      console.error("Program creation error:", err);
-      setError(
-        err.message || err.response?.data?.message || "Failed to create program"
-      );
+      setError(err.message || "Failed to create program");
     } finally {
       setIsSubmitting(false);
     }
@@ -99,13 +64,11 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
   return (
     <div className="bg-white rounded-2xl p-10 border border-gray-100 shadow-sm animate-in zoom-in-95 duration-200">
       <h3 className="text-xl font-bold text-slate-800 mb-10">Create Program</h3>
-
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
           {error}
         </div>
       )}
-
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-6">
           <div className="space-y-6">
@@ -121,16 +84,8 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
               type="select"
               value={formData.type}
               onChange={(value) => handleChange("type", value)}
-              options={PROGRAM_TYPES.map((t) => t.label)}
-              required
-            />
-            <FormFieldHorizontal
-              label="Level"
-              type="select"
-              value={formData.levelId}
-              onChange={(value) => handleChange("levelId", value)}
-              options={LEVEL_OPTIONS.map((l) => l.name)}
-              placeholder="Select Level"
+              // ✅ FIXED: Send value-label pairs
+              options={PROGRAM_TYPES}
               required
             />
             <FormFieldHorizontal
@@ -138,7 +93,11 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
               type="select"
               value={formData.duration.toString()}
               onChange={(value) => handleChange("duration", parseInt(value))}
-              options={DURATION_OPTIONS}
+              // ✅ FIXED: Send value-label pairs for duration too
+              options={DURATION_OPTIONS.map((d) => ({
+                label: `${d} year${d !== "1" ? "s" : ""}`,
+                value: d,
+              }))}
               required
             />
           </div>
@@ -159,7 +118,6 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
             />
           </div>
         </div>
-
         <div className="flex justify-end gap-3 mt-12">
           <button
             type="button"
@@ -176,8 +134,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="animate-spin h-4 w-4" />
-                Creating...
+                <Loader2 className="animate-spin h-4 w-4" /> Creating...
               </>
             ) : (
               "Create Program"
@@ -190,3 +147,4 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
 };
 
 export default ProgramForm;
+

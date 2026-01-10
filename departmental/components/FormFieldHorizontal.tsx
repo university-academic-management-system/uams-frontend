@@ -1,3 +1,4 @@
+// FormFieldHorizontal.tsx - UPDATED VERSION
 import React from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -5,7 +6,7 @@ interface FormFieldHorizontalProps {
   label: string;
   placeholder?: string;
   type?: "text" | "select" | "textarea";
-  options?: string[];
+  options?: Array<{ label: string; value: string }> | string[]; // ✅ Allow both formats
   value?: string;
   onChange?: (value: string) => void;
   required?: boolean;
@@ -29,6 +30,26 @@ const FormFieldHorizontal: React.FC<FormFieldHorizontalProps> = ({
       onChange(e.target.value);
     }
   };
+
+  // Helper to normalize options
+  const normalizedOptions = React.useMemo(() => {
+    if (options.length === 0) return [];
+
+    // If options are objects with label/value
+    if (
+      typeof options[0] === "object" &&
+      "label" in options[0] &&
+      "value" in options[0]
+    ) {
+      return options as Array<{ label: string; value: string }>;
+    }
+
+    // If options are strings, convert to label/value pairs
+    return (options as string[]).map((opt) => ({
+      label: opt,
+      value: opt,
+    }));
+  }, [options]);
 
   return (
     <div className="flex items-start gap-12 group">
@@ -55,9 +76,9 @@ const FormFieldHorizontal: React.FC<FormFieldHorizontalProps> = ({
               className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all appearance-none cursor-pointer"
             >
               <option value="">{placeholder || "Select an option"}</option>
-              {options.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
+              {normalizedOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </select>
@@ -81,3 +102,4 @@ const FormFieldHorizontal: React.FC<FormFieldHorizontalProps> = ({
 };
 
 export default FormFieldHorizontal;
+

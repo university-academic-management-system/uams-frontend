@@ -1,22 +1,21 @@
 import api from "./axios";
-import {
-  getCurrentDepartmentId,
-  getCurrentUniversityId,
-  getCurrentTenantId,
-} from "../utils/auth";
+import { getCurrentDepartmentId, getCurrentUniversityId } from "../utils/auth";
 import {
   Program,
-  CreateProgramData,
   Course,
   CreateCourseData,
   CoursesApiResponse,
-} from "./types"; // Import from types file
+  CreateProgramData,
+} from "./types";
 
 export const programsCoursesApi = {
-  // Programs - GET programs for current department (from token)
+  /** PROGRAMS **/
+
   getProgramsByDepartment: async (): Promise<Program[]> => {
     const departmentId = getCurrentDepartmentId();
-    if (!departmentId) throw new Error("No department ID found in token");
+    if (!departmentId) {
+      throw new Error("No department ID found in token");
+    }
 
     const response = await api.get<Program[]>(
       `/api/program/department/${departmentId}`
@@ -24,59 +23,58 @@ export const programsCoursesApi = {
     return response.data;
   },
 
-  createProgram: async (programData: CreateProgramData): Promise<Program> => {
-    console.log("Creating program with data:", programData);
+  createProgram: async (formData: CreateProgramData): Promise<Program> => {
+    // 🔐 Ensure user is authenticated
+    const departmentId = getCurrentDepartmentId();
+    const universityId = getCurrentUniversityId();
 
-    // Add missing fields from token if not provided
-    const dataToSend = {
-      ...programData,
-      tenantId: getCurrentTenantId(), // Add tenantId from token
+    if (!departmentId || !universityId) {
+      throw new Error("Missing required IDs from authentication token");
+    }
+
+    // ❗ Payload MUST match Postman (IDs come from JWT, not body)
+    const payload = {
+      name: formData.name.trim(),
+      code: formData.code.trim(),
+      type: formData.type,
+      duration: Number(formData.duration),
+      description: formData.description?.trim() || null,
     };
 
-    const response = await api.post<Program>(
-      `/api/university-admin/programs`,
-      dataToSend
-    );
+    console.log("🚀 Payload sent to Program Service:");
+
+    const response = await api.post<Program>(`/api/program`, payload);
     return response.data;
   },
 
-  // Courses - GET courses for current department (from token)
+  /** COURSES **/
+  /** GET COURSES FOR LOGGED-IN DEPARTMENT */
   getCoursesByDepartment: async (): Promise<CoursesApiResponse> => {
     const departmentId = getCurrentDepartmentId();
-    if (!departmentId) throw new Error("No department ID found in token");
-
-    // First try the my-department endpoint
-    try {
-      const response = await api.get<CoursesApiResponse>(
-        `/api/courses/my-department`
-      );
-      return response.data;
-    } catch (error) {
-      // If my-department fails, try with department ID
-      console.log("my-department endpoint failed, trying with department ID");
-      const response = await api.post<CoursesApiResponse>(
-        `/api/courses/department`,
-        { departmentId }
-      );
-      return response.data;
+    if (!departmentId) {
+      throw new Error("No department ID found in token");
     }
+
+    const response = await api.get<CoursesApiResponse>(
+      "/api/courses/my-department"
+    );
+
+    return response.data;
   },
 
+  /** CREATE COURSE */
   createCourse: async (courseData: CreateCourseData): Promise<Course> => {
-    console.log("Creating course with data:", courseData);
-
-    // Get IDs from token as fallbacks
-    const universityId = getCurrentUniversityId();
-    const departmentId = getCurrentDepartmentId();
-
-    // Add missing fields from token if not provided
-    const dataToSend = {
+    const payload = {
       ...courseData,
-      universityId: courseData.universityId || universityId,
-      departmentId: courseData.departmentId || departmentId,
+      universityId: getCurrentUniversityId(),
+      departmentId: getCurrentDepartmentId(),
     };
 
-    const response = await api.post<Course>(`/api/courses`, dataToSend);
+    const response = await api.post<Course>("/api/courses", payload);
     return response.data;
+  },
+
+  deleteCourse: async (courseId: string): Promise<void> => {
+    await api.delete(`/api/courses/${courseId}`);
   },
 };

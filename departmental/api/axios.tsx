@@ -17,12 +17,12 @@ api.interceptors.request.use(
       // Log token for debugging (remove in production)
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
-        console.log("Token payload:", {
-          departmentId: payload.departmentId,
-          universityId: payload.universityId,
-          tenantId: payload.tenantId,
-          role: payload.role,
-        });
+        // console.log("Token payload:", {
+        //   departmentId: payload.departmentId,
+        //   universityId: payload.universityId,
+        //   tenantId: payload.tenantId,
+        //   role: payload.role,
+        // });
       } catch (e) {
         console.log("Token present but could not decode");
       }
