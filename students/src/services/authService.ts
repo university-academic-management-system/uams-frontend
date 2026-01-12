@@ -18,8 +18,29 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
       const mockUser = {
         id: 'student_' + Date.now(),
         email: credentials.email,
-        name: credentials.email.split('@')[0],
-        status: 'active',
+        fullName: credentials.email.split('@')[0],
+        role: 'STUDENT',
+        profile: {
+          id: 'profile_' + Date.now(),
+          universityId: 'uni_123',
+          departmentId: 'dept_123',
+          programId: 'prog_123',
+          userId: 'student_' + Date.now(),
+          studentId: 'STU/2026/001',
+          level: '100',
+          levelId: 'level_100',
+          sessionId: 'session_2025_2026',
+          isActive: true,
+          academicStanding: 'GOOD',
+          probationStartDate: null,
+          probationEndDate: null,
+          totalCreditsEarned: 0,
+          currentGPA: 5.0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          idCard: null,
+          Level: { id: 'level_100', name: '100 Level', code: '100' }
+        }
       };
 
       localStorage.setItem('authToken', mockToken);
@@ -51,8 +72,29 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
       const mockUser = {
         id: 'student_' + Date.now(),
         email: credentials.email,
-        name: credentials.email.split('@')[0],
-        status: 'active',
+        fullName: credentials.email.split('@')[0],
+        role: 'STUDENT',
+        profile: {
+          id: 'profile_' + Date.now(),
+          universityId: 'uni_123',
+          departmentId: 'dept_123',
+          programId: 'prog_123',
+          userId: 'student_' + Date.now(),
+          studentId: 'STU/2026/001',
+          level: '100',
+          levelId: 'level_100',
+          sessionId: 'session_2025_2026',
+          isActive: true,
+          academicStanding: 'GOOD',
+          probationStartDate: null,
+          probationEndDate: null,
+          totalCreditsEarned: 0,
+          currentGPA: 5.0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          idCard: null,
+          Level: { id: 'level_100', name: '100 Level', code: '100' }
+        }
       };
 
       localStorage.setItem('authToken', mockToken);

@@ -15,17 +15,37 @@ import Checkout from "./pages/Checkout";
 
 const router = createBrowserRouter([
   // Pre-login public routes (activation, checkout, then login)
-  {
-    path: "/activate-account",
-    element: <ActivateAccount />,
-  },
+  // {
+  //   path: "/activate-account",
+  //   element: <ActivateAccount />,
+  // },
   {
     path: "/checkout",
     element: <Checkout />,
   },
   {
-    path: "/login/*",
-    element: <Login />,
+    path: "/login",
+    element: <Login initialStep="login" />,
+  },
+  {
+    path: "/register",
+    element: <Login initialStep="reg-number" />,
+  },
+  {
+    path: "/contact-info",
+    element: <Login initialStep="contact-info" />,
+  },
+  {
+    path: "/payment",
+    element: <Login initialStep="payment" />,
+  },
+  {
+    path: "/activate-account", // Changed from /activate-account to match existing if needed, or keep consistent
+    element: <Login initialStep="activate" />,
+  },
+  {
+    path: "/forgot-password",
+    element: <Login initialStep="forgot-password" />,
   },
 
   // Protected dashboard routes
