@@ -40,347 +40,252 @@ const Login: React.FC = () => {
       style={{
         minHeight: "100vh",
         display: "flex",
-        backgroundColor: "#ffffff",
-        overflow: "hidden",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/super-admin/assets/login-building.png')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        padding: "20px",
       }}
     >
-      {/* Left Side - Building Image Background */}
       <div
         style={{
-          flex: 1,
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/assets/login-building.png')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          display: window.innerWidth > 1024 ? "block" : "none",
+          backgroundColor: "white",
+          borderRadius: "16px",
+          padding: "48px 40px",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          width: "100%",
+          maxWidth: "480px",
           position: "relative",
+          border: "1px solid #E5E7EB", // Subtle border
         }}
       >
-        {/* Fallback background if image fails to load */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            opacity: 0,
-          }}
-        />
-      </div>
+        {/* Logo */}
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <img
+            src="/super-admin/assets/logo.png"
+            alt="SPEEDLINK Logo"
+            onError={(e) => {
+              (e.currentTarget.style.display as any) = "none";
+              const fallback = document.createElement("div");
+              fallback.textContent = "S";
+              // ... simplistic fallback style
+              e.currentTarget.parentElement?.appendChild(fallback);
+            }}
+            style={{ height: "64px", width: "auto" }}
+          />
+        </div>
 
-      {/* Right Side - Login Form Card */}
-      <div
-        style={{
-          flex: window.innerWidth > 1024 ? 1 : "none",
-          width: window.innerWidth > 1024 ? "auto" : "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px 20px",
-          backgroundColor: "#f9fafb",
-        }}
-      >
-        <div
+        {/* Heading */}
+        <h1
           style={{
-            backgroundColor: "white",
-            borderRadius: "16px",
-            padding: "48px 40px",
-            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.08)",
-            width: "100%",
-            maxWidth: "480px",
+            fontSize: "24px",
+            fontWeight: "700",
+            textAlign: "center",
+            color: "#111827",
+            marginBottom: "8px",
           }}
         >
-          {/* Logo Icon */}
+          Login
+        </h1>
+        <p
+          style={{
+            textAlign: "center",
+            color: "#6B7280",
+            fontSize: "14px",
+            marginBottom: "32px",
+          }}
+        >
+          Welcome back please login to your account
+        </p>
+
+        {/* Error Message */}
+        {error && (
           <div
             style={{
-              textAlign: "center",
-              marginBottom: "32px",
-            }}
-          >
-            <img
-              src="/assets/logo.png"
-              alt="SPEEDLINK Logo"
-              style={{
-                height: "60px",
-                width: "auto",
-                marginBottom: "16px",
-              }}
-              onError={(e) => {
-                // Fallback to placeholder if image fails to load
-                (e.currentTarget.style.display as any) = "none";
-                const fallback = document.createElement("div");
-                fallback.style.display = "inline-flex";
-                fallback.style.alignItems = "center";
-                fallback.style.justifyContent = "center";
-                fallback.style.width = "60px";
-                fallback.style.height = "60px";
-                fallback.style.borderRadius = "12px";
-                fallback.style.background =
-                  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
-                fallback.style.color = "white";
-                fallback.style.fontSize = "28px";
-                fallback.style.fontWeight = "bold";
-                fallback.textContent = "S";
-                e.currentTarget.parentElement?.appendChild(fallback);
-              }}
-            />
-          </div>
-
-          {/* Heading */}
-          <h1
-            style={{
-              fontSize: "28px",
-              fontWeight: "700",
-              textAlign: "center",
-              color: "#111827",
-              margin: "0 0 12px 0",
-              letterSpacing: "-0.5px",
-            }}
-          >
-            Login
-          </h1>
-          <p
-            style={{
-              textAlign: "center",
-              color: "#6b7280",
+              backgroundColor: "#fee2e2",
+              color: "#991b1b",
+              padding: "12px",
+              borderRadius: "8px",
+              marginBottom: "24px",
               fontSize: "14px",
-              margin: "0 0 32px 0",
-              lineHeight: "1.5",
+              border: "1px solid #fecaca",
             }}
           >
-            Welcome back please login to your account
-          </p>
+            {error}
+          </div>
+        )}
 
-          {/* Error Message */}
-          {error && (
-            <div
-              style={{
-                backgroundColor: "#fee2e2",
-                color: "#991b1b",
-                padding: "12px 16px",
-                borderRadius: "8px",
-                marginBottom: "24px",
-                fontSize: "14px",
-                border: "1px solid #fecaca",
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleLogin}>
-            {/* Email Field */}
-            <div style={{ marginBottom: "20px" }}>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter Email"
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  boxSizing: "border-box",
-                  fontFamily: "inherit",
-                  transition: "all 0.3s ease",
-                  backgroundColor: "#ffffff",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#3b82f6";
-                  e.currentTarget.style.boxShadow =
-                    "0 0 0 3px rgba(59, 130, 246, 0.1)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            {/* Password Field */}
-            <div style={{ marginBottom: "20px", position: "relative" }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter Password"
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  paddingRight: "44px",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  boxSizing: "border-box",
-                  fontFamily: "inherit",
-                  transition: "all 0.3s ease",
-                  backgroundColor: "#ffffff",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#3b82f6";
-                  e.currentTarget.style.boxShadow =
-                    "0 0 0 3px rgba(59, 130, 246, 0.1)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#9ca3af",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "4px",
-                  transition: "color 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#6b7280";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "#9ca3af";
-                }}
-              >
-                {showPassword ? (
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </svg>
-                ) : (
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                )}
-              </button>
-            </div>
-
-            {/* Remember Me Checkbox */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "28px",
-                gap: "8px",
-              }}
-            >
-              <input
-                type="checkbox"
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                style={{
-                  width: "16px",
-                  height: "16px",
-                  cursor: "pointer",
-                  accentColor: "#3b82f6",
-                  borderRadius: "4px",
-                }}
-              />
-              <label
-                htmlFor="rememberMe"
-                style={{
-                  fontSize: "14px",
-                  color: "#6b7280",
-                  cursor: "pointer",
-                  userSelect: "none",
-                }}
-              >
-                Remember me
-              </label>
-            </div>
-
-            {/* Login Button */}
-            <button
-              type="submit"
-              disabled={loading}
+        {/* Form */}
+        <form onSubmit={handleLogin}>
+          {/* Email Field with User Icon */}
+          <div style={{ marginBottom: "20px", position: "relative" }}>
+            <input
+              type="text" // Changed from email to text for "Enter Username" placeholder flexibility
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter Username"
               style={{
                 width: "100%",
                 padding: "12px 16px",
-                backgroundColor: loading ? "#93c5fd" : "#3b82f6",
-                color: "white",
-                border: "none",
+                paddingRight: "40px", // Space for icon
+                border: "1px solid #D1D5DB",
                 borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: loading ? "not-allowed" : "pointer",
-                transition: "all 0.3s ease",
-                marginBottom: "20px",
-                letterSpacing: "0.5px",
+                fontSize: "14px",
+                outline: "none",
+                color: "#111827",
+                transition: "border-color 0.2s",
               }}
-              onMouseEnter={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.backgroundColor = "#2563eb";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.backgroundColor = "#3b82f6";
-                }
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#2563EB")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#D1D5DB")}
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
               }}
             >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          </div>
 
-          {/* Forgot Password Link */}
-          <div style={{ textAlign: "center" }}>
+          {/* Password Field with Eye Icon */}
+          <div style={{ marginBottom: "20px", position: "relative" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter Password"
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                paddingRight: "40px",
+                border: "1px solid #D1D5DB",
+                borderRadius: "8px",
+                fontSize: "14px",
+                outline: "none",
+                color: "#111827",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#2563EB")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#D1D5DB")}
+            />
             <button
               type="button"
-              onClick={() => navigate("/forgot-password")}
+              onClick={() => setShowPassword(!showPassword)}
               style={{
+                position: "absolute",
+                right: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
                 background: "none",
                 border: "none",
-                color: "#3b82f6",
-                fontSize: "14px",
                 cursor: "pointer",
-                fontWeight: "500",
-                padding: "0",
-                transition: "color 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#2563eb";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#3b82f6";
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
               }}
             >
-              Forgot Password?{" "}
-              <span style={{ fontWeight: "600" }}>Click Here</span>
+              {showPassword ? (
+                 // Eye Off
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              ) : (
+                // Eye On
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              )}
             </button>
           </div>
+
+          {/* Remember Me Toggle */}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "24px" }}>
+            <label className="switch" style={{ position: "relative", display: "inline-block", width: "36px", height: "20px", marginRight: "12px" }}>
+              <input 
+                type="checkbox" 
+                checked={rememberMe} 
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ opacity: 0, width: 0, height: 0 }}
+              />
+              <span 
+                style={{
+                  position: "absolute",
+                  cursor: "pointer",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: rememberMe ? "#2563EB" : "#E5E7EB", // Blue when checked, Gray when unchecked
+                  borderRadius: "34px",
+                  transition: ".4s",
+                }}
+              >
+                  <span style={{
+                    position: "absolute",
+                    content: '""',
+                    height: "16px",
+                    width: "16px",
+                    left: rememberMe ? "18px" : "2px", // Move knob
+                    bottom: "2px",
+                    backgroundColor: "white",
+                    borderRadius: "50%",
+                    transition: ".4s",
+                  }}></span>
+              </span>
+            </label>
+            <span style={{ fontSize: "14px", color: "#1F2937", fontWeight: 500 }}>Remember me</span>
+          </div>
+
+          {/* Login Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: "12px",
+              backgroundColor: "#1273D4", // Specific blue from design
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "16px",
+              fontWeight: "600",
+              cursor: loading ? "not-allowed" : "pointer",
+              transition: "background-color 0.2s",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#1d4ed8"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#1273D4"}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        {/* Forgot Password */}
+        <div style={{ textAlign: "center", marginTop: "24px" }}>
+          <span style={{ fontSize: "14px", color: "#6B7280" }}>Forgot Password? </span>
+          <button
+            onClick={() => navigate("/forgot-password")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#3B82F6", // Cyan/Blue link color
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            Click Here
+          </button>
         </div>
       </div>
     </div>

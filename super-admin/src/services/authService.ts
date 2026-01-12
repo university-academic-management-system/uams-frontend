@@ -71,6 +71,27 @@ export const authService = {
     return response.data;
   },
 
+  updateProfile: async (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+  }) => {
+    const response = await apiClient.put("/super-admin/profile", data);
+    // Update localStorage with new user data
+    if (response.data) {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        userData.full_name = `${data.firstName} ${data.lastName}`;
+        userData.email = data.email;
+        localStorage.setItem("user", JSON.stringify(userData));
+      }
+    }
+    return response.data;
+  },
+
   getAuthToken: () => localStorage.getItem("authToken"),
 
   isAuthenticated: () => !!localStorage.getItem("authToken"),

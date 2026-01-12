@@ -38,6 +38,7 @@ const UniversityPage: React.FC = () => {
     phone: "",
     address: "",
     status: "active",
+    slug: "",
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -148,6 +149,7 @@ const UniversityPage: React.FC = () => {
       phone: uni.phone,
       address: uni.address || "",
       status: uni.status,
+      slug: uni.slug || "",
     });
     setShowEditModal(true);
     setOpenDropdown(null);
@@ -186,6 +188,7 @@ const UniversityPage: React.FC = () => {
         phone: editFormData.phone,
         address: editFormData.address,
         status: editFormData.status as 'active' | 'pending' | 'suspended',
+        slug: editFormData.slug,
       });
       // Refresh universities list
       const updatedList = await universityService.getAll();
@@ -317,7 +320,7 @@ const UniversityPage: React.FC = () => {
         }}
       >
         <img
-          src="/assets/university.png"
+          src="/super-admin/assets/university.png"
           alt="University Icon"
           style={{
             width: "40px",
@@ -1801,155 +1804,333 @@ const UniversityPage: React.FC = () => {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 100,
-            padding: isMobile ? "16px" : "0",
+            padding: "16px",
           }}
           onClick={() => setShowEditModal(false)}
         >
           <div
             style={{
-              backgroundColor: "white",
+              backgroundColor: "#F9FAFB",
               borderRadius: "12px",
-              padding: isMobile ? "20px" : "32px",
+              padding: "24px",
               width: "100%",
-              maxWidth: "512px",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
-              position: "relative",
+              maxWidth: "900px",
               maxHeight: "90vh",
               overflowY: "auto",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "24px" }}>
-              <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#1273D4", margin: 0 }}>Edit University</h2>
-              <button 
-                onClick={() => setShowEditModal(false)}
+            {/* Header Card */}
+            <div
+              style={{
+                backgroundColor: "white",
+                padding: isMobile ? "20px" : "32px",
+                borderRadius: "12px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <h1
+                  style={{
+                    fontSize: isMobile ? "20px" : "24px",
+                    fontWeight: "700",
+                    color: "#111827",
+                    marginBottom: "4px",
+                    margin: 0,
+                  }}
+                >
+                  {selectedUniversity.name}
+                </h1>
+                <a
+                  href="#"
+                  style={{
+                    color: "#6B7280",
+                    fontSize: "14px",
+                    textDecoration: "underline",
+                    display: "block",
+                    marginTop: "4px",
+                  }}
+                >
+                  www.{selectedUniversity.slug || "university"}.uams.com
+                </a>
+              </div>
+              <div
                 style={{
-                  padding: isMobile ? "6px 8px" : "2px 7px",
-                  borderRadius: "6px",
-                  backgroundColor: "#1273D4",
-                  fontWeight: 600,
-                  border: "none",
-                  cursor: "pointer",
-                  color: "white"
+                  width: "80px",
+                  height: "80px",
+                  borderRadius: "50%",
+                  backgroundColor: "#D1D5DB",
+                  flexShrink: 0,
+                  marginLeft: "16px",
                 }}
-                onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      "#2563eb";
-                }}
-                onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      "#1273D4";
-                }}
-              >
-                <CloseIcon w={12} h={12} />
-              </button>
+              />
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
-                  University Name
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
-                  Contact Person
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.contactPerson}
-                  onChange={(e) => setEditFormData({ ...editFormData, contactPerson: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={editFormData.email}
-                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
-                  Phone
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.phone}
-                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
-                  Address
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.address}
-                  onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#111827", marginBottom: "6px" }}>
-                  Status
-                </label>
-                <select
-                  value={editFormData.status}
-                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none", backgroundColor: "white" }}
-                >
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+            {/* User Information Card */}
+            <div
+              style={{
+                backgroundColor: "white",
+                padding: isMobile ? "20px" : "32px",
+                borderRadius: "12px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "700",
+                  color: "#111827",
+                  marginBottom: "24px",
+                  margin: 0,
+                }}
+              >
+                User Information
+              </h2>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                  gap: "24px",
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "#374151",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    University Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.name}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, name: e.target.value })
+                    }
+                    placeholder="University of Port..."
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #D1D5DB",
+                      fontSize: "14px",
+                      outline: "none",
+                      color: "#111827",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "#374151",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Contact Person Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.contactPerson}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        contactPerson: e.target.value,
+                      })
+                    }
+                    placeholder="Select mode of delivery"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #D1D5DB",
+                      fontSize: "14px",
+                      outline: "none",
+                      color: "#111827",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "#374151",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Official Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editFormData.email}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, email: e.target.value })
+                    }
+                    placeholder="Enter address"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #D1D5DB",
+                      fontSize: "14px",
+                      outline: "none",
+                      color: "#111827",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "#374151",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.phone}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, phone: e.target.value })
+                    }
+                    placeholder="Enter address"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #D1D5DB",
+                      fontSize: "14px",
+                      outline: "none",
+                      color: "#111827",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "#374151",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    University Address
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.address}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, address: e.target.value })
+                    }
+                    placeholder="Input contact information"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #D1D5DB",
+                      fontSize: "14px",
+                      outline: "none",
+                      color: "#111827",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "#374151",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Slug
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.slug}
+                    readOnly
+                    placeholder="Input contact information"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #D1D5DB",
+                      fontSize: "14px",
+                      outline: "none",
+                      color: "#9CA3AF",
+                      backgroundColor: "#F9FAFB",
+                      cursor: "not-allowed",
+                    }}
+                  />
+                </div>
               </div>
 
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "16px" }}>
-                <button
-                  onClick={() => setShowEditModal(false)}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  justifyContent: "flex-end",
+                  marginTop: "32px",
+                }}
+              >
+                <div
                   style={{
-                    padding: "8px 20px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: 500,
-                    backgroundColor: "white",
-                    border: "1px solid #e5e7eb",
-                    color: "#374151",
-                    cursor: "pointer",
+                    display: "flex",
+                    gap: "12px",
                   }}
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleEditSubmit}
-                  disabled={isUpdating}
-                  style={{
-                    padding: "8px 20px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: 500,
-                    backgroundColor: "#2563eb",
-                    border: "none",
-                    color: "white",
-                    cursor: isUpdating ? "not-allowed" : "pointer",
-                    opacity: isUpdating ? 0.7 : 1,
-                  }}
-                >
-                  {isUpdating ? "Saving..." : "Save Changes"}
-                </button>
+                    <button
+                      onClick={handleEditSubmit}
+                      disabled={isUpdating}
+                      style={{
+                        padding: "10px 24px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        backgroundColor: "#22C55E",
+                        border: "none",
+                        color: "white",
+                        cursor: isUpdating ? "not-allowed" : "pointer",
+                        opacity: isUpdating ? 0.7 : 1,
+                      }}
+                    >
+                      {isUpdating ? "Saving..." : "Save Changes"}
+                    </button>
+                    <button
+                      onClick={() => setShowEditModal(false)}
+                      style={{
+                        padding: "10px 24px",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        backgroundColor: "white",
+                        border: "1px solid #D1D5DB",
+                        color: "#374151",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                </div>
               </div>
             </div>
           </div>

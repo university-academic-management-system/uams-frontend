@@ -118,7 +118,7 @@ const ResetPassword: React.FC = () => {
           }}
         >
           <img
-            src="/assets/reset-password-illustration.png"
+            src="/super-admin/assets/reset-password-illustration.png"
             alt="Reset Password Illustration"
             style={{
               width: "100%",

@@ -46,11 +46,12 @@ const Payments: React.FC = () => {
     }
   };
 
-  const getPaymentMethodIcon = (method: string) => {
+  const getPaymentMethodIcon = (method: string | null | undefined) => {
+    if (!method) return null;
     if (method.toLowerCase().includes("visa")) {
-      return "/assets/visa logo.png";
+      return "/super-admin/assets/visa logo.png";
     } else if (method.toLowerCase().includes("mastercard")) {
-      return "/assets/master.png";
+      return "/super-admin/assets/master.png";
     }
     return null;
   };
@@ -71,9 +72,9 @@ const Payments: React.FC = () => {
 
   const filteredPayments = payments.filter(
     (p) =>
-      p.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.university_name.toLowerCase().includes(searchTerm.toLowerCase()),
+      (p.student_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.transaction_id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.university_name || "").toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Pagination logic
@@ -115,7 +116,7 @@ const Payments: React.FC = () => {
         }}
       >
         <img
-          src="/assets/payment.png"
+          src="/super-admin/assets/payment.png"
           alt="Payment Icon"
           style={{
             width: "40px",
@@ -158,7 +159,7 @@ const Payments: React.FC = () => {
           }}
         >
           <img
-            src="/assets/transaction.png"
+            src="/super-admin/assets/transaction.png"
             alt="Payment"
             style={{
               width: "48px",

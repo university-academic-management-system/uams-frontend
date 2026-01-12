@@ -140,7 +140,7 @@ const VerificationCode: React.FC = () => {
           }}
         >
           <img
-            src="/assets/verification-illustration.png"
+            src="/super-admin/assets/verification-illustration.png"
             alt="Verification Code Illustration"
             style={{
               width: "100%",

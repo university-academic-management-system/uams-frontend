@@ -164,7 +164,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
         }}
       >
         <img
-          src="/assets/speedlink.png"
+          src="/super-admin/assets/speedlink.png"
           alt="SPEEDLINK Logo"
           style={{
             height: "48px",

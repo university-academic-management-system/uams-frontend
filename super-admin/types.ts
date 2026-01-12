@@ -7,6 +7,7 @@ export interface University {
   phone: string;
   address: string;
   status: 'active' | 'pending' | 'suspended';
+  slug?: string;
   created_at?: string;
 }
 

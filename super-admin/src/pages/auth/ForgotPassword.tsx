@@ -88,7 +88,7 @@ const ForgotPassword: React.FC = () => {
           }}
         >
           <img
-            src="/assets/forgot-password-illustration.png"
+            src="/super-admin/assets/forgot-password-illustration.png"
             alt="Forgot Password Illustration"
             style={{
               width: "100%",
@@ -130,48 +130,34 @@ const ForgotPassword: React.FC = () => {
             maxWidth: "450px",
           }}
         >
-          {/* Icon */}
-          <div
-            style={{
-              textAlign: "center",
-              marginBottom: "30px",
-            }}
-          >
-            <div
+          {/* Logo */}
+          <div style={{ textAlign: "center", marginBottom: "24px" }}>
+            <img
+              src="/super-admin/assets/logo.png"
+              alt="SPEEDLINK Logo"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "80px",
-                height: "80px",
-                borderRadius: "50%",
-                backgroundColor: "#F3F4F6",
-                marginBottom: "20px",
+                height: "64px",
+                width: "auto",
               }}
-            >
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "50%",
-                  backgroundColor: "#3B82F6",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <svg
-                  width="36"
-                  height="36"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                >
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-              </div>
-            </div>
+              onError={(e) => {
+                // Fallback to placeholder if image fails to load
+                (e.currentTarget.style.display as any) = "none";
+                const fallback = document.createElement("div");
+                fallback.style.fontSize = "32px";
+                fallback.style.fontWeight = "bold";
+                fallback.style.textAlign = "center";
+                fallback.textContent = "S";
+                // style the fallback circle if needed
+                fallback.style.width = "64px";
+                fallback.style.height = "64px";
+                fallback.style.borderRadius = "50%";
+                fallback.style.backgroundColor = "#F3F4F6";
+                fallback.style.display = "flex";
+                fallback.style.alignItems = "center";
+                fallback.style.justifyContent = "center";
+                e.currentTarget.parentElement?.appendChild(fallback);
+              }}
+            />
           </div>
 
           {/* Title */}
@@ -255,7 +241,7 @@ const ForgotPassword: React.FC = () => {
               style={{
                 width: "100%",
                 padding: "12px 16px",
-                backgroundColor: loading ? "#93C5FD" : "#3B82F6",
+                backgroundColor: loading ? "#93C5FD" : "#1273D4", // Match Login Blue
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
@@ -267,12 +253,12 @@ const ForgotPassword: React.FC = () => {
               }}
               onMouseEnter={(e) => {
                 if (!loading) {
-                  e.currentTarget.style.backgroundColor = "#2563EB";
+                  e.currentTarget.style.backgroundColor = "#1d4ed8";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!loading) {
-                  e.currentTarget.style.backgroundColor = "#3B82F6";
+                  e.currentTarget.style.backgroundColor = "#1273D4"; // Match Login Blue
                 }
               }}
             >
@@ -287,19 +273,22 @@ const ForgotPassword: React.FC = () => {
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#3B82F6",
+                  color: "#6B7280", // Gray to match design
                   fontSize: "14px",
                   cursor: "pointer",
                   textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.textDecoration = "underline";
+                  e.currentTarget.style.color = "#111827"; // Darker on hover
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.textDecoration = "none";
+                  e.currentTarget.style.color = "#6B7280";
                 }}
               >
-                ← Back to login
+                <span>←</span> Back to login
               </button>
             </div>
           </form>

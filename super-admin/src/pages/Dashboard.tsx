@@ -416,7 +416,7 @@ const Dashboard: React.FC = () => {
             loading={loading}
             icon={
               <img
-                src="/assets/university.png"
+                src="/super-admin/assets/university.png"
                 alt="University"
                 style={{
                   width: isMobile ? "24px" : "28px",
@@ -436,7 +436,7 @@ const Dashboard: React.FC = () => {
             loading={loading}
             icon={
               <img
-                src="/assets/payment.png"
+                src="/super-admin/assets/payment.png"
                 alt="Payment"
                 style={{
                   width: isMobile ? "24px" : "28px",
@@ -455,7 +455,7 @@ const Dashboard: React.FC = () => {
             loading={loading}
             icon={
               <img
-                src="/assets/users.jpg"
+                src="/super-admin/assets/users.jpg"
                 alt="Users"
                 style={{
                   width: isMobile ? "24px" : "28px",
