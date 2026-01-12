@@ -9,10 +9,22 @@ import Login from "./pages/Login";
 import MainLayout from "./components/MainLayout";
 import SessionGuard from "./components/SessionGuard";
 
+
+import ActivateAccount from "./pages/ActivateAccount";
+import Checkout from "./pages/Checkout";
+
 const router = createBrowserRouter([
-  // Public route
+  // Pre-login public routes (activation, checkout, then login)
   {
-    path: "/login",
+    path: "/activate-account",
+    element: <ActivateAccount />,
+  },
+  {
+    path: "/checkout",
+    element: <Checkout />,
+  },
+  {
+    path: "/login/*",
     element: <Login />,
   },
 
