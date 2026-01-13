@@ -8,7 +8,7 @@ import { AxiosError } from 'axios';
  */
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   try {
-    const response = await apiClient.post<LoginResponse>('/login', credentials);
+    const response = await apiClient.post<LoginResponse>('/api/login', credentials);
     
     if (response.data.status === 'success' && response.data.token) {
       const { token, user } = response.data;
