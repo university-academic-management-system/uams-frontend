@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
     return {
       base: '/students/',
       server: {
-        allowedHosts: ["f9e682218e41.ngrok-free.app"],
+        allowedHosts: ['computerscience.uniport.edu.ng', 'localhost'],
         port: 3000,
         host: '0.0.0.0',
       },

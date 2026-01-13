@@ -193,7 +193,7 @@ export const bulkRegisterCourses = async (data: {
   totalAmount: number;
 }): Promise<{ success: boolean; message: string; data?: any }> => {
   try {
-    const response = await apiClient.post('/course-registration/bulk-reg', data);
+    const response = await apiClient.post('/course-registration/confirm', data);
     return { 
       success: true, 
       message: response.data?.message || 'Courses registered successfully',
@@ -240,48 +240,6 @@ export const initCourseRegistrationPayment = async (
   } catch (error: any) {
     console.error('Failed to initialize payment:', error);
     const message = error.response?.data?.message || 'Failed to initialize payment';
-    return { success: false, message };
-  }
-};
-
-/**
- * Initialize registration fee payment
- * @param sessionId - The session ID from user profile
- * @param amount - Payment amount
- * @param callbackUrl - URL to redirect after payment
- */
-export const initRegistrationFeePayment = async (
-  sessionId: string,
-  amount: number,
-  callbackUrl: string
-): Promise<{ 
-  success: boolean; 
-  message: string; 
-  data?: {
-    authorizationUrl: string;
-    reference: string;
-    transactionId: string;
-  }
-}> => {
-  try {
-    const response = await apiClient.post('/course-registration/payment/init', {
-      sessionId,
-      amount,
-      callback_url: callbackUrl,
-    });
-    
-    if (response.data.status === 'success') {
-      return { 
-        success: true, 
-        message: 'Payment initialized successfully',
-        data: response.data.data
-      };
-    }
-    
-    return { success: false, message: response.data.message || 'Failed to initialize payment' };
-  } catch (error: any) {
-    console.error('Failed to initialize registration fee payment:', error);
-    const message = error.response?.data?.error || error.response?.data?.message || 'Failed to initialize payment';
     return { success: false, message };
   }
 };

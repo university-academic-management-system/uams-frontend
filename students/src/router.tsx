@@ -9,11 +9,33 @@ import Login from "./pages/Login";
 import MainLayout from "./components/MainLayout";
 import SessionGuard from "./components/SessionGuard";
 
+
+import Checkout from "./pages/Checkout";
+
 const router = createBrowserRouter([
-  // Public route
+  {
+    path: "/checkout",
+    element: <Checkout />,
+  },
   {
     path: "/login",
-    element: <Login />,
+    element: <Login initialStep="login" />,
+  },
+  {
+    path: "/register",
+    element: <Login initialStep="reg-number" />,
+  },
+  {
+    path: "/activate-account",
+    element: <Login initialStep="activate" />,
+  },
+  {
+    path: "/payment",
+    element: <Login initialStep="payment" />,
+  },
+  {
+    path: "/forgot-password",
+    element: <Login initialStep="forgot-password" />,
   },
 
   // Protected dashboard routes
