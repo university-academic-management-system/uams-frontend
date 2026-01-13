@@ -4,7 +4,7 @@ export type ViewType =
   | "Students"
   | "Staff"
   | "Payments"
-  | "Roles & Permissions"
+  | "ID Card Management"
   | "Announcements"
   | "Settings"
   | "Notifications";

@@ -1,62 +1,535 @@
-import React, { useState } from 'react';
-import { Plus, Filter, Search } from 'lucide-react';
+"use client"
 
-interface RoleEntry {
-  id: string;
-  idNo: string;
-  name: string;
-  status: 'Student' | 'Staff';
-  office: string;
-  permissions: {
-    createProgram: boolean;
-    createCourses: boolean;
-    createBilling: boolean;
-    viewPayments: boolean;
-    createTest: boolean;
-  };
+import type React from "react"
+import { useState, useRef, useEffect } from "react"
+import { Plus, Filter, Search, Camera, Download, Printer, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from "lucide-react"
+import api from "../api/axios" // Adjust the import path as needed
+
+interface Student {
+  id: string
+  idNo: string
+  name: string
+  matric: string
+  faculty: string
+  department: string
+  graduationDate: string
+  status: "Pending" | "Issued" | "Active"
+  photoUrl?: string
+  level?: string
+  email?: string
+  phone?: string
+  userId?: string
+  hasPaidIDCardFee?: boolean
+  PaymentTransactions?: Array<{
+    id: string
+    reference: string
+    amount: string
+    currency: string
+    payment_for: string
+    status: string
+    payment_date: string | null
+    paid_at: string
+    payment_method: string
+    gateway: string
+  }>
+  paymentSummary?: {
+    totalSuccessful: string
+    totalPending: string
+    totalPaidAmount: string
+    lastPaymentDate: string | null
+    hasSuccessfulPayments: boolean
+    hasPendingPayments: boolean
+    allPayments: Array<{
+      id: string
+      reference: string
+      amount: string
+      currency: string
+      payment_for: string
+      status: string
+      payment_date: string | null
+      paid_at: string
+      payment_method: string
+      gateway: string
+    }>
+  }
 }
 
-const MOCK_ROLES: RoleEntry[] = [
-  { id: '1', idNo: 'U2020/2502201', name: 'Justice Amadi', status: 'Student', office: 'Course Rep', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-  { id: '2', idNo: 'U2020/2502201', name: 'Glory King', status: 'Staff', office: 'HOD', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-  { id: '3', idNo: 'U2020/2502201', name: 'Goodness Alozie', status: 'Staff', office: 'ERO', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-  { id: '4', idNo: 'U2020/2502201', name: 'Justice Amadi', status: 'Student', office: 'Course Rep', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-  { id: '5', idNo: 'U2020/2502201', name: 'Justice Amadi', status: 'Student', office: 'Course Rep', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-  { id: '6', idNo: 'U2020/2502201', name: 'Justice Amadi', status: 'Student', office: 'Course Rep', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-  { id: '7', idNo: 'U2020/2502201', name: 'Justice Amadi', status: 'Student', office: 'Course Rep', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-  { id: '8', idNo: 'U2020/2502201', name: 'Justice Amadi', status: 'Student', office: 'Course Rep', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-  { id: '9', idNo: 'U2020/2502201', name: 'Justice Amadi', status: 'Student', office: 'Course Rep', permissions: { createProgram: false, createCourses: false, createBilling: false, viewPayments: false, createTest: false } },
-];
+interface ApiStudent {
+  id: string
+  studentId: string
+  level: string
+  isActive: boolean
+  User: {
+    fullName: string
+    email: string
+    phone: string
+    avatar: string | null
+    id: string
+  }
+  Department?: {
+    id: string
+    name: string
+    code: string
+    Faculty?: {
+      id: string
+      name: string
+      code: string
+    }
+  }
+  Program?: {
+    id: string
+    name: string
+    code: string
+  }
+  PaymentTransactions?: Array<{
+    id: string
+    reference: string
+    amount: string
+    currency: string
+    payment_for: string
+    status: string
+    payment_date: string | null
+    paid_at: string
+    payment_method: string
+    gateway: string
+  }>
+  paymentSummary?: {
+    totalSuccessful: string
+    totalPending: string
+    totalPaidAmount: string
+    lastPaymentDate: string | null
+    hasSuccessfulPayments: boolean
+    hasPendingPayments: boolean
+    allPayments: Array<{
+      id: string
+      reference: string
+      amount: string
+      currency: string
+      payment_for: string
+      status: string
+      payment_date: string | null
+      paid_at: string
+      payment_method: string
+      gateway: string
+    }>
+  }
+}
+
+interface PaginationInfo {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  itemsPerPage: number
+}
 
 export const RolesView: React.FC = () => {
-  const [roles, setRoles] = useState<RoleEntry[]>(MOCK_ROLES);
+  const [students, setStudents] = useState<Student[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
+  const [showModal, setShowModal] = useState(false)
+  const [currentStudent, setCurrentStudent] = useState<Student | null>(null)
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
+  const [cameraActive, setCameraActive] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10
+  })
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const togglePermission = (roleId: string, permissionKey: keyof RoleEntry['permissions']) => {
-    setRoles(prev => prev.map(role => 
-      role.id === roleId 
-        ? { ...role, permissions: { ...role.permissions, [permissionKey]: !role.permissions[permissionKey] } }
-        : role
-    ));
-  };
+  // Fetch students from API
+  const fetchStudents = async (page: number = 1, search: string = "") => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.itemsPerPage.toString()
+      })
+      
+      if (search) {
+        params.append("search", search)
+      }
+      
+      const response = await api.get(`/api/university-admin/students?${params}`)
+      
+      // Transform API response to match component interface
+      const transformedStudents: Student[] = response.data.students.map((apiStudent: ApiStudent) => {
+        // Check if student has paid ID card fee
+        const hasPaidIDCardFee = apiStudent.PaymentTransactions?.some(
+          transaction => transaction.payment_for === "id_card_fee" && transaction.status === "success"
+        ) || false
+        
+        // Get department and faculty names from the nested structure
+        const departmentName = apiStudent.Department?.name || "Not Assigned"
+        const facultyName = apiStudent.Department?.Faculty?.name || "Not Assigned"
+        
+        return {
+          id: apiStudent.id,
+          idNo: apiStudent.studentId,
+          name: apiStudent.User.fullName,
+          matric: apiStudent.studentId,
+          faculty: facultyName,
+          department: departmentName,
+          graduationDate: "2026-06-15", // You might want to get this from the API or calculate it
+          status: hasPaidIDCardFee ? "Pending" : "Active", // Update status based on payment
+          level: apiStudent.level,
+          email: apiStudent.User.email,
+          phone: apiStudent.User.phone,
+          userId: apiStudent.User.id,
+          hasPaidIDCardFee,
+          PaymentTransactions: apiStudent.PaymentTransactions,
+          paymentSummary: apiStudent.paymentSummary
+        }
+      })
+      
+      setStudents(transformedStudents)
+      
+      // Update pagination info from response if available
+      if (response.data.pagination) {
+        setPagination(prev => ({
+          ...prev,
+          currentPage: response.data.pagination.currentPage || page,
+          totalPages: response.data.pagination.totalPages || 1,
+          totalItems: response.data.pagination.totalItems || 0
+        }))
+      }
+    } catch (err: any) {
+      console.error("Error fetching students:", err)
+      setError(err.response?.data?.message || "Failed to load students")
+      setStudents([]) // Clear students on error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Initial fetch
+  useEffect(() => {
+    fetchStudents()
+  }, [])
+
+  // Search handler with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== "") {
+        fetchStudents(1, searchQuery)
+      } else {
+        fetchStudents(1)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Fetch student photo
+  const fetchStudentPhoto = async (studentId: string): Promise<string | null> => {
+    try {
+      const response = await api.get(`/api/university-admin/students/avatar?studentId=${studentId}`, {
+        responseType: 'blob' // Important for image data
+      })
+      
+      if (response.data) {
+        // Create object URL from blob
+        const imageUrl = URL.createObjectURL(response.data)
+        return imageUrl
+      }
+      return null
+    } catch (err) {
+      console.error("Error fetching student photo:", err)
+      return null
+    }
+  }
+
+  // Upload photo to backend
+  const uploadPhotoToBackend = async (studentId: string, photoData: string): Promise<boolean> => {
+    try {
+      setUploadingPhoto(true)
+      setUploadError(null)
+      setUploadSuccess(false)
+      
+      // Convert base64 to blob
+      const base64Response = await fetch(photoData)
+      const blob = await base64Response.blob()
+      
+      // Create FormData object
+      const formData = new FormData()
+      formData.append('avatar', blob, `student_${studentId}.png`)
+      
+      // Make PUT request to update avatar
+      const uploadResponse = await api.put(
+        `/api/university-admin/students/avatar?studentId=${studentId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      )
+      
+      setUploadSuccess(true)
+      console.log("Photo uploaded successfully:", uploadResponse.data)
+      return true
+      
+    } catch (err: any) {
+      console.error("Error uploading photo:", err)
+      setUploadError(err.response?.data?.message || "Failed to upload photo")
+      return false
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
+  // Handle photo upload and then perform action (print or download)
+  const handlePhotoUploadAndAction = async (
+    studentId: string, 
+    photoData: string, 
+    action: 'print' | 'download'
+  ) => {
+    // First upload the photo
+    const uploadSuccess = await uploadPhotoToBackend(studentId, photoData)
+    
+    if (!uploadSuccess) {
+      alert("Failed to upload photo. Please try again.")
+      return
+    }
+    
+    // Then perform the requested action
+    if (action === 'print') {
+      handlePrintID()
+    } else if (action === 'download') {
+      handleDownloadID()
+    }
+  }
+
+  // Update student photo when modal opens
+  useEffect(() => {
+    if (showModal && currentStudent) {
+      // Pre-fetch photo if available
+      fetchStudentPhoto(currentStudent.matric).then(photoUrl => {
+        if (photoUrl) {
+          // You can set this as the initial captured photo
+          // Or use it as a fallback if no photo is captured
+        }
+      })
+    }
+  }, [showModal, currentStudent])
+
+  useEffect(() => {
+    if (showModal && !capturedPhoto) {
+      startCamera()
+      setCameraActive(true)
+    } else {
+      stopCamera()
+      setCameraActive(false)
+    }
+
+    return () => {
+      stopCamera()
+    }
+  }, [showModal, capturedPhoto])
+
+  const toggleStudentSelection = (studentId: string) => {
+    setSelectedStudents((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId)
+      } else {
+        newSet.add(studentId)
+      }
+      return newSet
+    })
+  }
+
+  const toggleAllSelection = () => {
+    if (selectedStudents.size === students.length) {
+      setSelectedStudents(new Set())
+    } else {
+      // Only select students who have paid ID card fee
+      const eligibleStudentIds = students
+        .filter(student => student.hasPaidIDCardFee)
+        .map(student => student.id)
+      setSelectedStudents(new Set(eligibleStudentIds))
+    }
+  }
+
+  const canIssueCard = (student: Student) => {
+    // Student can get ID card if they have paid the ID card fee
+    return student.hasPaidIDCardFee === true
+  }
+
+  const handleIssueCard = async (student: Student) => {
+    if (!canIssueCard(student)) return
+
+    setCurrentStudent(student)
+    setCapturedPhoto(null)
+    setUploadSuccess(false)
+    setUploadError(null)
+    
+    // Try to load existing photo from API
+    try {
+      const photoUrl = await fetchStudentPhoto(student.matric)
+      if (photoUrl) {
+        setCapturedPhoto(photoUrl)
+      }
+    } catch (err) {
+      console.log("No existing photo found, will capture new one")
+    }
+    
+    setShowModal(true)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      fetchStudents(newPage, searchQuery)
+    }
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+      })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (err) {
+      console.error("[v0] Error accessing camera:", err)
+    }
+  }
+
+  const captureImage = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext("2d")
+      if (context) {
+        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
+        const photoData = canvasRef.current.toDataURL("image/png")
+        setCapturedPhoto(photoData)
+        stopCamera()
+        setCameraActive(false)
+      }
+    }
+  }
+
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
+      tracks.forEach((track) => track.stop())
+    }
+  }
+
+  const handlePrintID = () => {
+    const printWindow = window.open("", "", "width=1000,height=600")
+    if (printWindow && currentStudent && capturedPhoto) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+              .card-container { display: flex; gap: 40px; justify-content: center; }
+              .card { width: 400px; height: 250px; border: 2px solid #333; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+              .front { background: linear-gradient(135deg, #1D7AD9 0%, #0052A3 100%); color: white; display: flex; flex-direction: column; padding: 20px; }
+              .logo { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+              .student-section { display: flex; gap: 15px; flex: 1; }
+              .photo { width: 80px; height: 100px; background: white; border-radius: 4px; overflow: hidden; }
+              .photo img { width: 100%; height: 100%; object-fit: cover; }
+              .details { flex: 1; font-size: 12px; }
+              .details div { margin: 4px 0; }
+              .label { font-size: 10px; opacity: 0.8; }
+              .back { background: white; color: #333; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; border-left: 2px solid #1D7AD9; }
+              .back-text { font-size: 11px; line-height: 1.6; text-align: center; margin-bottom: 20px; }
+              .signature { border-top: 1px solid #333; padding-top: 10px; font-size: 10px; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="card-container">
+              <div class="card front">
+                <div class="logo">UNIVERSITY OF PORT HARCOURT</div>
+                <div class="logo" style="font-size: 12px; margin-bottom: 15px;">${currentStudent.faculty}</div>
+                <div class="student-section">
+                  <div class="photo"><img src="${capturedPhoto}" /></div>
+                  <div class="details">
+                    <div><span class="label">NAME</span></div>
+                    <div style="font-weight: bold; margin-bottom: 8px;">${currentStudent.name}</div>
+                    <div><span class="label">MATRIC NO</span></div>
+                    <div>${currentStudent.matric}</div>
+                    <div style="margin-top: 8px;"><span class="label">FACULTY</span></div>
+                    <div>${currentStudent.faculty}</div>
+                    <div style="margin-top: 8px;"><span class="label">DEPARTMENT</span></div>
+                    <div>${currentStudent.department}</div>
+                    <div style="margin-top: 8px;"><span class="label">EXPIRES</span></div>
+                    <div>${new Date(currentStudent.graduationDate).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="card back">
+                <div class="back-text">
+                  The holder whose name and photograph on this I.D card is a bonafide student of the University of Port Harcourt.
+                </div>
+                <div class="back-text">
+                  If found please return to the office of Chief Security Officer, University of Port Harcourt.
+                </div>
+                <div class="signature">
+                  Department Admin<br>
+                  ________________<br>
+                  Signature
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+      printWindow.print()
+    }
+  }
+
+  const handleDownloadID = () => {
+    if (capturedPhoto && currentStudent) {
+      const link = document.createElement("a")
+      link.href = capturedPhoto
+      link.download = `ID_${currentStudent.idNo}.png`
+      link.click()
+    }
+  }
 
   return (
     <div className="animate-in fade-in duration-500 max-w-[1400px] mx-auto">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Roles & Permission</h2>
-          <p className="text-xs text-slate-500 mt-1">This table contains a list of all staff and students with assigned responsibilities</p>
+          <h2 className="text-2xl font-bold text-slate-900">ID Card Issuance</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Issue ID cards to students by selecting them from the list below
+          </p>
         </div>
         <button className="bg-[#1D7AD9] text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all w-full sm:w-auto justify-center">
-          <Plus size={18} /> Assign New Role
+          <Plus size={18} /> Add New Student
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6">
-        <div className="relative w-full sm:w-80 group">
-          <input 
-            type="text" 
-            placeholder="Search by name, office, or code" 
-            className="bg-white border border-slate-200 text-xs py-2.5 pl-4 pr-10 rounded-xl outline-none w-full focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 shadow-sm" 
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
+        <div className="relative w-full sm:flex-1 group">
+          <input
+            type="text"
+            placeholder="Search by name or ID..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="bg-white border border-slate-200 text-xs py-2.5 pl-4 pr-10 rounded-xl outline-none w-full focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 shadow-sm"
           />
           <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
         </div>
@@ -66,69 +539,1165 @@ export const RolesView: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto scrollbar-hide">
-          <table className="w-full text-left min-w-[1000px]">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-500 font-bold text-[10px] uppercase tracking-wider border-b border-slate-100">
-                <th className="px-6 py-5 w-12 text-center">
-                  <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10" />
-                </th>
-                <th className="px-6 py-5">ID No</th>
-                <th className="px-6 py-5">Name</th>
-                <th className="px-6 py-5">Status</th>
-                <th className="px-6 py-5">Office</th>
-                <th className="px-6 py-5 text-center">Create Program</th>
-                <th className="px-6 py-5 text-center">Create Courses</th>
-                <th className="px-6 py-5 text-center">Create Billing</th>
-                <th className="px-6 py-5 text-center">View Payments</th>
-                <th className="px-6 py-5 text-center">Create Test</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {roles.map((role) => (
-                <tr key={role.id} className="hover:bg-slate-50/30 transition-colors group">
-                  <td className="px-6 py-5 text-center">
-                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10" />
-                  </td>
-                  <td className="px-6 py-5 text-[11px] text-slate-400 font-medium">{role.idNo}</td>
-                  <td className="px-6 py-5 text-xs font-bold text-slate-700">{role.name}</td>
-                  <td className="px-6 py-5 text-xs text-slate-500">{role.status}</td>
-                  <td className="px-6 py-5 text-xs text-slate-500">{role.office}</td>
-                  <td className="px-6 py-5 text-center">
-                    <ToggleButton active={role.permissions.createProgram} onClick={() => togglePermission(role.id, 'createProgram')} />
-                  </td>
-                  <td className="px-6 py-5 text-center">
-                    <ToggleButton active={role.permissions.createCourses} onClick={() => togglePermission(role.id, 'createCourses')} />
-                  </td>
-                  <td className="px-6 py-5 text-center">
-                    <ToggleButton active={role.permissions.createBilling} onClick={() => togglePermission(role.id, 'createBilling')} />
-                  </td>
-                  <td className="px-6 py-5 text-center">
-                    <ToggleButton active={role.permissions.viewPayments} onClick={() => togglePermission(role.id, 'viewPayments')} />
-                  </td>
-                  <td className="px-6 py-5 text-center">
-                    <ToggleButton active={role.permissions.createTest} onClick={() => togglePermission(role.id, 'createTest')} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Loading and Error States */}
+      {loading && (
+        <div className="flex justify-center items-center py-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-sm text-slate-600">Loading students...</span>
         </div>
-      </div>
-    </div>
-  );
-};
+      )}
 
-const ToggleButton: React.FC<{ active: boolean; onClick: () => void }> = ({ active, onClick }) => (
-  <button 
-    onClick={onClick}
-    className={`inline-flex items-center w-8 h-4.5 rounded-full p-0.5 transition-all duration-200 outline-none ${
-      active ? 'bg-blue-600' : 'bg-white border border-slate-300'
-    }`}
-  >
-    <div className={`w-3 h-3 rounded-full transition-all duration-200 shadow-sm ${
-      active ? 'translate-x-3.5 bg-white' : 'translate-x-0 bg-slate-400'
-    }`} />
-  </button>
-);
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <p className="font-semibold">Error loading students</p>
+          <p className="text-sm">{error}</p>
+          <button
+            onClick={() => fetchStudents(1, searchQuery)}
+            className="mt-2 text-sm bg-red-100 hover:bg-red-200 px-3 py-1 rounded"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Students Table */}
+      {!loading && !error && (
+        <>
+          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm mb-6">
+            <div className="overflow-x-auto scrollbar-hide">
+              <table className="w-full text-left min-w-[800px]">
+                <thead>
+                  <tr className="bg-slate-50/50 text-slate-500 font-bold text-[10px] uppercase tracking-wider border-b border-slate-100">
+                    <th className="px-6 py-5 w-12 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedStudents.size > 0 && selectedStudents.size === students.filter(s => s.hasPaidIDCardFee).length}
+                        onChange={toggleAllSelection}
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10"
+                      />
+                    </th>
+                    <th className="px-6 py-5">ID No</th>
+                    <th className="px-6 py-5">Name</th>
+                    <th className="px-6 py-5">Matric</th>
+                    <th className="px-6 py-5">Faculty</th>
+                    <th className="px-6 py-5">Department</th>
+                    <th className="px-6 py-5 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {students.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
+                        {searchQuery ? "No students found matching your search" : "No students found"}
+                      </td>
+                    </tr>
+                  ) : (
+                    students.map((student) => (
+                      <tr key={student.id} className="hover:bg-slate-50/30 transition-colors">
+                        <td className="px-6 py-5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedStudents.has(student.id)}
+                            onChange={() => toggleStudentSelection(student.id)}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10"
+                            disabled={!canIssueCard(student)}
+                          />
+                        </td>
+                        <td className="px-6 py-5 text-[11px] text-slate-400 font-medium">{student.idNo}</td>
+                        <td className="px-6 py-5 text-xs font-bold text-slate-700">
+                          {student.name}
+                          {student.hasPaidIDCardFee && (
+                            <span className="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                              Paid
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-5 text-xs text-slate-500">{student.matric}</td>
+                        <td className="px-6 py-5 text-xs text-slate-500">{student.faculty}</td>
+                        <td className="px-6 py-5 text-xs text-slate-500">{student.department}</td>
+                        <td className="px-6 py-5 text-center">
+                          <button
+                            onClick={() => handleIssueCard(student)}
+                            disabled={!canIssueCard(student)}
+                            className={`text-xs font-bold transition-colors ${
+                              canIssueCard(student)
+                                ? "text-blue-600 hover:text-blue-700 cursor-pointer"
+                                : "text-slate-300 cursor-not-allowed"
+                            }`}
+                          >
+                            {canIssueCard(student) ? "Issue Card" : "Payment Required"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4 rounded-b-2xl">
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <span>Total:</span>
+                <span className="font-semibold">{pagination.totalItems} students</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(1)}
+                  disabled={pagination.currentPage === 1}
+                  className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  <ChevronsLeft size={16} className="text-slate-600" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+                  disabled={pagination.currentPage === 1}
+                  className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  <ChevronLeft size={16} className="text-slate-600" />
+                </button>
+                
+                <div className="flex items-center gap-1 mx-2">
+                  <span className="text-sm text-slate-600">
+                    Page {pagination.currentPage} of {pagination.totalPages}
+                  </span>
+                </div>
+                
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage + 1)}
+                  disabled={pagination.currentPage === pagination.totalPages}
+                  className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  <ChevronRight size={16} className="text-slate-600" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(pagination.totalPages)}
+                  disabled={pagination.currentPage === pagination.totalPages}
+                  className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  <ChevronsRight size={16} className="text-slate-600" />
+                </button>
+              </div>
+              
+              <div className="text-sm text-slate-500">
+                Showing {students.length} of {pagination.totalItems}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900">Capture and Preview ID Card - {currentStudent?.name}</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-slate-600" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 flex flex-col gap-8">
+              {/* Camera Capture Section */}
+              <div className="flex flex-col items-center gap-4">
+                <h4 className="text-sm font-semibold text-slate-900">Capture Photo</h4>
+                <div className="w-full bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center relative">
+                  {!capturedPhoto ? (
+                    <>
+                      <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                      {!cameraActive && (
+                        <div className="absolute flex flex-col items-center gap-4">
+                          <Camera size={64} className="text-slate-300" />
+                          <p className="text-white text-sm">Initializing camera...</p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <img
+                      src={capturedPhoto || "/placeholder.svg"}
+                      alt="Captured"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+                <canvas ref={canvasRef} width={640} height={480} className="hidden" />
+
+                {!capturedPhoto && (
+                  <button
+                    onClick={captureImage}
+                    className="bg-[#1D7AD9] text-white px-8 py-3 rounded-lg flex items-center gap-2 font-bold hover:bg-blue-700 transition-all w-full justify-center shadow-lg shadow-blue-500/20"
+                  >
+                    <Camera size={18} /> Capture Image
+                  </button>
+                )}
+
+                {capturedPhoto && (
+                  <button
+                    onClick={() => {
+                      setCapturedPhoto(null)
+                      startCamera()
+                      setCameraActive(true)
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
+                  >
+                    Retake Photo
+                  </button>
+                )}
+              </div>
+
+              {/* Upload Status Messages */}
+              {uploadingPhoto && (
+                <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Uploading photo to server...</span>
+                </div>
+              )}
+              
+              {uploadSuccess && (
+                <div className="text-center text-sm text-green-600 bg-green-50 py-2 rounded-lg">
+                  ✓ Photo uploaded successfully!
+                </div>
+              )}
+              
+              {uploadError && (
+                <div className="text-center text-sm text-red-600 bg-red-50 py-2 rounded-lg">
+                  {uploadError}
+                </div>
+              )}
+
+              {/* ID Card Preview Section */}
+              {capturedPhoto && (
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-sm font-semibold text-slate-900">ID Card Preview</h4>
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Front of Card */}
+                    <div className="flex flex-col items-center">
+                      <p className="text-xs font-semibold text-slate-600 mb-3">Front</p>
+                      <div className="w-full bg-gradient-to-br from-[#1D7AD9] to-[#0052A3] rounded-lg p-4 aspect-video flex flex-col justify-between text-white relative overflow-hidden">
+                        <div className="relative z-10">
+                          <p className="text-xs font-bold mb-1">UNIVERSITY OF PORT HARCOURT</p>
+                          <p className="text-[10px] opacity-90">{currentStudent?.faculty}</p>
+                          <p className="text-[9px] opacity-75">Port Harcourt, Nigeria</p>
+                        </div>
+
+                        <div className="flex gap-3 relative z-10">
+                          <div className="w-16 h-20 bg-white rounded overflow-hidden flex-shrink-0">
+                            <img
+                              src={capturedPhoto || "/placeholder.svg"}
+                              alt="Student"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 flex flex-col justify-between text-[9px]">
+                            <div>
+                              <p className="font-bold text-xs">{currentStudent?.name}</p>
+                              <p className="opacity-90">ID: {currentStudent?.idNo}</p>
+                              <p className="opacity-90">Matric: {currentStudent?.matric}</p>
+                            </div>
+                            <div>
+                              <p className="opacity-75">Faculty: {currentStudent?.faculty}</p>
+                              <p className="opacity-75">Dept: {currentStudent?.department}</p>
+                              <p className="opacity-75">
+                                Expires: {new Date(currentStudent?.graduationDate || "").toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Back of Card */}
+                    <div className="flex flex-col items-center">
+                      <p className="text-xs font-semibold text-slate-600 mb-3">Back</p>
+                      <div className="w-full bg-white border-2 border-[#1D7AD9] rounded-lg p-4 aspect-video flex flex-col justify-between text-center overflow-hidden">
+                        <div className="flex-1 flex flex-col justify-center gap-3">
+                          <p className="text-[9px] leading-relaxed text-slate-700 font-medium">
+                            The holder whose name and photograph on this I.D card is a bonafide student of the
+                            university of port harcourt.
+                          </p>
+                          <p className="text-[9px] leading-relaxed text-slate-700 font-medium">
+                            If found please return to the office of Chief Security Officer university of port harcourt.
+                          </p>
+                        </div>
+                        <div className="border-t border-slate-300 pt-2">
+                          <p className="text-[8px] text-slate-600 font-semibold">Department Admin</p>
+                          <p className="text-[8px] text-slate-500 mt-1">________________</p>
+                          <p className="text-[8px] text-slate-500">Signature</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            {capturedPhoto && currentStudent && (
+              <div className="flex gap-3 p-6 border-t border-slate-100 bg-slate-50">
+                <button
+                  onClick={() => handlePhotoUploadAndAction(currentStudent.matric, capturedPhoto, 'print')}
+                  disabled={uploadingPhoto}
+                  className="bg-green-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 font-bold hover:bg-green-700 transition-all flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploadingPhoto ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" /> Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Printer size={18} /> Print ID
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => handlePhotoUploadAndAction(currentStudent.matric, capturedPhoto, 'download')}
+                  disabled={uploadingPhoto}
+                  className="bg-blue-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 font-bold hover:bg-blue-700 transition-all flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploadingPhoto ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" /> Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={18} /> Download ID
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// "use client"
+
+// import type React from "react"
+// import { useState, useRef, useEffect } from "react"
+// import { Plus, Filter, Search, Camera, Download, Printer, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+// import api from "../api/axios" // Adjust the import path as needed
+
+// interface Student {
+//   id: string
+//   idNo: string
+//   name: string
+//   matric: string
+//   faculty: string
+//   department: string
+//   graduationDate: string
+//   status: "Pending" | "Issued" | "Active"
+//   photoUrl?: string
+//   level?: string
+//   email?: string
+//   phone?: string
+//   userId?: string
+//   hasPaidIDCardFee?: boolean
+//   PaymentTransactions?: Array<{
+//     id: string
+//     reference: string
+//     amount: string
+//     currency: string
+//     payment_for: string
+//     status: string
+//     payment_date: string | null
+//     paid_at: string
+//     payment_method: string
+//     gateway: string
+//   }>
+//   paymentSummary?: {
+//     totalSuccessful: string
+//     totalPending: string
+//     totalPaidAmount: string
+//     lastPaymentDate: string | null
+//     hasSuccessfulPayments: boolean
+//     hasPendingPayments: boolean
+//     allPayments: Array<{
+//       id: string
+//       reference: string
+//       amount: string
+//       currency: string
+//       payment_for: string
+//       status: string
+//       payment_date: string | null
+//       paid_at: string
+//       payment_method: string
+//       gateway: string
+//     }>
+//   }
+// }
+
+// interface ApiStudent {
+//   id: string
+//   studentId: string
+//   level: string
+//   isActive: boolean
+//   User: {
+//     fullName: string
+//     email: string
+//     phone: string
+//     avatar: string | null
+//     id: string
+//   }
+//   Department?: {
+//     id: string
+//     name: string
+//     code: string
+//     Faculty?: {
+//       id: string
+//       name: string
+//       code: string
+//     }
+//   }
+//   Program?: {
+//     id: string
+//     name: string
+//     code: string
+//   }
+//   PaymentTransactions?: Array<{
+//     id: string
+//     reference: string
+//     amount: string
+//     currency: string
+//     payment_for: string
+//     status: string
+//     payment_date: string | null
+//     paid_at: string
+//     payment_method: string
+//     gateway: string
+//   }>
+//   paymentSummary?: {
+//     totalSuccessful: string
+//     totalPending: string
+//     totalPaidAmount: string
+//     lastPaymentDate: string | null
+//     hasSuccessfulPayments: boolean
+//     hasPendingPayments: boolean
+//     allPayments: Array<{
+//       id: string
+//       reference: string
+//       amount: string
+//       currency: string
+//       payment_for: string
+//       status: string
+//       payment_date: string | null
+//       paid_at: string
+//       payment_method: string
+//       gateway: string
+//     }>
+//   }
+// }
+
+// interface PaginationInfo {
+//   currentPage: number
+//   totalPages: number
+//   totalItems: number
+//   itemsPerPage: number
+// }
+
+// export const RolesView: React.FC = () => {
+//   const [students, setStudents] = useState<Student[]>([])
+//   const [loading, setLoading] = useState(true)
+//   const [error, setError] = useState<string | null>(null)
+//   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
+//   const [showModal, setShowModal] = useState(false)
+//   const [currentStudent, setCurrentStudent] = useState<Student | null>(null)
+//   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
+//   const [cameraActive, setCameraActive] = useState(false)
+//   const [searchQuery, setSearchQuery] = useState("")
+//   const [pagination, setPagination] = useState<PaginationInfo>({
+//     currentPage: 1,
+//     totalPages: 1,
+//     totalItems: 0,
+//     itemsPerPage: 20
+//   })
+  
+//   const videoRef = useRef<HTMLVideoElement>(null)
+//   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+//   // Fetch students from API
+//   const fetchStudents = async (page: number = 1, search: string = "") => {
+//     try {
+//       setLoading(true)
+//       setError(null)
+      
+//       const params = new URLSearchParams({
+//         page: page.toString(),
+//         limit: pagination.itemsPerPage.toString()
+//       })
+      
+//       if (search) {
+//         params.append("search", search)
+//       }
+      
+//       const response = await api.get(`/api/university-admin/students?${params}`)
+      
+//       // Transform API response to match component interface
+//       const transformedStudents: Student[] = response.data.students.map((apiStudent: ApiStudent) => {
+//         // Check if student has paid ID card fee
+//         const hasPaidIDCardFee = apiStudent.PaymentTransactions?.some(
+//           transaction => transaction.payment_for === "id_card_fee" && transaction.status === "success"
+//         ) || false
+
+//         // Get department and faculty names from the nested structure
+//         const departmentName = apiStudent.Department?.name || "Not Assigned"
+//         const facultyName = apiStudent.Department?.Faculty?.name || "Not Assigned"
+        
+//         return {
+//           id: apiStudent.id,
+//           idNo: apiStudent.studentId,
+//           name: apiStudent.User.fullName,
+//           matric: apiStudent.studentId,
+//           faculty: facultyName,
+//           department: departmentName,
+//           graduationDate: "2026-06-15", // You might want to get this from the API or calculate it
+//           status: hasPaidIDCardFee ? "Pending" : "Active", // Update status based on payment
+//           level: apiStudent.level,
+//           email: apiStudent.User.email,
+//           phone: apiStudent.User.phone,
+//           userId: apiStudent.User.id,
+//           hasPaidIDCardFee,
+//           PaymentTransactions: apiStudent.PaymentTransactions,
+//           paymentSummary: apiStudent.paymentSummary
+//         }
+//       })
+      
+//       setStudents(transformedStudents)
+      
+//       // Update pagination info from response if available
+//       if (response.data.pagination) {
+//         setPagination(prev => ({
+//           ...prev,
+//           currentPage: response.data.pagination.currentPage || page,
+//           totalPages: response.data.pagination.totalPages || 1,
+//           totalItems: response.data.pagination.totalItems || 0
+//         }))
+//       }
+//     } catch (err: any) {
+//       console.error("Error fetching students:", err)
+//       setError(err.response?.data?.message || "Failed to load students")
+//       setStudents([]) // Clear students on error
+//     } finally {
+//       setLoading(false)
+//     }
+//   }
+
+//   // Initial fetch
+//   useEffect(() => {
+//     fetchStudents()
+//   }, [])
+
+//   // Search handler with debounce
+//   useEffect(() => {
+//     const timer = setTimeout(() => {
+//       if (searchQuery !== "") {
+//         fetchStudents(1, searchQuery)
+//       } else {
+//         fetchStudents(1)
+//       }
+//     }, 500)
+
+//     return () => clearTimeout(timer)
+//   }, [searchQuery])
+
+//   // Fetch student photo
+//   const fetchStudentPhoto = async (studentId: string): Promise<string | null> => {
+//     try {
+//       const response = await api.get(`/api/university-admin/students/avatar?studentId=${studentId}`, {
+//         responseType: 'blob' // Important for image data
+//       })
+      
+//       if (response.data) {
+//         // Create object URL from blob
+//         const imageUrl = URL.createObjectURL(response.data)
+//         return imageUrl
+//       }
+//       return null
+//     } catch (err) {
+//       console.error("Error fetching student photo:", err)
+//       return null
+//     }
+//   }
+
+//   // Update student photo when modal opens
+//   useEffect(() => {
+//     if (showModal && currentStudent) {
+//       // Pre-fetch photo if available
+//       fetchStudentPhoto(currentStudent.matric).then(photoUrl => {
+//         if (photoUrl) {
+//           // You can set this as the initial captured photo
+//           // Or use it as a fallback if no photo is captured
+//         }
+//       })
+//     }
+//   }, [showModal, currentStudent])
+
+//   useEffect(() => {
+//     if (showModal && !capturedPhoto) {
+//       startCamera()
+//       setCameraActive(true)
+//     } else {
+//       stopCamera()
+//       setCameraActive(false)
+//     }
+
+//     return () => {
+//       stopCamera()
+//     }
+//   }, [showModal, capturedPhoto])
+
+//   const toggleStudentSelection = (studentId: string) => {
+//     setSelectedStudents((prev) => {
+//       const newSet = new Set(prev)
+//       if (newSet.has(studentId)) {
+//         newSet.delete(studentId)
+//       } else {
+//         newSet.add(studentId)
+//       }
+//       return newSet
+//     })
+//   }
+
+//   const toggleAllSelection = () => {
+//     if (selectedStudents.size === students.length) {
+//       setSelectedStudents(new Set())
+//     } else {
+//       // Only select students who have paid ID card fee
+//       const eligibleStudentIds = students
+//         .filter(student => student.hasPaidIDCardFee)
+//         .map(student => student.id)
+//       setSelectedStudents(new Set(eligibleStudentIds))
+//     }
+//   }
+
+//   const canIssueCard = (student: Student) => {
+//     // Student can get ID card if they have paid the ID card fee
+//     return student.hasPaidIDCardFee === true
+//   }
+
+//   const handleIssueCard = async (student: Student) => {
+//     if (!canIssueCard(student)) return
+
+//     setCurrentStudent(student)
+//     setCapturedPhoto(null)
+    
+//     // Try to load existing photo from API
+//     try {
+//       const photoUrl = await fetchStudentPhoto(student.matric)
+//       if (photoUrl) {
+//         setCapturedPhoto(photoUrl)
+//       }
+//     } catch (err) {
+//       console.log("No existing photo found, will capture new one")
+//     }
+    
+//     setShowModal(true)
+//   }
+
+//   const handlePageChange = (newPage: number) => {
+//     if (newPage >= 1 && newPage <= pagination.totalPages) {
+//       fetchStudents(newPage, searchQuery)
+//     }
+//   }
+
+//   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setSearchQuery(e.target.value)
+//   }
+
+//   const startCamera = async () => {
+//     try {
+//       const stream = await navigator.mediaDevices.getUserMedia({
+//         video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+//       })
+//       if (videoRef.current) {
+//         videoRef.current.srcObject = stream
+//       }
+//     } catch (err) {
+//       console.error("[v0] Error accessing camera:", err)
+//     }
+//   }
+
+//   const captureImage = () => {
+//     if (videoRef.current && canvasRef.current) {
+//       const context = canvasRef.current.getContext("2d")
+//       if (context) {
+//         context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
+//         const photoData = canvasRef.current.toDataURL("image/png")
+//         setCapturedPhoto(photoData)
+//         stopCamera()
+//         setCameraActive(false)
+//       }
+//     }
+//   }
+
+//   const stopCamera = () => {
+//     if (videoRef.current?.srcObject) {
+//       const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
+//       tracks.forEach((track) => track.stop())
+//     }
+//   }
+
+//   const handlePrintID = () => {
+//     const printWindow = window.open("", "", "width=1000,height=600")
+//     if (printWindow && currentStudent && capturedPhoto) {
+//       printWindow.document.write(`
+//         <!DOCTYPE html>
+//         <html>
+//           <head>
+//             <style>
+//               body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+//               .card-container { display: flex; gap: 40px; justify-content: center; }
+//               .card { width: 400px; height: 250px; border: 2px solid #333; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+//               .front { background: linear-gradient(135deg, #1D7AD9 0%, #0052A3 100%); color: white; display: flex; flex-direction: column; padding: 20px; }
+//               .logo { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+//               .student-section { display: flex; gap: 15px; flex: 1; }
+//               .photo { width: 80px; height: 100px; background: white; border-radius: 4px; overflow: hidden; }
+//               .photo img { width: 100%; height: 100%; object-fit: cover; }
+//               .details { flex: 1; font-size: 12px; }
+//               .details div { margin: 4px 0; }
+//               .label { font-size: 10px; opacity: 0.8; }
+//               .back { background: white; color: #333; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; border-left: 2px solid #1D7AD9; }
+//               .back-text { font-size: 11px; line-height: 1.6; text-align: center; margin-bottom: 20px; }
+//               .signature { border-top: 1px solid #333; padding-top: 10px; font-size: 10px; text-align: center; }
+//             </style>
+//           </head>
+//           <body>
+//             <div class="card-container">
+//               <div class="card front">
+//                 <div class="logo">UNIVERSITY OF PORT HARCOURT</div>
+//                 <div class="logo" style="font-size: 12px; margin-bottom: 15px;">${currentStudent.faculty}</div>
+//                 <div class="student-section">
+//                   <div class="photo"><img src="${capturedPhoto}" /></div>
+//                   <div class="details">
+//                     <div><span class="label">NAME</span></div>
+//                     <div style="font-weight: bold; margin-bottom: 8px;">${currentStudent.name}</div>
+//                     <div><span class="label">MATRIC NO</span></div>
+//                     <div>${currentStudent.matric}</div>
+//                     <div style="margin-top: 8px;"><span class="label">FACULTY</span></div>
+//                     <div>${currentStudent.faculty}</div>
+//                     <div style="margin-top: 8px;"><span class="label">DEPARTMENT</span></div>
+//                     <div>${currentStudent.department}</div>
+//                     <div style="margin-top: 8px;"><span class="label">EXPIRES</span></div>
+//                     <div>${new Date(currentStudent.graduationDate).toLocaleDateString()}</div>
+//                   </div>
+//                 </div>
+//               </div>
+//               <div class="card back">
+//                 <div class="back-text">
+//                   The holder whose name and photograph on this I.D card is a bonafide student of the University of Port Harcourt.
+//                 </div>
+//                 <div class="back-text">
+//                   If found please return to the office of Chief Security Officer, University of Port Harcourt.
+//                 </div>
+//                 <div class="signature">
+//                   Department Admin<br>
+//                   ________________<br>
+//                   Signature
+//                 </div>
+//               </div>
+//             </div>
+//           </body>
+//         </html>
+//       `)
+//       printWindow.document.close()
+//       printWindow.print()
+//     }
+//   }
+
+//   const handleDownloadID = () => {
+//     if (capturedPhoto && currentStudent) {
+//       const link = document.createElement("a")
+//       link.href = capturedPhoto
+//       link.download = `ID_${currentStudent.idNo}.png`
+//       link.click()
+//     }
+//   }
+
+//   // Add a function to upload photo to backend
+//   const uploadPhotoToBackend = async (studentId: string, photoData: string) => {
+//     try {
+//       // Convert base64 to blob
+//       const response = await fetch(photoData)
+//       const blob = await response.blob()
+      
+//       const formData = new FormData()
+//       formData.append('avatar', blob, `student_${studentId}.png`)
+      
+//       const uploadResponse = await api.post(
+//         `/api/university-admin/students/avatar?studentId=${studentId}`,
+//         formData,
+//         {
+//           headers: {
+//             'Content-Type': 'multipart/form-data'
+//           }
+//         }
+//       )
+      
+//       return uploadResponse.data
+//     } catch (err) {
+//       console.error("Error uploading photo:", err)
+//       throw err
+//     }
+//   }
+
+//   return (
+//     <div className="animate-in fade-in duration-500 max-w-[1400px] mx-auto">
+//       {/* Header */}
+//       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+//         <div>
+//           <h2 className="text-2xl font-bold text-slate-900">ID Card Issuance</h2>
+//           <p className="text-xs text-slate-500 mt-1">
+//             Issue ID cards to students by selecting them from the list below
+//           </p>
+//         </div>
+//         <button className="bg-[#1D7AD9] text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all w-full sm:w-auto justify-center">
+//           <Plus size={18} /> Add New Student
+//         </button>
+//       </div>
+
+//       {/* Search and Filter */}
+//       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
+//         <div className="relative w-full sm:flex-1 group">
+//           <input
+//             type="text"
+//             placeholder="Search by name or ID..."
+//             value={searchQuery}
+//             onChange={handleSearchChange}
+//             className="bg-white border border-slate-200 text-xs py-2.5 pl-4 pr-10 rounded-xl outline-none w-full focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 shadow-sm"
+//           />
+//           <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+//         </div>
+//         <button className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm w-full sm:w-auto">
+//           Filter
+//           <Filter size={14} className="text-slate-900" />
+//         </button>
+//       </div>
+
+//       {/* Loading and Error States */}
+//       {loading && (
+//         <div className="flex justify-center items-center py-10">
+//           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+//           <span className="ml-2 text-sm text-slate-600">Loading students...</span>
+//         </div>
+//       )}
+
+//       {error && !loading && (
+//         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+//           <p className="font-semibold">Error loading students</p>
+//           <p className="text-sm">{error}</p>
+//           <button
+//             onClick={() => fetchStudents(1, searchQuery)}
+//             className="mt-2 text-sm bg-red-100 hover:bg-red-200 px-3 py-1 rounded"
+//           >
+//             Retry
+//           </button>
+//         </div>
+//       )}
+
+//       {/* Students Table */}
+//       {!loading && !error && (
+//         <>
+//           <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm mb-6">
+//             <div className="overflow-x-auto scrollbar-hide">
+//               <table className="w-full text-left min-w-[800px]">
+//                 <thead>
+//                   <tr className="bg-slate-50/50 text-slate-500 font-bold text-[10px] uppercase tracking-wider border-b border-slate-100">
+//                     <th className="px-6 py-5 w-12 text-center">
+//                       <input
+//                         type="checkbox"
+//                         checked={selectedStudents.size > 0 && selectedStudents.size === students.filter(s => s.hasPaidIDCardFee).length}
+//                         onChange={toggleAllSelection}
+//                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10"
+//                       />
+//                     </th>
+//                     <th className="px-6 py-5">ID No</th>
+//                     <th className="px-6 py-5">Name</th>
+//                     <th className="px-6 py-5">Matric</th>
+//                     <th className="px-6 py-5">Faculty</th>
+//                     <th className="px-6 py-5">Department</th>
+//                     <th className="px-6 py-5 text-center">Action</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="divide-y divide-slate-50">
+//                   {students.length === 0 ? (
+//                     <tr>
+//                       <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
+//                         {searchQuery ? "No students found matching your search" : "No students found"}
+//                       </td>
+//                     </tr>
+//                   ) : (
+//                     students.map((student) => (
+//                       <tr key={student.id} className="hover:bg-slate-50/30 transition-colors">
+//                         <td className="px-6 py-5 text-center">
+//                           <input
+//                             type="checkbox"
+//                             checked={selectedStudents.has(student.id)}
+//                             onChange={() => toggleStudentSelection(student.id)}
+//                             className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10"
+//                             disabled={!canIssueCard(student)}
+//                           />
+//                         </td>
+//                         <td className="px-6 py-5 text-[11px] text-slate-400 font-medium">{student.idNo}</td>
+//                         <td className="px-6 py-5 text-xs font-bold text-slate-700">
+//                           {student.name}
+//                           {student.hasPaidIDCardFee && (
+//                             <span className="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+//                               Paid
+//                             </span>
+//                           )}
+//                         </td>
+//                         <td className="px-6 py-5 text-xs text-slate-500">{student.matric}</td>
+//                         <td className="px-6 py-5 text-xs text-slate-500">{student.faculty}</td>
+//                         <td className="px-6 py-5 text-xs text-slate-500">{student.department}</td>
+//                         <td className="px-6 py-5 text-center">
+//                           <button
+//                             onClick={() => handleIssueCard(student)}
+//                             disabled={!canIssueCard(student)}
+//                             className={`text-xs font-bold transition-colors ${
+//                               canIssueCard(student)
+//                                 ? "text-blue-600 hover:text-blue-700 cursor-pointer"
+//                                 : "text-slate-300 cursor-not-allowed"
+//                             }`}
+//                           >
+//                             {canIssueCard(student) ? "Issue Card" : "Payment Required"}
+//                           </button>
+//                         </td>
+//                       </tr>
+//                     ))
+//                   )}
+//                 </tbody>
+//               </table>
+//             </div>
+//           </div>
+
+//           {/* Pagination */}
+//           {pagination.totalPages > 1 && (
+//             <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4 rounded-b-2xl">
+//               <div className="flex items-center gap-2 text-sm text-slate-600">
+//                 <span>Total:</span>
+//                 <span className="font-semibold">{pagination.totalItems} students</span>
+//               </div>
+              
+//               <div className="flex items-center gap-2">
+//                 <button
+//                   onClick={() => handlePageChange(1)}
+//                   disabled={pagination.currentPage === 1}
+//                   className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+//                 >
+//                   <ChevronsLeft size={16} className="text-slate-600" />
+//                 </button>
+//                 <button
+//                   onClick={() => handlePageChange(pagination.currentPage - 1)}
+//                   disabled={pagination.currentPage === 1}
+//                   className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+//                 >
+//                   <ChevronLeft size={16} className="text-slate-600" />
+//                 </button>
+                
+//                 <div className="flex items-center gap-1 mx-2">
+//                   <span className="text-sm text-slate-600">
+//                     Page {pagination.currentPage} of {pagination.totalPages}
+//                   </span>
+//                 </div>
+                
+//                 <button
+//                   onClick={() => handlePageChange(pagination.currentPage + 1)}
+//                   disabled={pagination.currentPage === pagination.totalPages}
+//                   className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+//                 >
+//                   <ChevronRight size={16} className="text-slate-600" />
+//                 </button>
+//                 <button
+//                   onClick={() => handlePageChange(pagination.totalPages)}
+//                   disabled={pagination.currentPage === pagination.totalPages}
+//                   className="p-2 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+//                 >
+//                   <ChevronsRight size={16} className="text-slate-600" />
+//                 </button>
+//               </div>
+              
+//               <div className="text-sm text-slate-500">
+//                 Showing {students.length} of {pagination.totalItems}
+//               </div>
+//             </div>
+//           )}
+//         </>
+//       )}
+
+//       {showModal && (
+//         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+//           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+//             {/* Modal Header */}
+//             <div className="flex justify-between items-center p-6 border-b border-slate-100">
+//               <h3 className="text-lg font-bold text-slate-900">Capture and Preview ID Card - {currentStudent?.name}</h3>
+//               <button
+//                 onClick={() => setShowModal(false)}
+//                 className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+//               >
+//                 <X size={20} className="text-slate-600" />
+//               </button>
+//             </div>
+
+//             {/* Modal Content */}
+//             <div className="p-6 flex flex-col gap-8">
+//               {/* Camera Capture Section */}
+//               <div className="flex flex-col items-center gap-4">
+//                 <h4 className="text-sm font-semibold text-slate-900">Capture Photo</h4>
+//                 <div className="w-full bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center relative">
+//                   {!capturedPhoto ? (
+//                     <>
+//                       <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+//                       {!cameraActive && (
+//                         <div className="absolute flex flex-col items-center gap-4">
+//                           <Camera size={64} className="text-slate-300" />
+//                           <p className="text-white text-sm">Initializing camera...</p>
+//                         </div>
+//                       )}
+//                     </>
+//                   ) : (
+//                     <img
+//                       src={capturedPhoto || "/placeholder.svg"}
+//                       alt="Captured"
+//                       className="w-full h-full object-cover"
+//                     />
+//                   )}
+//                 </div>
+//                 <canvas ref={canvasRef} width={640} height={480} className="hidden" />
+
+//                 {!capturedPhoto && (
+//                   <button
+//                     onClick={captureImage}
+//                     className="bg-[#1D7AD9] text-white px-8 py-3 rounded-lg flex items-center gap-2 font-bold hover:bg-blue-700 transition-all w-full justify-center shadow-lg shadow-blue-500/20"
+//                   >
+//                     <Camera size={18} /> Capture Image
+//                   </button>
+//                 )}
+
+//                 {capturedPhoto && (
+//                   <button
+//                     onClick={() => {
+//                       setCapturedPhoto(null)
+//                       startCamera()
+//                       setCameraActive(true)
+//                     }}
+//                     className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
+//                   >
+//                     Retake Photo
+//                   </button>
+//                 )}
+//               </div>
+
+//               {/* ID Card Preview Section */}
+//               {capturedPhoto && (
+//                 <div className="flex flex-col gap-4">
+//                   <h4 className="text-sm font-semibold text-slate-900">ID Card Preview</h4>
+//                   <div className="grid grid-cols-2 gap-6">
+//                     {/* Front of Card */}
+//                     <div className="flex flex-col items-center">
+//                       <p className="text-xs font-semibold text-slate-600 mb-3">Front</p>
+//                       <div className="w-full bg-gradient-to-br from-[#1D7AD9] to-[#0052A3] rounded-lg p-4 aspect-video flex flex-col justify-between text-white relative overflow-hidden">
+//                         <div className="relative z-10">
+//                           <p className="text-xs font-bold mb-1">UNIVERSITY OF PORT HARCOURT</p>
+//                           <p className="text-[10px] opacity-90">{currentStudent?.faculty}</p>
+//                           <p className="text-[9px] opacity-75">Port Harcourt, Nigeria</p>
+//                         </div>
+
+//                         <div className="flex gap-3 relative z-10">
+//                           <div className="w-16 h-20 bg-white rounded overflow-hidden flex-shrink-0">
+//                             <img
+//                               src={capturedPhoto || "/placeholder.svg"}
+//                               alt="Student"
+//                               className="w-full h-full object-cover"
+//                             />
+//                           </div>
+//                           <div className="flex-1 flex flex-col justify-between text-[9px]">
+//                             <div>
+//                               <p className="font-bold text-xs">{currentStudent?.name}</p>
+//                               <p className="opacity-90">ID: {currentStudent?.idNo}</p>
+//                               <p className="opacity-90">Matric: {currentStudent?.matric}</p>
+//                             </div>
+//                             <div>
+//                               <p className="opacity-75">Faculty: {currentStudent?.faculty}</p>
+//                               <p className="opacity-75">Dept: {currentStudent?.department}</p>
+//                               <p className="opacity-75">
+//                                 Expires: {new Date(currentStudent?.graduationDate || "").toLocaleDateString()}
+//                               </p>
+//                             </div>
+//                           </div>
+//                         </div>
+//                       </div>
+//                     </div>
+
+//                     {/* Back of Card */}
+//                     <div className="flex flex-col items-center">
+//                       <p className="text-xs font-semibold text-slate-600 mb-3">Back</p>
+//                       <div className="w-full bg-white border-2 border-[#1D7AD9] rounded-lg p-4 aspect-video flex flex-col justify-between text-center overflow-hidden">
+//                         <div className="flex-1 flex flex-col justify-center gap-3">
+//                           <p className="text-[9px] leading-relaxed text-slate-700 font-medium">
+//                             The holder whose name and photograph on this I.D card is a bonafide student of the
+//                             university of port harcourt.
+//                           </p>
+//                           <p className="text-[9px] leading-relaxed text-slate-700 font-medium">
+//                             If found please return to the office of Chief Security Officer university of port harcourt.
+//                           </p>
+//                         </div>
+//                         <div className="border-t border-slate-300 pt-2">
+//                           <p className="text-[8px] text-slate-600 font-semibold">Department Admin</p>
+//                           <p className="text-[8px] text-slate-500 mt-1">________________</p>
+//                           <p className="text-[8px] text-slate-500">Signature</p>
+//                         </div>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               )}
+//             </div>
+
+//             {/* Action Buttons */}
+//             {capturedPhoto && (
+//               <div className="flex gap-3 p-6 border-t border-slate-100 bg-slate-50">
+//                 <button
+//                   onClick={handlePrintID}
+//                   className="bg-green-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 font-bold hover:bg-green-700 transition-all flex-1 justify-center"
+//                 >
+//                   <Printer size={18} /> Print ID
+//                 </button>
+//                 <button
+//                   onClick={handleDownloadID}
+//                   className="bg-blue-600 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 font-bold hover:bg-blue-700 transition-all flex-1 justify-center"
+//                 >
+//                   <Download size={18} /> Download ID
+//                 </button>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   )
+// }
+
+
