@@ -14,7 +14,6 @@ import {
   getCourseCart,
   removeCourseFromCart,
   bulkRegisterCourses,
-  initRegistrationFeePayment,
 } from '../services/registrationService';
 import type {
   Level,
@@ -521,36 +520,6 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
     }
   };
 
-  // Handle payment initialization
-  const handlePayRegistrationFee = async () => {
-    const storedUser = getStoredUser();
-    const sessionId = storedUser?.profile?.sessionId;
-
-    if (!sessionId) {
-      alert('Unable to retrieve your session information. Please log in again.');
-      return;
-    }
-
-    const callbackUrl = import.meta.env.VITE_CALLBACK_URL|| 'http://localhost:3000/students/registration/courses';
-    const amount = 5000;
-
-    console.log('Callback URL from env:', import.meta.env.VITE_CALLBACK_URL);
-    console.log('Final callback URL:', callbackUrl);
-
-    const result = await initRegistrationFeePayment(sessionId, amount, callbackUrl);
-
-    if (result.success && result.data) {
-      // Store the payment reference for later use
-      setPaymentReference(result.data.reference);
-      localStorage.setItem('pendingPaymentReference', result.data.reference);
-      
-      // Redirect to Paystack
-      window.location.href = result.data.authorizationUrl;
-    } else {
-      alert(`Error: ${result.message}`);
-    }
-  };
-
   // Confirmation Modal
   if (showConfirmation) {
     return (
@@ -755,11 +724,9 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                 {isAddingToCart ? 'Adding...' : 'Confirm Courses'}
               </button>
               <button 
-                onClick={handlePayRegistrationFee}
-                disabled={!isCartConfirmed}
-                className="bg-[#f97316] text-white px-6 py-2.5 rounded-lg text-[11px] font-bold hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="bg-white border border-gray-200 text-[#1e293b] px-6 py-2.5 rounded-lg text-[11px] font-bold hover:bg-gray-50 transition-colors"
               >
-                Pay Registration Fee
+                Cancel
               </button>
             </div>
 

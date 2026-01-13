@@ -130,6 +130,18 @@ const LoginFormStep: React.FC<LoginFormStepProps> = ({ onLoginSuccess, onForgotP
               </button>
             </p>
           </div>
+          <div className="mt-4 text-center">
+            <p className="text-[13px] font-bold text-gray-400">
+              Activate your account to gain access?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/register")}
+                className="text-[#3b82f6] cursor-pointer hover:underline"
+              >
+                Click Here
+              </button>
+            </p>
+          </div>
         </form>
       </AuthCard>
     </div>

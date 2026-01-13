@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { User, Eye, EyeOff } from 'lucide-react';
+import { User, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import AuthBackground from '../components/AuthBackground';
 import AuthCard from '../components/AuthCard';
+import authService from '../../../services/authService';
 
 interface ActivateAccountStepProps {
   onNext: () => void;
@@ -9,8 +10,34 @@ interface ActivateAccountStepProps {
 }
 
 const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onForgotPassword }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleActivate = async () => {
+    if (!email.trim()) {
+      setError('Please enter your email');
+      return;
+    }
+    if (!password.trim()) {
+      setError('Please enter your password');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await authService.activateAccount({ email, password });
+      onNext();
+    } catch (err: any) {
+      setError(err.message || 'Account activation failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative font-['Inter']">
@@ -25,12 +52,26 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
             phone number as username and password respectively
           </p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle size={20} className="shrink-0" />
+            <p className="text-[13px] font-bold">{error}</p>
+          </div>
+        )}
+
         <div className="space-y-6">
           <div className="relative group">
             <input
-              type="text"
-              placeholder="Enter Username"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError('');
+              }}
+              placeholder="Enter Email"
               className="w-full bg-white border border-gray-300 rounded-xl py-4 px-6 text-[15px] font-medium text-[#1e293b] focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-[#1d76d2] transition-all"
+              disabled={isLoading}
             />
             <User
               className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400"
@@ -40,46 +81,38 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
           <div className="relative group">
             <input
               type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError('');
+              }}
               placeholder="Enter Password"
               className="w-full bg-white border border-gray-300 rounded-xl py-4 px-6 text-[15px] font-medium text-[#1e293b] focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-[#1d76d2] transition-all"
+              disabled={isLoading}
+              onKeyDown={(e) => e.key === 'Enter' && handleActivate()}
             />
             <button
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500"
+              disabled={isLoading}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
-          <div className="flex items-center space-x-3 px-2">
-            <button
-              onClick={() => setRememberMe(!rememberMe)}
-              className={`relative w-11 h-5 rounded-full transition-colors ${rememberMe ? "bg-blue-100" : "bg-gray-100"}`}
-            >
-              <div
-                className={`absolute top-1 left-1 w-3 h-3 rounded-full transition-transform transform ${rememberMe ? "translate-x-6 bg-[#1d76d2]" : "translate-x-0 bg-white"}`}
-              ></div>
-            </button>
-            <span className="text-[12px] font-bold text-gray-400">
-              Remember me
-            </span>
-          </div>
           <button
-            onClick={onNext}
-            className="w-full bg-[#1d76d2] hover:bg-[#1565c0] text-white py-4 rounded-xl text-[16px] font-black shadow-lg shadow-blue-200/50 transition-all"
+            onClick={handleActivate}
+            disabled={isLoading}
+            className="w-full bg-[#1d76d2] hover:bg-[#1565c0] disabled:bg-blue-300 disabled:cursor-not-allowed text-white py-4 rounded-xl text-[16px] font-black shadow-lg shadow-blue-200/50 transition-all flex items-center justify-center gap-2"
           >
-            Activate Account
+            {isLoading ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                <span>Activating...</span>
+              </>
+            ) : (
+              'Activate Account'
+            )}
           </button>
-          <div className="text-center mt-4">
-            <p className="text-[12px] font-bold text-gray-400">
-              Forgot Password?{" "}
-              <button
-                onClick={onForgotPassword}
-                className="text-[#3b82f6] cursor-pointer hover:underline"
-              >
-                Click Here
-              </button>
-            </p>
-          </div>
         </div>
       </AuthCard>
     </div>

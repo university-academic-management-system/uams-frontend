@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import RegNumberStep from "./auth/steps/RegNumberStep";
-import ContactInfoStep from "./auth/steps/ContactInfoStep";
+
 import PaymentStep from "./auth/steps/PaymentStep";
 import ActivateAccountStep from "./auth/steps/ActivateAccountStep";
 import LoginFormStep from "./auth/steps/LoginFormStep";
@@ -15,7 +15,6 @@ interface LoginProps {
 
 type AuthStep =
   | "reg-number"
-  | "contact-info"
   | "payment"
   | "activate"
   | "login"
@@ -34,7 +33,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialStep }) => {
   const go = (s: AuthStep) => {
     switch(s) {
       case "reg-number": navigate("/register"); break;
-      case "contact-info": navigate("/contact-info"); break;
       case "payment": navigate("/payment"); break;
       case "activate": navigate("/activate-account"); break;
       case "login": navigate("/login"); break;
@@ -60,25 +58,18 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialStep }) => {
   // --- ORIGINAL AUTH FLOW STEPS ---
 
   if (step === "reg-number") {
-    return <RegNumberStep onNext={() => go("contact-info")} />;
-  }
-
-  if (step === "contact-info") {
-    return <ContactInfoStep onNext={() => go("payment")} />;
-  }
-
-  if (step === "payment") {
-    return <PaymentStep onNext={() => go("activate")} />;
+    return <RegNumberStep onNext={() => go("activate")} />;
   }
 
   if (step === "activate") {
-    return (
-      <ActivateAccountStep
-        onNext={() => go("login")}
-        onForgotPassword={() => go("forgot-password")}
-      />
-    );
+    return <ActivateAccountStep onNext={() => go("payment")} />;
   }
+
+  if (step === "payment") {
+    return <PaymentStep onNext={() => go("login")} />;
+  }
+
+  
 
   // Default: Login Form
   return (
