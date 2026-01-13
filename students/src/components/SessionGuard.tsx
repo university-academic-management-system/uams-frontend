@@ -8,7 +8,7 @@ import authService from "../services/authService";
  */
 const SessionGuard: React.FC = () => {
   if (!authService.isAuthenticated()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/students/login" replace />;
   }
 
   return <Outlet />;
