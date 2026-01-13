@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
     return {
       base: '/students/',
       server: {
-        allowedHosts: '*',
+        allowedHosts: ['computerscience.uniport.edu.ng', 'localhost'],
         port: 3000,
         host: '0.0.0.0',
       },
