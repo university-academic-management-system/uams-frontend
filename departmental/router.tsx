@@ -7,7 +7,7 @@ import ProgramCoursesPage from "./pages/ProgramCoursesPage";
 import { StudentsView } from "./pages/StudentsView";
 import { StaffView } from "./components/StaffView";
 import { AnnouncementsView } from "./components/AnnouncementsView";
-import { PaymentsView } from "./components/PaymentsView";
+import  PaymentsPage  from "./pages/PaymentsPage";
 import { SettingsView } from "./components/SettingsView";
 import { NotificationsView } from "./components/NotificationsView";
 import { RolesView } from "./components/RolesView";
@@ -49,7 +49,7 @@ const router = createBrowserRouter([
           },
           {
             path: "payments",
-            element: <PaymentsView />,
+            element: <PaymentsPage />,
           },
           {
             path: "roles-permissions",

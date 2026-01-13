@@ -60,7 +60,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ onSubmit, onCancel }) => {
 
         // ✅ REQUIRED BY BACKEND
         Level: level.name.replace(" Level", ""),
-        Semester: semester.order ?? 1,
+        Semester: semester.name,
       };
 
       console.log("Sending course payload:", payload);

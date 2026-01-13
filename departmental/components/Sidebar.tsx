@@ -1,18 +1,17 @@
-
-import React from 'react';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Users, 
-  UserSquare2, 
-  CreditCard, 
-  ShieldCheck, 
-  Megaphone, 
+import React from "react";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Users,
+  UserSquare2,
+  CreditCard,
+  ShieldCheck,
+  Megaphone,
   Settings,
   GraduationCap,
-  LogOut
-} from 'lucide-react';
-import { ViewType } from '../types';
+  LogOut,
+} from "lucide-react";
+import { ViewType } from "../types";
 
 interface SidebarProps {
   activeView: ViewType;
@@ -21,17 +20,21 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard' as ViewType },
-  { icon: BookOpen, label: 'Program & Courses' as ViewType },
-  { icon: Users, label: 'Staff' as ViewType },
-  { icon: UserSquare2, label: 'Students' as ViewType },
-  { icon: CreditCard, label: 'Payments' as ViewType },
-  { icon: ShieldCheck, label: 'Roles & Permissions' as ViewType },
-  { icon: Megaphone, label: 'Announcements' as ViewType },
-  { icon: Settings, label: 'Settings' as ViewType },
+  { icon: LayoutDashboard, label: "Dashboard" as ViewType },
+  { icon: BookOpen, label: "Program & Courses" as ViewType },
+  { icon: Users, label: "Staff" as ViewType },
+  { icon: UserSquare2, label: "Students" as ViewType },
+  { icon: CreditCard, label: "Payments" as ViewType },
+  { icon: ShieldCheck, label: "Roles & Permissions" as ViewType },
+  { icon: Megaphone, label: "Announcements" as ViewType },
+  { icon: Settings, label: "Settings" as ViewType },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLogout }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  activeView,
+  onViewChange,
+  onLogout,
+}) => {
   return (
     <aside className="w-64 bg-white h-screen border-r border-gray-200 flex flex-col fixed left-0 top-0 z-50">
       <div className="p-6 flex items-center gap-2">
@@ -49,12 +52,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
             key={item.label}
             onClick={() => onViewChange(item.label)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group ${
-              activeView === item.label 
-                ? 'bg-slate-100 text-slate-900 font-semibold' 
-                : 'text-slate-500 hover:bg-gray-50 hover:text-slate-900'
+              activeView === item.label
+                ? "bg-slate-100 text-slate-900 font-semibold"
+                : "text-slate-500 hover:bg-gray-50 hover:text-slate-900"
             }`}
           >
-            <item.icon size={20} className={activeView === item.label ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'} />
+            <item.icon
+              size={20}
+              className={
+                activeView === item.label
+                  ? "text-blue-600"
+                  : "text-slate-400 group-hover:text-slate-600"
+              }
+            />
             <span className="text-sm">{item.label}</span>
           </button>
         ))}
