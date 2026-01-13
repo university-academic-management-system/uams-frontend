@@ -26,11 +26,13 @@ const PaymentMethodItem = ({ icon: IconComp, label, active = false }: { icon: an
 const PaymentsNew: React.FC = () => {
   const query = useQuery();
   const type = query.get('type') || 'other';
+  const purpose = query.get('purpose') || '';
   const semesterId = query.get('semesterId') || '';
   const navigate = useNavigate();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const labelMap: Record<string, string> = {
     registration: 'ID Card',
@@ -38,10 +40,30 @@ const PaymentsNew: React.FC = () => {
     other: 'Other Payment',
   };
 
-  const purpose = labelMap[type] ?? labelMap.other;
+  const paymentPurpose = labelMap[type] ?? labelMap.other;
   const amount = 5000; // Could be dynamic based on type
 
   const handlePayment = async () => {
+    // ID Card payments (no semesterId required)
+    if (purpose === 'idcard') {
+      setIsProcessing(true);
+      setErrorMessage(null);
+      
+      // Mock payment success
+      setTimeout(() => {
+        // Store payment confirmation
+        localStorage.setItem('idCardPaymentSuccess', 'true');
+        localStorage.setItem('idCardPaymentDate', new Date().toISOString());
+        
+        setSuccessMessage('Payment Successful! Your ID Card payment has been confirmed.');
+        setTimeout(() => {
+          navigate('/registration/other');
+        }, 2000);
+      }, 1500);
+      return;
+    }
+    
+    // Course registration payments
     if (type === 'registration') {
       if (!semesterId) {
         setErrorMessage('Semester ID is required for registration payment');
@@ -63,13 +85,44 @@ const PaymentsNew: React.FC = () => {
       }
     } else {
       // Handle other payment types
-      alert('Payment Successful!');
-      navigate('/payments');
+      setIsProcessing(true);
+      setErrorMessage(null);
+      
+      // Mock payment success
+      setTimeout(() => {
+        alert('✅ Payment Successful!');
+        navigate('/payments');
+      }, 1500);
     }
   };
 
   return (
     <Box p={{ base: 4, lg: 8 }}>
+      {/* Success Notification */}
+      {successMessage && (
+        <Box 
+          position="fixed" 
+          top={4} 
+          right={4} 
+          bg="linear-gradient(135deg, #4ade80 0%, #22c55e 100%)"
+          color="white"
+          px={6}
+          py={4}
+          rounded="xl"
+          shadow="lg"
+          display="flex"
+          alignItems="center"
+          gap={3}
+          zIndex={9999}
+          animation="slideIn 0.3s ease-out"
+        >
+          <Box fontSize="xl">✓</Box>
+          <Box>
+            <Text fontSize="sm" fontWeight="bold">{successMessage}</Text>
+          </Box>
+        </Box>
+      )}
+
       {/* Header not strictly needed if we assume it's inside the dashboard layout, but good to have a title */}
       <Box bg="white" rounded="2xl" p={{ base: 6, lg: 10 }} shadow="sm">
         <Heading fontSize="2xl" mb={8} fontWeight="bold" color="#1e293b">Make Payment</Heading>
@@ -78,7 +131,7 @@ const PaymentsNew: React.FC = () => {
         <Flex justify="space-between" align="flex-start" mb={10} wrap="wrap" gap={6}>
           <Box>
             <Text fontSize="xs" color="gray.500" mb={1} textTransform="uppercase" fontWeight="bold">Purpose</Text>
-            <Text fontWeight="bold" fontSize="lg" color="#1e293b">{purpose}</Text>
+            <Text fontWeight="bold" fontSize="lg" color="#1e293b">{paymentPurpose}</Text>
           </Box>
           <Box>
             <Text fontSize="xs" color="gray.500" mb={1} textTransform="uppercase" fontWeight="bold">Transaction ID:</Text>
