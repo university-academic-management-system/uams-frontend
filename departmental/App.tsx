@@ -488,7 +488,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       case "Staff":
         return <StaffView />;
       case "Payments":
-        return <PaymentsView />;
+        return <PaymentsPage />;
       case "ID Card Management":
         return <RolesView />;
       case "Announcements":
