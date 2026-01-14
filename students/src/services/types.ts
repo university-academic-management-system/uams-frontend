@@ -46,6 +46,7 @@ export interface StudentProfile {
   studentId: string; // e.g., "MAT/2025/001"
   level: string; // e.g., "500"
   levelId: string;
+  sessionId: string;
   isActive: boolean;
   academicStanding: 'GOOD' | 'PROBATION' | 'SUSPENDED' | string;
   probationStartDate: string | null;

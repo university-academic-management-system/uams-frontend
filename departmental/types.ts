@@ -60,7 +60,7 @@ export interface Session {
   status: 'Current' | 'Past' | 'Upcoming';
 }
 
-export type ViewType = 'Dashboard' | 'Program & Courses' | 'Students' | 'Staff' | 'Payments' | 'Roles & Permissions' | 'Announcements' | 'Settings' | 'Notifications';
+export type ViewType = 'Dashboard' | 'Program & Courses' | 'Students' | 'Staff' | 'Payments' | 'ID Card Management' | 'Announcements' | 'Settings' | 'Notifications';
 
 export interface Permission {
   id: string;

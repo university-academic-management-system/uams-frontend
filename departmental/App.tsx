@@ -281,7 +281,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       Students: "/students",
       Staff: "/staff",
       Payments: "/payments",
-      "Roles & Permissions": "/roles-permissions",
+      "ID Card Management": "/roles-permissions",
       Announcements: "/announcements",
       Settings: "/settings",
       Notifications: "/notifications",
@@ -296,7 +296,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       "/students": "Students",
       "/staff": "Staff",
       "/payments": "Payments",
-      "/roles-permissions": "Roles & Permissions",
+      "/roles-permissions": "ID Card Management",
       "/announcements": "Announcements",
       "/settings": "Settings",
       "/notifications": "Notifications",
@@ -488,8 +488,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       case "Staff":
         return <StaffView />;
       case "Payments":
-        return <PaymentsPage />;
-      case "Roles & Permissions":
+        return <PaymentsView />;
+      case "ID Card Management":
         return <RolesView />;
       case "Announcements":
         return <AnnouncementsView />;
@@ -533,7 +533,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <Route path="/payments" element={renderContent("Payments")} />
             <Route
               path="/roles-permissions"
-              element={renderContent("Roles & Permissions")}
+              element={renderContent("ID Card Management")}
             />
             <Route
               path="/announcements"

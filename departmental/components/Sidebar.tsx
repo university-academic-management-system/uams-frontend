@@ -20,21 +20,20 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard" as ViewType },
-  { icon: BookOpen, label: "Program & Courses" as ViewType },
-  { icon: Users, label: "Staff" as ViewType },
-  { icon: UserSquare2, label: "Students" as ViewType },
-  { icon: CreditCard, label: "Payments" as ViewType },
-  { icon: ShieldCheck, label: "Roles & Permissions" as ViewType },
-  { icon: Megaphone, label: "Announcements" as ViewType },
-  { icon: Settings, label: "Settings" as ViewType },
+  { icon: LayoutDashboard, label: 'Dashboard' as ViewType },
+  { icon: BookOpen, label: 'Program & Courses' as ViewType },
+  { icon: Users, label: 'Staff' as ViewType },
+  { icon: UserSquare2, label: 'Students' as ViewType },
+  { icon: CreditCard, label: 'Payments' as ViewType },
+  { icon: ShieldCheck, label: 'ID Card Management' as ViewType },
+  { icon: Megaphone, label: 'Announcements' as ViewType },
+  { icon: Settings, label: 'Settings' as ViewType },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  activeView,
-  onViewChange,
-  onLogout,
-}) => {
+
+// ID Card Management
+// Roles & Permissions
+export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLogout }) => {
   return (
     <aside className="w-64 bg-white h-screen border-r border-gray-200 flex flex-col fixed left-0 top-0 z-50">
       <div className="p-6 flex items-center gap-2">
