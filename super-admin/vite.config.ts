@@ -7,9 +7,9 @@ export default defineConfig(({ mode }) => {
     return {
       base: '/super-admin/',
       server: {
-        allowedHosts: ["a1dd3159869e.ngrok-free.app"],
-        // port: 3000,
-        // host: '0.0.0.0',
+        allowedHosts: ['computerscience.uniport.edu.ng', 'localhost'],
+        port: 3000,
+        host: '0.0.0.0',
       },
       plugins: [react()],
       define: {
