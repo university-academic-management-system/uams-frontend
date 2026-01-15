@@ -222,7 +222,7 @@ export default function Hero({ onLoginClick }: HeroProps) {
               {[
                 { value: "50K+", label: "Students" },
                 { value: "1,200+", label: "Courses" },
-                { value: "500+", label: "Faculty" },
+                { value: "500+", label: "Faculties" },
               ].map((stat, i) => (
                 <MotionBox
                   key={stat.label}

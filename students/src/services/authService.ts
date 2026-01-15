@@ -58,6 +58,7 @@ export const verifyStudent = async (studentId: string): Promise<LoginResponse> =
 
 interface ActivateAccountRequest {
   email: string;
+  phone: string;
   password: string;
 }
 
@@ -153,6 +154,132 @@ export const getStoredUser = () => {
   }
 };
 
+export interface DepartmentDuesResponse {
+  success: boolean;
+  data: {
+    departmentDues: number;
+    accessFee: number;
+    totalFee: number;
+  };
+}
+
+/**
+ * Get department annual dues breakdown
+ */
+export const getDepartmentAnnualDue = async (): Promise<DepartmentDuesResponse> => {
+  try {
+    const response = await apiClient.get<DepartmentDuesResponse>('/annual-access-fee');
+    
+    if (response.data.success) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to fetch dues information');
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to fetch dues. Please try again.');
+  }
+};
+
+export interface IdCardFeeResponse {
+  success: boolean;
+  data: {
+    idCardFee: number;
+  };
+}
+
+/**
+ * Get ID card fee
+ */
+export const getIdCardFee = async (): Promise<IdCardFeeResponse> => {
+  try {
+    const response = await apiClient.get<IdCardFeeResponse>('/annual-access-fee/idcard-fee');
+    
+    if (response.data.success) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to fetch ID card fee');
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to fetch ID card fee. Please try again.');
+  }
+};
+
+/**
+ * Initialize ID card payment
+ */
+export const initializeIdCardPayment = async (): Promise<InitializePaymentResponse> => {
+  try {
+    const callbackUrl = import.meta.env.VITE_ID_CARD_CALLBACK_URL;
+    const response = await apiClient.post<InitializePaymentResponse>('/annual-access-fee/idcard-payment', { callbackUrl });
+
+    if (response.data.success) {
+      return response.data;
+    }
+
+    throw new Error(response.data.message || 'ID card payment initialization failed');
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('ID card payment initialization failed. Please try again.');
+  }
+};
+
+export interface ConfirmIdCardPaymentResponse {
+  success: boolean;
+  transaction: {
+    id: string;
+    reference: string;
+    student_id: string;
+    student_reg_number: string;
+    student_name: string;
+    payment_for: string;
+    amount: string;
+    currency: string;
+    status: string;
+    paid_at: string;
+  };
+}
+
+/**
+ * Confirm ID card payment after returning from Paystack
+ * @param reference - Payment reference from callback URL
+ */
+export const confirmIdCardPayment = async (reference: string): Promise<ConfirmIdCardPaymentResponse> => {
+  try {
+    const response = await apiClient.post<ConfirmIdCardPaymentResponse>('/annual-access-fee/confirm-idcard-payment', { reference });
+
+    if (response.data.success) {
+      return response.data;
+    }
+
+    throw new Error('Failed to confirm ID card payment');
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to confirm ID card payment. Please try again.');
+  }
+};
+
 const authService = {
   login,
   logout,
@@ -161,6 +288,10 @@ const authService = {
   verifyStudent,
   activateAccount,
   initializePayment,
+  getDepartmentAnnualDue,
+  getIdCardFee,
+  initializeIdCardPayment,
+  confirmIdCardPayment,
 };
 
 export default authService;

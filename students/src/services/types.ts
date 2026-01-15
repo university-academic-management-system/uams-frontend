@@ -127,6 +127,7 @@ export interface RegisteredCourse {
   lecturer: string;
   status: 'registered' | 'pending' | 'dropped';
   registeredAt: string;
+  sessionId?: string; 
 }
 
 export interface RegistrationData {

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router";
 import Login from "./components/Login";
 import SessionGuard from "./components/SessionGuard";
 import DashboardLayout from "./components/DashboardLayout";
@@ -78,7 +78,7 @@ const router = createBrowserRouter([
     element: <Navigate to="/dashboard" replace />,
   },
 ], {
-  basename: "/department-admin"
+  basename: "/departmental-admin"
 });
 
 export default router;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { User, Eye, EyeOff } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import api from "../api/axios";
 import { AuthData } from "../components/types";
 import { useAuth } from "../context/AuthProvider";
@@ -25,7 +25,7 @@ const Login: React.FC = () => {
       localStorage.setItem("loginEmail", email);
 
       // API call to signin endpoint
-      const response = await api.post("/api/auth/signin", {
+      const response = await api.post("/auth/signin", {
         email: email,
         password: password,
       });
@@ -86,7 +86,7 @@ const Login: React.FC = () => {
       {/* Left Side - Modern Campus Image */}
       <div className="hidden lg:block lg:w-[65%] relative">
         <img
-          src="/assets/54edd5a52523c71877ec8fcec5d76c0ac0adf1f5.png"
+          src="/departmental-admin/assets/54edd5a52523c71877ec8fcec5d76c0ac0adf1f5.png"
           alt="Modern University Campus"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -99,7 +99,7 @@ const Login: React.FC = () => {
         <div className="w-full max-w-md bg-[#f9fbff] lg:bg-[#f9fbff] p-8 lg:p-12 rounded-[48px] border border-[#e2e8f0]/60 shadow-xl shadow-blue-50/20 lg:shadow-2xl lg:shadow-blue-50/40 animate-in fade-in zoom-in-95 duration-700">
           <div className="flex justify-center mb-12">
             <img
-              src="/assets/spedox.jpg"
+              src="/departmental-admin/assets/uphcscLG.png"
               alt="Logo"
               className="h-12 w-auto rounded-md"
             />
@@ -240,13 +240,6 @@ const Login: React.FC = () => {
               >
                 Click Here
               </button>
-            </p>
-          </div>
-
-          {/* Debug info (optional - remove in production) */}
-          <div className="mt-8 text-center">
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.3em]">
-              API Endpoint: /api/auth/signin
             </p>
           </div>
         </div>

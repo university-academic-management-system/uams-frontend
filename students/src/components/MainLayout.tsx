@@ -20,7 +20,7 @@ import { getAssetPath } from '../utils/assetPath';
 const Logo = ({ collapsed }: { collapsed?: boolean }) => (
   <Flex align="center" justify={collapsed ? "center" : "start"} w={collapsed ? "full" : "auto"}>
     <Image 
-      src={getAssetPath('assets/logos.png')} 
+      src={getAssetPath('assets/uphcscLG.png')} 
       alt="UniEdu Logo" 
       h={{ base: '10', lg: '12' }}
       w={collapsed ? '10' : 'auto'}

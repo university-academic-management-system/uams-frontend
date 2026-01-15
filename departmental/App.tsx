@@ -5,7 +5,7 @@ import {
   Route,
   Navigate,
   useNavigate,
-} from "react-router-dom";
+} from "react-router";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import Login from "./components/Login";
@@ -240,7 +240,8 @@ const App: React.FC = () => {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/department-admin">
+ 
       {!authData ? (
         <Routes>
           <Route path="*" element={<Login />} />

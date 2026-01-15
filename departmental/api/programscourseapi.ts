@@ -18,7 +18,7 @@ export const programsCoursesApi = {
     }
 
     const response = await api.get<Program[]>(
-      `/api/program/department/${departmentId}`
+      `/program/department/${departmentId}`
     );
     return response.data;
   },
@@ -43,7 +43,7 @@ export const programsCoursesApi = {
 
     console.log("🚀 Payload sent to Program Service:");
 
-    const response = await api.post<Program>(`/api/program`, payload);
+    const response = await api.post<Program>(`/program`, payload);
     return response.data;
   },
 
@@ -56,7 +56,7 @@ export const programsCoursesApi = {
     }
 
     const response = await api.get<CoursesApiResponse>(
-      "/api/courses/my-department"
+      "/courses/my-department"
     );
 
     return response.data;
@@ -70,11 +70,11 @@ export const programsCoursesApi = {
       departmentId: getCurrentDepartmentId(),
     };
 
-    const response = await api.post<Course>("/api/courses", payload);
+    const response = await api.post<Course>("/courses", payload);
     return response.data;
   },
 
   deleteCourse: async (courseId: string): Promise<void> => {
-    await api.delete(`/api/courses/${courseId}`);
+    await api.delete(`/courses/${courseId}`);
   },
 };

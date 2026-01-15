@@ -6,7 +6,7 @@ import {
   Navigate,
   useNavigate,
   useLocation,
-} from "react-router-dom";
+} from "react-router";
 import Sidebar from "./src/components/Sidebar";
 import Topbar from "./src/components/Topbar";
 import Dashboard from "./src/pages/Dashboard";
