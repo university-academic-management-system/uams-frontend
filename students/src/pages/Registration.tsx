@@ -319,10 +319,10 @@ const OtherServicesView = ({ hasPaid, onAction, navigate }: { hasPaid: boolean, 
         <h2 className="text-xl font-bold text-[#1e293b] mb-8">ID Card</h2>
         <div className="space-y-6">
           <p className="text-[12px] lg:text-[13px] text-gray-400 leading-relaxed font-medium">
-            Applicants are required to pay the prescribed ID card application fee through the university's online portal. The fee varies depending on the card type and may range between <span className="text-gray-600 font-bold">₦5,000</span> and <span className="text-gray-600 font-bold">₦10,000</span>. <span className="text-gray-600 font-bold">The card is valid for a period of 4 years.</span>
+            Applicants are required to pay the prescribed ID card application fee through the university's online portal.
           </p>
           <p className="text-[12px] lg:text-[13px] text-gray-400 leading-relaxed font-medium">
-            All payments must be made online, and a payment receipt will be generated automatically upon successful transaction. Your ID card will be processed and ready for pickup within 5-7 working days.
+            All payments must be made online, and a payment receipt will be generated automatically upon successful transaction. After payment, kindly visit the department for capturing. Your ID card will be processed and ready for pickup within 5-7 working days.
           </p>
           
           {/* Payment Status Message */}
