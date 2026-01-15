@@ -97,10 +97,10 @@ const PaymentStep: React.FC<PaymentStepProps> = ({ onNext }) => {
                 <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">Total Due</span>
                 <span className="text-2xl font-black text-[#1d76d2]">{formatCurrency(duesData.totalFee)}</span>
               </div>
-              <div className="flex items-center gap-3 text-gray-400 pt-2">
+              {/* <div className="flex items-center gap-3 text-gray-400 pt-2">
                 <CreditCard size={20} />
                 <span className="text-[13px] font-medium">Department Annual Dues</span>
-              </div>
+              </div> */}
             </div>
           ) : (
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
