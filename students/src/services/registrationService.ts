@@ -139,7 +139,7 @@ export const getRegistrations = async (): Promise<RegistrationData | null> => {
         lecturer: 'Not Assigned', // API doesn't return lecturer info
         status: formatStatus(reg.status),
         registeredAt: reg.createdAt,
-        sessionId: reg.sessionId, // Include sessionId for filtering
+        sessionId: reg.sessionId, 
       }));
 
       // Calculate total units

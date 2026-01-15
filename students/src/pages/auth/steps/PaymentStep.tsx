@@ -90,11 +90,11 @@ const PaymentStep: React.FC<PaymentStepProps> = ({ onNext }) => {
                 <span className="text-[15px] font-bold text-[#1e293b]">{formatCurrency(duesData.departmentDues)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] font-medium text-gray-400">Access Fee</span>
+                <span className="text-[13px] font-medium text-gray-400">Portal Access Fee</span>
                 <span className="text-[15px] font-bold text-[#1e293b]">{formatCurrency(duesData.accessFee)}</span>
               </div>
               <div className="border-t border-gray-200 pt-4 flex items-center justify-between">
-                <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">Total Due</span>
+                <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">Total Dues</span>
                 <span className="text-2xl font-black text-[#1d76d2]">{formatCurrency(duesData.totalFee)}</span>
               </div>
             </div>
