@@ -13,7 +13,7 @@ import { UserSession, AuthData } from "./components/types";
 import DashboardHome from "./components/DashboardHome";
 
 const SESSION_KEY = "u_university_session";
-
+ 
 const App: React.FC = () => {
   const [session, setSession] = useState<UserSession>({
     authData: null,

@@ -241,7 +241,7 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter basename="/department-admin">
-
+ 
       {!authData ? (
         <Routes>
           <Route path="*" element={<Login />} />
