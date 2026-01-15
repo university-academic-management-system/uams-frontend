@@ -86,7 +86,7 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
                 setPassword(e.target.value);
                 if (error) setError('');
               }}
-              placeholder="Enter Password"
+              placeholder="Enter Phone Number"
               className="w-full bg-white border border-gray-300 rounded-xl py-4 px-6 text-[15px] font-medium text-[#1e293b] focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-[#1d76d2] transition-all"
               disabled={isLoading}
               onKeyDown={(e) => e.key === 'Enter' && handleActivate()}
