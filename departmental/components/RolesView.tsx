@@ -161,6 +161,8 @@ export const RolesView: React.FC = () => {
       }
       
       const response = await api.get(`/api/university-admin/students?${params}`)
+
+      // console.log("fetched students", response)
       
       // Transform API response to match component interface
       const transformedStudents: Student[] = response.data.students.map((apiStudent: ApiStudent) => {
