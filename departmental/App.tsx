@@ -5,7 +5,7 @@ import {
   Route,
   Navigate,
   useNavigate,
-} from "react-router-dom";
+} from "react-router";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import Login from "./components/Login";
@@ -15,7 +15,7 @@ import ProgramCoursesPage from "./pages/ProgramCoursesPage";
 import { StudentsView } from "./pages/StudentsView";
 import { StaffView } from "./components/StaffView";
 import { AnnouncementsView } from "./components/AnnouncementsView";
-import { PaymentsView } from "./components/PaymentsView";
+import PaymentsPage from "./pages/PaymentsPage"; //here is the initial payment page mounted 👈
 import { SettingsView } from "./components/SettingsView";
 import { NotificationsView } from "./components/NotificationsView";
 import { RolesView } from "./components/RolesView";
@@ -240,10 +240,11 @@ const App: React.FC = () => {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/department-admin">
+ 
       {!authData ? (
         <Routes>
-          <Route path="*" element={<Login onLogin={handleLogin} />} />
+          <Route path="*" element={<Login />} />
         </Routes>
       ) : (
         <DashboardLayout authData={authData} onLogout={handleLogout} />
@@ -488,7 +489,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       case "Staff":
         return <StaffView />;
       case "Payments":
-        return <PaymentsView />;
+        return <PaymentsPage />;
       case "ID Card Management":
         return <RolesView />;
       case "Announcements":
@@ -514,14 +515,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         activeView={activeView}
         onViewChange={handleViewChange}
         onLogout={onLogout}
-        authData={authData}
       />
       <main className="flex-1 ml-64 bg-[#F8FAFC]">
         <Header
           onViewChange={handleViewChange}
           currentUser={currentUser}
           onLogout={onLogout}
-          authData={authData}
         />
         <div className="p-8 max-w-[1600px] mx-auto">
           <Routes>

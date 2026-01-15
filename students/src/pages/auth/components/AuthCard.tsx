@@ -16,7 +16,7 @@ const AuthCard: React.FC<AuthCardProps> = ({
   >
     <div className="flex justify-center mb-8">
       <img
-        src={`${import.meta.env.BASE_URL}assets/uniEdu.png`}
+        src={`${import.meta.env.BASE_URL}assets/uphcscLG.png`}
         alt="UniEdu Logo"
         className="h-12"
         onError={(e: any) => {

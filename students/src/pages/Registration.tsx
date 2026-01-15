@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Loader2, CreditCard, Printer, Download, ArrowLeft, Clock, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, Loader2, CreditCard, Printer, Download, ArrowLeft, Clock, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getStoredUser } from '../services/authService';
+import { getStoredUser, getIdCardFee, initializeIdCardPayment } from '../services/authService';
 import {
   getLevels,
   getSemesters,
@@ -270,46 +270,169 @@ const IDCardView = ({
   </div>
 );
 
-const OtherServicesView = ({ hasPaid, onAction, navigate }: { hasPaid: boolean, onAction: (action: 'view') => void, navigate: any }) => (
-  <div className="bg-white rounded-3xl lg:rounded-4xl p-8 lg:p-14 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl">
-    <h2 className="text-xl font-bold text-[#1e293b] mb-8">ID Card</h2>
-    <div className="space-y-6">
-      <p className="text-[12px] lg:text-[13px] text-gray-400 leading-relaxed font-medium">
-        Applicants are required to pay the prescribed ID card application fee through the university's online portal. The fee varies depending on the card type and may range between <span className="text-gray-600 font-bold">₦5,000</span> and <span className="text-gray-600 font-bold">₦10,000</span>. <span className="text-gray-600 font-bold">The card is valid for a period of 4 years.</span>
-      </p>
-      <p className="text-[12px] lg:text-[13px] text-gray-400 leading-relaxed font-medium">
-        All payments must be made online, and a payment receipt will be generated automatically upon successful transaction. Your ID card will be processed and ready for pickup within 5-7 working days.
-      </p>
-      
-      {/* Payment Status Message */}
-      {!hasPaid && (
-        <div className="bg-[#fef3c7] border border-[#fcd34d] p-4 rounded-lg">
-          <p className="text-[12px] font-bold text-[#92400e]">
-            💳 Payment Required: To view your ID card, you must complete payment first.
+const OtherServicesView = ({ hasPaid, onAction, navigate }: { hasPaid: boolean, onAction: (action: 'view') => void, navigate: any }) => {
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isLoadingFee, setIsLoadingFee] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [idCardFee, setIdCardFee] = useState<number | null>(null);
+  const [error, setError] = useState('');
+
+  const handleProceedToApply = async () => {
+    setIsLoadingFee(true);
+    setError('');
+    
+    try {
+      const response = await getIdCardFee();
+      setIdCardFee(response.data.idCardFee);
+      setShowPaymentModal(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch ID card fee. Please try again.');
+    } finally {
+      setIsLoadingFee(false);
+    }
+  };
+
+  const handlePayNow = async () => {
+    setIsProcessingPayment(true);
+    setError('');
+    
+    try {
+      const response = await initializeIdCardPayment();
+      window.location.href = response.data.authorizationUrl;
+    } catch (err: any) {
+      setError(err.message || 'Payment initialization failed. Please try again.');
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  return (
+    <>
+      <div className="bg-white rounded-3xl lg:rounded-4xl p-8 lg:p-14 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl">
+        <h2 className="text-xl font-bold text-[#1e293b] mb-8">ID Card</h2>
+        <div className="space-y-6">
+          <p className="text-[12px] lg:text-[13px] text-gray-400 leading-relaxed font-medium">
+            Applicants are required to pay the prescribed ID card application fee through the university's online portal.
           </p>
+          <p className="text-[12px] lg:text-[13px] text-gray-400 leading-relaxed font-medium">
+            All payments must be made online, and a payment receipt will be generated automatically upon successful transaction. After payment, kindly visit the department for capturing. Your ID card will be processed and ready for pickup within 5-7 working days.
+          </p>
+          
+          {/* Payment Status Message */}
+          {!hasPaid && (
+            <div className="bg-[#fef3c7] border border-[#fcd34d] p-4 rounded-lg">
+              <p className="text-[12px] font-bold text-[#92400e]">
+                💳 Payment Required: To view your ID card, you must complete payment first.
+              </p>
+            </div>
+          )} 
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600">
+              <AlertCircle size={20} className="shrink-0" />
+              <p className="text-[13px] font-bold">{error}</p>
+            </div>
+          )}
+          
+          <div className="flex justify-end items-center space-x-4 pt-4">
+            <button 
+              onClick={() => onAction('view')}
+              disabled={!hasPaid}
+              className="px-10 py-3 rounded-lg border border-gray-200 text-[#1e293b] text-[13px] font-bold hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
+            >
+              {hasPaid ? '👁️ View ID Card' : '🔒 Locked - Pay First'}
+            </button>
+            {!hasPaid && (
+              <button 
+                onClick={handleProceedToApply}
+                disabled={isLoadingFee}
+                className="px-10 py-3 rounded-lg bg-[#22c55e] text-white text-[13px] font-bold hover:bg-green-600 disabled:bg-green-300 transition-all shadow-md shadow-green-50 flex items-center gap-2"
+              >
+                {isLoadingFee ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Proceed to apply'
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ID Card Payment Modal */}
+      {showPaymentModal && idCardFee !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-[#1e293b]">ID Card Payment</h2>
+              <button 
+                onClick={() => setShowPaymentModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+            
+            <p className="text-[13px] font-medium text-gray-400 mb-8">
+              Complete your payment to apply for your student ID card
+            </p>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600">
+                <AlertCircle size={20} className="shrink-0" />
+                <p className="text-[13px] font-bold">{error}</p>
+              </div>
+            )}
+
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 space-y-4 mb-8">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-gray-400">ID Card Fee</span>
+                <span className="text-[15px] font-bold text-[#1e293b]">{formatCurrency(idCardFee)}</span>
+              </div>
+              <div className="border-t border-gray-200 pt-4 flex items-center justify-between">
+                <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">Total</span>
+                <span className="text-2xl font-black text-[#1d76d2]">{formatCurrency(idCardFee)}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="flex-1 py-4 rounded-xl text-[14px] font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePayNow}
+                disabled={isProcessingPayment}
+                className="flex-1 bg-[#2ecc71] hover:bg-[#27ae60] disabled:bg-green-300 disabled:cursor-not-allowed text-white py-4 rounded-xl text-[14px] font-black shadow-lg shadow-green-200/50 transition-all flex items-center justify-center gap-2"
+              >
+                {isProcessingPayment ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Pay Now'
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
-      
-      <div className="flex justify-end items-center space-x-4 pt-4">
-        <button 
-          onClick={() => onAction('view')}
-          disabled={!hasPaid}
-          className="px-10 py-3 rounded-lg border border-gray-200 text-[#1e293b] text-[13px] font-bold hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
-        >
-          {hasPaid ? '👁️ View ID Card' : '🔒 Locked - Pay First'}
-        </button>
-        {!hasPaid && (
-          <button 
-            onClick={() => navigate('/payments/new?type=registration&purpose=idcard')}
-            className="px-10 py-3 rounded-lg bg-[#22c55e] text-white text-[13px] font-bold hover:bg-green-600 transition-all shadow-md shadow-green-50"
-          >
-            Proceed to apply
-          </button>
-        )}
-      </div>
-    </div>
-  </div>
-);
+    </>
+  );
+};
 
 const CoursesRegView: React.FC<CoursesRegViewProps> = ({
   levels,
@@ -473,7 +596,12 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
   };
 
   const totalUnits = previewedCourses.reduce((sum, course) => sum + course.creditUnits, 0);
-  const registeredCourses = registrationData?.courses || [];
+  
+  // Filter registered courses by selected session, or show all if no session selected
+  const allCourses = registrationData?.courses || [];
+  const registeredCourses = selectedSession 
+    ? allCourses.filter(course => course.sessionId === selectedSession)
+    : allCourses;
 
   // Handle course registration
   const handleRegisterCourses = async () => {
@@ -487,21 +615,21 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
       return;
     }
 
-    // Get payment reference from localStorage (set after payment)
-    const paymentRef = localStorage.getItem('pendingPaymentReference');
-    if (!paymentRef) {
-      alert('Payment reference not found. Please complete payment first.');
-      return;
-    }
+    // // Get payment reference from localStorage (set after payment)
+    // // const paymentRef = localStorage.getItem('pendingPaymentReference');
+    // // if (!paymentRef) {
+    // //   alert('Payment reference not found. Please complete payment first.');
+    // //   return;
+    // }
 
     setIsRegistering(true);
 
     const registrationData = {
-      paymentReference: paymentRef,
+      // paymentReference: paymentRef,
       levelId,
       sessionId,
       totalCredits: totalUnits,
-      totalAmount: 5000,
+      // totalAmount: 5000,
     };
 
     const result = await bulkRegisterCourses(registrationData);
@@ -511,7 +639,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
       alert(`Success! ${result.message}`);
       setShowConfirmation(false);
       // Clear the payment reference after successful registration
-      localStorage.removeItem('pendingPaymentReference');
+      // localStorage.removeItem('pendingPaymentReference');
       // Clear cart after successful registration
       setPreviewedCourses([]);
       setIsCartConfirmed(false);
@@ -614,7 +742,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                     className="w-full bg-[#f8fafc] border border-gray-100 rounded-xl py-2.5 px-4 text-[13px] font-bold text-gray-600 appearance-none focus:outline-none"
                   >
                     <option value="">Select Semester</option>
-                    {semesters?.map((semester) => (
+                    {semesters?.filter(semester => semester.isActive).map((semester) => (
                       <option key={semester.id} value={semester.id}>
                         {semester.name}
                       </option>
@@ -811,7 +939,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
             <select 
               value={selectedSession}
               onChange={(e) => setSelectedSession(e.target.value)}
-              className="w-full sm:w-auto bg-[#f8fafc] border border-gray-100 text-[10px] font-bold rounded-lg pl-3 pr-10 py-2.5 text-gray-400 uppercase appearance-none cursor-pointer"
+              className="w-full sm:w-auto bg-blue-50 border border-blue-200 text-[10px] font-bold rounded-lg pl-3 pr-10 py-2.5 text-gray-600 uppercase appearance-none cursor-pointer hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
             >
               <option value="">Select Session</option>
               {sessions?.map((session) => (
@@ -899,7 +1027,9 @@ const Registration: React.FC = () => {
 
   // State for ID Card application in Other tab
   const [isViewingID, setIsViewingID] = useState(false);
-  const [hasPaidID, setHasPaidID] = useState(false);
+  const [hasPaidID, setHasPaidID] = useState(() => {
+    return localStorage.getItem('idcard_paid') === 'true';
+  });
   const [isPhotoUploaded, setIsPhotoUploaded] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState<string | null>(null);
 

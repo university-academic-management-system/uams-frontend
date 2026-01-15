@@ -51,7 +51,7 @@ export const StudentsView: React.FC = () => {
       setError(null);
 
       const response = await api.get<UsersResponse>(
-        "/api/university-admin/users"
+        "/university-admin/users"
       );
       const apiUsers = response.data.users;
 

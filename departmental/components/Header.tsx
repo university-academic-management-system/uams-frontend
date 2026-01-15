@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Search, Bell, History, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { ViewType } from '../types';
 
 interface HeaderProps {

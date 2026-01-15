@@ -1,5 +1,5 @@
 // import React, { useState } from "react";
-// import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+// import { NavLink, Outlet, useNavigate, useLocation } from "react-router";
 // import {
 //   LogOut,
 //   LayoutDashboard,
@@ -335,7 +335,7 @@
 // export default Dashboard;
 
 import React, { useState } from "react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router";
 import {
   LogOut,
   LayoutDashboard,

@@ -1,18 +1,17 @@
-
-import React from 'react';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Users, 
-  UserSquare2, 
-  CreditCard, 
-  ShieldCheck, 
-  Megaphone, 
+import React from "react";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Users,
+  UserSquare2,
+  CreditCard,
+  ShieldCheck,
+  Megaphone,
   Settings,
   GraduationCap,
-  LogOut
-} from 'lucide-react';
-import { ViewType } from '../types';
+  LogOut,
+} from "lucide-react";
+import { ViewType } from "../types";
 
 interface SidebarProps {
   activeView: ViewType;
@@ -52,12 +51,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
             key={item.label}
             onClick={() => onViewChange(item.label)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group ${
-              activeView === item.label 
-                ? 'bg-slate-100 text-slate-900 font-semibold' 
-                : 'text-slate-500 hover:bg-gray-50 hover:text-slate-900'
+              activeView === item.label
+                ? "bg-slate-100 text-slate-900 font-semibold"
+                : "text-slate-500 hover:bg-gray-50 hover:text-slate-900"
             }`}
           >
-            <item.icon size={20} className={activeView === item.label ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'} />
+            <item.icon
+              size={20}
+              className={
+                activeView === item.label
+                  ? "text-blue-600"
+                  : "text-slate-400 group-hover:text-slate-600"
+              }
+            />
             <span className="text-sm">{item.label}</span>
           </button>
         ))}

@@ -8,7 +8,7 @@ import PaymentsNew from "./pages/PaymentsNew";
 import Login from "./pages/Login";
 import MainLayout from "./components/MainLayout";
 import SessionGuard from "./components/SessionGuard";
-
+import IdCardPaymentCallback from "./pages/IdCardPaymentCallback";
 
 import Checkout from "./pages/Checkout";
 
@@ -36,6 +36,10 @@ const router = createBrowserRouter([
   {
     path: "/forgot-password",
     element: <Login initialStep="forgot-password" />,
+  },
+  {
+    path: "/idcard-payment-callback",
+    element: <IdCardPaymentCallback />,
   },
 
   // Protected dashboard routes

@@ -17,12 +17,12 @@ export interface Semester {
 /** API */
 export const academicsApi = {
   async getLevels(): Promise<Level[]> {
-    const res = await api.get("/api/accademics/levels");
+    const res = await api.get("/accademics/levels");
     return res.data;
   },
 
   async getSemesters(): Promise<Semester[]> {
-    const res = await api.get("/api/accademics/semesters");
+    const res = await api.get("/accademics/semesters");
     return res.data;
   },
 };
