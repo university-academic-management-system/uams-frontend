@@ -59,10 +59,10 @@ interface ApiStudent {
   studentId: string
   level: string
   isActive: boolean
-  User: {
+  user: {
     fullName: string
     email: string
-    phone: string
+    phone: string | null
     avatar: string | null
     id: string
   }
@@ -178,16 +178,16 @@ export const RolesView: React.FC = () => {
         return {
           id: apiStudent.id,
           idNo: apiStudent.studentId,
-          name: apiStudent.User.fullName,
+          name: apiStudent.user?.fullName || "N/A",
           matric: apiStudent.studentId,
           faculty: facultyName,
           department: departmentName,
           graduationDate: "2026-06-15", // You might want to get this from the API or calculate it
           status: hasPaidIDCardFee ? "Pending" : "Active", // Update status based on payment
           level: apiStudent.level,
-          email: apiStudent.User.email,
-          phone: apiStudent.User.phone,
-          userId: apiStudent.User.id,
+          email: apiStudent.user?.email || "",
+          phone: apiStudent.user?.phone || "",
+          userId: apiStudent.user?.id || "",
           hasPaidIDCardFee,
           PaymentTransactions: apiStudent.PaymentTransactions,
           paymentSummary: apiStudent.paymentSummary
