@@ -1027,7 +1027,9 @@ const Registration: React.FC = () => {
 
   // State for ID Card application in Other tab
   const [isViewingID, setIsViewingID] = useState(false);
-  const [hasPaidID, setHasPaidID] = useState(false);
+  const [hasPaidID, setHasPaidID] = useState(() => {
+    return localStorage.getItem('idcard_paid') === 'true';
+  });
   const [isPhotoUploaded, setIsPhotoUploaded] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState<string | null>(null);
 

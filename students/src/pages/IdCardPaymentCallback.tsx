@@ -37,6 +37,8 @@ const IdCardPaymentCallback: React.FC = () => {
             amount: response.transaction.amount,
             studentName: response.transaction.student_name,
           });
+          // Save payment status to localStorage
+          localStorage.setItem('idcard_paid', 'true');
         } else {
           setStatus('error');
           setMessage('Payment verification failed. Please contact support.');
@@ -105,7 +107,7 @@ const IdCardPaymentCallback: React.FC = () => {
             )}
 
             <button
-              onClick={() => navigate('/registration')}
+              onClick={() => navigate('/registration/other')}
               className="w-full bg-[#1d76d2] hover:bg-blue-700 text-white py-4 rounded-xl text-[14px] font-black shadow-lg shadow-blue-200/50 transition-all"
             >
               Continue to Registration
@@ -126,7 +128,7 @@ const IdCardPaymentCallback: React.FC = () => {
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => navigate('/registration')}
+                onClick={() => navigate('/registration/other')}
                 className="flex-1 py-4 rounded-xl text-[14px] font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all"
               >
                 Back to Registration
