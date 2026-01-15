@@ -492,21 +492,21 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
       return;
     }
 
-    // Get payment reference from localStorage (set after payment)
-    // const paymentRef = localStorage.getItem('pendingPaymentReference');
-    // if (!paymentRef) {
-    //   alert('Payment reference not found. Please complete payment first.');
-    //   return;
-    }
+    // // Get payment reference from localStorage (set after payment)
+    // // const paymentRef = localStorage.getItem('pendingPaymentReference');
+    // // if (!paymentRef) {
+    // //   alert('Payment reference not found. Please complete payment first.');
+    // //   return;
+    // }
 
     setIsRegistering(true);
 
     const registrationData = {
-      paymentReference: paymentRef,
+      // paymentReference: paymentRef,
       levelId,
       sessionId,
       totalCredits: totalUnits,
-      totalAmount: 5000,
+      // totalAmount: 5000,
     };
 
     const result = await bulkRegisterCourses(registrationData);
@@ -516,7 +516,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
       alert(`Success! ${result.message}`);
       setShowConfirmation(false);
       // Clear the payment reference after successful registration
-      localStorage.removeItem('pendingPaymentReference');
+      // localStorage.removeItem('pendingPaymentReference');
       // Clear cart after successful registration
       setPreviewedCourses([]);
       setIsCartConfirmed(false);

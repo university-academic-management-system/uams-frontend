@@ -246,11 +246,11 @@ export const removeCourseFromCart = async (courseId: string): Promise<{ success:
  * @param data - Registration data including payment reference, level, session, credits, and amount
  */
 export const bulkRegisterCourses = async (data: {
-  paymentReference: string;
+  // paymentReference: string;
   levelId: string;
   sessionId: string;
   totalCredits: number;
-  totalAmount: number;
+  // totalAmount: number;
 }): Promise<{ success: boolean; message: string; data?: any }> => {
   try {
     const response = await apiClient.post('/course-registration/confirm', data);
