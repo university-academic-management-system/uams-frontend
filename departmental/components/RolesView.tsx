@@ -1332,152 +1332,211 @@ export const RolesView: React.FC = () => {
                 </div>
               )}  */}
               {/* ID Card Preview Section */}
+              {/* ID Card Preview Section */}
               {capturedPhoto && (
                 <div className="flex flex-col gap-4">
                   <h4 className="text-sm font-semibold text-slate-900">
                     ID Card Preview
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Front of Card - With Actual Background Image */}
+                    {/* Front of Card - Complete Design */}
                     <div className="flex flex-col items-center">
                       <p className="text-xs font-semibold text-slate-600 mb-3">
                         Front
                       </p>
-                      <div className="w-full max-w-[400px] aspect-[400/250] rounded-lg overflow-hidden border-2 border-slate-300 relative">
-                        {/* Background Image */}
-                        <div
-                          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                          style={{ backgroundImage: `url('/idcard.png')` }}
-                        />
-                        {/* Overlay content */}
-                        <div className="relative z-10 p-4 h-full flex flex-col">
-                          {/* Header */}
+                      <div className="w-full max-w-[400px] aspect-[400/250] rounded-xl overflow-hidden border-2 border-blue-300 shadow-lg relative bg-gradient-to-br from-blue-50 to-white">
+                        {/* Card Content */}
+                        <div className="p-4 h-full flex flex-col">
+                          {/* University Header */}
                           <div className="text-center mb-2">
-                            <p className="text-xs font-bold text-blue-900">
+                            <p className="text-sm font-bold text-blue-900">
                               UNIVERSITY OF PORT HARCOURT
                             </p>
-                            <p className="text-[10px] text-blue-700 font-semibold">
+                            <p className="text-xs text-blue-700 font-semibold">
                               DEPARTMENT OF COMPUTER SCIENCE
                             </p>
-                            <p className="text-[8px] text-slate-600 mt-1">
-                              East-West Road, Choba, Port Harcourt, Rivers State
+                            <p className="text-[10px] text-gray-600 mt-1">
+                              East-West Road, Choba, Port Harcourt, Rivers
+                              State, P.M.B.5323.
                             </p>
                           </div>
 
-                          {/* Title */}
-                          <div className="text-center border-b border-blue-200 pb-2 mb-3">
-                            <p className="text-[9px] font-bold text-blue-800">
+                          {/* Card Title */}
+                          <div className="text-center my-2 border-y border-blue-200 py-2">
+                            <p className="text-xs font-bold text-blue-800">
                               STUDENT DEPARTMENT IDENTITY CARD
                             </p>
                           </div>
 
-                          {/* Content */}
-                          <div className="flex gap-3 flex-1">
-                            {/* Photo */}
+                          {/* Student Info Section */}
+                          <div className="flex gap-4 flex-1 mt-2">
+                            {/* Photo Area */}
                             <div className="flex flex-col items-center">
-                              <div className="w-16 h-20 bg-white rounded overflow-hidden border-2 border-blue-500">
+                              <div className="w-20 h-24 bg-white rounded-lg overflow-hidden border-2 border-blue-400 shadow-sm">
                                 <img
                                   src={capturedPhoto || "/placeholder.svg"}
                                   alt="Student"
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <p className="text-[7px] text-slate-600 mt-1 font-medium">
-                                OFFICIAL PHOTO
+                              <p className="text-[10px] text-gray-600 mt-1 font-medium">
+                                PHOTO
                               </p>
                             </div>
 
-                            {/* Details */}
-                            <div className="flex-1 text-[9px] space-y-1">
-                              <div className="flex">
-                                <span className="font-bold text-blue-800 min-w-[60px]">
-                                  NAME:
-                                </span>
-                                <span className="font-semibold text-slate-800">
-                                  {currentStudent?.name}
-                                </span>
-                              </div>
-                              <div className="flex">
-                                <span className="font-bold text-blue-800 min-w-[60px]">
-                                  MATRIC NO.:
-                                </span>
-                                <span className="font-semibold text-slate-800">
-                                  {currentStudent?.matric}
-                                </span>
-                              </div>
-                              <div className="flex">
-                                <span className="font-bold text-blue-800 min-w-[60px]">
-                                  FACULTY:
-                                </span>
-                                <span className="font-semibold text-slate-800">
-                                  {currentStudent?.faculty}
-                                </span>
-                              </div>
-                              <div className="flex">
-                                <span className="font-bold text-blue-800 min-w-[60px]">
-                                  DEPT:
-                                </span>
-                                <span className="font-semibold text-slate-800">
-                                  {currentStudent?.department}
-                                </span>
-                              </div>
-                              <div className="flex">
-                                <span className="font-bold text-blue-800 min-w-[60px]">
-                                  EXPIRY DATE:
-                                </span>
-                                <span className="font-semibold text-slate-800">
-                                  {new Date(
-                                    currentStudent?.graduationDate || ""
-                                  ).toLocaleDateString("en-GB", {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric",
-                                  })}
-                                </span>
+                            {/* Student Details */}
+                            <div className="flex-1">
+                              <div className="space-y-2">
+                                <div>
+                                  <p className="text-xs font-bold text-blue-800">
+                                    NAME:
+                                  </p>
+                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                                    {currentStudent?.name}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-xs font-bold text-blue-800">
+                                    MATRIC NO.:
+                                  </p>
+                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                                    {currentStudent?.matric}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-xs font-bold text-blue-800">
+                                    FACULTY:
+                                  </p>
+                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                                    {currentStudent?.faculty}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-xs font-bold text-blue-800">
+                                    DEPT:
+                                  </p>
+                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                                    {currentStudent?.department}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-xs font-bold text-blue-800">
+                                    EXPIRY DATE:
+                                  </p>
+                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                                    {new Date(
+                                      currentStudent?.graduationDate || ""
+                                    ).toLocaleDateString("en-GB", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* Footer */}
-                          <div className="mt-3 pt-2 border-t border-slate-300">
-                            <div className="h-[1px] bg-slate-400 w-32 mx-auto"></div>
-                            <p className="text-[7px] text-center text-slate-600 mt-1">
-                              Authorized Signature & Stamp
-                            </p>
+                          {/* Footer/University Seal Area */}
+                          <div className="mt-4 pt-2 border-t border-blue-200">
+                            <div className="flex justify-between items-center">
+                              <div className="text-[10px] text-gray-500">
+                                <p>Issued by: Department Administration</p>
+                                <p>ID No: {currentStudent?.idNo}</p>
+                              </div>
+                              <div className="w-12 h-12 rounded-full border-2 border-blue-300 flex items-center justify-center">
+                                <span className="text-[8px] font-bold text-blue-700 text-center">
+                                  UNIPORT
+                                  <br />
+                                  CS
+                                </span>
+                              </div>
+                            </div>
                           </div>
+                        </div>
+
+                        {/* Decorative Border */}
+                        <div className="absolute inset-0 border-4 border-transparent rounded-xl">
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-300"></div>
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-300 to-blue-500"></div>
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-300"></div>
+                          <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-300 to-blue-500"></div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Back of Card - With Actual Background Image */}
+                    {/* Back of Card - Complete Design */}
                     <div className="flex flex-col items-center">
                       <p className="text-xs font-semibold text-slate-600 mb-3">
                         Back
                       </p>
-                      <div className="w-full max-w-[400px] aspect-[400/250] rounded-lg overflow-hidden border-2 border-slate-300 relative">
-                        {/* Background Image */}
-                        <div
-                          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                          style={{ backgroundImage: `url('/idcard1.png')` }}
-                        />
-                        {/* Overlay content */}
-                        <div className="relative z-10 p-4 h-full flex flex-col">
+                      <div className="w-full max-w-[400px] aspect-[400/250] rounded-xl overflow-hidden border-2 border-blue-300 shadow-lg relative bg-gradient-to-br from-blue-50 to-white">
+                        <div className="p-6 h-full flex flex-col">
+                          {/* University Logo/Header */}
+                          <div className="text-center mb-4">
+                            <p className="text-sm font-bold text-blue-900">
+                              UNIVERSITY OF PORT HARCOURT
+                            </p>
+                            <p className="text-xs text-blue-700 font-semibold">
+                              STUDENT IDENTIFICATION CARD
+                            </p>
+                          </div>
+
+                          {/* Verification Text */}
                           <div className="flex-1 flex flex-col justify-center">
-                            <p className="text-[10px] leading-relaxed text-slate-700 text-center font-medium mb-4">
-                              The holder whose name and photograph appear on
-                              this I.D. Card is a bonafide student of the
-                              University of Port Harcourt
-                            </p>
-                            <p className="text-[10px] leading-relaxed text-slate-700 text-center font-medium">
-                              If found please return to the office of the Chief
-                              Security Officer University of Port Harcourt
-                            </p>
+                            <div className="space-y-4 text-center">
+                              <p className="text-xs leading-relaxed text-gray-700 font-medium">
+                                The holder whose name and photograph appear on
+                                this I.D. Card is a bonafide student of the
+                                University of Port Harcourt
+                              </p>
+                              <p className="text-xs leading-relaxed text-gray-700 font-medium">
+                                If found please return to the office of the
+                                Chief Security Officer University of Port
+                                Harcourt
+                              </p>
+                            </div>
                           </div>
-                          <div className="pt-4 border-t border-slate-300">
-                            <p className="text-[9px] text-center font-bold text-slate-700">
-                              Department Admin's Signature
-                            </p>
+
+                          {/* Signature Area */}
+                          <div className="mt-6 pt-4 border-t border-blue-300">
+                            <div className="text-center">
+                              <p className="text-xs font-bold text-gray-800">
+                                Department Admin's Signature
+                              </p>
+                              <div className="mt-2 mx-auto w-48 h-6 border-b-2 border-gray-400"></div>
+                              <div className="flex justify-between mt-1 text-[10px] text-gray-500">
+                                <span>
+                                  Date: {new Date().toLocaleDateString()}
+                                </span>
+                                <span>Stamp & Seal</span>
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Security Features */}
+                          <div className="mt-4 flex justify-between items-center text-[8px] text-gray-400">
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 rounded-full bg-blue-200"></div>
+                              <span>Hologram Seal</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 rounded-full bg-blue-200"></div>
+                              <span>Valid with Photo ID</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Decorative Border */}
+                        <div className="absolute inset-0 border-4 border-transparent rounded-xl">
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-300 to-blue-500"></div>
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-300"></div>
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-300 to-blue-500"></div>
+                          <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-300"></div>
                         </div>
                       </div>
                     </div>
