@@ -471,9 +471,8 @@ export const RolesView: React.FC = () => {
   const handlePrintID = () => {
     const printWindow = window.open("", "", "width=1000,height=600");
     if (printWindow && currentStudent && capturedPhoto) {
-      // Use the correct paths from your public folder
-      const frontBackground = "/idcard.png"; // Front template
-      const backBackground = "/idcard1.png"; // Back design
+      const frontBackground = "/idcard-front.png"; // exact front template
+      const backBackground = "/idcard-back.png"; // exact back template
 
       printWindow.document.write(`
       <!DOCTYPE html>
@@ -481,437 +480,112 @@ export const RolesView: React.FC = () => {
         <head>
           <title>ID Card - ${currentStudent.name}</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-            
-            * {
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+            body {
               margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            body { 
-              margin: 0; 
-              padding: 20px; 
-              font-family: 'Poppins', Arial, sans-serif;
-              background: #f5f5f5;
+              padding: 20px;
+              font-family: 'Poppins', sans-serif;
+              background: #f0f0f0;
               display: flex;
               justify-content: center;
               align-items: center;
               min-height: 100vh;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
             }
-            
-            .card-container { 
-              display: flex; 
-              gap: 40px; 
-              justify-content: center;
-              align-items: center;
+            .card-container {
+              display: flex;
+              gap: 40px;
               flex-wrap: wrap;
+              justify-content: center;
             }
-            
-            .card { 
-              width: 400px; 
-              height: 250px; 
-              border-radius: 12px; 
-              overflow: hidden; 
-              box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            .card {
+              width: 400px;
+              height: 250px;
               position: relative;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 8px 20px rgba(0,0,0,0.2);
             }
-            
-            /* Front Card Styling */
-            .front { 
-              background-image: url('${frontBackground}');
-              background-size: 100% 100%;
+            .card-bg {
+              position: absolute;
+              top: 0; left: 0; right: 0; bottom: 0;
+              background-size: cover;
               background-position: center;
               background-repeat: no-repeat;
-              position: relative;
-              color: #333;
             }
-            
-            .front-content {
-              position: relative;
-              z-index: 2;
-              height: 100%;
-              display: flex;
-              flex-direction: column;
+            .overlay {
+              position: absolute;
+              inset: 0;
               padding: 20px;
+              color: #000;
             }
-            
-            /* University Header */
-            .university-header {
-              text-align: center;
-              margin-bottom: 10px;
-            }
-            
-            .university-name {
-              font-size: 14px;
-              font-weight: 700;
-              color: #003366;
-              letter-spacing: 0.5px;
-              margin: 0;
-              line-height: 1.2;
-              text-transform: uppercase;
-            }
-            
-            .university-department {
-              font-size: 10px;
-              font-weight: 600;
-              color: #1D7AD9;
-              margin: 3px 0 0 0;
-            }
-            
-            .university-address {
-              font-size: 8px;
-              color: #666;
-              margin: 2px 0 0 0;
-              font-weight: 500;
-            }
-            
-            /* Card Title */
-            .card-title {
-              text-align: center;
-              font-size: 10px;
-              font-weight: 600;
-              color: #003366;
-              margin: 5px 0 15px 0;
-              letter-spacing: 1px;
-              text-transform: uppercase;
-              border-bottom: 1px solid rgba(0, 51, 102, 0.1);
-              padding-bottom: 5px;
-            }
-            
-            /* Student Info Section */
-            .student-info {
-              display: flex;
-              gap: 15px;
-              flex: 1;
-            }
-            
-            .photo-section {
-              width: 90px;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-            }
-            
-            .photo-container {
+            .photo {
+              position: absolute;
               width: 80px;
               height: 100px;
-              background: white;
-              border-radius: 5px;
-              overflow: hidden;
-              border: 2px solid #1D7AD9;
-              box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+              object-fit: cover;
+              border-radius: 4px;
             }
-            
-            .photo-container img { 
-              width: 100%; 
-              height: 100%; 
-              object-fit: cover; 
-            }
-            
-            .photo-label {
-              font-size: 8px;
-              color: #666;
-              margin-top: 3px;
-              font-weight: 600;
-              text-align: center;
-            }
-            
-            /* Details Section */
-            .details-section {
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-              justify-content: space-between;
-            }
-            
-            .details-grid {
-              display: grid;
-              grid-template-columns: 1fr;
-              gap: 6px;
-            }
-            
-            .detail-row {
-              display: flex;
-              align-items: center;
-            }
-            
-            .detail-label {
-              font-size: 9px;
-              font-weight: 700;
-              color: #003366;
-              min-width: 85px;
-              display: inline-block;
-            }
-            
-            .detail-value {
-              font-size: 10px;
-              font-weight: 600;
-              color: #222;
-              flex: 1;
-              padding-left: 5px;
-            }
-            
-            /* Signature Section */
-            .signature-section {
-              margin-top: 10px;
-              text-align: center;
-            }
-            
-            .signature-line {
-              width: 150px;
-              height: 1px;
-              background: #333;
-              margin: 0 auto;
-              margin-top: 20px;
-            }
-            
-            .signature-text {
-              font-size: 8px;
-              color: #666;
-              margin-top: 3px;
-            }
-            
-            /* Back Card Styling */
-            .back { 
-              background-image: url('${backBackground}');
-              background-size: 100% 100%;
-              background-position: center;
-              background-repeat: no-repeat;
-              position: relative;
-            }
-            
-            .back-content {
-              position: relative;
-              z-index: 2;
-              height: 100%;
-              display: flex;
-              flex-direction: column;
-              padding: 25px;
-            }
-            
-            .back-text-container {
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              text-align: center;
-            }
-            
-            .back-text {
+            .text-overlay {
+              position: absolute;
               font-size: 11px;
-              line-height: 1.6;
-              margin-bottom: 15px;
-              color: #333;
-              font-weight: 500;
+              font-weight: 600;
+              color: #000;
             }
-            
-            .return-text {
-              font-size: 11px;
-              line-height: 1.6;
-              color: #333;
-              font-weight: 500;
-            }
-            
-            .signature-area {
-              margin-top: auto;
-              padding-top: 15px;
-              border-top: 1px solid rgba(0, 0, 0, 0.2);
-            }
-            
-            .signature-label {
-              font-size: 9px;
-              font-weight: 700;
-              color: #333;
-              margin: 0;
-              text-align: center;
-            }
-            
-            /* Print-specific styles */
             @media print {
-              body {
-                background: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-              }
-              
-              .card-container {
-                gap: 20px !important;
-                margin: 0 !important;
-              }
-              
-              .card {
-                box-shadow: none !important;
-                border: 1px solid #ddd !important;
-                page-break-inside: avoid !important;
-              }
-              
-              .no-print {
-                display: none !important;
-              }
-            }
-            
-            /* Utility Classes */
-            .text-center {
-              text-align: center;
-            }
-            
-            .text-uppercase {
-              text-transform: uppercase;
-            }
-            
-            .font-bold {
-              font-weight: 700;
-            }
-            
-            .mt-2 {
-              margin-top: 8px;
-            }
-            
-            .mt-3 {
-              margin-top: 12px;
-            }
-            
-            .mb-2 {
-              margin-bottom: 8px;
-            }
-            
-            .mb-3 {
-              margin-bottom: 12px;
+              body { background: none; padding: 0; }
+              .card { box-shadow: none; page-break-inside: avoid; }
             }
           </style>
         </head>
         <body>
           <div class="card-container">
-            <!-- Front of ID Card -->
-            <div class="card front">
-              <div class="front-content">
-                <div class="university-header">
-                  <h1 class="university-name text-uppercase">University of Port Harcourt</h1>
-                  <p class="university-department">Department of Computer Science</p>
-                  <p class="university-address">East-West Road, Choba, Port Harcourt, Rivers State</p>
-                </div>
+            <!-- Front -->
+            <div class="card">
+              <div class="card-bg" style="background-image: url('${frontBackground}');"></div>
+              <div class="overlay">
+                <!-- Photo positioned exactly where the white box is -->
+                <img src="${capturedPhoto}" class="photo" style="top: 105px; left: 35px;" />
                 
-                <h2 class="card-title">Student Department Identity Card</h2>
-                
-                <div class="student-info">
-                  <div class="photo-section">
-                    <div class="photo-container">
-                      <img src="${capturedPhoto}" alt="${
-        currentStudent.name
-      }" />
-                    </div>
-                    <div class="photo-label">OFFICIAL PHOTO</div>
-                  </div>
-                  
-                  <div class="details-section">
-                    <div class="details-grid">
-                      <div class="detail-row">
-                        <span class="detail-label">NAME:</span>
-                        <span class="detail-value font-bold">${
-                          currentStudent.name
-                        }</span>
-                      </div>
-                      
-                      <div class="detail-row">
-                        <span class="detail-label">MATRIC NO.:</span>
-                        <span class="detail-value">${
-                          currentStudent.matric
-                        }</span>
-                      </div>
-                      
-                      <div class="detail-row">
-                        <span class="detail-label">FACULTY:</span>
-                        <span class="detail-value">${
-                          currentStudent.faculty
-                        }</span>
-                      </div>
-                      
-                      <div class="detail-row">
-                        <span class="detail-label">DEPT:</span>
-                        <span class="detail-value">${
-                          currentStudent.department
-                        }</span>
-                      </div>
-                      
-                      <div class="detail-row">
-                        <span class="detail-label">EXPIRY DATE:</span>
-                        <span class="detail-value">${new Date(
-                          currentStudent.graduationDate
-                        ).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}</span>
-                      </div>
-                    </div>
-                    
-                    <div class="signature-section">
-                      <div class="signature-line"></div>
-                      <div class="signature-text">Authorized Signature & Stamp</div>
-                    </div>
-                  </div>
-                </div>
+                <!-- Dynamic text fields positioned to match the template -->
+                <div class="text-overlay" style="top: 105px; left: 130px;">${currentStudent.name.toUpperCase()}</div>
+                <div class="text-overlay" style="top: 130px; left: 130px;">${
+                  currentStudent.matric
+                }</div>
+                <div class="text-overlay" style="top: 155px; left: 130px;">${
+                  currentStudent.faculty
+                }</div>
+                <div class="text-overlay" style="top: 180px; left: 130px;">${
+                  currentStudent.department
+                }</div>
+                <div class="text-overlay" style="top: 205px; left: 130px;">${new Date(
+                  currentStudent.graduationDate
+                ).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}</div>
               </div>
             </div>
-            
-            <!-- Back of ID Card -->
-            <div class="card back">
-              <div class="back-content">
-                <div class="back-text-container">
-                  <p class="back-text">
-                    The holder whose name and photograph appear on this I.D. Card is a bonafide student of the University of Port Harcourt
-                  </p>
-                  <p class="return-text">
-                    If found please return to the office of the Chief Security Officer University of Port Harcourt
-                  </p>
-                </div>
-                
-                <div class="signature-area">
-                  <p class="signature-label">Department Admin's Signature</p>
-                </div>
-              </div>
+
+            <!-- Back -->
+            <div class="card">
+              <div class="card-bg" style="background-image: url('${backBackground}');"></div>
+              <!-- No overlay needed on back since all text is already in the image -->
             </div>
           </div>
-          
+
           <script>
-            // Auto-print and close window
-            window.onload = function() {
-              // Small delay to ensure images are loaded
-              setTimeout(function() {
-                window.focus();
-                window.print();
-              }, 800);
-              
-              // Close window after printing or if print is cancelled
-              window.onafterprint = function() {
-                window.close();
-              };
-              
-              // Fallback: close window after 10 seconds if print dialog doesn't open
-              setTimeout(function() {
-                window.close();
-              }, 10000);
+            window.onload = () => {
+              setTimeout(() => window.print(), 800);
             };
-            
-            // Handle page load errors
-            window.onerror = function() {
-              setTimeout(function() {
-                window.print();
-              }, 1000);
-            };
+            window.onafterprint = () => window.close();
           </script>
         </body>
       </html>
     `);
       printWindow.document.close();
-    } else {
-      console.error("Cannot open print window: Missing student data or photo");
     }
   };
-
   const handleDownloadID = () => {
     if (capturedPhoto && currentStudent) {
       const link = document.createElement("a");
@@ -1338,207 +1012,76 @@ export const RolesView: React.FC = () => {
                   <h4 className="text-sm font-semibold text-slate-900">
                     ID Card Preview
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Front of Card - Complete Design */}
-                    <div className="flex flex-col items-center">
-                      <p className="text-xs font-semibold text-slate-600 mb-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                    {/* Front */}
+                    <div className="relative">
+                      <p className="text-xs font-semibold text-slate-600 mb-3 text-center">
                         Front
                       </p>
-                      <div className="w-full max-w-[400px] aspect-[400/250] rounded-xl overflow-hidden border-2 border-blue-300 shadow-lg relative bg-gradient-to-br from-blue-50 to-white">
-                        {/* Card Content */}
-                        <div className="p-4 h-full flex flex-col">
-                          {/* University Header */}
-                          <div className="text-center mb-2">
-                            <p className="text-sm font-bold text-blue-900">
-                              UNIVERSITY OF PORT HARCOURT
-                            </p>
-                            <p className="text-xs text-blue-700 font-semibold">
-                              DEPARTMENT OF COMPUTER SCIENCE
-                            </p>
-                            <p className="text-[10px] text-gray-600 mt-1">
-                              East-West Road, Choba, Port Harcourt, Rivers
-                              State, P.M.B.5323.
-                            </p>
-                          </div>
-
-                          {/* Card Title */}
-                          <div className="text-center my-2 border-y border-blue-200 py-2">
-                            <p className="text-xs font-bold text-blue-800">
-                              STUDENT DEPARTMENT IDENTITY CARD
-                            </p>
-                          </div>
-
-                          {/* Student Info Section */}
-                          <div className="flex gap-4 flex-1 mt-2">
-                            {/* Photo Area */}
-                            <div className="flex flex-col items-center">
-                              <div className="w-20 h-24 bg-white rounded-lg overflow-hidden border-2 border-blue-400 shadow-sm">
-                                <img
-                                  src={capturedPhoto || "/placeholder.svg"}
-                                  alt="Student"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <p className="text-[10px] text-gray-600 mt-1 font-medium">
-                                PHOTO
-                              </p>
-                            </div>
-
-                            {/* Student Details */}
-                            <div className="flex-1">
-                              <div className="space-y-2">
-                                <div>
-                                  <p className="text-xs font-bold text-blue-800">
-                                    NAME:
-                                  </p>
-                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
-                                    {currentStudent?.name}
-                                  </p>
-                                </div>
-
-                                <div>
-                                  <p className="text-xs font-bold text-blue-800">
-                                    MATRIC NO.:
-                                  </p>
-                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
-                                    {currentStudent?.matric}
-                                  </p>
-                                </div>
-
-                                <div>
-                                  <p className="text-xs font-bold text-blue-800">
-                                    FACULTY:
-                                  </p>
-                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
-                                    {currentStudent?.faculty}
-                                  </p>
-                                </div>
-
-                                <div>
-                                  <p className="text-xs font-bold text-blue-800">
-                                    DEPT:
-                                  </p>
-                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
-                                    {currentStudent?.department}
-                                  </p>
-                                </div>
-
-                                <div>
-                                  <p className="text-xs font-bold text-blue-800">
-                                    EXPIRY DATE:
-                                  </p>
-                                  <p className="text-sm font-semibold text-gray-800 mt-0.5">
-                                    {new Date(
-                                      currentStudent?.graduationDate || ""
-                                    ).toLocaleDateString("en-GB", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                    })}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Footer/University Seal Area */}
-                          <div className="mt-4 pt-2 border-t border-blue-200">
-                            <div className="flex justify-between items-center">
-                              <div className="text-[10px] text-gray-500">
-                                <p>Issued by: Department Administration</p>
-                                <p>ID No: {currentStudent?.idNo}</p>
-                              </div>
-                              <div className="w-12 h-12 rounded-full border-2 border-blue-300 flex items-center justify-center">
-                                <span className="text-[8px] font-bold text-blue-700 text-center">
-                                  UNIPORT
-                                  <br />
-                                  CS
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                      <div
+                        className="w-full aspect-[400/250] rounded-xl shadow-lg relative overflow-hidden border-2 border-gray-200"
+                        style={{
+                          backgroundImage: `url('/idcard-front.png')`,
+                          backgroundSize: "cover",
+                        }}
+                      >
+                        <img
+                          src={capturedPhoto}
+                          alt="Student photo"
+                          className="absolute w-20 h-24 object-cover rounded"
+                          style={{ top: "105px", left: "35px" }}
+                        />
+                        <div
+                          className="absolute font-semibold text-sm"
+                          style={{ top: "105px", left: "130px" }}
+                        >
+                          {currentStudent?.name.toUpperCase()}
                         </div>
-
-                        {/* Decorative Border */}
-                        <div className="absolute inset-0 border-4 border-transparent rounded-xl">
-                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-300"></div>
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-300 to-blue-500"></div>
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-300"></div>
-                          <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-300 to-blue-500"></div>
+                        <div
+                          className="absolute font-semibold text-sm"
+                          style={{ top: "130px", left: "130px" }}
+                        >
+                          {currentStudent?.matric}
+                        </div>
+                        <div
+                          className="absolute font-semibold text-sm"
+                          style={{ top: "155px", left: "130px" }}
+                        >
+                          {currentStudent?.faculty}
+                        </div>
+                        <div
+                          className="absolute font-semibold text-sm"
+                          style={{ top: "180px", left: "130px" }}
+                        >
+                          {currentStudent?.department}
+                        </div>
+                        <div
+                          className="absolute font-semibold text-sm"
+                          style={{ top: "205px", left: "130px" }}
+                        >
+                          {new Date(
+                            currentStudent?.graduationDate || ""
+                          ).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
                         </div>
                       </div>
                     </div>
 
-                    {/* Back of Card - Complete Design */}
-                    <div className="flex flex-col items-center">
-                      <p className="text-xs font-semibold text-slate-600 mb-3">
+                    {/* Back */}
+                    <div className="relative">
+                      <p className="text-xs font-semibold text-slate-600 mb-3 text-center">
                         Back
                       </p>
-                      <div className="w-full max-w-[400px] aspect-[400/250] rounded-xl overflow-hidden border-2 border-blue-300 shadow-lg relative bg-gradient-to-br from-blue-50 to-white">
-                        <div className="p-6 h-full flex flex-col">
-                          {/* University Logo/Header */}
-                          <div className="text-center mb-4">
-                            <p className="text-sm font-bold text-blue-900">
-                              UNIVERSITY OF PORT HARCOURT
-                            </p>
-                            <p className="text-xs text-blue-700 font-semibold">
-                              STUDENT IDENTIFICATION CARD
-                            </p>
-                          </div>
-
-                          {/* Verification Text */}
-                          <div className="flex-1 flex flex-col justify-center">
-                            <div className="space-y-4 text-center">
-                              <p className="text-xs leading-relaxed text-gray-700 font-medium">
-                                The holder whose name and photograph appear on
-                                this I.D. Card is a bonafide student of the
-                                University of Port Harcourt
-                              </p>
-                              <p className="text-xs leading-relaxed text-gray-700 font-medium">
-                                If found please return to the office of the
-                                Chief Security Officer University of Port
-                                Harcourt
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Signature Area */}
-                          <div className="mt-6 pt-4 border-t border-blue-300">
-                            <div className="text-center">
-                              <p className="text-xs font-bold text-gray-800">
-                                Department Admin's Signature
-                              </p>
-                              <div className="mt-2 mx-auto w-48 h-6 border-b-2 border-gray-400"></div>
-                              <div className="flex justify-between mt-1 text-[10px] text-gray-500">
-                                <span>
-                                  Date: {new Date().toLocaleDateString()}
-                                </span>
-                                <span>Stamp & Seal</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Security Features */}
-                          <div className="mt-4 flex justify-between items-center text-[8px] text-gray-400">
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 rounded-full bg-blue-200"></div>
-                              <span>Hologram Seal</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 rounded-full bg-blue-200"></div>
-                              <span>Valid with Photo ID</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Decorative Border */}
-                        <div className="absolute inset-0 border-4 border-transparent rounded-xl">
-                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-300 to-blue-500"></div>
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-300"></div>
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-300 to-blue-500"></div>
-                          <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-300"></div>
-                        </div>
-                      </div>
+                      <div
+                        className="w-full aspect-[400/250] rounded-xl shadow-lg border-2 border-gray-200"
+                        style={{
+                          backgroundImage: `url('/idcard-back.png')`,
+                          backgroundSize: "cover",
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
