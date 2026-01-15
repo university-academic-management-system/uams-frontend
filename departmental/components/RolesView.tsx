@@ -160,7 +160,7 @@ export const RolesView: React.FC = () => {
         params.append("search", search)
       }
       
-      const response = await api.get(`/university-admin/students?${params}`)
+      const response = await api.get(`/api/university-admin/students?${params}`)
 
       // console.log("fetched students", response)
       
