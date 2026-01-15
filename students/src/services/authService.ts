@@ -153,6 +153,38 @@ export const getStoredUser = () => {
   }
 };
 
+export interface DepartmentDuesResponse {
+  success: boolean;
+  data: {
+    departmentDues: number;
+    accessFee: number;
+    totalFee: number;
+  };
+}
+
+/**
+ * Get department annual dues breakdown
+ */
+export const getDepartmentAnnualDue = async (): Promise<DepartmentDuesResponse> => {
+  try {
+    const response = await apiClient.get<DepartmentDuesResponse>('/department-annual-due');
+    
+    if (response.data.success) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to fetch dues information');
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to fetch dues. Please try again.');
+  }
+};
+
 const authService = {
   login,
   logout,
@@ -161,6 +193,7 @@ const authService = {
   verifyStudent,
   activateAccount,
   initializePayment,
+  getDepartmentAnnualDue,
 };
 
 export default authService;
