@@ -66,7 +66,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({ onNext }) => {
             Pay Department Annual Dues
           </h1>
           <p className="text-[14px] font-medium text-gray-400">
-            Complete your payment to proceed with account activation
+            Complete your payment to activate your account 
           </p>
         </div>
 
