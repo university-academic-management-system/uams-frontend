@@ -816,7 +816,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
             <select 
               value={selectedSession}
               onChange={(e) => setSelectedSession(e.target.value)}
-              className="w-full sm:w-auto bg-[#f8fafc] border border-gray-100 text-[10px] font-bold rounded-lg pl-3 pr-10 py-2.5 text-gray-400 uppercase appearance-none cursor-pointer"
+              className="w-full sm:w-auto bg-blue-50 border border-blue-200 text-[10px] font-bold rounded-lg pl-3 pr-10 py-2.5 text-gray-600 uppercase appearance-none cursor-pointer hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
             >
               <option value="">Select Session</option>
               {sessions?.map((session) => (
