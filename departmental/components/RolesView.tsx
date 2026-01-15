@@ -1008,56 +1008,72 @@ export const RolesView: React.FC = () => {
               {/* ID Card Preview Section */}
               {/* ID Card Preview Section */}
               {capturedPhoto && (
-                <div className="flex flex-col gap-4">
-                  <h4 className="text-sm font-semibold text-slate-900">
+                <div className="flex flex-col gap-6">
+                  <h4 className="text-sm font-semibold text-slate-900 text-center">
                     ID Card Preview
                   </h4>
+
+                  {/* Toggle for Front/Back - optional but nice */}
+                  <div className="flex justify-center gap-8 text-sm font-medium text-slate-600">
+                    <span className="text-blue-600">Front</span>
+                    <span>Back</span>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                     {/* Front */}
-                    <div className="relative">
-                      <p className="text-xs font-semibold text-slate-600 mb-3 text-center">
+                    <div className="flex flex-col items-center">
+                      <p className="text-xs font-semibold text-slate-600 mb-4">
                         Front
                       </p>
                       <div
-                        className="w-full aspect-[400/250] rounded-xl shadow-lg relative overflow-hidden border-2 border-gray-200"
+                        className="relative w-full max-w-[400px] aspect-[400/250] rounded-xl shadow-2xl overflow-hidden border-4 border-white"
                         style={{
-                          backgroundImage: `url('/idcard-front.png')`,
+                          backgroundImage: "url('/idcard-front.png')",
                           backgroundSize: "cover",
+                          backgroundPosition: "center",
                         }}
                       >
+                        {/* Student Photo - positioned exactly over the white box */}
                         <img
                           src={capturedPhoto}
                           alt="Student photo"
-                          className="absolute w-20 h-24 object-cover rounded"
-                          style={{ top: "105px", left: "35px" }}
+                          className="absolute object-cover border-2 border-white shadow-md"
+                          style={{
+                            width: "88px",
+                            height: "108px",
+                            top: "88px",
+                            left: "28px",
+                          }}
                         />
+
+                        {/* Dynamic Text Fields - adjust these px values if needed for perfect alignment */}
                         <div
-                          className="absolute font-semibold text-sm"
-                          style={{ top: "105px", left: "130px" }}
+                          className="absolute font-bold text-sm text-blue-900 uppercase"
+                          style={{ top: "90px", left: "130px", width: "250px" }}
                         >
-                          {currentStudent?.name.toUpperCase()}
+                          {currentStudent?.name}
                         </div>
                         <div
-                          className="absolute font-semibold text-sm"
-                          style={{ top: "130px", left: "130px" }}
+                          className="absolute font-bold text-sm text-blue-900"
+                          style={{ top: "118px", left: "130px" }}
                         >
                           {currentStudent?.matric}
                         </div>
                         <div
-                          className="absolute font-semibold text-sm"
-                          style={{ top: "155px", left: "130px" }}
+                          className="absolute font-bold text-sm text-blue-900"
+                          style={{ top: "145px", left: "130px" }}
                         >
                           {currentStudent?.faculty}
                         </div>
                         <div
-                          className="absolute font-semibold text-sm"
-                          style={{ top: "180px", left: "130px" }}
+                          className="absolute font-bold text-sm text-blue-900"
+                          style={{ top: "172px", left: "130px" }}
                         >
                           {currentStudent?.department}
                         </div>
                         <div
-                          className="absolute font-semibold text-sm"
-                          style={{ top: "205px", left: "130px" }}
+                          className="absolute font-bold text-sm text-blue-900"
+                          style={{ top: "200px", left: "130px" }}
                         >
                           {new Date(
                             currentStudent?.graduationDate || ""
@@ -1071,15 +1087,16 @@ export const RolesView: React.FC = () => {
                     </div>
 
                     {/* Back */}
-                    <div className="relative">
-                      <p className="text-xs font-semibold text-slate-600 mb-3 text-center">
+                    <div className="flex flex-col items-center">
+                      <p className="text-xs font-semibold text-slate-600 mb-4">
                         Back
                       </p>
                       <div
-                        className="w-full aspect-[400/250] rounded-xl shadow-lg border-2 border-gray-200"
+                        className="w-full max-w-[400px] aspect-[400/250] rounded-xl shadow-2xl overflow-hidden border-4 border-white"
                         style={{
-                          backgroundImage: `url('/idcard-back.png')`,
+                          backgroundImage: "url('/idcard-back.png')",
                           backgroundSize: "cover",
+                          backgroundPosition: "center",
                         }}
                       />
                     </div>
