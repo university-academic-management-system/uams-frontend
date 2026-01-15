@@ -4,7 +4,7 @@ import { GlobalSettingsSection } from "@/components/payments/GlobalSettingsSecti
 import { PaymentSplitKeysSection } from "@/components/payments/PaymentSplitKeysSection";
 import { PageActions } from "@/components/payments/PageActions";
 
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function PaymentsPage() {
   const [activeSession, setActiveSession] = useState<any>(null);
