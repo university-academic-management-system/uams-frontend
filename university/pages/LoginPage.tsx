@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { User, Eye, EyeOff, GraduationCap } from "lucide-react";
 import api from "../api/axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { AuthData } from "../components/types";
 
 interface ApiLoginResponse {
@@ -301,7 +301,7 @@ export default LoginPage;
 // import React, { useState } from "react";
 // import { User, Eye, EyeOff, GraduationCap } from "lucide-react";
 // import api from "../api/axios";
-// import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router";
 // import { AuthData } from "../components/types";
 
 // interface LoginResponse {
