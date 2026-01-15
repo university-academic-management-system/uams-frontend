@@ -168,7 +168,7 @@ export interface DepartmentDuesResponse {
  */
 export const getDepartmentAnnualDue = async (): Promise<DepartmentDuesResponse> => {
   try {
-    const response = await apiClient.get<DepartmentDuesResponse>('/department-annual-due');
+    const response = await apiClient.get<DepartmentDuesResponse>('/annual-access-fee');
     
     if (response.data.success) {
       return response.data;
