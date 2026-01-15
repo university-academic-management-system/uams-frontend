@@ -68,17 +68,17 @@ interface Student {
 }
 
 interface ApiStudent {
-  id: string;
-  studentId: string;
-  level: string;
-  isActive: boolean;
-  User: {
-    fullName: string;
-    email: string;
-    phone: string;
-    avatar: string | null;
-    id: string;
-  };
+  id: string
+  studentId: string
+  level: string
+  isActive: boolean
+  user: {
+    fullName: string
+    email: string
+    phone: string | null
+    avatar: string | null
+    id: string
+  }
   Department?: {
     id: string;
     name: string;
@@ -174,42 +174,38 @@ export const RolesView: React.FC = () => {
       if (search) {
         params.append("search", search);
       }
+      
+      const response = await api.get(`/university-admin/students?${params}`)
 
-      const response = await api.get(`/university-admin/students?${params}`);
-
+      // console.log("fetched students", response)
+      
       // Transform API response to match component interface
-      const transformedStudents: Student[] = response.data.students.map(
-        (apiStudent: ApiStudent) => {
-          // Check if student has paid ID card fee
-          const hasPaidIDCardFee =
-            apiStudent.PaymentTransactions?.some(
-              (transaction) =>
-                transaction.payment_for === "id_card_fee" &&
-                transaction.status === "success"
-            ) || false;
-
-          // Get department and faculty names from the nested structure
-          const departmentName = apiStudent.Department?.name || "Not Assigned";
-          const facultyName =
-            apiStudent.Department?.Faculty?.name || "Not Assigned";
-
-          return {
-            id: apiStudent.id,
-            idNo: apiStudent.studentId,
-            name: apiStudent.User.fullName,
-            matric: apiStudent.studentId,
-            faculty: facultyName,
-            department: departmentName,
-            graduationDate: "2026-06-15", // You might want to get this from the API or calculate it
-            status: hasPaidIDCardFee ? "Pending" : "Active", // Update status based on payment
-            level: apiStudent.level,
-            email: apiStudent.User.email,
-            phone: apiStudent.User.phone,
-            userId: apiStudent.User.id,
-            hasPaidIDCardFee,
-            PaymentTransactions: apiStudent.PaymentTransactions,
-            paymentSummary: apiStudent.paymentSummary,
-          };
+      const transformedStudents: Student[] = response.data.students.map((apiStudent: ApiStudent) => {
+        // Check if student has paid ID card fee
+        const hasPaidIDCardFee = apiStudent.PaymentTransactions?.some(
+          transaction => transaction.payment_for === "id_card_fee" && transaction.status === "success"
+        ) || false
+        
+        // Get department and faculty names from the nested structure
+        const departmentName = apiStudent.Department?.name || "Not Assigned"
+        const facultyName = apiStudent.Department?.Faculty?.name || "Not Assigned"
+        
+        return {
+          id: apiStudent.id,
+          idNo: apiStudent.studentId,
+          name: apiStudent.user?.fullName || "N/A",
+          matric: apiStudent.studentId,
+          faculty: facultyName,
+          department: departmentName,
+          graduationDate: "2026-06-15", // You might want to get this from the API or calculate it
+          status: hasPaidIDCardFee ? "Pending" : "Active", // Update status based on payment
+          level: apiStudent.level,
+          email: apiStudent.user?.email || "",
+          phone: apiStudent.user?.phone || "",
+          userId: apiStudent.user?.id || "",
+          hasPaidIDCardFee,
+          PaymentTransactions: apiStudent.PaymentTransactions,
+          paymentSummary: apiStudent.paymentSummary
         }
       );
 
