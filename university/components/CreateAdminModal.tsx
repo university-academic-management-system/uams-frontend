@@ -51,7 +51,9 @@ export const CreateAdminModal = ({
       setFetchingData(true);
       try {
         const res = await adminApi.get("/university-admin/sub-organizations");
-        setSubOrgs(res.data || []);
+        // Handle different API response structures - ensure we always get an array
+        const responseData = res.data?.data || res.data;
+        setSubOrgs(Array.isArray(responseData) ? responseData : []);
       } catch {
         setNotification({
           type: "error",
