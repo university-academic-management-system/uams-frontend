@@ -25,7 +25,7 @@ const Login: React.FC = () => {
       localStorage.setItem("loginEmail", email);
 
       // API call to signin endpoint
-      const response = await api.post("/api/auth/signin", {
+      const response = await api.post("/auth/signin", {
         email: email,
         password: password,
       });

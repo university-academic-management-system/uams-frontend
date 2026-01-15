@@ -28,7 +28,7 @@ export default function PaymentsPage() {
     const fetchActiveSession = async () => {
       try {
         const response = await axios.get(
-          `${BASE_URL}/api/department-admins/department-sessions`,
+          `${BASE_URL}/department-admins/department-sessions`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -71,7 +71,7 @@ export default function PaymentsPage() {
 
     try {
       await axios.post(
-        `${BASE_URL}/api/department-annual-due`,
+        `${BASE_URL}/department-annual-due`,
         {
           sessionId: activeSession.id,
           departmentDues: Number(fees.departmentDues),

@@ -40,7 +40,7 @@ const StatsContainer: React.FC = () => {
   const fetchUsers = async () => {
     try {
       const response = await api.get<UsersResponse>(
-        "/api/university-admin/users"
+        "/university-admin/users"
       );
       const users = response.data.users;
 

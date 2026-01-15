@@ -212,8 +212,6 @@ const CoursesTab: React.FC = () => {
 };
 
 export default CoursesTab;
-
-// import React, { useState, useEffect } from "react";
 // import { Plus, Search, Filter, Loader2, X, MoreHorizontal } from "lucide-react";
 // // import CourseForm from "./CourseForm";
 // import { programsCoursesApi } from "../api/programscourseapi";
