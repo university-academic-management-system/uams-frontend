@@ -11,6 +11,7 @@ interface ActivateAccountStepProps {
 
 const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onForgotPassword }) => {
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,12 +26,16 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
       setError('Please enter your password');
       return;
     }
+    if (!phone.trim()) {
+      setError('Please enter your phone number');
+      return;
+    }
 
     setIsLoading(true);
     setError('');
 
     try {
-      await authService.activateAccount({ email, password });
+      await authService.activateAccount({ email, phone, password });
       onNext();
     } catch (err: any) {
       setError(err.message || 'Account activation failed. Please try again.');
@@ -48,8 +53,7 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
             Activate Account
           </h1>
           <p className="text-[13px] font-medium text-gray-400 leading-relaxed px-4">
-            Welcome back please activate your account using your email and
-            phone number as username and password respectively
+            Activate your account using your email and phone number
           </p>
         </div>
 
@@ -80,13 +84,30 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
           </div>
           <div className="relative group">
             <input
+              type="phone"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                if (error) setError('');
+              }}
+              placeholder="Enter Phone Number"
+              className="w-full bg-white border border-gray-300 rounded-xl py-4 px-6 text-[15px] font-medium text-[#1e293b] focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-[#1d76d2] transition-all"
+              disabled={isLoading}
+            />
+            <User
+              className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+          </div>
+          <div className="relative group">
+            <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
                 if (error) setError('');
               }}
-              placeholder="Enter Phone Number"
+              placeholder="Enter Password"
               className="w-full bg-white border border-gray-300 rounded-xl py-4 px-6 text-[15px] font-medium text-[#1e293b] focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-[#1d76d2] transition-all"
               disabled={isLoading}
               onKeyDown={(e) => e.key === 'Enter' && handleActivate()}

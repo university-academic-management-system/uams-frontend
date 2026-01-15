@@ -58,6 +58,7 @@ export const verifyStudent = async (studentId: string): Promise<LoginResponse> =
 
 interface ActivateAccountRequest {
   email: string;
+  phone: string;
   password: string;
 }
 
