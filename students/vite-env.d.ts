@@ -4,6 +4,7 @@ interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string;
   readonly VITE_API_TIMEOUT: string;
   readonly VITE_CALLBACK_URL: string;
+  readonly VITE_ID_CARD_CALLBACK_URL: string;
 }
 
 interface ImportMeta {
