@@ -1237,14 +1237,14 @@ export const RolesView: React.FC = () => {
               )}
 
               {/* ID Card Preview Section */}
-              {capturedPhoto && (
+              {/* {capturedPhoto && (
                 <div className="flex flex-col gap-4">
                   <h4 className="text-sm font-semibold text-slate-900">
                     ID Card Preview
                   </h4>
                   <div className="grid grid-cols-2 gap-6">
                     {/* Front of Card */}
-                    <div className="flex flex-col items-center">
+              {/* <div className="flex flex-col items-center">
                       <p className="text-xs font-semibold text-slate-600 mb-3">
                         Front
                       </p>
@@ -1301,7 +1301,7 @@ export const RolesView: React.FC = () => {
                     </div>
 
                     {/* Back of Card */}
-                    <div className="flex flex-col items-center">
+              {/* <div className="flex flex-col items-center">
                       <p className="text-xs font-semibold text-slate-600 mb-3">
                         Back
                       </p>
@@ -1325,6 +1325,159 @@ export const RolesView: React.FC = () => {
                             ________________
                           </p>
                           <p className="text-[8px] text-slate-500">Signature</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}  */}
+              {/* ID Card Preview Section */}
+              {capturedPhoto && (
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-sm font-semibold text-slate-900">
+                    ID Card Preview
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Front of Card - With Actual Background Image */}
+                    <div className="flex flex-col items-center">
+                      <p className="text-xs font-semibold text-slate-600 mb-3">
+                        Front
+                      </p>
+                      <div className="w-full max-w-[400px] aspect-[400/250] rounded-lg overflow-hidden border-2 border-slate-300 relative">
+                        {/* Background Image */}
+                        <div
+                          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                          style={{ backgroundImage: `url('/idcard.png')` }}
+                        />
+                        {/* Overlay content */}
+                        <div className="relative z-10 p-4 h-full flex flex-col">
+                          {/* Header */}
+                          <div className="text-center mb-2">
+                            <p className="text-xs font-bold text-blue-900">
+                              UNIVERSITY OF PORT HARCOURT
+                            </p>
+                            <p className="text-[10px] text-blue-700 font-semibold">
+                              DEPARTMENT OF COMPUTER SCIENCE
+                            </p>
+                            <p className="text-[8px] text-slate-600 mt-1">
+                              East-West Road, Choba, Port Harcourt, Rivers State
+                            </p>
+                          </div>
+
+                          {/* Title */}
+                          <div className="text-center border-b border-blue-200 pb-2 mb-3">
+                            <p className="text-[9px] font-bold text-blue-800">
+                              STUDENT DEPARTMENT IDENTITY CARD
+                            </p>
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex gap-3 flex-1">
+                            {/* Photo */}
+                            <div className="flex flex-col items-center">
+                              <div className="w-16 h-20 bg-white rounded overflow-hidden border-2 border-blue-500">
+                                <img
+                                  src={capturedPhoto || "/placeholder.svg"}
+                                  alt="Student"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <p className="text-[7px] text-slate-600 mt-1 font-medium">
+                                OFFICIAL PHOTO
+                              </p>
+                            </div>
+
+                            {/* Details */}
+                            <div className="flex-1 text-[9px] space-y-1">
+                              <div className="flex">
+                                <span className="font-bold text-blue-800 min-w-[60px]">
+                                  NAME:
+                                </span>
+                                <span className="font-semibold text-slate-800">
+                                  {currentStudent?.name}
+                                </span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold text-blue-800 min-w-[60px]">
+                                  MATRIC NO.:
+                                </span>
+                                <span className="font-semibold text-slate-800">
+                                  {currentStudent?.matric}
+                                </span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold text-blue-800 min-w-[60px]">
+                                  FACULTY:
+                                </span>
+                                <span className="font-semibold text-slate-800">
+                                  {currentStudent?.faculty}
+                                </span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold text-blue-800 min-w-[60px]">
+                                  DEPT:
+                                </span>
+                                <span className="font-semibold text-slate-800">
+                                  {currentStudent?.department}
+                                </span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold text-blue-800 min-w-[60px]">
+                                  EXPIRY DATE:
+                                </span>
+                                <span className="font-semibold text-slate-800">
+                                  {new Date(
+                                    currentStudent?.graduationDate || ""
+                                  ).toLocaleDateString("en-GB", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Footer */}
+                          <div className="mt-3 pt-2 border-t border-slate-300">
+                            <div className="h-[1px] bg-slate-400 w-32 mx-auto"></div>
+                            <p className="text-[7px] text-center text-slate-600 mt-1">
+                              Authorized Signature & Stamp
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Back of Card - With Actual Background Image */}
+                    <div className="flex flex-col items-center">
+                      <p className="text-xs font-semibold text-slate-600 mb-3">
+                        Back
+                      </p>
+                      <div className="w-full max-w-[400px] aspect-[400/250] rounded-lg overflow-hidden border-2 border-slate-300 relative">
+                        {/* Background Image */}
+                        <div
+                          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                          style={{ backgroundImage: `url('/idcard1.png')` }}
+                        />
+                        {/* Overlay content */}
+                        <div className="relative z-10 p-4 h-full flex flex-col">
+                          <div className="flex-1 flex flex-col justify-center">
+                            <p className="text-[10px] leading-relaxed text-slate-700 text-center font-medium mb-4">
+                              The holder whose name and photograph appear on
+                              this I.D. Card is a bonafide student of the
+                              University of Port Harcourt
+                            </p>
+                            <p className="text-[10px] leading-relaxed text-slate-700 text-center font-medium">
+                              If found please return to the office of the Chief
+                              Security Officer University of Port Harcourt
+                            </p>
+                          </div>
+                          <div className="pt-4 border-t border-slate-300">
+                            <p className="text-[9px] text-center font-bold text-slate-700">
+                              Department Admin's Signature
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
