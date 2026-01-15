@@ -619,7 +619,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                     className="w-full bg-[#f8fafc] border border-gray-100 rounded-xl py-2.5 px-4 text-[13px] font-bold text-gray-600 appearance-none focus:outline-none"
                   >
                     <option value="">Select Semester</option>
-                    {semesters?.map((semester) => (
+                    {semesters?.filter(semester => semester.isActive).map((semester) => (
                       <option key={semester.id} value={semester.id}>
                         {semester.name}
                       </option>
