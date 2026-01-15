@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { ViewType } from "./types";

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { User, Eye, EyeOff } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import api from "../api/axios";
 import { AuthData } from "../components/types";
 import { useAuth } from "../context/AuthProvider";
