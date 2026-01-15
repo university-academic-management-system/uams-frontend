@@ -39,7 +39,7 @@ const loginOptions = [
     id: "dept_admin",
     label: "Continue as Dept. Admin",
     icon: School,
-    url: "/department-admin/login",
+    url: "/departmental-admin/login",
     color: "purple",
     description: "Manage departmental resources and scheduling",
   },
