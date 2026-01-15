@@ -473,7 +473,12 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
   };
 
   const totalUnits = previewedCourses.reduce((sum, course) => sum + course.creditUnits, 0);
-  const registeredCourses = registrationData?.courses || [];
+  
+  // Filter registered courses by selected session, or show all if no session selected
+  const allCourses = registrationData?.courses || [];
+  const registeredCourses = selectedSession 
+    ? allCourses.filter(course => course.sessionId === selectedSession)
+    : allCourses;
 
   // Handle course registration
   const handleRegisterCourses = async () => {
