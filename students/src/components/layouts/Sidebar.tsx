@@ -140,27 +140,3 @@ const Sidebar = () => {
     </Stack>
 }
 export default Sidebar;
-
-//  <Stack flex="2" justify={"end"}>
-//                     <Flex borderTop={"sm"} borderTopColor={"border"} p="2" justify={"center"} align={"center"}>
-//                         <Heading size="sm" color="fg.subtle">Nexus</Heading>
-//                     </Flex>
-//                 </Stack>
-
-{/* <Stack separator={<Separator />} w="60" borderRight={"sm"} borderRightColor={"border"}>
-            {items.map((item) => (
-                <Stack key={item.title} px="4" py="2" gap="2">
-                    <Heading size="sm" color="fg.subtle">{item.title}</Heading>
-                    <Stack>
-                        {item.links.map((link) => (
-                            <Link key={link.title} to={link.to}>
-                                <Flex align="center" gap="2">
-                                    <Icon as={link.icon} />
-                                    <Text fontWeight={"medium"}>{link.title}</Text>
-                                </Flex>
-                            </Link>
-                        ))}
-                    </Stack>
-                </Stack>
-            ))}
-        </Stack> */}

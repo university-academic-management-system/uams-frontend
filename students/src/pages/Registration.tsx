@@ -493,10 +493,10 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
     }
 
     // Get payment reference from localStorage (set after payment)
-    const paymentRef = localStorage.getItem('pendingPaymentReference');
-    if (!paymentRef) {
-      alert('Payment reference not found. Please complete payment first.');
-      return;
+    // const paymentRef = localStorage.getItem('pendingPaymentReference');
+    // if (!paymentRef) {
+    //   alert('Payment reference not found. Please complete payment first.');
+    //   return;
     }
 
     setIsRegistering(true);
