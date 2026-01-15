@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { User, Eye, EyeOff, Loader2, AlertCircle, Phone } from 'lucide-react';
 import AuthBackground from '../components/AuthBackground';
 import AuthCard from '../components/AuthCard';
 import authService from '../../../services/authService';
@@ -94,7 +94,7 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
               className="w-full bg-white border border-gray-300 rounded-xl py-4 px-6 text-[15px] font-medium text-[#1e293b] focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-[#1d76d2] transition-all"
               disabled={isLoading}
             />
-            <User
+            <Phone
               className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400"
               size={20}
             />
