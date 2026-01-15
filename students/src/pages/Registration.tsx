@@ -332,7 +332,7 @@ const OtherServicesView = ({ hasPaid, onAction, navigate }: { hasPaid: boolean, 
                 💳 Payment Required: To view your ID card, you must complete payment first.
               </p>
             </div>
-          )}
+          )} 
 
           {error && (
             <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600">
