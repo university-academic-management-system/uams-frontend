@@ -313,7 +313,7 @@ export const RolesView: React.FC = () => {
                     {/* Front View */}
                     <div className="relative aspect-[400/250] rounded-xl border border-slate-200 overflow-hidden shadow-lg group">
                       <img
-                        src="/idcard-front.png"
+                        src="/departmental-admin/idcard-front.png"
                         className="w-full h-full"
                         alt="Front Template"
                       />
@@ -337,7 +337,7 @@ export const RolesView: React.FC = () => {
                     {/* Back View */}
                     <div className="aspect-[400/250] rounded-xl border border-slate-200 overflow-hidden shadow-lg">
                       <img
-                        src="/idcard-back.png"
+                        src="/departmental-admin/idcard-back.png"
                         className="w-full h-full"
                         alt="Back Template"
                       />
