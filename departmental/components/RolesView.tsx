@@ -327,17 +327,19 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
                       <div className="absolute left-[46.5%] top-[42.5%] text-[7px] font-bold text-black uppercase text-left">
                         {/* Each line is individually positioned with padding to match the background lines */}
-                        <p className="leading-none">{currentStudent?.name}</p>
                         <p className="leading-none pt-[8.5px]">
+                          {currentStudent?.name}
+                        </p>
+                        <p className="leading-none pt-[9.0px] pl-[4px]">
                           {currentStudent?.matric}
                         </p>
-                        <p className="leading-none pt-[8.5px]">
+                        <p className="leading-none pt-[8.5px] pl-[4px]">
                           {currentStudent?.faculty}
                         </p>
                         <p className="leading-none pt-[8.5px]">
                           {currentStudent?.department}
                         </p>
-                        <p className="leading-none pt-[8.5px]">
+                        <p className="leading-none pt-[8px] pl-[4px]">
                           {currentStudent?.graduationDate}
                         </p>
                       </div>
