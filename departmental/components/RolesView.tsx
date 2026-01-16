@@ -326,41 +326,38 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Text Overlays */}
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
                       <div className="absolute left-[46.5%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
-                        <div className="grid grid-cols-[auto_1fr] gap-x-[4px] gap-y-[8.5px] leading-none">
-                          {/* NAME */}
-                          <span />
-                          <span className="text-left">
+                        <div className="flex flex-col gap-y-[8.5px] leading-none">
+                          {/* NAME - Single line */}
+                          <div className="text-left whitespace-nowrap">
                             <span>NAME: </span>
                             <span>{currentStudent?.name}</span>
-                          </span>
+                          </div>
 
-                          {/* MATRIC NO */}
-                          <span />
-                          <span className="text-left">
+                          {/* MATRIC NO - Single line */}
+                          <div className="text-left whitespace-nowrap">
                             <span>MATRIC NO.: </span>
                             <span>{currentStudent?.matric}</span>
-                          </span>
+                          </div>
 
-                          {/* FACULTY */}
-                          <span />
-                          <span className="text-left">
+                          {/* FACULTY - Single line */}
+                          <div className="text-left whitespace-nowrap">
                             <span>FACULTY </span>
                             <span>{currentStudent?.faculty}</span>
-                          </span>
+                          </div>
 
-                          {/* DEPARTMENT */}
-                          <span />
-                          <span className="text-left">
+                          {/* DEPARTMENT - Allows wrapping */}
+                          <div className="text-left">
                             <span>DEPT: </span>
-                            <span>{currentStudent?.department}</span>
-                          </span>
+                            <span className="break-words">
+                              {currentStudent?.department}
+                            </span>
+                          </div>
 
-                          {/* EXPIRY DATE */}
-                          <span />
-                          <span className="text-left">
+                          {/* EXPIRY DATE - Single line */}
+                          <div className="text-left whitespace-nowrap">
                             <span>EXPIRY DATE: </span>
                             <span>{currentStudent?.graduationDate}</span>
-                          </span>
+                          </div>
                         </div>
                       </div>
                     </div>
