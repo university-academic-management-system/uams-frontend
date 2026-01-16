@@ -326,38 +326,38 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Text Overlays */}
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
                       <div className="absolute left-[46.5%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
-                        <div className="grid grid-cols-[1fr_1.2fr] gap-y-[8.5px] leading-none">
-                          {/* NAME: Label on left, value on right */}
-                          <span>NAME:</span>
-                          <span className="text-left">
-                            {currentStudent?.name}
-                          </span>
+                        <div className="flex flex-col gap-y-[8.5px] leading-none">
+                          {/* NAME */}
+                          <div className="text-left">
+                            <span>NAME: </span>
+                            <span>{currentStudent?.name}</span>
+                          </div>
 
-                          {/* MATRIC NO: Label on left, value on right */}
-                          <span>MATRIC NO.:</span>
-                          <span className="text-left">
-                            {currentStudent?.matric}
-                          </span>
+                          {/* MATRIC NO */}
+                          <div className="text-left">
+                            <span>MATRIC NO.: </span>
+                            <span>{currentStudent?.matric}</span>
+                          </div>
 
-                          {/* FACULTY: Label on left, value on right */}
-                          <span>FACULTY</span>
-                          <span className="text-left">
-                            {currentStudent?.faculty}
-                          </span>
+                          {/* FACULTY */}
+                          <div className="text-left">
+                            <span>FACULTY </span>
+                            <span>{currentStudent?.faculty}</span>
+                          </div>
 
-                          {/* DEPARTMENT: Label on left, value on right */}
-                          <span>DEPT:</span>
-                          <span className="text-left">
-                            {currentStudent?.department}
-                          </span>
+                          {/* DEPARTMENT */}
+                          <div className="text-left">
+                            <span>DEPT: </span>
+                            <span>{currentStudent?.department}</span>
+                          </div>
 
-                          {/* EXPIRY DATE: Label on left, value on right */}
-                          <span />
-                          <span className="text-left">
-                            {currentStudent?.graduationDate}
-                          </span>
+                          {/* EXPIRY DATE */}
+                          <div className="text-left">
+                            <span>EXPIRY DATE: </span>
+                            <span>{currentStudent?.graduationDate}</span>
+                          </div>
                         </div>
-                      </div>{" "}
+                      </div>
                     </div>
                     {/* Back View */}
                     <div className="aspect-[400/250] rounded-xl border border-slate-200 overflow-hidden shadow-lg">
