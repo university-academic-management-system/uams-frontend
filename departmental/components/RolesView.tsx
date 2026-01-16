@@ -325,23 +325,23 @@ export const RolesView: React.FC = () => {
                       />
                       {/* Dynamic Text Overlays */}
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
-                      <div className="absolute left-[46.5%] top-[42.5%] text-[7px] font-bold text-black uppercase text-left relative">
-                        {/* Each line is individually positioned with padding to match the background lines */}
-                        <p className="leading-none pt-[8.5px]">
-                          {currentStudent?.name}
-                        </p>
-                        <p className="absolute left-[55%] leading-none pt-[8.5px]">
-                          {currentStudent?.matric}
-                        </p>
-                        <p className="leading-none pt-[8.5px]">
-                          {currentStudent?.faculty}
-                        </p>
-                        <p className="leading-none pt-[8.5px]">
-                          {currentStudent?.department}
-                        </p>
-                        <p className="absolute left-[55%] leading-none pt-[6.5px]">
-                          {currentStudent?.graduationDate}
-                        </p>
+                      <div className="absolute left-[46.5%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
+                        <div className="grid grid-cols-[1fr_1.2fr] gap-y-[8.5px] leading-none">
+                          <span>{currentStudent?.name}</span>
+                          <span></span>
+
+                          <span></span>
+                          <span>{currentStudent?.matric}</span>
+
+                          <span>{currentStudent?.faculty}</span>
+                          <span></span>
+
+                          <span>{currentStudent?.department}</span>
+                          <span></span>
+
+                          <span></span>
+                          <span>{currentStudent?.graduationDate}</span>
+                        </div>
                       </div>
                     </div>
                     {/* Back View */}
