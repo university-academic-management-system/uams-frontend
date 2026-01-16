@@ -327,36 +327,54 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
                       <div className="absolute left-[46.5%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
                         <div className="flex flex-col gap-y-[8.5px] leading-none">
-                          {/* NAME - Single line */}
-                          <div className="text-left whitespace-nowrap">
-                            <span>NAME: </span>
-                            <span>{currentStudent?.name}</span>
+                          {/* NAME */}
+                          <div className="flex items-start">
+                            <span className="mr-[5px] whitespace-nowrap">
+                              NAME:
+                            </span>
+                            <span className="whitespace-nowrap">
+                              {currentStudent?.name}
+                            </span>
                           </div>
 
-                          {/* MATRIC NO - Single line */}
-                          <div className="text-left whitespace-nowrap">
-                            <span>MATRIC NO.: </span>
-                            <span>{currentStudent?.matric}</span>
+                          {/* MATRIC NO */}
+                          <div className="flex items-start">
+                            <span className="mr-[5px] whitespace-nowrap">
+                              MATRIC NO.:
+                            </span>
+                            <span className="whitespace-nowrap">
+                              {currentStudent?.matric}
+                            </span>
                           </div>
 
-                          {/* FACULTY - Single line */}
-                          <div className="text-left whitespace-nowrap">
-                            <span>FACULTY </span>
-                            <span>{currentStudent?.faculty}</span>
+                          {/* FACULTY */}
+                          <div className="flex items-start">
+                            <span className="mr-[5px] whitespace-nowrap">
+                              FACULTY:
+                            </span>
+                            <span className="whitespace-nowrap">
+                              {currentStudent?.faculty}
+                            </span>
                           </div>
 
-                          {/* DEPARTMENT - Allows wrapping */}
-                          <div className="text-left">
-                            <span>DEPT: </span>
-                            <span className="break-words">
+                          {/* DEPARTMENT (wrap allowed) */}
+                          <div className="flex items-start">
+                            <span className="mr-[5px] whitespace-nowrap">
+                              DEPT:
+                            </span>
+                            <span className="break-words leading-tight">
                               {currentStudent?.department}
                             </span>
                           </div>
 
-                          {/* EXPIRY DATE - Single line */}
-                          <div className="text-left whitespace-nowrap">
-                            <span>EXPIRY DATE: </span>
-                            <span>{currentStudent?.graduationDate}</span>
+                          {/* EXPIRY DATE */}
+                          <div className="flex items-start">
+                            <span className="mr-[5px] whitespace-nowrap">
+                              EXPIRY DATE:
+                            </span>
+                            <span className="whitespace-nowrap">
+                              {currentStudent?.graduationDate}
+                            </span>
                           </div>
                         </div>
                       </div>
