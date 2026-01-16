@@ -24,8 +24,11 @@ interface ApiStudent {
   PaymentTransactions?: Array<{ payment_for: string; status: string }>;
 }
 
-// FIX: Explicitly returning the JSX ensures the type is React.FC
-export const IDCardIssuance: React.FC = () => {
+/**
+ * RolesView Component
+ * Renamed to match the import in router.tsx and fix the build error.
+ */
+export const RolesView: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -101,7 +104,7 @@ export const IDCardIssuance: React.FC = () => {
     }
   };
 
-  // --- Button Handlers (FIXED: Restored Functionality) ---
+  // --- Button Handlers (Print & Download Logic) ---
   const handleAction = async (type: "print" | "download") => {
     if (!currentStudent || !capturedPhoto) return;
     setUploadingPhoto(true);
@@ -129,21 +132,30 @@ export const IDCardIssuance: React.FC = () => {
     }
   };
 
+  if (loading && students.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="animate-spin text-blue-600" size={40} />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-[1200px] mx-auto min-h-screen">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">
             ID Card Issuance
           </h2>
           <p className="text-sm text-slate-500">
-            University of Port Harcourt - Student Records
+            University of Port Harcourt - Student Management
           </p>
         </div>
-        <div className="relative w-80">
+        <div className="relative w-full md:w-80">
           <input
             className="w-full pl-10 pr-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="Search students..."
+            value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <Search
@@ -153,20 +165,21 @@ export const IDCardIssuance: React.FC = () => {
         </div>
       </div>
 
+      {/* Student List Table */}
       <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500">
             <tr>
-              <th className="px-6 py-4">Student Name</th>
-              <th className="px-6 py-4">Matric No</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-center">Action</th>
+              <th className="px-6 py-4 tracking-wider">Student Name</th>
+              <th className="px-6 py-4 tracking-wider">Matric No</th>
+              <th className="px-6 py-4 tracking-wider">Status</th>
+              <th className="px-6 py-4 text-center tracking-wider">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y text-sm">
+          <tbody className="divide-y text-sm text-slate-700">
             {students.map((s) => (
               <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-6 py-4 font-bold text-slate-700">{s.name}</td>
+                <td className="px-6 py-4 font-bold">{s.name}</td>
                 <td className="px-6 py-4 font-mono text-slate-500">
                   {s.matric}
                 </td>
@@ -201,10 +214,11 @@ export const IDCardIssuance: React.FC = () => {
         </table>
       </div>
 
+      {/* Production Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[95vh]">
-            <div className="p-6 flex justify-between items-center border-b">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[95vh] overflow-hidden">
+            <div className="p-6 flex justify-between items-center border-b bg-white">
               <h3 className="font-bold text-slate-800 text-lg">
                 Production: {currentStudent?.name}
               </h3>
@@ -219,7 +233,8 @@ export const IDCardIssuance: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-8">
+            <div className="p-6 overflow-y-auto space-y-8 bg-white">
+              {/* Camera Area */}
               <div className="aspect-video bg-slate-100 rounded-2xl overflow-hidden relative border-2 border-slate-200">
                 {!capturedPhoto ? (
                   <video
@@ -232,6 +247,7 @@ export const IDCardIssuance: React.FC = () => {
                   <img
                     src={capturedPhoto}
                     className="w-full h-full object-cover"
+                    alt="Captured"
                   />
                 )}
                 <button
@@ -243,19 +259,20 @@ export const IDCardIssuance: React.FC = () => {
                           startCamera();
                         }
                   }
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white px-8 py-2.5 rounded-full font-bold shadow-xl hover:bg-slate-50 transition-all border border-slate-200"
+                  className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white px-8 py-2.5 rounded-full font-bold shadow-xl hover:bg-slate-50 border border-slate-200"
                 >
                   {!capturedPhoto ? "Capture Student Photo" : "Retake Photo"}
                 </button>
               </div>
 
+              {/* ID Card Preview Area */}
               {capturedPhoto && (
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     ID Card Preview
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* FRONT - ALIGNED TO TEMPLATE */}
+                    {/* FRONT TEMPLATE */}
                     <div className="relative aspect-[400/250] border rounded-xl overflow-hidden shadow-lg bg-white">
                       <img
                         src="/idcard.png"
@@ -265,10 +282,11 @@ export const IDCardIssuance: React.FC = () => {
                       <img
                         src={capturedPhoto}
                         className="absolute top-[34.5%] left-[7.2%] w-[24.5%] h-[46%] object-cover"
+                        alt="Overlay"
                       />
 
-                      {/* FIXED ALIGNMENT: Adjusted percentages and line heights */}
-                      <div className="absolute left-[45%] top-[41%] text-[7.5px] font-black text-slate-800 uppercase space-y-[4.5px] text-left">
+                      {/* Dynamic Overlays aligned to UniPort Template */}
+                      <div className="absolute left-[45%] top-[41%] text-[7.5px] font-black text-slate-800 uppercase space-y-[4.5px]">
                         <p className="leading-none">{currentStudent?.name}</p>
                         <p className="leading-none pt-[5px]">
                           {currentStudent?.matric}
@@ -285,8 +303,8 @@ export const IDCardIssuance: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* BACK */}
-                    <div className="aspect-[400/250] border rounded-xl overflow-hidden shadow-lg">
+                    {/* BACK TEMPLATE */}
+                    <div className="aspect-[400/250] border rounded-xl overflow-hidden shadow-lg bg-white">
                       <img
                         src="/idcard1.png"
                         className="w-full h-full"
@@ -298,11 +316,12 @@ export const IDCardIssuance: React.FC = () => {
               )}
             </div>
 
+            {/* Modal Actions */}
             <div className="p-6 bg-slate-50 border-t flex gap-4">
               <button
                 onClick={() => handleAction("print")}
                 disabled={!capturedPhoto || uploadingPhoto}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-green-200"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-green-100"
               >
                 {uploadingPhoto ? (
                   <Loader2 className="animate-spin" />
@@ -314,9 +333,14 @@ export const IDCardIssuance: React.FC = () => {
               <button
                 onClick={() => handleAction("download")}
                 disabled={!capturedPhoto || uploadingPhoto}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-blue-200"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-blue-100"
               >
-                <Download size={20} /> Download
+                {uploadingPhoto ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Download size={20} />
+                )}{" "}
+                Download
               </button>
             </div>
           </div>
