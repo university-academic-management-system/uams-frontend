@@ -326,36 +326,41 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Text Overlays */}
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
                       <div className="absolute left-[46.5%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
-                        <div className="flex flex-col gap-y-[8.5px] leading-none">
+                        <div className="grid grid-cols-[auto_1fr] gap-x-[4px] gap-y-[8.5px] leading-none">
                           {/* NAME */}
-                          <div className="text-left">
+                          <span />
+                          <span className="text-left">
                             <span>NAME: </span>
                             <span>{currentStudent?.name}</span>
-                          </div>
+                          </span>
 
                           {/* MATRIC NO */}
-                          <div className="text-left">
+                          <span />
+                          <span className="text-left">
                             <span>MATRIC NO.: </span>
                             <span>{currentStudent?.matric}</span>
-                          </div>
+                          </span>
 
                           {/* FACULTY */}
-                          <div className="text-left">
+                          <span />
+                          <span className="text-left">
                             <span>FACULTY </span>
                             <span>{currentStudent?.faculty}</span>
-                          </div>
+                          </span>
 
                           {/* DEPARTMENT */}
-                          <div className="text-left">
+                          <span />
+                          <span className="text-left">
                             <span>DEPT: </span>
                             <span>{currentStudent?.department}</span>
-                          </div>
+                          </span>
 
                           {/* EXPIRY DATE */}
-                          <div className="text-left">
+                          <span />
+                          <span className="text-left">
                             <span>EXPIRY DATE: </span>
                             <span>{currentStudent?.graduationDate}</span>
-                          </div>
+                          </span>
                         </div>
                       </div>
                     </div>
