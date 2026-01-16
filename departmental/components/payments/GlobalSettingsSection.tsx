@@ -2,6 +2,7 @@
 import { Select } from "@/components/ui/Select";
 
 export const GlobalSettingsSection = () => {
+  // work please
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-8 mb-12">
       <div className="space-y-6">
