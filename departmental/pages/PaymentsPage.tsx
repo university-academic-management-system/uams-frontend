@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import PaymentSettings from "@/components/payments/SpltKeysConfig";
-import { GlobalSettingsSection } from "@/components/payments/GlobalSettingsSection";
+// import { GlobalSettingsSection } from "@/components/payments/GlobalSettingsSection";
 import { PaymentSplitKeysSection } from "@/components/payments/PaymentSplitKeysSection";
 import { PageActions } from "@/components/payments/PageActions";
 
