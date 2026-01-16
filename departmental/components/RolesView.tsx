@@ -327,37 +327,37 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
                       <div className="absolute left-[46.5%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
                         <div className="grid grid-cols-[1fr_1.2fr] gap-y-[8.5px] leading-none">
-                          {/* NAME */}
+                          {/* NAME: Label on left, value on right */}
+                          <span>NAME:</span>
                           <span className="text-left">
                             {currentStudent?.name}
                           </span>
-                          <span />
 
-                          {/* MATRIC NO */}
-                          <span />
+                          {/* MATRIC NO: Label on left, value on right */}
+                          <span>MATRIC NO.:</span>
                           <span className="text-left">
                             {currentStudent?.matric}
                           </span>
 
-                          {/* FACULTY */}
+                          {/* FACULTY: Label on left, value on right */}
+                          <span>FACULTY</span>
                           <span className="text-left">
                             {currentStudent?.faculty}
                           </span>
-                          <span />
 
-                          {/* DEPARTMENT */}
+                          {/* DEPARTMENT: Label on left, value on right */}
+                          <span>DEPT:</span>
                           <span className="text-left">
                             {currentStudent?.department}
                           </span>
-                          <span />
 
-                          {/* EXPIRY DATE */}
+                          {/* EXPIRY DATE: Label on left, value on right */}
                           <span />
                           <span className="text-left">
                             {currentStudent?.graduationDate}
                           </span>
                         </div>
-                      </div>
+                      </div>{" "}
                     </div>
                     {/* Back View */}
                     <div className="aspect-[400/250] rounded-xl border border-slate-200 overflow-hidden shadow-lg">
