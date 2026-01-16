@@ -1,17 +1,7 @@
 "use client";
 
-import type React from "react";
-import { useState, useRef, useEffect } from "react";
-import {
-  Plus,
-  Filter,
-  Search,
-  Camera,
-  Download,
-  Printer,
-  X,
-  Loader2,
-} from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Search, Camera, Download, Printer, X, Loader2 } from "lucide-react";
 import api from "../api/axios";
 
 // --- Interfaces ---
@@ -23,61 +13,53 @@ interface Student {
   faculty: string;
   department: string;
   graduationDate: string;
-  status: string;
   hasPaidIDCardFee: boolean;
 }
 
 interface ApiStudent {
   id: string;
   studentId: string;
-  user: { fullName: string; email: string; phone: string | null; id: string };
+  user: { fullName: string; email: string; id: string };
   Department?: { name: string; Faculty?: { name: string } };
   PaymentTransactions?: Array<{ payment_for: string; status: string }>;
 }
 
-export const RolesView: React.FC = () => {
-  // --- State Management ---
+// FIX: Explicitly returning the JSX ensures the type is React.FC
+export const IDCardIssuance: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
-  const [cameraActive, setCameraActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // --- API Logic ---
+  // --- API Functions ---
   const fetchStudents = async (search = "") => {
     try {
       setLoading(true);
       const response = await api.get(`/university-admin/students`, {
-        params: { search, limit: 20 },
+        params: { search, limit: 15 },
       });
-
-      const transformed: Student[] = response.data.students.map(
-        (s: ApiStudent) => ({
-          id: s.id,
-          idNo: s.studentId,
-          name: s.user?.fullName || "N/A",
-          matric: s.studentId,
-          faculty: s.Department?.Faculty?.name || "N/A",
-          department: s.Department?.name || "N/A",
-          graduationDate: "2026-06-15",
-          status: "Active",
-          hasPaidIDCardFee:
-            s.PaymentTransactions?.some(
-              (t) => t.payment_for === "id_card_fee" && t.status === "success"
-            ) || false,
-        })
-      );
-
+      const transformed = response.data.students.map((s: ApiStudent) => ({
+        id: s.id,
+        idNo: s.studentId,
+        name: s.user?.fullName || "N/A",
+        matric: s.studentId,
+        faculty: s.Department?.Faculty?.name || "N/A",
+        department: s.Department?.name || "N/A",
+        graduationDate: "2026-06-30",
+        hasPaidIDCardFee:
+          s.PaymentTransactions?.some(
+            (t) => t.payment_for === "id_card_fee" && t.status === "success"
+          ) || false,
+      }));
       setStudents(transformed);
     } catch (err) {
-      console.error("Failed to fetch students");
+      console.error("Fetch error", err);
     } finally {
       setLoading(false);
     }
@@ -87,152 +69,128 @@ export const RolesView: React.FC = () => {
     fetchStudents(searchQuery);
   }, [searchQuery]);
 
-  // --- Camera Logic ---
+  // --- Camera Controls ---
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 },
+        video: { aspectRatio: 1 },
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setCameraActive(true);
       }
     } catch (err) {
-      alert("Camera access denied. Please check your browser permissions.");
+      alert("Camera access required.");
     }
   };
 
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach((track) => track.stop());
+      (videoRef.current.srcObject as MediaStream)
+        .getTracks()
+        .forEach((t) => t.stop());
       videoRef.current.srcObject = null;
     }
-    setCameraActive(false);
   };
 
   const captureImage = () => {
     if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext("2d");
-      if (context) {
-        context.drawImage(videoRef.current, 0, 0, 640, 480);
-        setCapturedPhoto(canvasRef.current.toDataURL("image/png"));
-        stopCamera();
-      }
+      const ctx = canvasRef.current.getContext("2d");
+      ctx?.drawImage(videoRef.current, 0, 0, 640, 480);
+      setCapturedPhoto(canvasRef.current.toDataURL("image/png"));
+      stopCamera();
     }
   };
 
-  const handleIssueCard = (student: Student) => {
-    setCurrentStudent(student);
-    setCapturedPhoto(null);
-    setShowModal(true);
-    startCamera();
-  };
-
-  const handlePhotoUploadAndAction = async (action: "print" | "download") => {
+  // --- Button Handlers (FIXED: Restored Functionality) ---
+  const handleAction = async (type: "print" | "download") => {
     if (!currentStudent || !capturedPhoto) return;
-
     setUploadingPhoto(true);
-    setUploadError(null);
-
     try {
-      // Convert base64 to blob for upload
-      const response = await fetch(capturedPhoto);
-      const blob = await response.blob();
+      const blob = await (await fetch(capturedPhoto)).blob();
       const formData = new FormData();
       formData.append("avatar", blob, `${currentStudent.matric}.png`);
-
       await api.put(
         `/university-admin/students/avatar?studentId=${currentStudent.matric}`,
         formData
       );
 
-      if (action === "download") {
+      if (type === "download") {
         const link = document.createElement("a");
         link.href = capturedPhoto;
-        link.download = `ID_Card_${currentStudent.matric}.png`;
+        link.download = `${currentStudent.name}_ID.png`;
         link.click();
       } else {
         window.print();
       }
     } catch (err) {
-      setUploadError("Failed to save photo to server.");
+      alert("Error processing request.");
     } finally {
       setUploadingPhoto(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto animate-in fade-in duration-500">
-      {/* Search Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+    <div className="p-6 max-w-[1200px] mx-auto min-h-screen">
+      <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">
-            Student ID Issuance
+            ID Card Issuance
           </h2>
           <p className="text-sm text-slate-500">
-            Capture photos and generate official university ID cards.
+            University of Port Harcourt - Student Records
           </p>
         </div>
-        <div className="relative w-full md:w-96">
+        <div className="relative w-80">
           <input
-            type="text"
-            placeholder="Search by name or matric..."
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-10 pr-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+            placeholder="Search students..."
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
           />
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
         <table className="w-full text-left">
-          <thead className="bg-slate-50 text-[11px] uppercase font-bold text-slate-500 tracking-wider">
+          <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500">
             <tr>
               <th className="px-6 py-4">Student Name</th>
               <th className="px-6 py-4">Matric No</th>
-              <th className="px-6 py-4">Department</th>
-              <th className="px-6 py-4 text-center">Status</th>
+              <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 text-center">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50 text-sm">
-            {students.map((student) => (
-              <tr
-                key={student.id}
-                className="hover:bg-slate-50/50 transition-colors"
-              >
-                <td className="px-6 py-4 font-bold text-slate-700">
-                  {student.name}
+          <tbody className="divide-y text-sm">
+            {students.map((s) => (
+              <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-6 py-4 font-bold text-slate-700">{s.name}</td>
+                <td className="px-6 py-4 font-mono text-slate-500">
+                  {s.matric}
                 </td>
-                <td className="px-6 py-4 text-slate-500">{student.matric}</td>
-                <td className="px-6 py-4 text-slate-500">
-                  {student.department}
-                </td>
-                <td className="px-6 py-4 text-center">
+                <td className="px-6 py-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                      student.hasPaidIDCardFee
+                    className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                      s.hasPaidIDCardFee
                         ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
+                        : "bg-red-100 text-red-600"
                     }`}
                   >
-                    {student.hasPaidIDCardFee ? "FEE PAID" : "UNPAID"}
+                    {s.hasPaidIDCardFee ? "READY" : "FEE PENDING"}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-center">
                   <button
-                    onClick={() => handleIssueCard(student)}
-                    disabled={!student.hasPaidIDCardFee}
-                    className={`font-bold ${
-                      student.hasPaidIDCardFee
-                        ? "text-blue-600 hover:underline"
-                        : "text-slate-300 cursor-not-allowed"
-                    }`}
+                    disabled={!s.hasPaidIDCardFee}
+                    onClick={() => {
+                      setCurrentStudent(s);
+                      setCapturedPhoto(null);
+                      setShowModal(true);
+                      startCamera();
+                    }}
+                    className="text-blue-600 font-bold disabled:opacity-30 hover:underline"
                   >
                     Issue Card
                   </button>
@@ -243,14 +201,12 @@ export const RolesView: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal Section */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="p-6 border-b flex justify-between items-center">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[95vh]">
+            <div className="p-6 flex justify-between items-center border-b">
               <h3 className="font-bold text-slate-800 text-lg">
-                Capture & Issue: {currentStudent?.name}
+                Production: {currentStudent?.name}
               </h3>
               <button
                 onClick={() => {
@@ -259,87 +215,82 @@ export const RolesView: React.FC = () => {
                 }}
                 className="p-2 hover:bg-slate-100 rounded-full transition-colors"
               >
-                <X size={20} />
+                <X />
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-8">
-              {/* Camera Area */}
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden relative border-4 border-slate-100 shadow-inner">
-                  {!capturedPhoto ? (
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={capturedPhoto}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                </div>
+              <div className="aspect-video bg-slate-100 rounded-2xl overflow-hidden relative border-2 border-slate-200">
                 {!capturedPhoto ? (
-                  <button
-                    onClick={captureImage}
-                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700"
-                  >
-                    <Camera size={18} /> Capture Photo
-                  </button>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <button
-                    onClick={() => {
-                      setCapturedPhoto(null);
-                      startCamera();
-                    }}
-                    className="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200"
-                  >
-                    Retake Photo
-                  </button>
+                  <img
+                    src={capturedPhoto}
+                    className="w-full h-full object-cover"
+                  />
                 )}
+                <button
+                  onClick={
+                    !capturedPhoto
+                      ? captureImage
+                      : () => {
+                          setCapturedPhoto(null);
+                          startCamera();
+                        }
+                  }
+                  className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white px-8 py-2.5 rounded-full font-bold shadow-xl hover:bg-slate-50 transition-all border border-slate-200"
+                >
+                  {!capturedPhoto ? "Capture Student Photo" : "Retake Photo"}
+                </button>
               </div>
 
-              {/* ID Preview Section */}
               {capturedPhoto && (
-                <div className="space-y-4 animate-in slide-in-from-bottom-4">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     ID Card Preview
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Front View */}
-                    <div className="relative aspect-[400/250] rounded-xl border border-slate-200 overflow-hidden shadow-lg group">
+                    {/* FRONT - ALIGNED TO TEMPLATE */}
+                    <div className="relative aspect-[400/250] border rounded-xl overflow-hidden shadow-lg bg-white">
                       <img
-                        src="/departmental-admin/idcard-front.png"
+                        src="/idcard.png"
                         className="w-full h-full"
-                        alt="Front Template"
+                        alt="front"
                       />
-                      {/* Dynamic Photo Overlay */}
                       <img
                         src={capturedPhoto}
-                        className="absolute top-[38%] left-[6.5%] w-[23%] h-[43%] object-cover border border-white"
-                        alt="Student"
+                        className="absolute top-[34.5%] left-[7.2%] w-[24.5%] h-[46%] object-cover"
                       />
-                      {/* Dynamic Text Overlays */}
-                      <div className="absolute left-[33%] top-[40%] text-[8px] font-bold text-black uppercase space-y-1">
-                        <p className="text-[10px] leading-tight max-w-[180px]">
-                          {currentStudent?.name}
+
+                      {/* FIXED ALIGNMENT: Adjusted percentages and line heights */}
+                      <div className="absolute left-[45%] top-[41%] text-[7.5px] font-black text-slate-800 uppercase space-y-[4.5px] text-left">
+                        <p className="leading-none">{currentStudent?.name}</p>
+                        <p className="leading-none pt-[5px]">
+                          {currentStudent?.matric}
                         </p>
-                        <p className="pt-2">{currentStudent?.matric}</p>
-                        <p className="leading-none">
+                        <p className="leading-none pt-[5px]">
+                          {currentStudent?.faculty}
+                        </p>
+                        <p className="leading-none pt-[5px]">
                           {currentStudent?.department}
+                        </p>
+                        <p className="leading-none pt-[5px]">
+                          {currentStudent?.graduationDate}
                         </p>
                       </div>
                     </div>
-                    {/* Back View */}
-                    <div className="aspect-[400/250] rounded-xl border border-slate-200 overflow-hidden shadow-lg">
+
+                    {/* BACK */}
+                    <div className="aspect-[400/250] border rounded-xl overflow-hidden shadow-lg">
                       <img
-                        src="/departmental-admin/idcard-back.png"
+                        src="/idcard1.png"
                         className="w-full h-full"
-                        alt="Back Template"
+                        alt="back"
                       />
                     </div>
                   </div>
@@ -347,33 +298,30 @@ export const RolesView: React.FC = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-6 bg-slate-50 border-t flex gap-3">
+            <div className="p-6 bg-slate-50 border-t flex gap-4">
               <button
+                onClick={() => handleAction("print")}
                 disabled={!capturedPhoto || uploadingPhoto}
-                onClick={() => handlePhotoUploadAndAction("print")}
-                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-green-200"
               >
                 {uploadingPhoto ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  <Printer size={18} />
+                  <Printer size={20} />
                 )}{" "}
                 Print Card
               </button>
               <button
+                onClick={() => handleAction("download")}
                 disabled={!capturedPhoto || uploadingPhoto}
-                onClick={() => handlePhotoUploadAndAction("download")}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-blue-200"
               >
-                <Download size={18} /> Download
+                <Download size={20} /> Download
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Hidden Canvas for Processing */}
       <canvas ref={canvasRef} className="hidden" width={640} height={480} />
     </div>
   );
