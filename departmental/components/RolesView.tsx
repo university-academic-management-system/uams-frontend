@@ -1,7 +1,17 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Search, Camera, Download, Printer, X, Loader2 } from "lucide-react";
+import type React from "react";
+import { useState, useRef, useEffect } from "react";
+import {
+  Plus,
+  Filter,
+  Search,
+  Camera,
+  Download,
+  Printer,
+  X,
+  Loader2,
+} from "lucide-react";
 import api from "../api/axios";
 
 // --- Interfaces ---
@@ -13,53 +23,61 @@ interface Student {
   faculty: string;
   department: string;
   graduationDate: string;
+  status: string;
   hasPaidIDCardFee: boolean;
 }
 
 interface ApiStudent {
   id: string;
   studentId: string;
-  user: { fullName: string; email: string; id: string };
+  user: { fullName: string; email: string; phone: string | null; id: string };
   Department?: { name: string; Faculty?: { name: string } };
   PaymentTransactions?: Array<{ payment_for: string; status: string }>;
 }
 
-// FIX: Explicitly returning the JSX ensures the type is React.FC
-export const IDCardIssuance: React.FC = () => {
+export const RolesView: React.FC = () => {
+  // --- State Management ---
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // --- API Functions ---
+  // --- API Logic ---
   const fetchStudents = async (search = "") => {
     try {
       setLoading(true);
       const response = await api.get(`/university-admin/students`, {
-        params: { search, limit: 15 },
+        params: { search, limit: 20 },
       });
-      const transformed = response.data.students.map((s: ApiStudent) => ({
-        id: s.id,
-        idNo: s.studentId,
-        name: s.user?.fullName || "N/A",
-        matric: s.studentId,
-        faculty: s.Department?.Faculty?.name || "N/A",
-        department: s.Department?.name || "N/A",
-        graduationDate: "2026-06-30",
-        hasPaidIDCardFee:
-          s.PaymentTransactions?.some(
-            (t) => t.payment_for === "id_card_fee" && t.status === "success"
-          ) || false,
-      }));
+
+      const transformed: Student[] = response.data.students.map(
+        (s: ApiStudent) => ({
+          id: s.id,
+          idNo: s.studentId,
+          name: s.user?.fullName || "N/A",
+          matric: s.studentId,
+          faculty: s.Department?.Faculty?.name || "N/A",
+          department: s.Department?.name || "N/A",
+          graduationDate: "2026-06-15",
+          status: "Active",
+          hasPaidIDCardFee:
+            s.PaymentTransactions?.some(
+              (t) => t.payment_for === "id_card_fee" && t.status === "success"
+            ) || false,
+        })
+      );
+
       setStudents(transformed);
     } catch (err) {
-      console.error("Fetch error", err);
+      console.error("Failed to fetch students");
     } finally {
       setLoading(false);
     }
@@ -69,128 +87,152 @@ export const IDCardIssuance: React.FC = () => {
     fetchStudents(searchQuery);
   }, [searchQuery]);
 
-  // --- Camera Controls ---
+  // --- Camera Logic ---
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { aspectRatio: 1 },
+        video: { width: 640, height: 480 },
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        setCameraActive(true);
       }
     } catch (err) {
-      alert("Camera access required.");
+      alert("Camera access denied. Please check your browser permissions.");
     }
   };
 
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
-      (videoRef.current.srcObject as MediaStream)
-        .getTracks()
-        .forEach((t) => t.stop());
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
+    setCameraActive(false);
   };
 
   const captureImage = () => {
     if (videoRef.current && canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      ctx?.drawImage(videoRef.current, 0, 0, 640, 480);
-      setCapturedPhoto(canvasRef.current.toDataURL("image/png"));
-      stopCamera();
+      const context = canvasRef.current.getContext("2d");
+      if (context) {
+        context.drawImage(videoRef.current, 0, 0, 640, 480);
+        setCapturedPhoto(canvasRef.current.toDataURL("image/png"));
+        stopCamera();
+      }
     }
   };
 
-  // --- Button Handlers (FIXED: Restored Functionality) ---
-  const handleAction = async (type: "print" | "download") => {
+  const handleIssueCard = (student: Student) => {
+    setCurrentStudent(student);
+    setCapturedPhoto(null);
+    setShowModal(true);
+    startCamera();
+  };
+
+  const handlePhotoUploadAndAction = async (action: "print" | "download") => {
     if (!currentStudent || !capturedPhoto) return;
+
     setUploadingPhoto(true);
+    setUploadError(null);
+
     try {
-      const blob = await (await fetch(capturedPhoto)).blob();
+      // Convert base64 to blob for upload
+      const response = await fetch(capturedPhoto);
+      const blob = await response.blob();
       const formData = new FormData();
       formData.append("avatar", blob, `${currentStudent.matric}.png`);
+
       await api.put(
         `/university-admin/students/avatar?studentId=${currentStudent.matric}`,
         formData
       );
 
-      if (type === "download") {
+      if (action === "download") {
         const link = document.createElement("a");
         link.href = capturedPhoto;
-        link.download = `${currentStudent.name}_ID.png`;
+        link.download = `ID_Card_${currentStudent.matric}.png`;
         link.click();
       } else {
         window.print();
       }
     } catch (err) {
-      alert("Error processing request.");
+      setUploadError("Failed to save photo to server.");
     } finally {
       setUploadingPhoto(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto min-h-screen">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-6 max-w-[1400px] mx-auto animate-in fade-in duration-500">
+      {/* Search Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">
-            ID Card Issuance
+            Student ID Issuance
           </h2>
           <p className="text-sm text-slate-500">
-            University of Port Harcourt - Student Records
+            Capture photos and generate official university ID cards.
           </p>
         </div>
-        <div className="relative w-80">
+        <div className="relative w-full md:w-96">
           <input
-            className="w-full pl-10 pr-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="Search students..."
+            type="text"
+            placeholder="Search by name or matric..."
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <Search
-            size={18}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={18}
           />
         </div>
       </div>
 
-      <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
+      {/* Table Section */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500">
+          <thead className="bg-slate-50 text-[11px] uppercase font-bold text-slate-500 tracking-wider">
             <tr>
               <th className="px-6 py-4">Student Name</th>
               <th className="px-6 py-4">Matric No</th>
-              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4">Department</th>
+              <th className="px-6 py-4 text-center">Status</th>
               <th className="px-6 py-4 text-center">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y text-sm">
-            {students.map((s) => (
-              <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-6 py-4 font-bold text-slate-700">{s.name}</td>
-                <td className="px-6 py-4 font-mono text-slate-500">
-                  {s.matric}
+          <tbody className="divide-y divide-slate-50 text-sm">
+            {students.map((student) => (
+              <tr
+                key={student.id}
+                className="hover:bg-slate-50/50 transition-colors"
+              >
+                <td className="px-6 py-4 font-bold text-slate-700">
+                  {student.name}
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-slate-500">{student.matric}</td>
+                <td className="px-6 py-4 text-slate-500">
+                  {student.department}
+                </td>
+                <td className="px-6 py-4 text-center">
                   <span
-                    className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                      s.hasPaidIDCardFee
+                    className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                      student.hasPaidIDCardFee
                         ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-600"
+                        : "bg-red-100 text-red-700"
                     }`}
                   >
-                    {s.hasPaidIDCardFee ? "READY" : "FEE PENDING"}
+                    {student.hasPaidIDCardFee ? "FEE PAID" : "UNPAID"}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-center">
                   <button
-                    disabled={!s.hasPaidIDCardFee}
-                    onClick={() => {
-                      setCurrentStudent(s);
-                      setCapturedPhoto(null);
-                      setShowModal(true);
-                      startCamera();
-                    }}
-                    className="text-blue-600 font-bold disabled:opacity-30 hover:underline"
+                    onClick={() => handleIssueCard(student)}
+                    disabled={!student.hasPaidIDCardFee}
+                    className={`font-bold ${
+                      student.hasPaidIDCardFee
+                        ? "text-blue-600 hover:underline"
+                        : "text-slate-300 cursor-not-allowed"
+                    }`}
                   >
                     Issue Card
                   </button>
@@ -201,12 +243,14 @@ export const IDCardIssuance: React.FC = () => {
         </table>
       </div>
 
+      {/* Modal Section */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[95vh]">
-            <div className="p-6 flex justify-between items-center border-b">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-6 border-b flex justify-between items-center">
               <h3 className="font-bold text-slate-800 text-lg">
-                Production: {currentStudent?.name}
+                Capture & Issue: {currentStudent?.name}
               </h3>
               <button
                 onClick={() => {
@@ -215,82 +259,87 @@ export const IDCardIssuance: React.FC = () => {
                 }}
                 className="p-2 hover:bg-slate-100 rounded-full transition-colors"
               >
-                <X />
+                <X size={20} />
               </button>
             </div>
 
+            {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-8">
-              <div className="aspect-video bg-slate-100 rounded-2xl overflow-hidden relative border-2 border-slate-200">
+              {/* Camera Area */}
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden relative border-4 border-slate-100 shadow-inner">
+                  {!capturedPhoto ? (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={capturedPhoto}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
                 {!capturedPhoto ? (
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
+                  <button
+                    onClick={captureImage}
+                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700"
+                  >
+                    <Camera size={18} /> Capture Photo
+                  </button>
                 ) : (
-                  <img
-                    src={capturedPhoto}
-                    className="w-full h-full object-cover"
-                  />
+                  <button
+                    onClick={() => {
+                      setCapturedPhoto(null);
+                      startCamera();
+                    }}
+                    className="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200"
+                  >
+                    Retake Photo
+                  </button>
                 )}
-                <button
-                  onClick={
-                    !capturedPhoto
-                      ? captureImage
-                      : () => {
-                          setCapturedPhoto(null);
-                          startCamera();
-                        }
-                  }
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white px-8 py-2.5 rounded-full font-bold shadow-xl hover:bg-slate-50 transition-all border border-slate-200"
-                >
-                  {!capturedPhoto ? "Capture Student Photo" : "Retake Photo"}
-                </button>
               </div>
 
+              {/* ID Preview Section */}
               {capturedPhoto && (
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <div className="space-y-4 animate-in slide-in-from-bottom-4">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                     ID Card Preview
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* FRONT - ALIGNED TO TEMPLATE */}
-                    <div className="relative aspect-[400/250] border rounded-xl overflow-hidden shadow-lg bg-white">
+                    {/* Front View */}
+                    <div className="relative aspect-[400/250] rounded-xl border border-slate-200 overflow-hidden shadow-lg group">
                       <img
-                        src="/idcard.png"
+                        src="/department-admin/idcard-front.png"
                         className="w-full h-full"
-                        alt="front"
+                        alt="Front Template"
                       />
+                      {/* Dynamic Photo Overlay */}
                       <img
                         src={capturedPhoto}
-                        className="absolute top-[34.5%] left-[7.2%] w-[24.5%] h-[46%] object-cover"
+                        className="absolute top-[38%] left-[6.5%] w-[23%] h-[43%] object-cover border border-white"
+                        alt="Student"
                       />
-
-                      {/* FIXED ALIGNMENT: Adjusted percentages and line heights */}
-                      <div className="absolute left-[45%] top-[41%] text-[7.5px] font-black text-slate-800 uppercase space-y-[4.5px] text-left">
-                        <p className="leading-none">{currentStudent?.name}</p>
-                        <p className="leading-none pt-[5px]">
-                          {currentStudent?.matric}
+                      {/* Dynamic Text Overlays */}
+                      <div className="absolute left-[33%] top-[40%] text-[8px] font-bold text-black uppercase space-y-1">
+                        <p className="text-[10px] leading-tight max-w-[180px]">
+                          {currentStudent?.name}
                         </p>
-                        <p className="leading-none pt-[5px]">
-                          {currentStudent?.faculty}
-                        </p>
-                        <p className="leading-none pt-[5px]">
+                        <p className="pt-2">{currentStudent?.matric}</p>
+                        <p className="leading-none">
                           {currentStudent?.department}
-                        </p>
-                        <p className="leading-none pt-[5px]">
-                          {currentStudent?.graduationDate}
                         </p>
                       </div>
                     </div>
-
-                    {/* BACK */}
-                    <div className="aspect-[400/250] border rounded-xl overflow-hidden shadow-lg">
+                    {/* Back View */}
+                    <div className="aspect-[400/250] rounded-xl border border-slate-200 overflow-hidden shadow-lg">
                       <img
-                        src="/idcard1.png"
+                        src="/department-admin/idcard-back.png"
                         className="w-full h-full"
-                        alt="back"
+                        alt="Back Template"
                       />
                     </div>
                   </div>
@@ -298,30 +347,33 @@ export const IDCardIssuance: React.FC = () => {
               )}
             </div>
 
-            <div className="p-6 bg-slate-50 border-t flex gap-4">
+            {/* Modal Footer */}
+            <div className="p-6 bg-slate-50 border-t flex gap-3">
               <button
-                onClick={() => handleAction("print")}
                 disabled={!capturedPhoto || uploadingPhoto}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-green-200"
+                onClick={() => handlePhotoUploadAndAction("print")}
+                className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50"
               >
                 {uploadingPhoto ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  <Printer size={20} />
+                  <Printer size={18} />
                 )}{" "}
                 Print Card
               </button>
               <button
-                onClick={() => handleAction("download")}
                 disabled={!capturedPhoto || uploadingPhoto}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-blue-200"
+                onClick={() => handlePhotoUploadAndAction("download")}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50"
               >
-                <Download size={20} /> Download
+                <Download size={18} /> Download
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Hidden Canvas for Processing */}
       <canvas ref={canvasRef} className="hidden" width={640} height={480} />
     </div>
   );
