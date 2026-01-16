@@ -320,17 +320,27 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Photo Overlay */}
                       <img
                         src={capturedPhoto}
-                        className="absolute top-[38%] left-[6.5%] w-[23%] h-[43%] object-cover border border-white"
+                        className="absolute top-[34.5%] left-[7.2%] w-[24.5%] h-[46%] object-cover"
                         alt="Student"
                       />
                       {/* Dynamic Text Overlays */}
-                      <div className="absolute left-[33%] top-[40%] text-[8px] font-bold text-black uppercase space-y-1">
-                        <p className="text-[10px] leading-tight max-w-[180px]">
+                      <div className="absolute left-[45%] top-[41%] text-[6px] font-bold text-black uppercase space-y-[4.5px]">
+                        <p className="leading-none">
+                          {" "}
+                          {/*removed text[10px]  max-w-[180px] */}
                           {currentStudent?.name}
                         </p>
-                        <p className="pt-2">{currentStudent?.matric}</p>
-                        <p className="leading-none">
+                        <p className="leading-none pt-[5px]">
+                          {currentStudent?.matric}
+                        </p>
+                        <p className="leading-none pt-[5px]">
+                          {currentStudent?.faculty}
+                        </p>
+                        <p className="leading-none pt-[5px]">
                           {currentStudent?.department}
+                        </p>
+                        <p className="leading-none pt-[5px]">
+                          {currentStudent?.graduationDate}
                         </p>
                       </div>
                     </div>
@@ -348,7 +358,7 @@ export const RolesView: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 bg-slate-50 border-t flex gap-3">
+            {/* <div className="p-6 bg-slate-50 border-t flex gap-3">
               <button
                 disabled={!capturedPhoto || uploadingPhoto}
                 onClick={() => handlePhotoUploadAndAction("print")}
@@ -368,6 +378,33 @@ export const RolesView: React.FC = () => {
               >
                 <Download size={18} /> Download
               </button>
+            </div> */}
+            {/* Modal Actions */}
+            <div className="p-6 bg-slate-50 border-t flex gap-4">
+              <button
+                onClick={() => handlePhotoUploadAndAction("print")}
+                disabled={!capturedPhoto || uploadingPhoto}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-green-100"
+              >
+                {uploadingPhoto ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Printer size={20} />
+                )}{" "}
+                Print Card
+              </button>
+              <button
+                onClick={() => handlePhotoUploadAndAction("download")}
+                disabled={!capturedPhoto || uploadingPhoto}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-blue-100"
+              >
+                {uploadingPhoto ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Download size={20} />
+                )}{" "}
+                Download
+              </button>
             </div>
           </div>
         </div>
@@ -379,12 +416,15 @@ export const RolesView: React.FC = () => {
   );
 };
 
-// "use client";
+{
+  /* // "use client";
 
 // import type React from "react";
 // import { useState, useRef, useEffect } from "react";
-// import {
-//   Plus,
+// import { */
+}
+{
+  /* //   Plus,
 //   Filter,
 //   Search,
 //   Camera,
@@ -399,7 +439,8 @@ export const RolesView: React.FC = () => {
 // } from "lucide-react";
 // import api from "../api/axios"; // Adjust the import path as needed
 
-// interface Student {
+// interface Student { */
+}
 //   id: string;
 //   idNo: string;
 //   name: string;
