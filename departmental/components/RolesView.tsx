@@ -325,7 +325,7 @@ export const RolesView: React.FC = () => {
                       />
                       {/* Dynamic Text Overlays */}
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
-                      <div className="absolute left-[46.5%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
+                      <div className="absolute left-[32%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
                         <div className="flex flex-col gap-y-[8.5px] leading-none">
                           {/* NAME */}
                           <div className="flex items-start">
