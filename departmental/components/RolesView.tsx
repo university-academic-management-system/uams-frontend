@@ -129,6 +129,38 @@ export const RolesView: React.FC = () => {
     startCamera();
   };
 
+  // const handlePhotoUploadAndAction = async (action: "print" | "download") => {
+  //   if (!currentStudent || !capturedPhoto) return;
+
+  //   setUploadingPhoto(true);
+  //   setUploadError(null);
+
+  //   try {
+  //     // Convert base64 to blob for upload
+  //     const response = await fetch(capturedPhoto);
+  //     const blob = await response.blob();
+  //     const formData = new FormData();
+  //     formData.append("avatar", blob, `${currentStudent.matric}.png`);
+
+  //     await api.put(
+  //       `/department-admins/students/avatar?studentId=${currentStudent.matric}`,
+  //       formData
+  //     );
+
+  //     if (action === "download") {
+  //       const link = document.createElement("a");
+  //       link.href = capturedPhoto;
+  //       link.download = `ID_Card_${currentStudent.matric}.png`;
+  //       link.click();
+  //     } else {
+  //       window.print();
+  //     }
+  //   } catch (err) {
+  //     setUploadError("Failed to save photo to server.");
+  //   } finally {
+  //     setUploadingPhoto(false);
+  //   }
+  // };
   const handlePhotoUploadAndAction = async (action: "print" | "download") => {
     if (!currentStudent || !capturedPhoto) return;
 
@@ -142,9 +174,15 @@ export const RolesView: React.FC = () => {
       const formData = new FormData();
       formData.append("avatar", blob, `${currentStudent.matric}.png`);
 
+      // ADD HEADERS like in the old code
       await api.put(
         `/department-admins/students/avatar?studentId=${currentStudent.matric}`,
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       if (action === "download") {
@@ -155,13 +193,16 @@ export const RolesView: React.FC = () => {
       } else {
         window.print();
       }
-    } catch (err) {
-      setUploadError("Failed to save photo to server.");
+    } catch (err: any) {
+      // IMPROVE ERROR HANDLING like in the old code
+      console.error("Upload error:", err);
+      setUploadError(
+        err.response?.data?.message || "Failed to save photo to server."
+      );
     } finally {
       setUploadingPhoto(false);
     }
   };
-
   return (
     <div className="p-6 max-w-[1400px] mx-auto animate-in fade-in duration-500">
       {/* Search Header */}
