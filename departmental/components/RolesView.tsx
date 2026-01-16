@@ -320,7 +320,7 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Photo Overlay */}
                       <img
                         src={capturedPhoto}
-                        className="absolute top-[34.5%] left-[7.2%] w-[24.5%] h-[46%] object-cover"
+                        className="absolute top-[38%] left-[6.5%] w-[23%] h-[43%] object-cover border border-white"
                         alt="Student"
                       />
                       {/* Dynamic Text Overlays */}
