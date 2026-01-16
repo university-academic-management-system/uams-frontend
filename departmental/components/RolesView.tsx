@@ -143,7 +143,7 @@ export const RolesView: React.FC = () => {
       formData.append("avatar", blob, `${currentStudent.matric}.png`);
 
       await api.put(
-        `/university-admin/students/avatar?studentId=${currentStudent.matric}`,
+        `/department-admins/students/avatar?studentId=${currentStudent.matric}`,
         formData
       );
 
