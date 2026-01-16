@@ -327,20 +327,35 @@ export const RolesView: React.FC = () => {
                       {/* Dynamic Text Overlays aligned to UniPort Template */}
                       <div className="absolute left-[46.5%] top-[42.5%] w-[45%] text-[7px] font-bold text-black uppercase">
                         <div className="grid grid-cols-[1fr_1.2fr] gap-y-[8.5px] leading-none">
-                          <span>{currentStudent?.name}</span>
-                          <span></span>
+                          {/* NAME */}
+                          <span className="text-left">
+                            {currentStudent?.name}
+                          </span>
+                          <span />
 
-                          <span></span>
-                          <span>{currentStudent?.matric}</span>
+                          {/* MATRIC NO */}
+                          <span />
+                          <span className="text-left">
+                            {currentStudent?.matric}
+                          </span>
 
-                          <span>{currentStudent?.faculty}</span>
-                          <span></span>
+                          {/* FACULTY */}
+                          <span className="text-left">
+                            {currentStudent?.faculty}
+                          </span>
+                          <span />
 
-                          <span>{currentStudent?.department}</span>
-                          <span></span>
+                          {/* DEPARTMENT */}
+                          <span className="text-left">
+                            {currentStudent?.department}
+                          </span>
+                          <span />
 
-                          <span></span>
-                          <span>{currentStudent?.graduationDate}</span>
+                          {/* EXPIRY DATE */}
+                          <span />
+                          <span className="text-left">
+                            {currentStudent?.graduationDate}
+                          </span>
                         </div>
                       </div>
                     </div>
