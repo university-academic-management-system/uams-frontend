@@ -330,16 +330,16 @@ export const RolesView: React.FC = () => {
                           {/*removed text[10px]  max-w-[180px] */}
                           {currentStudent?.name}
                         </p>
-                        <p className="leading-none pt-[5px]">
+                        <p className="leading-none pt-[8px]">
                           {currentStudent?.matric}
                         </p>
-                        <p className="leading-none pt-[5px]">
+                        <p className="leading-none pt-[8px]">
                           {currentStudent?.faculty}
                         </p>
-                        <p className="leading-none pt-[5px]">
+                        <p className="leading-none pt-[8px]">
                           {currentStudent?.department}
                         </p>
-                        <p className="leading-none pt-[5px]">
+                        <p className="leading-none pt-[8px]">
                           {currentStudent?.graduationDate}
                         </p>
                       </div>
