@@ -1,12 +1,13 @@
 import {
   Box,
   Flex,
-  Heading,
+  // Heading,
   Text,
   IconButton,
   VStack,
   Button,
   Icon,
+  Image,
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, BookOpen, School, Settings, ArrowRight } from "lucide-react";
@@ -128,30 +129,21 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
                 {/* Header */}
                 <VStack gap={2} mb={8} align="center">
-                  <Box
-                    w={14}
+                  <Image
+                    src="/logo1.png"
+                    alt="University Logo"
+                    // w={20}
                     h={14}
-                    borderRadius="2xl"
-                    bgGradient="to-br"
-                    gradientFrom="#1a365d"
-                    gradientTo="#0d9488"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
                     mb={2}
-                  >
-                    <Text color="white" fontWeight="800" fontSize="2xl">
-                      U
-                    </Text>
-                  </Box>
-                  <Heading
+                  />
+                  {/* <Heading
                     textAlign="center"
                     fontSize="2xl"
                     fontWeight="800"
                     color="#1e293b"
                   >
                     Welcome to UAMS
-                  </Heading>
+                  </Heading> */}
                   <Text textAlign="center" color="gray.500" fontSize="md">
                     Please select your role to continue
                   </Text>

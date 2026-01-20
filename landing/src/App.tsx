@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Box } from "@chakra-ui/react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
-import Features from "./components/Features";
+import PromoSection from "./components/PromoSection";
 import About from "./components/About";
+import NewsSection from "./components/NewsSection";
+import ResourcesSection from "./components/ResourcesSection";
 import Footer from "./components/Footer";
 import LoginModal from "./components/LoginModal";
 
@@ -14,11 +16,13 @@ function App() {
   const closeLogin = () => setIsLoginOpen(false);
 
   return (
-    <Box>
+    <Box position="relative">
       <Navbar onLoginClick={openLogin} />
-      <Hero onLoginClick={openLogin} />
-      <Features />
+      <Hero />
+      <PromoSection />
       <About />
+      <NewsSection />
+      <ResourcesSection />
       <Footer />
       <LoginModal isOpen={isLoginOpen} onClose={closeLogin} />
     </Box>

@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Button, IconButton, Stack, Collapsible } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, IconButton, Stack, Collapsible, Image } from "@chakra-ui/react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -52,32 +52,15 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
       >
         {/* Logo */}
         <Link to="/">
-          <Flex align="center" gap={2} cursor="pointer">
-            <Box
-              w={10}
-              h={10}
-              borderRadius="xl"
-              bgGradient="to-br"
-              gradientFrom="#1a365d"
-              gradientTo="#0d9488"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Text color="white" fontWeight="800" fontSize="lg">
-                U
-              </Text>
-            </Box>
-            <Text
-              fontSize="xl"
-              fontWeight="800"
-              bgGradient="to-r"
-              gradientFrom="#1a365d"
-              gradientTo="#0d9488"
-              bgClip="text"
-            >
-              UAMS
-            </Text>
+          <Flex align="center" gap={3} cursor="pointer">
+            <Image
+              src="/landing-logo.jpg"
+              alt="UNIPORT Logo"
+              // w={12}
+              h={14}
+              // borderRadius="full"
+              objectFit="cover"
+            />
           </Flex>
         </Link>
 
@@ -86,8 +69,17 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
           display={{ base: "none", lg: "flex" }}
           align="center"
           gap={8}
+          flex={1}
+          justify="center"
         >
-          {navLinks.map((link) => (
+          {[
+            { name: "Home", href: "#home" },
+            { name: "About", href: "#about" },
+            { name: "Research", href: "#research" },
+            { name: "Collaborations", href: "#partners" },
+            { name: "Digital Labs", href: "#labs" },
+            { name: "Updates", href: "#news" },
+          ].map((link) => (
             <Text
               key={link.name}
               color="gray.600"
@@ -97,21 +89,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
               _hover={{ color: "#1a365d" }}
               onClick={() => scrollToSection(link.href)}
               transition="color 0.2s"
-              _after={{
-                content: '""',
-                position: "absolute",
-                bottom: "-4px",
-                left: 0,
-                width: "0%",
-                height: "2px",
-                bg: "#0d9488",
-                transition: "width 0.3s",
-              }}
-              css={{
-                "&:hover::after": {
-                  width: "100%",
-                },
-              }}
+              fontSize="sm"
             >
               {link.name}
             </Text>
@@ -119,25 +97,32 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
         </Flex>
 
         {/* Login Button - Desktop */}
-        <Box display={{ base: "none", lg: "block" }}>
+        <Flex display={{ base: "none", lg: "flex" }} align="center" gap={4}>
+          {/* <Button
+            variant="ghost"
+            size="sm"
+            px={2}
+            aria-label="Search"
+          >
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </Button> */}
           <Button
-            bg="#1a365d"
+            bg="#0284c7" // Light blue like in the screenshot
             color="white"
-            px={8}
-            py={6}
-            borderRadius="full"
+            px={6}
+            py={5}
+            borderRadius="md"
             fontWeight="600"
+            fontSize="sm"
             _hover={{
-              bg: "#2c5282",
-              transform: "translateY(-2px)",
-              boxShadow: "0 10px 30px rgba(26, 54, 93, 0.3)",
+              bg: "#0369a1",
             }}
             transition="all 0.3s"
             onClick={onLoginClick}
           >
             Login
           </Button>
-        </Box>
+        </Flex>
 
         {/* Mobile Menu Button */}
         <IconButton
