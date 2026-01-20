@@ -65,31 +65,16 @@ const Dashboard: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* User info banner */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">
-              Welcome back, {currentUser}!
-            </h2>
-            <p className="text-slate-500 mt-1">
-              Logged in as{" "}
-              <span className="font-semibold text-[#1d76d2]">
-                {authData.role}
-              </span>
-              {authData.universityId && (
-                <span className="ml-3">
-                  University ID:{" "}
-                  <span className="font-mono text-sm">
-                    {authData.universityId.substring(0, 8)}...
-                  </span>
-                </span>
-              )}
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <div className="px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-semibold rounded-full border border-blue-100">
-              Tenant: {authData.tenantId.substring(0, 8)}...
-            </div>
-          </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">
+            Welcome Back, {currentUser}
+          </h2>
+          <p className="text-slate-500 mt-1">
+            Logged in as{" "}
+            <span className="font-semibold text-[#1d76d2]">
+              DEPARTMENTAL ADMIN
+            </span>
+          </p>
         </div>
       </div>
 
