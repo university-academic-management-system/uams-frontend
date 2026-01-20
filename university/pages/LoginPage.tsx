@@ -82,7 +82,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       {/* Full Page Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/assets/landing-logo.png"
+          src={`${import.meta.env.BASE_URL}assets/landing-logo.png`}
           alt="University Background"
           className="w-full h-full object-cover"
         />
@@ -96,7 +96,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <img
-              src="/assets/uphcscLG.png"
+              src={`${import.meta.env.BASE_URL}assets/uphcscLG.png`}
               alt="UNIPORT Computer Science"
               className="h-16 w-auto object-contain"
             />

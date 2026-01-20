@@ -490,7 +490,7 @@ const Dashboard: React.FC<DashboardProps> = ({ authData, onLogout }) => {
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="/assets/uphcscLG.png"
+              src={`${import.meta.env.BASE_URL}assets/uphcscLG.png`}
               alt="UNIPORT Computer Science"
               className="h-12 w-auto object-contain"
             />
