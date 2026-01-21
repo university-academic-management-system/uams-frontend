@@ -4,7 +4,11 @@ import { CheckCircle2, Timer } from "lucide-react";
 
 const MotionBox = motion.create(Box);
 
-export default function PromoSection() {
+interface PromoSectionProps {
+  onLoginClick: () => void;
+}
+
+export default function PromoSection({ onLoginClick }: PromoSectionProps) {
   return (
     <Box bg="#0f172a" py={{ base: 16, md: 24 }} position="relative" overflow="hidden">
       {/* Background decoration */}
@@ -27,12 +31,12 @@ export default function PromoSection() {
             <Heading
               as="h2"
               fontSize={{ base: "3xl", md: "4xl" }}
-              fontWeight="700"
+              fontWeight="600"
               color="white"
               mb={8}
-              lineHeight="1.2"
+              lineHeight="1.1"
             >
-              Streamline Your Academic Journey with UAMS !!!
+              Streamline Your Academic Journey with Computer Science Academic Portal !!!
             </Heading>
 
             <Stack gap={6} mb={10}>
@@ -58,6 +62,7 @@ export default function PromoSection() {
                 size="lg"
                 px={8}
                 _hover={{ bg: "#dc2626" }}
+                onClick={onLoginClick}
               >
                 Access Portal
               </Button>

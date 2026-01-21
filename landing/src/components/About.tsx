@@ -1,4 +1,4 @@
-import { Box, Container, Heading, Text, SimpleGrid, Flex, Button } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, SimpleGrid, Flex, Button, Image } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 
 const MotionBox = motion.create(Box);
@@ -8,19 +8,19 @@ export default function About() {
     {
       title: "Welcome Address",
       subtitle: "From the HOD's Desk",
-      image: "", // Placeholder - maybe part 3 left image
+      image: "/HOD.jpeg", 
       link: "#"
     },
     {
       title: "About",
       subtitle: "Our Philosophy | Focus Areas",
-      image: "", // Placeholder - maybe part 3 center image
+      image: "/About.jpeg", 
       link: "#"
     },
     {
       title: "Trainings Courses & Certifications",
       subtitle: "Enhance your skills",
-      image: "", // Placeholder - maybe part 3 right image
+      image: "/Training.jpeg", 
       link: "#"
     }
   ];
@@ -32,7 +32,7 @@ export default function About() {
           <Heading
             textAlign="center"
             fontSize={{ base: "3xl", md: "5xl" }}
-            fontWeight="bold" // Serif font like in Screenshot? "Welcome" looked serif.
+            fontWeight="bold" 
             fontFamily="serif"
             color="#1e293b"
             mb={12}
@@ -60,10 +60,13 @@ export default function About() {
                 }}
               >
                 <Box h="300px" bg="gray.200" position="relative">
-                    {/* Placeholder Image */}
-                     <Flex align="center" justify="center" h="full" bgGradient="to-br from-gray.100 to-gray.300">
-                        <Text color="gray.500">Image: {card.title}</Text>
-                     </Flex>
+                    <Image
+                      src={card.image}
+                      alt={card.title}
+                      w="full"
+                      h="full"
+                      objectFit="cover"
+                    />
                      {/* Overlay Content */}
                      <Box
                         position="absolute"

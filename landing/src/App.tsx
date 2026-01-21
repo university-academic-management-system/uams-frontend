@@ -19,7 +19,7 @@ function App() {
     <Box position="relative">
       <Navbar onLoginClick={openLogin} />
       <Hero />
-      <PromoSection />
+      <PromoSection onLoginClick={openLogin} />
       <About />
       <NewsSection />
       <ResourcesSection />
