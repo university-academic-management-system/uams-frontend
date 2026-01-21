@@ -557,7 +557,7 @@ export const RolesView: React.FC = () => {
           <input
             type="text"
             placeholder="Search by name or matric..."
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <Search

@@ -36,13 +36,12 @@ const menuItems = [
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLogout }) => {
   return (
     <aside className="w-64 bg-white h-screen border-r border-gray-200 flex flex-col fixed left-0 top-0 z-50">
-      <div className="p-6 flex items-center gap-2">
-        <div className="bg-blue-600 p-1.5 rounded-lg text-white">
-          <GraduationCap size={24} />
-        </div>
-        <span className="text-2xl font-bold tracking-tight text-slate-800">
-          uniedu<span className="text-blue-600">.</span>
-        </span>
+      <div className="p-6 flex items-center gap-3">
+        <img 
+          src="/assets/uphcscLG.png" 
+          alt="UNIPORT Computer Science" 
+          className="h-12 w-auto object-contain"
+        />
       </div>
 
       <nav className="flex-1 px-4 py-4 space-y-1">
