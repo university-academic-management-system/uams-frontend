@@ -28,7 +28,7 @@ import { NavigationItem } from './types';
 const Logo = ({ collapsed }: { collapsed?: boolean }) => (
   <Flex align="center" justify={collapsed ? "center" : "start"} w={collapsed ? "full" : "auto"}>
     <Image 
-      src="/assets/spedox.jpg" 
+      src="/assets/logo.png" 
       alt="UniEdu Logo" 
       h={{ base: '10', lg: '12' }}
       w={collapsed ? '10' : 'auto'}

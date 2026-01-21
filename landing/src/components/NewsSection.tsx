@@ -1,4 +1,4 @@
-import { Box, Container, Heading, Text, VStack, Flex } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, VStack, Flex, Image } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 
 const MotionBox = motion.create(Box);
@@ -10,7 +10,7 @@ const newsItems = [
     date: "March 15, 2026",
     category: "Research",
     excerpt: "The Department of Computer Science is proud to announce the opening of its state-of-the-art Artificial Intelligence Research Laboratory, sponsored by top tech partners.",
-    image: "/news-ai.jpg" // Placeholder path
+    image: "/Research.png"
   },
   {
     id: 2,
@@ -18,15 +18,15 @@ const newsItems = [
     date: "February 28, 2026",
     category: "Achievement",
     excerpt: "A team of final year Computer Science students secured the first place in the Annual National Software Development Hackathon held in Lagos.",
-    image: "/news-hackathon.jpg" // Placeholder path
+    image: "/Achievements.png"
   },
   {
     id: 3,
     title: "Upcoming Guest Lecture: Future of Cybersecurity",
-    date: "April 10, 2026",
+    date: "January 10, 2026",
     category: "Events",
     excerpt: "Join us for an insightful session with Dr. Alan Turing (not really) on the evolving landscape of cybersecurity threats and defenses.",
-    image: "/news-cyber.jpg" // Placeholder path
+    image: "/Events.png"
   }
 ];
 
@@ -68,9 +68,13 @@ export default function NewsSection() {
                   position="relative"
                 >
                   {/* Placeholder for Image */}
-                    <Flex align="center" justify="center" h="full" bgGradient="to-br from-gray.100 to-gray.300">
-                        <Text color="gray.500" fontSize="sm">News Image</Text>
-                    </Flex>
+                  <Image 
+                    src={news.image } 
+                    alt="News Image" 
+                    h="full" 
+                    w="full" 
+                    objectFit="cover" 
+                  />
                 </Box>
 
                 <Box p={6} flex={1}>
