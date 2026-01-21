@@ -1,9 +1,24 @@
+import { useState, useEffect } from "react";
 import { Box, Container, Heading, Text, Button } from "@chakra-ui/react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MotionBox = motion.create(Box);
 
+const heroImages = [
+  "/slider2-1.jpeg",
+  "/second-building.jpeg"
+];
+
 export default function Hero() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const scrollToFeatures = () => {
     const element = document.querySelector("#features");
     if (element) {
@@ -19,19 +34,37 @@ export default function Hero() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bgImage="url('/slider2-1.jpeg')"
-      bgSize="cover"
-      backgroundPosition="center" // Changed from bgPosition to backgroundPosition
-      bgRepeat="no-repeat"
+      overflow="hidden"
     >
-      {/* Dark Overlay for better text readability */}
+      {/* Background Image Carousel */}
+      <AnimatePresence>
+        <MotionBox
+          key={currentImageIndex}
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bgImage={`url('${heroImages[currentImageIndex]}')`}
+          bgSize="cover"
+          backgroundPosition="center"
+          bgRepeat="no-repeat"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1 }}
+          zIndex={0}
+        />
+      </AnimatePresence>
+
+      {/* Dark Overlay */}
       <Box
         position="absolute"
         top={0}
         left={0}
         right={0}
         bottom={0}
-        bg="rgba(0, 0, 0, 0.3)" 
+        bg="rgba(0, 0, 0, 0.4)" 
         zIndex={1}
       />
 
