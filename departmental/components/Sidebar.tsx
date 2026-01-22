@@ -38,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
     <aside className="w-64 bg-white h-screen border-r border-gray-200 flex flex-col fixed left-0 top-0 z-50">
       <div className="p-6 flex items-center gap-3">
         <img 
-          src="/assets/uphcscLG.png" 
+          src="/departmental-admin/assets/uphcscLG.png" 
           alt="UNIPORT Computer Science" 
           className="h-12 w-auto object-contain"
         />
