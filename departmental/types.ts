@@ -28,6 +28,8 @@ export interface Course {
   semester: string;
 }
 
+export type StudentRole = 'Class Rep' | 'Dept Rep' | 'None' | 'Bachelors' | 'PGD' | 'Masters';
+
 export interface Student {
   id: string;
   studentId: string;
@@ -37,8 +39,10 @@ export interface Student {
   department: string;
   level: string;
   programId: string;
-  role?: 'Class Rep' | 'Dept Rep' | 'None' | 'Bachelors' | 'PGD' | 'Masters';
+  role: StudentRole;
   permissions?: string[];
+  createdAt: string;
+  isActive: boolean;
 }
 
 export interface Staff {

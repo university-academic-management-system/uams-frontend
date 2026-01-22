@@ -5,18 +5,20 @@ import { Search, X } from "lucide-react";
 interface SearchFilterBarProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  selectedDepartment: string;
-  setSelectedDepartment: (dept: string) => void;
-  departments: string[];
+  selectedFilter: string;
+  setSelectedFilter: (filter: string) => void;
+  filterOptions: string[];
+  defaultFilterLabel?: string;
   onClearFilters: () => void;
 }
 
 export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   searchTerm,
   setSearchTerm,
-  selectedDepartment,
-  setSelectedDepartment,
-  departments,
+  selectedFilter,
+  setSelectedFilter,
+  filterOptions,
+  defaultFilterLabel = "All Items",
   onClearFilters,
 }) => {
   return (
@@ -36,12 +38,12 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
         <div className="flex items-center gap-3">
           <select
             className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/10"
-            value={selectedDepartment}
-            onChange={(e) => setSelectedDepartment(e.target.value)}
+            value={selectedFilter}
+            onChange={(e) => setSelectedFilter(e.target.value)}
           >
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept === "all" ? "All Departments" : dept}
+            {filterOptions.map((option) => (
+              <option key={option} value={option}>
+                {option === "all" ? defaultFilterLabel : option}
               </option>
             ))}
           </select>

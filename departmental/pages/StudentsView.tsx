@@ -1,7 +1,7 @@
 // StudentsView.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, Loader2, X } from "lucide-react";
-import { Student, StudentRole } from "../components/types";
+import { Plus, Loader2, X, FileDown, FileUp } from "lucide-react";
+import { Student, StudentRole } from "../types";
 import api from "../api/axios";
 import { SearchFilterBar } from "../components/SearchFilterBAr";
 import { StudentsTable } from "../components/StudentsTable";
@@ -37,7 +37,7 @@ export const StudentsView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedLevel, setSelectedLevel] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch students
@@ -101,15 +101,15 @@ export const StudentsView: React.FC = () => {
       );
     }
 
-    // Filter by department
-    if (selectedDepartment !== "all") {
+    // Filter by level
+    if (selectedLevel !== "all") {
       filtered = filtered.filter(
-        (student) => student.department === selectedDepartment
+        (student) => student.level === selectedLevel
       );
     }
 
     return filtered;
-  }, [students, searchTerm, selectedDepartment]);
+  }, [students, searchTerm, selectedLevel]);
 
   // Paginate filtered students
   const paginatedStudents = useMemo(() => {
@@ -123,15 +123,18 @@ export const StudentsView: React.FC = () => {
     return Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
   }, [filteredStudents.length]);
 
-  // Get unique departments for filter
-  const departments = useMemo(() => {
-    return ["all", ...Array.from(new Set(students.map((s) => s.department)))];
+  // Get unique levels for filter
+  const levels = useMemo(() => {
+    const uniqueLevels = Array.from(
+      new Set(students.map((s) => s.level))
+    ).filter(Boolean); // Filter out any undefined/null values
+    return ["all", ...uniqueLevels].sort();
   }, [students]);
 
   // Reset pagination when filters change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedDepartment]);
+    setCurrentPage(1); // Reset page on filter change
+  }, [students, searchTerm, selectedLevel]);
 
   // Helper functions
   const getDepartmentFromProgramId = (programId?: string): string => {
@@ -163,7 +166,7 @@ export const StudentsView: React.FC = () => {
 
   const clearFilters = useCallback(() => {
     setSearchTerm("");
-    setSelectedDepartment("all");
+    setSelectedLevel("all");
     setCurrentPage(1);
   }, []);
 
@@ -218,17 +221,28 @@ export const StudentsView: React.FC = () => {
               filtered
             </p>
           </div>
-          <button className="bg-[#1D7AD9] text-white px-8 py-3 rounded-md flex items-center gap-2 text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
-            <Plus size={20} /> Assign New Role
-          </button>
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#1D7AD9] text-[#1D7AD9] rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors">
+              <FileDown size={18} />
+              Download Sample File
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#1D7AD9] text-[#1D7AD9] rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors">
+              <FileUp size={18} />
+              Upload CSV
+            </button>
+            <button className="bg-[#1D7AD9] text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
+              <Plus size={18} /> Add Students
+            </button>
+          </div>
         </div>
 
         <SearchFilterBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          selectedDepartment={selectedDepartment}
-          setSelectedDepartment={setSelectedDepartment}
-          departments={departments}
+          selectedFilter={selectedLevel}
+          setSelectedFilter={setSelectedLevel}
+          filterOptions={levels}
+          defaultFilterLabel="All Levels"
           onClearFilters={clearFilters}
         />
 
@@ -238,7 +252,6 @@ export const StudentsView: React.FC = () => {
           selectedStudent={selectedStudent}
           setSelectedStudent={setSelectedStudent}
           searchTerm={searchTerm}
-          selectedDepartment={selectedDepartment}
         />
 
         {filteredStudents.length > 0 && (

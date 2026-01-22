@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Filter, Loader2, X, MoreHorizontal } from "lucide-react";
+import { Plus, Filter, Loader2, X, MoreHorizontal, Pencil, Trash, Download } from "lucide-react";
 import ProgramForm from "./ProgramForm";
 import { programsCoursesApi } from "../api/programscourseapi";
 
@@ -10,6 +10,36 @@ const ProgramsTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+
+  // Toggle selection for a single program
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // Toggle select all
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredPrograms.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredPrograms.map((p) => p.id));
+    }
+  };
+
+  const toggleDropdown = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveDropdownId(activeDropdownId === id ? null : id);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActiveDropdownId(null);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   // Fetch programs on component mount
   useEffect(() => {
@@ -172,7 +202,12 @@ const ProgramsTab: React.FC = () => {
                 <th className="px-6 py-4 w-12 text-center">
                   <input
                     type="checkbox"
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10"
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
+                    checked={
+                      filteredPrograms.length > 0 &&
+                      selectedIds.length === filteredPrograms.length
+                    }
+                    onChange={toggleSelectAll}
                   />
                 </th>
                 <th className="px-6 py-4">Program Name</th>
@@ -198,12 +233,16 @@ const ProgramsTab: React.FC = () => {
                 filteredPrograms.map((program) => (
                   <tr
                     key={program.id}
-                    className="hover:bg-slate-50/50 transition-colors text-sm text-slate-600 group"
+                    className={`hover:bg-slate-50/50 transition-colors text-sm text-slate-600 group ${
+                      selectedIds.includes(program.id) ? "bg-blue-50/30" : ""
+                    }`}
                   >
                     <td className="px-6 py-4 text-center">
                       <input
                         type="checkbox"
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10"
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
+                        checked={selectedIds.includes(program.id)}
+                        onChange={() => toggleSelection(program.id)}
                       />
                     </td>
                     <td className="px-6 py-4 font-semibold text-slate-700">
@@ -223,9 +262,43 @@ const ProgramsTab: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
-                        <MoreHorizontal size={18} />
-                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={(e) => toggleDropdown(program.id, e)}
+                          className="p-1 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
+                        >
+                          <MoreHorizontal size={18} />
+                        </button>
+
+                        {activeDropdownId === program.id && (
+                          <div className="absolute right-0 top-8 w-40 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="p-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log("Edit clicked", program.id);
+                                  setActiveDropdownId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              >
+                                <Pencil size={14} />
+                                Edit details
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log("Delete clicked", program.id);
+                                  setActiveDropdownId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash size={14} />
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -234,6 +307,24 @@ const ProgramsTab: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Floating Action Bar */}
+      {selectedIds.length > 1 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-3 rounded-xl shadow-2xl border border-gray-100 flex items-center gap-6 z-50 animate-in slide-in-from-bottom duration-300">
+          <span className="text-sm font-bold text-slate-700">
+            {selectedIds.length} items selected
+          </span>
+          <div className="h-6 w-px bg-slate-200"></div>
+          <button className="flex items-center gap-2 bg-[#1D7AD9] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors">
+            <Download size={16} />
+            Bulk Download
+          </button>
+          <button className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors">
+            <Trash size={16} />
+            Bulk Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 };
