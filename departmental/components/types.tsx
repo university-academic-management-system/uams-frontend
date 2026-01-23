@@ -7,7 +7,8 @@ export type ViewType =
   | "ID Card Management"
   | "Announcements"
   | "Settings"
-  | "Notifications";
+  | "Notifications"
+  | "Profile";
 
 export interface Announcement {
   id: string;

@@ -181,7 +181,9 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
                 <td className="px-6 py-5 text-slate-500 whitespace-nowrap">
                   {student.degreeAwardCode}
                 </td>
-                <td className={`px-6 py-5 text-right pr-12 sticky right-0 z-10 border-b border-gray-50 transition-colors ${
+                <td className={`px-6 py-5 text-right pr-12 sticky right-0 border-b border-gray-50 transition-colors ${
+                    activeDropdownId === student.id ? "z-50" : "z-10"
+                  } ${
                     selectedIds.includes(student.id) 
                       ? "bg-blue-50" 
                       : selectedStudent?.id === student.id 

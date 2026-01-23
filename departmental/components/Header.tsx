@@ -12,7 +12,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onViewChange, currentUser = 'Dept. Admin', authData, onLogout }) => {
-  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const navigate = useNavigate();
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-40">
@@ -42,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ onViewChange, currentUser = 'Dep
         </div>
 
         <button 
-          onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+          onClick={() => onViewChange('Profile')}
           className="flex items-center gap-3 hover:bg-slate-50 p-1 pr-3 rounded-xl transition-colors group relative"
         >
           <div className="text-right hidden sm:block">
@@ -57,22 +56,7 @@ export const Header: React.FC<HeaderProps> = ({ onViewChange, currentUser = 'Dep
             />
           </div>
 
-          {/* Logout Menu */}
-          {showLogoutMenu && onLogout && (
-            <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLogout();
-                  setShowLogoutMenu(false);
-                }}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <LogOut size={16} />
-                Logout
-              </button>
-            </div>
-          )}
+
         </button>
       </div>
     </header>

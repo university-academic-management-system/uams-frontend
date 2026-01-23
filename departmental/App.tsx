@@ -19,6 +19,7 @@ import PaymentsPage from "./pages/PaymentsPage"; //here is the initial payment p
 import { SettingsView } from "./components/SettingsView";
 import { NotificationsView } from "./components/NotificationsView";
 import { RolesView } from "./components/RolesView";
+import { ProfileView } from "./components/ProfileView";
 import {
   Users,
   CreditCard,
@@ -286,6 +287,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       Announcements: "/announcements",
       Settings: "/settings",
       Notifications: "/notifications",
+      Profile: "/profile",
     };
     navigate(routeMap[view] || "/dashboard");
   };
@@ -301,6 +303,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       "/announcements": "Announcements",
       "/settings": "Settings",
       "/notifications": "Notifications",
+      "/profile": "Profile",
     };
     return routeMap[pathname] || "Dashboard";
   };
@@ -498,6 +501,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         return <SettingsView />;
       case "Notifications":
         return <NotificationsView />;
+      case "Profile":
+        return <ProfileView />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -545,6 +550,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               path="/notifications"
               element={renderContent("Notifications")}
             />
+            <Route path="/profile" element={renderContent("Profile")} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>

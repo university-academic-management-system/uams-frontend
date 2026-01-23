@@ -49,10 +49,27 @@ export const RolesView: React.FC = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Toggle selection for a single student
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // Toggle select all
+  const toggleSelectAll = () => {
+    if (selectedIds.length === students.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(students.map((s) => s.id));
+    }
+  };
 
   // --- API Logic ---
   const fetchStudents = async (search = "") => {
@@ -557,7 +574,7 @@ export const RolesView: React.FC = () => {
           <input
             type="text"
             placeholder="Search by name or matric..."
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 bg-slate-100 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500/20"
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <Search
@@ -572,6 +589,15 @@ export const RolesView: React.FC = () => {
         <table className="w-full text-left">
           <thead className="bg-slate-50 text-[11px] uppercase font-bold text-slate-500 tracking-wider">
             <tr>
+              <th className="px-6 py-4 w-12 text-center">
+                <input
+                  type="checkbox"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
+                  checked={selectedIds.length === students.length && students.length > 0}
+                  onChange={toggleSelectAll}
+                />
+              </th>
+              <th className="px-6 py-4 w-16"></th> {/* Image Column */}
               <th className="px-6 py-4">Student Name</th>
               <th className="px-6 py-4">Matric No</th>
               <th className="px-6 py-4">Department</th>
@@ -582,7 +608,7 @@ export const RolesView: React.FC = () => {
           <tbody className="divide-y divide-slate-50 text-sm">
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center">
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="flex items-center justify-center gap-2 text-slate-500">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span className="text-sm font-medium">
@@ -594,7 +620,7 @@ export const RolesView: React.FC = () => {
             ) : students.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={7}
                   className="px-6 py-12 text-center text-slate-400"
                 >
                   No students found
@@ -604,8 +630,28 @@ export const RolesView: React.FC = () => {
               students.map((student) => (
                 <tr
                   key={student.id}
-                  className="hover:bg-slate-50/50 transition-colors"
+                  className={`hover:bg-slate-50/50 transition-colors group ${
+                    selectedIds.includes(student.id) ? "bg-blue-50/30" : ""
+                  }`}
+                  onClick={() => toggleSelection(student.id)}
                 >
+                  <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
+                      checked={selectedIds.includes(student.id)}
+                      onChange={() => toggleSelection(student.id)}
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                       <img 
+                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.name}`} 
+                          alt={student.name}
+                          className="h-full w-full object-cover"
+                        />
+                    </div>
+                  </td>
                   <td className="px-6 py-4 font-bold text-slate-700">
                     {student.name}
                   </td>
