@@ -24,7 +24,7 @@ const ActivateAccount: React.FC = () => {
         }}
       >
         <img
-          src={getAssetPath('assets/login-image.png')}
+          src={`${import.meta.env.BASE_URL}assets/login-image.jpeg`}
           alt="University Building"
           className="h-full w-full object-cover"
         />

@@ -15,7 +15,7 @@ const RegNumberStep: React.FC<RegNumberStepProps> = ({ onNext }) => {
 
   const handleVerify = async () => {
     if (!matricNumber.trim()) {
-      setError('Please enter your matriculation number');
+      setError('Please enter your matriculation or reg. number');
       return;
     }
 
@@ -26,7 +26,7 @@ const RegNumberStep: React.FC<RegNumberStepProps> = ({ onNext }) => {
       await authService.verifyStudent(matricNumber);
       onNext();
     } catch (err: any) {
-      setError(err.message || 'Verification failed. Please check your matriculation number.');
+      setError(err.message || 'Verification failed. Please check your matriculation or reg. number.');
     } finally {
       setIsLoading(false);
     }
@@ -41,7 +41,7 @@ const RegNumberStep: React.FC<RegNumberStepProps> = ({ onNext }) => {
             Verify Student
           </h1>
           <p className="text-[14px] font-medium text-gray-400">
-            Welcome! Please input your matriculation number to verify your account
+            Welcome! Please input your matriculation or reg. number to verify your account
           </p>
         </div>
         
@@ -61,7 +61,7 @@ const RegNumberStep: React.FC<RegNumberStepProps> = ({ onNext }) => {
                 setMatricNumber(e.target.value);
                 if (error) setError('');
               }}
-              placeholder="Enter Matriculation Number"
+              placeholder="Enter Matriculation or Reg. Number"
               className="w-full bg-white border border-gray-300 rounded-xl py-4 px-6 text-[15px] font-medium text-[#1e293b] focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-[#1d76d2] transition-all placeholder:text-gray-400"
               disabled={isLoading}
               onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
