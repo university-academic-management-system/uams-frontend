@@ -86,7 +86,7 @@ const Login: React.FC = () => {
       {/* Left Side - Modern Campus Image */}
       <div className="hidden lg:block lg:w-[65%] relative">
         <img
-          src="/departmental-admin/assets/54edd5a52523c71877ec8fcec5d76c0ac0adf1f5.png"
+          src="/departmental-admin/assets/slider.jpeg"
           alt="Modern University Campus"
           className="absolute inset-0 w-full h-full object-cover"
         />
