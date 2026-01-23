@@ -241,7 +241,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <BrowserRouter basename="/department-admin">
+    <BrowserRouter basename="/departmental-admin">
  
       {!authData ? (
         <Routes>
@@ -305,7 +305,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       "/notifications": "Notifications",
       "/profile": "Profile",
     };
-    return routeMap[pathname] || "Dashboard";
+    const relativePath = pathname.replace("/departmental-admin", "") || "/dashboard";
+    return routeMap[relativePath] || "Dashboard";
   };
 
   const pathname = window.location.pathname;
