@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  useLocation,
 } from "react-router";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
@@ -264,6 +265,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onLogout,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [announcements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
 
   // Get user display name from auth data
@@ -309,7 +311,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     return routeMap[relativePath] || "Dashboard";
   };
 
-  const pathname = window.location.pathname;
+  const pathname = location.pathname;
   const activeView = getActiveViewFromPath(pathname);
 
   const renderContent = (view: ViewType) => {
