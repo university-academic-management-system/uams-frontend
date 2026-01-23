@@ -32,14 +32,24 @@ export type StudentRole = 'Class Rep' | 'Dept Rep' | 'None' | 'Bachelors' | 'PGD
 
 export interface Student {
   id: string;
-  studentId: string;
-  name: string;
+  regNo: string;
+  matNo: string;
+  surname: string;
+  otherNames: string;
+  name: string; // Keeping for backward compatibility temporarily
   email: string;
   phoneNo: string;
   department: string;
   level: string;
   programId: string;
   role: StudentRole;
+  sex: string;
+  admissionMode: string;
+  entryQualification: string;
+  faculty: string;
+  degreeCourse: string;
+  programDuration: string;
+  degreeAwardCode: string;
   permissions?: string[];
   createdAt: string;
   isActive: boolean;

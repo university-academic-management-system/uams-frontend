@@ -1,7 +1,8 @@
 // components/StudentDetailsSidebar.tsx
-import React from "react";
-import { X, User, Mail, Phone, Calendar, ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import { X, User, Mail, Phone, Calendar, ShieldCheck, Loader2 } from "lucide-react";
 import { Student } from "../types";
+import api from "../api/axios";
 
 interface StudentDetailsSidebarProps {
   student: Student;
@@ -43,6 +44,37 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
   student,
   onClose,
 }) => {
+  const [selectedRole, setSelectedRole] = useState<'CLASS_REP' | 'ASSISTANT_CLASS_REP' | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const handleRoleChange = (role: 'CLASS_REP' | 'ASSISTANT_CLASS_REP') => {
+    // Toggle: if already selected, deselect; otherwise select this one
+    setSelectedRole((prev) => (prev === role ? null : role));
+    setSaveError(null);
+  };
+
+  const handleSaveRole = async () => {
+    if (!selectedRole) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      await api.post('/class-rep/assign', {
+        userId: student.id,
+        role: selectedRole,
+      });
+      // Success - close the sidebar or show success message
+      onClose();
+    } catch (err: any) {
+      console.error('Failed to assign role:', err);
+      setSaveError(err.response?.data?.message || 'Failed to assign role. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="fixed top-16 right-0 w-[380px] h-[calc(100vh-64px)] bg-white border-l border-gray-100 shadow-2xl z-40 animate-in slide-in-from-right duration-300 flex flex-col">
       <div className="p-6 border-b border-gray-50 flex items-center justify-between">
@@ -61,7 +93,7 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
             <User size={40} />
           </div>
           <h4 className="text-lg font-bold text-slate-900">{student.name}</h4>
-          <p className="text-xs text-slate-400">{student.studentId}</p>
+          <p className="text-xs text-slate-400">{student.matNo}</p>
           <div className="mt-2">
             <span
               className={`px-3 py-1 rounded-full text-[10px] font-bold ${
@@ -114,7 +146,20 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
               </span>
               <input
                 type="checkbox"
-                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                checked={selectedRole === 'CLASS_REP'}
+                onChange={() => handleRoleChange('CLASS_REP')}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-slate-700">
+                Assign as Asst. Class Rep
+              </span>
+              <input
+                type="checkbox"
+                checked={selectedRole === 'ASSISTANT_CLASS_REP'}
+                onChange={() => handleRoleChange('ASSISTANT_CLASS_REP')}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer"
               />
             </div>
             <div className="space-y-2">
@@ -127,9 +172,21 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
                 <PermissionToggle label="Manage Attendance" active />
               </div>
             </div>
+            {saveError && (
+              <p className="text-xs text-red-500 font-medium">{saveError}</p>
+            )}
             <div className="pt-2">
-              <button className="w-full bg-[#1D7AD9] text-white py-2 rounded-xl text-xs font-bold shadow-md shadow-blue-500/10">
-                Save Role Settings
+              <button
+                onClick={handleSaveRole}
+                disabled={!selectedRole || isSaving}
+                className={`w-full py-2 rounded-xl text-xs font-bold shadow-md shadow-blue-500/10 flex items-center justify-center gap-2 ${
+                  selectedRole && !isSaving
+                    ? 'bg-[#1D7AD9] text-white hover:bg-blue-700'
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                {isSaving && <Loader2 size={14} className="animate-spin" />}
+                {isSaving ? 'Saving...' : 'Save Role Settings'}
               </button>
             </div>
           </div>

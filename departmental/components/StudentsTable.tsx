@@ -9,12 +9,14 @@ interface StudentsTableProps {
   selectedStudent: Student | null;
   setSelectedStudent: (student: Student | null) => void;
   searchTerm: string;
+  onEdit: (student: Student) => void;
 }
 
 export const StudentsTable: React.FC<StudentsTableProps> = ({
   filteredStudents,
   selectedStudent,
   setSelectedStudent,
+  onEdit,
 }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDropdownId, setActiveDropdownId] = React.useState<string | null>(
@@ -84,8 +86,8 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="bg-slate-50/60 border-b border-gray-100 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
-              <th className="px-6 py-5 w-12 text-center">
+            <tr className="bg-slate-50/60 border-b border-gray-100 text-slate-500 font-bold text-[11px] uppercase tracking-wider text-nowrap">
+              <th className="px-6 py-5 w-12 text-center sticky left-0 z-20 bg-slate-50/95 backdrop-blur-sm border-b border-gray-100">
                 <input
                   type="checkbox"
                   className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
@@ -96,15 +98,21 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
                   onChange={toggleSelectAll}
                 />
               </th>
-              <th className="px-6 py-5">Student ID</th>
-              <th className="px-6 py-5">Name</th>
-              <th className="px-6 py-5">Email</th>
-              <th className="px-6 py-5">Phone No</th>
-              <th className="px-6 py-5">Department</th>
-              <th className="px-6 py-5">Level</th>
-              <th className="px-6 py-5">Program</th>
-              <th className="px-6 py-5">Joined</th>
-              <th className="px-6 py-5 text-right pr-12">Action</th>
+              <th className="px-6 py-5 min-w-[150px]">Reg No.</th>
+              <th className="px-6 py-5 min-w-[150px]">Mat. No.</th>
+              <th className="px-6 py-5 min-w-[150px]">Surname</th>
+              <th className="px-6 py-5 min-w-[150px]">Other Names</th>
+              <th className="px-6 py-5 min-w-[200px]">Email</th>
+              <th className="px-6 py-5 min-w-[140px]">Phone No</th>
+              <th className="px-6 py-5 min-w-[100px]">Sex</th>
+              <th className="px-6 py-5 min-w-[150px]">Admission Mode</th>
+              <th className="px-6 py-5 min-w-[150px]">Entry Qualification</th>
+              <th className="px-6 py-5 min-w-[150px]">Faculty</th>
+              <th className="px-6 py-5 min-w-[150px]">Department</th>
+              <th className="px-6 py-5 min-w-[150px]">Degree Course</th>
+              <th className="px-6 py-5 min-w-[120px]">Course Duration</th>
+              <th className="px-6 py-5 min-w-[150px]">Degree Award Code</th>
+              <th className="px-6 py-5 text-right pr-12 sticky right-0 z-20 bg-slate-50/95 backdrop-blur-sm border-b border-gray-100">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 text-xs">
@@ -116,7 +124,13 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
                 } ${selectedStudent?.id === student.id ? "bg-blue-50/50" : ""}`}
               >
                 <td
-                  className="px-6 py-5 text-center"
+                  className={`px-6 py-5 text-center sticky left-0 z-10 border-b border-gray-50 transition-colors ${
+                    selectedIds.includes(student.id) 
+                      ? "bg-blue-50" 
+                      : selectedStudent?.id === student.id 
+                        ? "bg-blue-100" 
+                        : "bg-white group-hover:bg-slate-50"
+                  }`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <input
@@ -129,31 +143,51 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
                     }}
                   />
                 </td>
-                <td className="px-6 py-5 text-slate-400 font-medium">
-                  {student.studentId}
+                <td className="px-6 py-5 text-slate-400 font-medium whitespace-nowrap">
+                  {student.regNo}
                 </td>
-                <td className="px-6 py-5 font-bold text-slate-700">
-                  {student.name}
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">
+                  {student.matNo}
                 </td>
-                <td className="px-6 py-5 text-slate-500">{student.email}</td>
-                <td className="px-6 py-5 text-slate-500">{student.phoneNo}</td>
-                <td className="px-6 py-5 text-slate-500">
+                <td className="px-6 py-5 font-bold text-slate-700 whitespace-nowrap">
+                  {student.surname}
+                </td>
+                <td className="px-6 py-5 font-medium text-slate-600 whitespace-nowrap">
+                  {student.otherNames}
+                </td>
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">{student.email}</td>
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">{student.phoneNo}</td>
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap capitalize">
+                  {student.sex}
+                </td>
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap capitalize">
+                  {student.admissionMode}
+                </td>
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">
+                  {student.entryQualification}
+                </td>
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">
+                  {student.faculty}
+                </td>
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">
                   {student.department}
                 </td>
-                <td className="px-6 py-5 text-slate-500">{student.level}</td>
-                <td className="px-6 py-5">
-                  <span
-                    className={`px-5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm inline-block min-w-[90px] text-center ${getProgramBadge(
-                      student.role
-                    )}`}
-                  >
-                    {student.role}
-                  </span>
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">
+                  {student.degreeCourse}
                 </td>
-                <td className="px-6 py-5 text-slate-500">
-                  {student.createdAt || "N/A"}
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">
+                  {student.programDuration}
                 </td>
-                <td className="px-6 py-5 text-right pr-12">
+                <td className="px-6 py-5 text-slate-500 whitespace-nowrap">
+                  {student.degreeAwardCode}
+                </td>
+                <td className={`px-6 py-5 text-right pr-12 sticky right-0 z-10 border-b border-gray-50 transition-colors ${
+                    selectedIds.includes(student.id) 
+                      ? "bg-blue-50" 
+                      : selectedStudent?.id === student.id 
+                        ? "bg-blue-100" 
+                        : "bg-white group-hover:bg-slate-50"
+                  }`}>
                   <div className="relative">
                     <button
                       onClick={(e) => toggleDropdown(student.id, e)}
@@ -163,7 +197,7 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
                     </button>
 
                     {activeDropdownId === student.id && (
-                      <div className="absolute right-0 top-8 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="absolute right-0 top-8 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-left">
                         <div className="p-1">
                           <button
                             onClick={(e) => {
@@ -177,11 +211,11 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
                             Assign Role
                           </button>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log("Edit clicked", student.id);
-                              setActiveDropdownId(null);
-                            }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(student);
+                                setActiveDropdownId(null);
+                              }}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                           >
                             <Pencil size={16} />

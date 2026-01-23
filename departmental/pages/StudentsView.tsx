@@ -7,6 +7,7 @@ import { SearchFilterBar } from "../components/SearchFilterBAr";
 import { StudentsTable } from "../components/StudentsTable";
 import { Pagination } from "../components/Pagination";
 import { StudentDetailsSidebar } from "../components/StudentDetailsSidedbar";
+import { AddStudentForm } from "../components/AddStudentForm";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -33,6 +34,8 @@ interface UsersResponse {
 
 export const StudentsView: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,14 +63,24 @@ export const StudentsView: React.FC = () => {
         .filter((user) => user.role === "STUDENT" && user.Student)
         .map((user, index) => ({
           id: user.id,
-          studentId: user.Student?.studentId || `STU-${index + 1000}`,
-          name: user.fullName,
-          email: user.email,
+          regNo: `2024${Math.floor(Math.random() * 1000000)}BA`, // Placeholder
+          matNo: user.Student?.studentId || `U2024/${index + 1000}`,
+          surname: user.fullName.split(" ")[0] || "",
+          otherNames: user.fullName.split(" ").slice(1).join(" ") || "",
+          name: user.fullName, // Keep for compatibility
+          email: user.email || "N/A",
           phoneNo: user.phone || "N/A",
           department: getDepartmentFromProgramId(user.Student?.programId),
           level: getLevelFromLevelId(user.Student?.levelId),
           programId: user.Student?.programId || "",
           role: getProgramType(user.Student?.programId),
+          sex: "nil", // Placeholder
+          admissionMode: "nil", // Placeholder
+          entryQualification: "nil", // Placeholder
+          faculty: "nil", // Placeholder
+          degreeCourse: "nil", // Placeholder
+          programDuration: "nil", // Placeholder
+          degreeAwardCode: "nil", // Placeholder
           createdAt: new Date(user.createdAt).toLocaleDateString("en-US", {
             year: "numeric",
             month: "short",
@@ -95,8 +108,11 @@ export const StudentsView: React.FC = () => {
       filtered = filtered.filter(
         (student) =>
           student.name.toLowerCase().includes(term) ||
+          student.surname.toLowerCase().includes(term) ||
+          student.otherNames.toLowerCase().includes(term) ||
           student.email.toLowerCase().includes(term) ||
-          student.studentId.toLowerCase().includes(term) ||
+          student.regNo.toLowerCase().includes(term) ||
+          student.matNo.toLowerCase().includes(term) ||
           student.phoneNo.toLowerCase().includes(term)
       );
     }
@@ -230,7 +246,10 @@ export const StudentsView: React.FC = () => {
               <FileUp size={18} />
               Upload CSV
             </button>
-            <button className="bg-[#1D7AD9] text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
+            <button 
+              onClick={() => setIsAddStudentModalOpen(true)}
+              className="bg-[#1D7AD9] text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
+            >
               <Plus size={18} /> Add Students
             </button>
           </div>
@@ -252,6 +271,10 @@ export const StudentsView: React.FC = () => {
           selectedStudent={selectedStudent}
           setSelectedStudent={setSelectedStudent}
           searchTerm={searchTerm}
+          onEdit={(student) => {
+            setStudentToEdit(student);
+            setIsAddStudentModalOpen(true);
+          }}
         />
 
         {filteredStudents.length > 0 && (
@@ -270,6 +293,36 @@ export const StudentsView: React.FC = () => {
         <StudentDetailsSidebar
           student={selectedStudent}
           onClose={() => setSelectedStudent(null)}
+        />
+      )}
+
+      {(isAddStudentModalOpen || studentToEdit) && (
+        <AddStudentForm
+          initialData={studentToEdit}
+          onClose={() => {
+            setIsAddStudentModalOpen(false);
+            setStudentToEdit(null);
+          }}
+          onSubmit={async (data) => {
+            try {
+              if (studentToEdit) {
+                // Edit mode
+                await api.patch(`/students/${studentToEdit.id}`, data);
+                // Refresh list
+                fetchStudents();
+              } else {
+                // Add mode (keeping mock for now unless specified)
+                console.log("Adding student:", data);
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+              }
+              
+              setIsAddStudentModalOpen(false);
+              setStudentToEdit(null);
+            } catch (err) {
+              console.error("Failed to save student:", err);
+              // You might want to show a toast here, e.g. toast.error("Failed to save")
+            }
+          }}
         />
       )}
     </div>
