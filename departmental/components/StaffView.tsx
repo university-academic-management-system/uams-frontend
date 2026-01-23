@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, FileUp, Filter, MoreHorizontal, UserCog, Pencil, Trash, Download, FileDown } from 'lucide-react';
+import { AssignCourseModal } from "./AssignCourseModal";
 
 interface StaffListItem {
   id: string;
@@ -27,6 +28,15 @@ const STAFF_MOCK_DATA: StaffListItem[] = Array(12).fill(null).map((_, i) => ({
 export const StaffView: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const [isAssignCourseModalOpen, setIsAssignCourseModalOpen] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+
+  const handleAssignCourse = async (data: { courseId: string; role: string }) => {
+    console.log("Assigning course:", data, "to staff:", selectedStaffId);
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setIsAssignCourseModalOpen(false);
+  };
 
   // Toggle selection for a single staff
   const toggleSelection = (id: string) => {
@@ -162,12 +172,14 @@ export const StaffView: React.FC = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setSelectedStaffId(item.id);
+                                setIsAssignCourseModalOpen(true);
                                 setActiveDropdownId(null);
                               }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             >
                               <UserCog size={16} />
-                              Assign Role
+                              Assign Course
                             </button>
                             <button
                               onClick={(e) => {
@@ -220,6 +232,13 @@ export const StaffView: React.FC = () => {
           </button>
         </div>
       )}
+
+      <AssignCourseModal
+        isOpen={isAssignCourseModalOpen}
+        onClose={() => setIsAssignCourseModalOpen(false)}
+        onAssign={handleAssignCourse}
+        staffName={STAFF_MOCK_DATA.find((s) => s.id === selectedStaffId)?.name}
+      />
     </div>
   );
 };
