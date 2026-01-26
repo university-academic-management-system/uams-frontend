@@ -118,7 +118,7 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="animate-spin text-blue-600" size={32} />
+          <Loader2 className="animate-spin text-blue-600" size={32} /><br/>
           <p className="text-sm text-slate-400">Loading profile...</p>
         </div>
       ) : profile ? (

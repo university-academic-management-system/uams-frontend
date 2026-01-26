@@ -14,19 +14,20 @@ import { toast } from "react-hot-toast";
 const ITEMS_PER_PAGE = 10;
 
 interface ApiUser {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  role: string;
+  id: string; // This is the ID used for sidebar profile fetch
+  userId: string;
+  studentId: string;
+  level: string;
+  levelId: string;
   isActive: boolean;
+  user: {
+    fullName: string;
+    email: string;
+    phone: string | null;
+  };
+  programId: string;
   createdAt: string;
-  Student: {
-    studentId: string;
-    levelId: string;
-    programId: string;
-    classRepRole?: 'CLASS_REP' | 'ASSISTANT_CLASS_REP';
-  } | null;
+  classRepRole?: 'CLASS_REP' | 'ASSISTANT_CLASS_REP'; // Assuming this might come from backend later, or we map it differently
 }
 
 interface UsersResponse {
@@ -58,27 +59,23 @@ export const StudentsView: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await api.get<UsersResponse>(
-        "/university-admin/users"
-      );
-      const apiUsers = response.data.users;
+      const apiUsers = await studentsApi.getDepartmentStudents();
 
       // Filter only STUDENT roles and map to Student interface
-      const studentData: Student[] = apiUsers
-        .filter((user) => user.role === "STUDENT" && user.Student)
-        .map((user, index) => ({
-          id: user.id,
+      const studentData: Student[] = (apiUsers as any[])
+        .map((student, index) => ({
+          id: student.id, // ID for sidebar fetch as requested
           regNo: `2024${Math.floor(Math.random() * 1000000)}BA`, // Placeholder
-          matNo: user.Student?.studentId || `U2024/${index + 1000}`,
-          surname: user.fullName.split(" ")[0] || "",
-          otherNames: user.fullName.split(" ").slice(1).join(" ") || "",
-          name: user.fullName, // Keep for compatibility
-          email: user.email || "N/A",
-          phoneNo: user.phone || "N/A",
-          department: getDepartmentFromProgramId(user.Student?.programId),
-          level: getLevelFromLevelId(user.Student?.levelId),
-          programId: user.Student?.programId || "",
-          role: getProgramType(user.Student?.programId),
+          matNo: student.studentId || `U2024/${index + 1000}`,
+          surname: student.user.fullName.split(" ")[0] || "",
+          otherNames: student.user.fullName.split(" ").slice(1).join(" ") || "",
+          name: student.user.fullName,
+          email: student.user.email || "N/A",
+          phoneNo: student.user.phone || "N/A",
+          department: getDepartmentFromProgramId(student.programId),
+          level: getLevelFromLevelId(student.levelId),
+          programId: student.programId || "",
+          role: getProgramType(student.programId),
           sex: "nil", // Placeholder
           admissionMode: "nil", // Placeholder
           entryQualification: "nil", // Placeholder
@@ -86,14 +83,15 @@ export const StudentsView: React.FC = () => {
           degreeCourse: "nil", // Placeholder
           programDuration: "nil", // Placeholder
           degreeAwardCode: "nil", // Placeholder
-          createdAt: new Date(user.createdAt).toLocaleDateString("en-US", {
+          createdAt: new Date(student.createdAt).toLocaleDateString("en-US", {
             year: "numeric",
             month: "short",
             day: "numeric",
           }),
-
-          isActive: user.isActive,
-          classRepRole: user.Student?.classRepRole,
+          isActive: student.isActive,
+          // Note: Backend response doesn't explicitly show classRepRole in the example yet, 
+          // keeping optional access safely if it exists or default to undefined
+          classRepRole: (student as any).classRepRole, 
         }));
 
       setStudents(studentData);

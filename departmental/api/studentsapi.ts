@@ -28,4 +28,12 @@ export const studentsApi = {
     const response = await api.get(`/students/profile/${studentId}`);
     return response.data;
   },
+
+  /**
+   * GET /students/department-students
+   */
+  getDepartmentStudents: async () => {
+    const response = await api.get("/students/department-students");
+    return response.data;
+  },
 };
