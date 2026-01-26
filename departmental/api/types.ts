@@ -6,7 +6,7 @@ export interface Program {
   id: string;
   name: string;
   code: string | null;
-  type: ProgramType;
+  type: string;
   duration: number;
   description: string | null;
   universityId: string;
@@ -16,6 +16,16 @@ export interface Program {
   updatedAt: string;
 }
 
+export interface ProgramTypeResponse {
+  id: string;
+  name: string;
+  type: string;
+  code: string;
+  description: string;
+  isActive: boolean;
+  universityId: string;
+}
+
 /**
  * ✅ Program creation payload
  * ❗ IDs are derived from JWT — NOT sent from frontend
@@ -23,7 +33,7 @@ export interface Program {
 export interface CreateProgramData {
   name: string;
   code: string;
-  type: ProgramType;
+  type: string;
   duration: number;
   description: string;
 }

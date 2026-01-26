@@ -6,10 +6,18 @@ import {
   CreateCourseData,
   CoursesApiResponse,
   CreateProgramData,
+  ProgramTypeResponse,
 } from "./types";
 
 export const programsCoursesApi = {
   /** PROGRAMS **/
+  
+  // ✅ New Endpoint: Get Program Types (Diploma, BSc, etc.)
+  getProgramTypes: async (): Promise<ProgramTypeResponse[]> => {
+    // This endpoint seems to be public or just authenticated; no specific param needed per user request
+    const response = await api.get<ProgramTypeResponse[]>("/program-types");
+    return response.data;
+  },
 
   getProgramsByDepartment: async (): Promise<Program[]> => {
     const departmentId = getCurrentDepartmentId();

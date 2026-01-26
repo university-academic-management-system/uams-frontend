@@ -2,8 +2,10 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
 import FormFieldHorizontal from "./FormFieldHorizontal";
-import { PROGRAM_TYPES, DURATION_OPTIONS } from "../utils/constants";
+import { DURATION_OPTIONS } from "../utils/constants";
 import { getCurrentDepartmentId, getCurrentUniversityId } from "../utils/auth";
+import { programsCoursesApi } from "../api/programscourseapi";
+import { ProgramTypeResponse } from "../api/types";
 
 interface ProgramFormProps {
   onSubmit: (data: any) => Promise<void>;
@@ -14,12 +16,30 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     name: "",
     code: "",
-    type: "UG" as "UG" | "PGD" | "Masters" | "PhD",
+    type: "", // Will be set to ID
     duration: 4,
     description: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [programTypes, setProgramTypes] = useState<ProgramTypeResponse[]>([]);
+
+  // Fetch Program Types on Mount
+  React.useEffect(() => {
+    const fetchTypes = async () => {
+      try {
+        const types = await programsCoursesApi.getProgramTypes();
+        setProgramTypes(types);
+        // Set default if available
+        if (types.length > 0) {
+            handleChange("type", types[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch program types", err);
+      }
+    };
+    fetchTypes();
+  }, []);
 
   const handleChange = (field: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -84,8 +104,11 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
               type="select"
               value={formData.type}
               onChange={(value) => handleChange("type", value)}
-              // ✅ FIXED: Send value-label pairs
-              options={PROGRAM_TYPES}
+              // ✅ FIXED: Send value-label pairs from API
+              options={programTypes.map((t) => ({
+                label: t.name,
+                value: t.id,
+              }))}
               required
             />
             <FormFieldHorizontal
