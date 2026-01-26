@@ -74,6 +74,7 @@ export const programsCoursesApi = {
   createCourse: async (courseData: CreateCourseData): Promise<Course> => {
     const payload = {
       ...courseData,
+      programTypeId: courseData.programTypeId, // ✅ Added programTypeId
       universityId: getCurrentUniversityId(),
       departmentId: getCurrentDepartmentId(),
     };

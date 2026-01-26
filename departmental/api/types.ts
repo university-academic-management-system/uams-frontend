@@ -72,6 +72,7 @@ export interface CreateCourseData {
   creditHours: number;
   contactHoursPerWeek: number;
   levelId?: string;
+  programTypeId: string;
 }
 
 export interface CoursesApiResponse {
@@ -80,4 +81,11 @@ export interface CoursesApiResponse {
   courses: Course[];
   message?: string;
 }
+export interface CourseAssignment {
+  courseId: string;
+  role: "MAIN" | "ASSISTANT" | "LAB_ASSISTANT";
+}
 
+export interface AssignCoursePayload {
+  courseAssignments: CourseAssignment[];
+}

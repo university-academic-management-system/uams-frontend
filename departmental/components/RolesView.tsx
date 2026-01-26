@@ -28,12 +28,13 @@ interface Student {
   graduationDate: string;
   status: string;
   hasPaidIDCardFee: boolean;
+  avatar: string;
 }
 
 interface ApiStudent {
   id: string;
   studentId: string;
-  user: { fullName: string; email: string; phone: string | null; id: string };
+  user: { fullName: string; email: string; phone: string | null; id: string; avatar: string };
   Department?: { name: string; Faculty?: { name: string } };
   PaymentTransactions?: Array<{ payment_for: string; status: string }>;
 }
@@ -82,6 +83,7 @@ export const RolesView: React.FC = () => {
 
       const transformed: Student[] = response.data.students.map(
         (s: ApiStudent) => ({
+          avatar: s.user?.avatar || "",
           id: s.id,
           idNo: s.studentId,
           name: s.user?.fullName || "N/A",
@@ -647,7 +649,11 @@ export const RolesView: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
                        <img 
-                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.name}`} 
+                          src={
+                            student.avatar 
+                              ? (student.avatar.startsWith('data:') ? student.avatar : `data:image/jpeg;base64,${student.avatar}`)
+                              : `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.name}`
+                          } 
                           alt={student.name}
                           className="h-full w-full object-cover"
                         />

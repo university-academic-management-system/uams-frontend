@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
+import { programsCoursesApi } from "../api/programscourseapi";
+import { Course } from "../api/types";
 
 interface AssignCourseModalProps {
   isOpen: boolean;
@@ -16,7 +18,29 @@ export const AssignCourseModal: React.FC<AssignCourseModalProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [courseId, setCourseId] = useState("");
-  const [role, setRole] = useState("Main Lecturer");
+  const [role, setRole] = useState("MAIN");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCourses();
+    }
+  }, [isOpen]);
+
+  const fetchCourses = async () => {
+    try {
+      setIsLoadingCourses(true);
+      const response = await programsCoursesApi.getCoursesByDepartment();
+      if (response && response.courses) {
+        setCourses(response.courses);
+      }
+    } catch (error) {
+      console.error("Failed to fetch courses:", error);
+    } finally {
+      setIsLoadingCourses(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -63,13 +87,13 @@ export const AssignCourseModal: React.FC<AssignCourseModalProps> = ({
                 required
               >
                 <option value="" disabled>
-                  Enter Name of Course
+                  {isLoadingCourses ? "Loading courses..." : "Select a Course"}
                 </option>
-                <option value="CSC101">CSC 101 - Introduction to Computer Science</option>
-                <option value="CSC102">CSC 102 - Introduction to Programming</option>
-                <option value="CSC201">CSC 201 - Data Structures</option>
-                <option value="CSC202">CSC 202 - Algorithms</option>
-                <option value="CSC301">CSC 301 - Operating Systems</option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.code} - {course.title}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -80,9 +104,9 @@ export const AssignCourseModal: React.FC<AssignCourseModalProps> = ({
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-[#1D7AD9] outline-none transition-all appearance-none bg-white"
               >
-                <option value="Main Lecturer">Main Lecturer</option>
-                <option value="Assistant Lecturer">Assistant Lecturer</option>
-                <option value="Lab Instructor">Lab Instructor</option>
+                <option value="MAIN">Main Lecturer</option>
+                <option value="ASSISTANT">Assistant Lecturer</option>
+                <option value="LAB_ASSISTANT">Lab Instructor</option>
               </select>
             </div>
 

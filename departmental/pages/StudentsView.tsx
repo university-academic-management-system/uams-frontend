@@ -8,6 +8,8 @@ import { StudentsTable } from "../components/StudentsTable";
 import { Pagination } from "../components/Pagination";
 import { StudentDetailsSidebar } from "../components/StudentDetailsSidedbar";
 import { AddStudentForm } from "../components/AddStudentForm";
+import { studentsApi } from "../api/studentsapi";
+import { toast } from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -23,6 +25,7 @@ interface ApiUser {
     studentId: string;
     levelId: string;
     programId: string;
+    classRepRole?: 'CLASS_REP' | 'ASSISTANT_CLASS_REP';
   } | null;
 }
 
@@ -42,6 +45,8 @@ export const StudentsView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Fetch students
   useEffect(() => {
@@ -86,7 +91,9 @@ export const StudentsView: React.FC = () => {
             month: "short",
             day: "numeric",
           }),
+
           isActive: user.isActive,
+          classRepRole: user.Student?.classRepRole,
         }));
 
       setStudents(studentData);
@@ -191,6 +198,33 @@ export const StudentsView: React.FC = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so same file can be selected again if needed
+    event.target.value = "";
+
+    try {
+      setIsUploading(true);
+      const loadingToast = toast.loading("Uploading students...");
+      
+      await studentsApi.bulkUploadStudents(file);
+      
+      toast.dismiss(loadingToast);
+      toast.success("Students uploaded successfully");
+      
+      // Refresh list
+      fetchStudents();
+    } catch (error: any) {
+      console.error("Upload failed:", error);
+      toast.dismiss();
+      toast.error(error.response?.data?.message || "Failed to upload students");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -242,9 +276,26 @@ export const StudentsView: React.FC = () => {
               <FileDown size={18} />
               Download Sample File
             </button>
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#1D7AD9] text-[#1D7AD9] rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors">
-              <FileUp size={18} />
-              Upload CSV
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+              accept=".csv"
+            />
+            
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#1D7AD9] text-[#1D7AD9] rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isUploading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <FileUp size={18} />
+              )}
+              {isUploading ? "Uploading..." : "Upload CSV"}
             </button>
             <button 
               onClick={() => setIsAddStudentModalOpen(true)}

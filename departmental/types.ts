@@ -53,6 +53,7 @@ export interface Student {
   permissions?: string[];
   createdAt: string;
   isActive: boolean;
+  classRepRole?: 'CLASS_REP' | 'ASSISTANT_CLASS_REP';
 }
 
 export interface Staff {

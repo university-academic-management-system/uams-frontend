@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, FileUp, Filter, MoreHorizontal, UserCog, Pencil, Trash, Download, FileDown } from 'lucide-react';
 import { AssignCourseModal } from "./AssignCourseModal";
+import { staffApi } from "../api/staffapi";
+import { toast } from "react-hot-toast";
 
 interface StaffListItem {
   id: string;
@@ -31,11 +33,29 @@ export const StaffView: React.FC = () => {
   const [isAssignCourseModalOpen, setIsAssignCourseModalOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
 
+  /* Updated to match backend payload requirement */
   const handleAssignCourse = async (data: { courseId: string; role: string }) => {
-    console.log("Assigning course:", data, "to staff:", selectedStaffId);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsAssignCourseModalOpen(false);
+    if (!selectedStaffId) return;
+
+    try {
+      console.log("Assigning course:", data, "to staff:", selectedStaffId);
+      
+      const payload = {
+        courseAssignments: [
+          {
+            courseId: data.courseId,
+            role: data.role as "MAIN" | "ASSISTANT" | "LAB_ASSISTANT",
+          },
+        ],
+      };
+
+      await staffApi.assignCourses(selectedStaffId, payload);
+      toast.success("Course assigned successfully");
+      setIsAssignCourseModalOpen(false);
+    } catch (error: any) {
+      console.error("Failed to assign course:", error);
+      toast.error(error.response?.data?.message || "Failed to assign course");
+    }
   };
 
   // Toggle selection for a single staff

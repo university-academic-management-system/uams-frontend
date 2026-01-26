@@ -44,7 +44,7 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
   student,
   onClose,
 }) => {
-  const [selectedRole, setSelectedRole] = useState<'CLASS_REP' | 'ASSISTANT_CLASS_REP' | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'CLASS_REP' | 'ASSISTANT_CLASS_REP' | null>(student.classRepRole || null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -104,6 +104,17 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
             >
               {student.isActive ? "Active" : "Inactive"}
             </span>
+
+            {/* Role Badge */}
+            {student.classRepRole && (
+              <span className={`ml-2 px-3 py-1 rounded-full text-[10px] font-bold ${
+                student.classRepRole === 'CLASS_REP' 
+                  ? 'bg-purple-100 text-purple-700' 
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                {student.classRepRole === 'CLASS_REP' ? 'Class Rep' : 'Asst. Rep'}
+              </span>
+            )}
           </div>
         </div>
 
