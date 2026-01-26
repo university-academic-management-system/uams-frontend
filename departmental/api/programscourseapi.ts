@@ -44,7 +44,7 @@ export const programsCoursesApi = {
     const payload = {
       name: formData.name.trim(),
       code: formData.code.trim(),
-      type: formData.type,
+      programTypeId: formData.type, // Map the selected ID to programTypeId
       duration: Number(formData.duration),
       description: formData.description?.trim() || null,
     };

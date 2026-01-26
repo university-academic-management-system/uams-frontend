@@ -17,7 +17,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
     name: "",
     code: "",
     type: "", // Will be set to ID
-    duration: 4,
+    duration: "",
     description: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,9 +31,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
         const types = await programsCoursesApi.getProgramTypes();
         setProgramTypes(types);
         // Set default if available
-        if (types.length > 0) {
-            handleChange("type", types[0].id);
-        }
+        // if (types.length > 0) {
+        //     handleChange("type", types[0].id);
+        // }
       } catch (err) {
         console.error("Failed to fetch program types", err);
       }
@@ -104,11 +104,13 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
               type="select"
               value={formData.type}
               onChange={(value) => handleChange("type", value)}
-              // ✅ FIXED: Send value-label pairs from API
-              options={programTypes.map((t) => ({
-                label: t.name,
-                value: t.id,
-              }))}
+              options={[
+                { label: "Select an Option", value: "" },
+                ...programTypes.map((t) => ({
+                  label: t.name,
+                  value: t.id,
+                }))
+              ]}
               required
             />
             <FormFieldHorizontal
@@ -116,11 +118,13 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
               type="select"
               value={formData.duration.toString()}
               onChange={(value) => handleChange("duration", parseInt(value))}
-              // ✅ FIXED: Send value-label pairs for duration too
-              options={DURATION_OPTIONS.map((d) => ({
-                label: `${d} year${d !== "1" ? "s" : ""}`,
-                value: d,
-              }))}
+              options={[
+                { label: "Select an Option", value: "" },
+                ...DURATION_OPTIONS.map((d) => ({
+                  label: `${d} year${d !== "1" ? "s" : ""}`,
+                  value: d,
+                }))
+              ]}
               required
             />
           </div>
