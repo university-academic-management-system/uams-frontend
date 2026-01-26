@@ -67,9 +67,11 @@ const ProgramsTab: React.FC = () => {
       setError(null);
 
       const data = await programsCoursesApi.getProgramsByDepartment();
+      
+      const programsList = Array.isArray(data) ? data : (data['programs'] || data['data'] || []);
 
-      setPrograms(data);
-      setFilteredPrograms(data);
+      setPrograms(programsList);
+      setFilteredPrograms(programsList);
     } catch (err: any) {
       console.error("Error fetching programs:", err);
       setError(
