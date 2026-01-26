@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
 import { RouterProvider } from 'react-router-dom';
 import router from './router';
+import { Toaster } from './components/ui/toaster';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -15,6 +16,7 @@ root.render(
   <React.StrictMode>
     <ChakraProvider value={defaultSystem}>
       <RouterProvider router={router} />
+      <Toaster />
     </ChakraProvider>
   </React.StrictMode>
 );

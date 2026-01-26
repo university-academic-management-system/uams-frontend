@@ -36,107 +36,149 @@ const performanceData = [
   { name: 'Yr 6', value: 70 },
 ];
 
-const CoursesTab = () => (
-  <VStack spacing={{ base: 6, lg: 8 }} w="full" animation="fade-in 0.5s">
-    <Box 
-      bg="white" 
-      rounded={{ base: "24px", lg: "32px" }} 
-      p={{ base: 6, lg: 8 }} 
-      border="1px" 
-      borderColor="gray.100" 
-      shadow="sm"
-      w="full"
-    >
-      <Heading 
-        fontSize={{ base: "md", lg: "lg" }} 
-        fontWeight="bold" 
-        color="slate.800" 
-        mb={{ base: 6, lg: 8 }}
+import { 
+  getRegistrations 
+} from '../services/registrationService';
+import { 
+  RegisteredCourse 
+} from '../services/types';
+import { Loader2 } from 'lucide-react';
+
+const CoursesTab = () => {
+  const [courses, setCourses] = React.useState<RegisteredCourse[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await getRegistrations();
+        if (data && data.courses) {
+          setCourses(data.courses);
+        }
+      } catch (error) {
+        console.error('Failed to fetch courses', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  return (
+    <VStack spacing={{ base: 6, lg: 8 }} w="full" animation="fade-in 0.5s">
+      <Box 
+        bg="white" 
+        rounded={{ base: "24px", lg: "32px" }} 
+        p={{ base: 6, lg: 8 }} 
+        border="1px" 
+        borderColor="gray.100" 
+        shadow="sm"
+        w="full"
       >
-        Registered Courses
-      </Heading>
-      <Box overflowX="auto" mx={{ base: -6, lg: 0 }} px={{ base: 6, lg: 0 }}>
-        <Table.Root variant="outline">
-          <Table.Header>
-            <Table.Row borderBottom="1px" borderColor="gray.50">
-              <Table.ColumnHeader px={4} py={3} w="8">
-                <TableCheckbox />
-              </Table.ColumnHeader>
-              <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Code</Table.ColumnHeader>
-              <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Course Title</Table.ColumnHeader>
-              <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Type</Table.ColumnHeader>
-              <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Unit</Table.ColumnHeader>
-              <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Lecturer(s)</Table.ColumnHeader>
-              <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Status</Table.ColumnHeader>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {Array(8).fill(0).map((_, i) => (
-              <Table.Row key={i} _hover={{ bg: 'slate.50' }} transition="background 0.2s" borderBottom="1px" borderColor="gray.50">
-                <Table.Cell px={4} py={4}>
+        <Heading 
+          fontSize={{ base: "md", lg: "lg" }} 
+          fontWeight="bold" 
+          color="slate.800" 
+          mb={{ base: 6, lg: 8 }}
+        >
+          Registered Courses
+        </Heading>
+        <Box overflowX="auto" mx={{ base: -6, lg: 0 }} px={{ base: 6, lg: 0 }}>
+          <Table.Root variant="outline">
+            <Table.Header>
+              <Table.Row borderBottom="1px" borderColor="gray.50">
+                <Table.ColumnHeader px={4} py={3} w="8">
                   <TableCheckbox />
-                </Table.Cell>
-                <Table.Cell px={4} py={4} fontWeight="bold" color="gray.500" fontSize="11px">CSC201.1</Table.Cell>
-                <Table.Cell px={4} py={4} fontWeight="bold" color="slate.800" fontSize="11px">
-                  {i === 2 ? 'General Studies' : i === 3 ? 'Advanced Calculus' : 'Computer Science Introduction'}
-                </Table.Cell>
-                <Table.Cell px={4} py={4} color="gray.500" fontSize="11px">
-                  {i === 2 ? 'General' : i === 3 ? 'Faculty' : 'Department'}
-                </Table.Cell>
-                <Table.Cell px={4} py={4} color="gray.500" fontWeight="bold" fontSize="11px">
-                  {i === 2 ? '2' : '3'}
-                </Table.Cell>
-                <Table.Cell px={4} py={4} color="gray.500" fontSize="11px" fontWeight="medium">
-                  {i === 2 ? 'Dr. Azubuike Okocha' : 'Dr. Edward Nduka'}
-                </Table.Cell>
-                <Table.Cell px={4} py={4}>
-                  <Badge 
-                    px={3} py={1} 
-                    bg="green.50" 
-                    color="green.500" 
-                    rounded="full" 
-                    fontSize="9px" 
-                    fontWeight="bold" 
-                    textTransform="uppercase" 
-                    letterSpacing="wider"
-                  >
-                    Registered
-                  </Badge>
-                </Table.Cell>
+                </Table.ColumnHeader>
+                <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Code</Table.ColumnHeader>
+                <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Course Title</Table.ColumnHeader>
+                <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Type</Table.ColumnHeader>
+                <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Unit</Table.ColumnHeader>
+                <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Lecturer(s)</Table.ColumnHeader>
+                <Table.ColumnHeader px={4} py={3} color="gray.400" fontSize="10px" textTransform="uppercase">Status</Table.ColumnHeader>
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
+            </Table.Header>
+            <Table.Body>
+              {isLoading ? (
+                <Table.Row>
+                  <Table.Cell colSpan={7} px={4} py={8} textAlign="center">
+                    <Flex justify="center" align="center" gap={2}>
+                      <Loader2 className="animate-spin text-blue-500" size={20} />
+                      <Text color="gray.500" fontSize="sm">Loading courses...</Text>
+                    </Flex>
+                  </Table.Cell>
+                </Table.Row>
+              ) : courses.length === 0 ? (
+                <Table.Row>
+                  <Table.Cell colSpan={7} px={4} py={8} textAlign="center" color="gray.500" fontSize="sm">
+                    No registered courses found.
+                  </Table.Cell>
+                </Table.Row>
+              ) : (
+                courses.map((course) => (
+                  <Table.Row key={course.id} _hover={{ bg: 'slate.50' }} transition="background 0.2s" borderBottom="1px" borderColor="gray.50">
+                    <Table.Cell px={4} py={4}>
+                      <TableCheckbox />
+                    </Table.Cell>
+                    <Table.Cell px={4} py={4} fontWeight="bold" color="gray.500" fontSize="11px">{course.code}</Table.Cell>
+                    <Table.Cell px={4} py={4} fontWeight="bold" color="slate.800" fontSize="11px">
+                      {course.title}
+                    </Table.Cell>
+                    <Table.Cell px={4} py={4} color="gray.500" fontSize="11px">
+                      {course.type || 'Departmental'}
+                    </Table.Cell>
+                    <Table.Cell px={4} py={4} color="gray.500" fontWeight="bold" fontSize="11px">
+                      {course.creditUnits}
+                    </Table.Cell>
+                    <Table.Cell px={4} py={4} color="gray.500" fontSize="11px" fontWeight="medium">
+                      {course.lecturer || 'Not Assigned'}
+                    </Table.Cell>
+                    <Table.Cell px={4} py={4}>
+                      <Badge 
+                        px={3} py={1} 
+                        bg={course.status === 'registered' ? "green.50" : course.status === 'pending' ? "yellow.50" : "red.50"}
+                        color={course.status === 'registered' ? "green.500" : course.status === 'pending' ? "yellow.600" : "red.500"}
+                        rounded="full" 
+                        fontSize="9px" 
+                        fontWeight="bold" 
+                        textTransform="uppercase" 
+                        letterSpacing="wider"
+                      >
+                        {course.status}
+                      </Badge>
+                    </Table.Cell>
+                  </Table.Row>
+                ))
+              )}
+            </Table.Body>
+          </Table.Root>
+        </Box>
       </Box>
-    </Box>
-  </VStack>
-);
+    </VStack>
+  );
+};
 
 const ResultsTab = () => {
   const results = [
-    { code: 'CSC201.1', title: 'Computer Science Introduction', unit: 3, ca: 20, exam: 55, total: 75, grade: 'A', remark: 'Distinction' },
-    { code: 'CSC201.1', title: 'Computer Science Introduction', unit: 2, ca: 24, exam: 39, total: 63, grade: 'B', remark: 'Very Good' },
-    { code: 'CSC201.1', title: 'Computer Science Introduction', unit: 3, ca: 7, exam: 50, total: 57, grade: 'C', remark: 'Credit' },
-    { code: 'CSC201.1', title: 'Computer Science Introduction', unit: 1, ca: 21, exam: 25, total: 46, grade: 'D', remark: 'Pass' },
-    { code: 'CSC201.1', title: 'Computer Science Introduction', unit: 3, ca: 10, exam: 30, total: 40, grade: 'E', remark: 'Bad' },
-    { code: 'CSC201.1', title: 'Computer Science Introduction', unit: 3, ca: 20, exam: 55, total: 75, grade: 'A', remark: 'Fail' },
-    { code: 'CSC201.1', title: 'Computer Science Introduction', unit: 3, ca: 20, exam: 55, total: 75, grade: 'A', remark: 'Distinction' },
-    { code: 'CSC201.1', title: 'Computer Science Introduction', unit: 3, ca: 20, exam: 55, total: 75, grade: 'A', remark: 'Distinction' },
+    { code: 'CSC201', title: 'Computer Science Introduction', unit: 3, ca: 20, exam: 55, total: 75, grade: 'A', remark: 'Distinction' },
+    { code: 'CSC202', title: 'Data Structures', unit: 2, ca: 24, exam: 39, total: 63, grade: 'B', remark: 'Very Good' },
+    { code: 'CSC203', title: 'Algorithms', unit: 3, ca: 7, exam: 50, total: 57, grade: 'C', remark: 'Credit' },
+    { code: 'CSC204', title: 'Computer Architecture', unit: 1, ca: 21, exam: 25, total: 46, grade: 'D', remark: 'Pass' },
+    { code: 'CSC205', title: 'Operating Systems', unit: 3, ca: 10, exam: 30, total: 40, grade: 'F', remark: 'Fail' },
+    { code: 'CSC206', title: 'Database Management Systems', unit: 3, ca: 18, exam: 42, total: 60, grade: 'B', remark: 'Very Good' },
+    { code: 'CSC207', title: 'Software Engineering', unit: 2, ca: 22, exam: 41, total: 63, grade: 'B', remark: 'Very Good' },
+    { code: 'CSC208', title: 'Computer Networks', unit: 3, ca: 15, exam: 48, total: 63, grade: 'B', remark: 'Very Good' },
   ];
 
   const getRemarkStyle = (remark: string) => {
     switch (remark) {
-      case 'Distinction':
-      case 'Very Good':
-        return { bg: 'green.50', color: 'green.500' };
-      case 'Credit':
-      case 'Pass':
-        return { bg: 'blue.50', color: 'blue.500' };
-      case 'Bad':
-      case 'Fail':
-        return { bg: 'red.50', color: 'red.500' };
-      default:
-        return { bg: 'gray.100', color: 'gray.500' };
+      case 'Distinction': return { bg: 'green.50', color: 'green.600' };
+      case 'Very Good': return { bg: 'teal.50', color: 'teal.600' };
+      case 'Credit': return { bg: 'blue.50', color: 'blue.600' };
+      case 'Pass': return { bg: 'yellow.50', color: 'yellow.700' };
+      case 'Fail': return { bg: 'red.50', color: 'red.600' };
+      default: return { bg: 'gray.100', color: 'gray.500' };
     }
   };
 

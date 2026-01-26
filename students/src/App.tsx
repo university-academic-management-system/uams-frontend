@@ -200,7 +200,7 @@ const MainLayout: React.FC = () => {
           <SidebarItem iconSrc="/assets/Books (1).png" label="Registration" active={activeTab === 'registration'} onClick={() => { navigate('/registration'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
           <SidebarItem iconSrc="/assets/CalendarDots (1).png" label="Schedule" active={activeTab === 'schedule'} onClick={() => { navigate('/schedule'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
           <SidebarItem iconSrc="/assets/Money (1).png" label="Payments" active={activeTab === 'payments'} onClick={() => { navigate('/payments'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
-          <SidebarItem iconSrc="/assets/305ae6c7f315bb219eb3b785a763838d55d71e73 (1).png" label="Settings" active={activeTab === 'settings'} onClick={() => { navigate('/settings'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc="/assets/305ae6c7f315bb219eb3b785a763838d55d71e73 (1).png" label="Profile" active={activeTab === 'settings'} onClick={() => { navigate('/settings'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
         </Box>
 
         <Box p={isSidebarCollapsed ? 4 : 6} borderTop="1px" borderColor="gray.100">
@@ -251,25 +251,7 @@ const MainLayout: React.FC = () => {
               <Menu size={24} />
             </IconButton>
 
-            <Box position="relative" maxW={{ base: '160px', sm: 'xs', lg: 'md' }} w="full">
-              <Input 
-                placeholder="Search" 
-                bg="white" 
-                border="1px solid"
-                borderColor="gray.300" 
-                rounded="full" 
-                py={{ base: 2, lg: 2.5 }}
-                pl={4}
-                pr={10}
-                fontSize={{ base: 'xs', lg: 'sm' }}
-                color="#1e293b"
-                _focus={{ borderColor: 'blue.400', boxShadow: 'none' }}
-                _placeholder={{ color: 'gray.400' }}
-              />
-              <Box position="absolute" right={4} top="50%" transform="translateY(-50%)" color="gray.400" pointerEvents="none">
-                <Search size={16} />
-              </Box>
-            </Box>
+            <Box maxW={{ base: '160px', sm: 'xs', lg: 'md' }} w="full" />
           </Flex>
 
           <Flex align="center" gap={{ base: 4, lg: 6 }} ml={4} shrink={0}>

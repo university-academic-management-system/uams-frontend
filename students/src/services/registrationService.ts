@@ -24,9 +24,10 @@ import type {
 /**
  * Get available academic levels (100, 200, 300, etc.)
  */
-export const getLevels = async (): Promise<Level[]> => {
+export const getLevels = async (programId?: string): Promise<Level[]> => {
   try {
-    const response = await apiClient.get<Level[]>('/accademics/levels');
+    const url = `/accademics/${programId}`;
+    const response = await apiClient.get<Level[]>(url);
     return response.data ?? [];
   } catch (error) {
     console.error('Failed to fetch levels:', error);

@@ -24,6 +24,7 @@ import type {
   RegisteredCourse,
   DepartmentCourse,
 } from '../services/types';
+import { toaster } from '../components/ui/toaster';
 
 const checkboxClasses = "appearance-none w-4 h-4 bg-white border border-gray-300 rounded checked:bg-blue-600 checked:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all bg-center bg-no-repeat checked:bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22white%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M16.707%205.293a1%201%200%20010%201.414l-8%208a1%201%200%2001-1.414%200l-4-4a1%201%200%20011.414-1.414L8%2012.586l7.293-7.293a1%201%200%20011.414%200z%22%20clip-rule%3D%22evenodd%22%20%2F%3E%3C%2Fsvg%3E')]";
 
@@ -495,7 +496,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
   // Set defaults from student profile when available
   useEffect(() => {
     if (studentProfile) {
-      setSelectedLevel(studentProfile.level || studentProfile.Level?.code || '');
+      setSelectedLevel(studentProfile.levelId || studentProfile.level || '');
     }
   }, [studentProfile]);
 
@@ -611,7 +612,11 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
     const sessionId = storedUser?.profile?.sessionId;
 
     if (!levelId || !sessionId) {
-      alert('Unable to retrieve your level or session information. Please log in again.');
+      toaster.create({
+        title: "Session Error",
+        description: "Unable to retrieve your level or session information. Please log in again.",
+        type: "error"
+      });
       return;
     }
 
@@ -636,7 +641,11 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
     setIsRegistering(false);
 
     if (result.success) {
-      alert(`Success! ${result.message}`);
+      toaster.create({
+        title: "Registration Successful",
+        description: result.message,
+        type: "success"
+      });
       setShowConfirmation(false);
       // Clear the payment reference after successful registration
       // localStorage.removeItem('pendingPaymentReference');
@@ -644,7 +653,11 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
       setPreviewedCourses([]);
       setIsCartConfirmed(false);
     } else {
-      alert(`Error: ${result.message}`);
+      toaster.create({
+        title: "Registration Failed",
+        description: result.message,
+        type: "error"
+      });
     }
   };
 
@@ -727,7 +740,7 @@ const CoursesRegView: React.FC<CoursesRegViewProps> = ({
                   >
                     <option value="">Select Level</option>
                     {levels?.map((level) => (
-                      <option key={level.id} value={level.code}>
+                      <option key={level.id} value={level.id}>
                         {level.name}
                       </option>
                     ))}
@@ -1040,8 +1053,12 @@ const Registration: React.FC = () => {
       setError(null);
       
       try {
+        const storedUser = getStoredUser();
+        // Check both direct property and nested profile property as structure can vary
+        const programId = storedUser?.profile?.programId || storedUser?.programId;
+        
         const [levelsData, semestersData, sessionsData, profileData, registrationsData] = await Promise.all([
-          getLevels(),
+          getLevels(programId),
           getSemesters(),
           getSessions(),
           getStudentProfile(),
@@ -1105,7 +1122,7 @@ const Registration: React.FC = () => {
                   : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'other' ? 'ID-Card' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>

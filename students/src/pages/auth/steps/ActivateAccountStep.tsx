@@ -130,7 +130,7 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
                <div className="space-y-2">
                 <label className="text-sm font-medium text-[#1e293b]">Entry Qualification</label>
                 <div className="w-full bg-gray-200/50 border border-gray-300 rounded-md py-3 px-4 text-sm font-medium text-gray-600 uppercase">
-                  {studentInfo?.entryQualification || 'O-LEVEL'}
+                  {studentInfo?.entryQualification || 'Nil'}
                 </div>
               </div>
               <div className="space-y-2">
@@ -191,7 +191,7 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
                             setEmail(e.target.value);
                             if (error) setError('');
                         }}
-                        placeholder="Enter address"
+                        placeholder="Enter email address"
                         className="w-full bg-white border border-gray-300 rounded-md py-3 px-4 text-sm font-medium text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1d76d2] focus:border-transparent transition-all placeholder:text-gray-400"
                         disabled={isLoading}
                     />
@@ -205,7 +205,7 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
                             setPhone(e.target.value);
                             if (error) setError('');
                         }}
-                        placeholder="Enter address"
+                        placeholder="Enter phone number"
                         className="w-full bg-white border border-gray-300 rounded-md py-3 px-4 text-sm font-medium text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1d76d2] focus:border-transparent transition-all placeholder:text-gray-400"
                         disabled={isLoading}
                     />
@@ -221,7 +221,7 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
                                 setPassword(e.target.value);
                                 if (error) setError('');
                             }}
-                            placeholder="Enter address"
+                            placeholder="Enter password"
                             className="w-full bg-white border border-gray-300 rounded-md py-3 px-4 text-sm font-medium text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1d76d2] focus:border-transparent transition-all placeholder:text-gray-400"
                             disabled={isLoading}
                         />
@@ -244,7 +244,7 @@ const ActivateAccountStep: React.FC<ActivateAccountStepProps> = ({ onNext, onFor
                                 setConfirmPassword(e.target.value);
                                 if (error) setError('');
                             }}
-                            placeholder="Enter address"
+                            placeholder="Re-enter password"
                             className="w-full bg-white border border-gray-300 rounded-md py-3 px-4 text-sm font-medium text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1d76d2] focus:border-transparent transition-all placeholder:text-gray-400"
                            disabled={isLoading}
                            onKeyDown={(e) => e.key === 'Enter' && handleActivate()}
