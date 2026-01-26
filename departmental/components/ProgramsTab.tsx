@@ -55,7 +55,7 @@ const ProgramsTab: React.FC = () => {
       const filtered = programs.filter(
         (program) =>
           program.name?.toLowerCase().includes(term) ||
-          program.type?.toLowerCase().includes(term)
+          program.programType?.name.toLowerCase().includes(term)
       );
       setFilteredPrograms(filtered);
     }
@@ -68,10 +68,10 @@ const ProgramsTab: React.FC = () => {
 
       const data = await programsCoursesApi.getProgramsByDepartment();
       
-      const programsList = Array.isArray(data) ? data : (data['programs'] || data['data'] || []);
-
-      setPrograms(programsList);
-      setFilteredPrograms(programsList);
+      
+      // Data is now directly the array from the API service
+      setPrograms(data);
+      setFilteredPrograms(data);
     } catch (err: any) {
       console.error("Error fetching programs:", err);
       setError(
@@ -250,7 +250,7 @@ const ProgramsTab: React.FC = () => {
                     <td className="px-6 py-4 font-semibold text-slate-700">
                       {program.name}
                     </td>
-                    <td className="px-6 py-4">{getTypeLabel(program.type)}</td>
+                    <td className="px-6 py-4">{program.programType?.name || "N/A"}</td>
                     <td className="px-6 py-4">
                       {program.duration} Year{program.duration !== 1 ? "s" : ""}
                     </td>

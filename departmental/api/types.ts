@@ -6,7 +6,7 @@ export interface Program {
   id: string;
   name: string;
   code: string | null;
-  type: string;
+  programTypeId: string | null;
   duration: number;
   description: string | null;
   universityId: string;
@@ -14,6 +14,11 @@ export interface Program {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  programType: {
+    id: string;
+    name: string;
+  } | null;
+  type?: string; // Keeping for backward compatibility if needed, but likely replaced by programType.name
 }
 
 export interface ProgramTypeResponse {

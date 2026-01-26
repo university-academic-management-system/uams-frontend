@@ -25,10 +25,10 @@ export const programsCoursesApi = {
       throw new Error("No department ID found in token");
     }
 
-    const response = await api.get<Program[]>(
+    const response = await api.get<{ success: boolean; count: number; data: Program[] }>(
       `/program/department/${departmentId}`
     );
-    return response.data;
+    return response.data.data;
   },
 
   createProgram: async (formData: CreateProgramData): Promise<Program> => {
