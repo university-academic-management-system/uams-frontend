@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Filter, MoreHorizontal, Search, ChevronDown } from "lucide-react";
 import FormFieldHorizontal from "./FormFieldHorizontal";
+import { programsCoursesApi } from "../api/programscourseapi";
+import { ProgramTypeResponse } from "../api/types";
 
 // Dummy data for sessions
 const INITIAL_SESSIONS = [
@@ -42,6 +44,20 @@ const StructureTab: React.FC = () => {
   const [sessions, setSessions] = useState(INITIAL_SESSIONS);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [programTypes, setProgramTypes] = useState<ProgramTypeResponse[]>([]);
+
+  // Fetch Program Types on Mount
+  React.useEffect(() => {
+    const fetchTypes = async () => {
+      try {
+        const types = await programsCoursesApi.getProgramTypes();
+        setProgramTypes(types);
+      } catch (err) {
+        console.error("Failed to fetch program types", err);
+      }
+    };
+    fetchTypes();
+  }, []);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -85,7 +101,10 @@ const StructureTab: React.FC = () => {
             <FormFieldHorizontal 
               label="Type" 
               type="select" 
-              options={["Undergraduate", "Masters", "PhD", "Sandwich"]}
+              options={programTypes.map((t) => ({
+                label: t.name,
+                value: t.id,
+              }))}
               value={formData.type}
               onChange={(val) => handleFormChange("type", val)}
             />
