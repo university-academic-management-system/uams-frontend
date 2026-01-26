@@ -68,7 +68,7 @@ const LoginFormStep: React.FC<LoginFormStepProps> = ({ onLoginSuccess, onForgotP
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter Username"
+              placeholder="Enter Email-Address"
               className="w-full bg-white border border-gray-300 rounded-xl py-4 px-6 text-[15px] font-medium text-[#1e293b] focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-[#1d76d2] transition-all"
             />
             <User
