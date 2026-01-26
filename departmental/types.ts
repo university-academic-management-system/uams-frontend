@@ -109,3 +109,66 @@ export interface ChartDataItem {
   year: string;
   value: number;
 }
+
+export interface StudentProfile {
+  id: string;
+  universityId: string;
+  departmentId: string;
+  programId: string;
+  userId: string;
+  studentId: string;
+  level: string;
+  levelId: string;
+  sessionId: string;
+  isActive: boolean;
+  academicStanding: string;
+  probationStartDate: string | null;
+  probationEndDate: string | null;
+  totalCreditsEarned: number;
+  currentGPA: string;
+  createdAt: string;
+  updatedAt: string;
+  idCard: string | null;
+  Department: {
+    name: string;
+    code: string;
+    type: string;
+    description: string | null;
+  };
+  Level: {
+    id: string;
+    name: string;
+  };
+  Program: {
+    id: string;
+    name: string;
+    programTypeId: string;
+    programType: {
+      id: string;
+      name: string;
+      type: string;
+      code: string;
+    };
+  };
+  user: {
+    fullName: string;
+    email: string;
+    phone: string;
+    avatar: string | null;
+    Roles: Array<{
+      name: string;
+      description: string;
+    }>;
+  };
+  session: {
+    id: string;
+    name: string;
+    isActive: boolean;
+  };
+  activeSemester: Array<{
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  }>;
+}

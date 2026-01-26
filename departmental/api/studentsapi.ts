@@ -21,4 +21,11 @@ export const studentsApi = {
     );
     return response.data;
   },
+
+  
+   /* Get student profile */
+  getStudentProfile: async (studentId: string) => {
+    const response = await api.get(`/students/profile/${studentId}`);
+    return response.data;
+  },
 };

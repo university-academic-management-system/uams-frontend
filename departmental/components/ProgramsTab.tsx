@@ -212,11 +212,11 @@ const ProgramsTab: React.FC = () => {
                     onChange={toggleSelectAll}
                   />
                 </th>
-                <th className="px-6 py-4">Program Name</th>
-                <th className="px-6 py-4">Type</th>
-                <th className="px-6 py-4">Duration</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-7 py-5">Program Name</th>
+                <th className="px-7 py-5">Type</th>
+                <th className="px-7 py-5">Duration</th>
+                <th className="px-7 py-5">Status</th>
+                <th className="px-7 py-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

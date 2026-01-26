@@ -1,8 +1,9 @@
 // components/StudentDetailsSidebar.tsx
 import React, { useState } from "react";
 import { X, User, Mail, Phone, Calendar, ShieldCheck, Loader2 } from "lucide-react";
-import { Student } from "../types";
+import { Student, StudentProfile } from "../types";
 import api from "../api/axios";
+import { studentsApi } from "../api/studentsapi";
 
 interface StudentDetailsSidebarProps {
   student: Student;
@@ -44,9 +45,37 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
   student,
   onClose,
 }) => {
-  const [selectedRole, setSelectedRole] = useState<'CLASS_REP' | 'ASSISTANT_CLASS_REP' | null>(student.classRepRole || null);
+  const [selectedRole, setSelectedRole] = useState<'CLASS_REP' | 'ASSISTANT_CLASS_REP' | null>(null);
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Fetch full profile on mount or when student changes
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const data = await studentsApi.getStudentProfile(student.id);
+        setProfile(data);
+        
+        // Set initial role from profile
+        const roles = data.user.Roles.map((r: any) => r.name);
+        if (roles.includes('CLASS_REP')) setSelectedRole('CLASS_REP');
+        else if (roles.includes('ASSISTANT_CLASS_REP')) setSelectedRole('ASSISTANT_CLASS_REP');
+        else setSelectedRole(null);
+        
+      } catch (err) {
+        console.error("Failed to fetch student profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (student.id) {
+      fetchProfile();
+    }
+  }, [student.id]);
 
   const handleRoleChange = (role: 'CLASS_REP' | 'ASSISTANT_CLASS_REP') => {
     // Toggle: if already selected, deselect; otherwise select this one
@@ -87,64 +116,94 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-4 border border-blue-100">
-            <User size={40} />
-          </div>
-          <h4 className="text-lg font-bold text-slate-900">{student.name}</h4>
-          <p className="text-xs text-slate-400">{student.matNo}</p>
-          <div className="mt-2">
-            <span
-              className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                student.isActive
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {student.isActive ? "Active" : "Inactive"}
-            </span>
-
-            {/* Role Badge */}
-            {student.classRepRole && (
-              <span className={`ml-2 px-3 py-1 rounded-full text-[10px] font-bold ${
-                student.classRepRole === 'CLASS_REP' 
-                  ? 'bg-purple-100 text-purple-700' 
-                  : 'bg-amber-100 text-amber-700'
-              }`}>
-                {student.classRepRole === 'CLASS_REP' ? 'Class Rep' : 'Asst. Rep'}
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="animate-spin text-blue-600" size={32} />
+          <p className="text-sm text-slate-400">Loading profile...</p>
+        </div>
+      ) : profile ? (
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-4 border-4 border-white shadow-lg overflow-hidden relative">
+              {profile.user.avatar ? (
+                <img 
+                  src={profile.user.avatar.startsWith('data:') ? profile.user.avatar : `data:image/jpeg;base64,${profile.user.avatar}`} 
+                  alt={profile.user.fullName} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User size={40} />
+              )}
+            </div>
+            <h4 className="text-lg font-bold text-slate-900">{profile.user.fullName}</h4>
+            <p className="text-xs text-slate-400">{profile.studentId}</p>
+            <div className="mt-2 flex items-center gap-2 justify-center">
+              <span
+                className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                  profile.isActive
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {profile.isActive ? "Active" : "Inactive"}
               </span>
-            )}
-          </div>
-        </div>
 
-        <div className="space-y-4">
-          <BioItem
-            icon={<Mail size={14} />}
-            label="Email Address"
-            value={student.email}
-          />
-          <BioItem
-            icon={<Phone size={14} />}
-            label="Phone Number"
-            value={student.phoneNo}
-          />
-          <BioItem
-            icon={<Calendar size={14} />}
-            label="Year Enrolled"
-            value={student.createdAt}
-          />
-          <BioItem
-            icon={<ShieldCheck size={14} />}
-            label="Department"
-            value={student.department}
-          />
-          <BioItem
-            icon={<ShieldCheck size={14} />}
-            label="Current Level"
-            value={student.level}
-          />
-        </div>
+              {/* Role Badge */}
+              {selectedRole && (
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                  selectedRole === 'CLASS_REP' 
+                    ? 'bg-purple-100 text-purple-700' 
+                    : 'bg-amber-100 text-amber-700'
+                }`}>
+                  {selectedRole === 'CLASS_REP' ? 'Class Rep' : 'Asst. Rep'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <BioItem
+              icon={<Mail size={14} />}
+              label="Email Address"
+              value={profile.user.email}
+            />
+            <BioItem
+              icon={<Phone size={14} />}
+              label="Phone Number"
+              value={profile.user.phone}
+            />
+            <BioItem
+              icon={<Calendar size={14} />}
+              label="Session"
+              value={profile.session?.name || "N/A"}
+            />
+            <BioItem
+              icon={<ShieldCheck size={14} />}
+              label="Department"
+              value={profile.Department?.name || "N/A"}
+            />
+            <BioItem
+              icon={<ShieldCheck size={14} />}
+              label="Program"
+              value={profile.Program?.name || "N/A"}
+            />
+            <BioItem
+              icon={<ShieldCheck size={14} />}
+              label="Level"
+              value={profile.Level?.name || "N/A"}
+            />
+            
+            <div className="grid grid-cols-2 gap-4 mt-4">
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">CGPA</p>
+                  <p className="text-lg font-bold text-slate-800">{profile.currentGPA || "0.00"}</p>
+               </div>
+               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Credits</p>
+                  <p className="text-lg font-bold text-slate-800">{profile.totalCreditsEarned}</p>
+               </div>
+            </div>
+          </div>
 
         <div className="pt-6 border-t border-gray-50">
           <h5 className="text-xs font-bold text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -203,6 +262,8 @@ export const StudentDetailsSidebar: React.FC<StudentDetailsSidebarProps> = ({
           </div>
         </div>
       </div>
+      ) : null}
     </div>
   );
+
 };
