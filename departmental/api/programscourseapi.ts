@@ -46,7 +46,7 @@ export const programsCoursesApi = {
       code: formData.code.trim(),
       programTypeId: formData.type, // Map the selected ID to programTypeId
       duration: Number(formData.duration),
-      description: formData.description?.trim() || null,
+      description: formData.description?.trim() || "",
     };
 
     console.log("🚀 Payload sent to Program Service:");

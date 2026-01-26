@@ -104,13 +104,11 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
               type="select"
               value={formData.type}
               onChange={(value) => handleChange("type", value)}
-              options={[
-                { label: "Select an Option", value: "" },
-                ...programTypes.map((t) => ({
-                  label: t.name,
-                  value: t.id,
-                }))
-              ]}
+              // ✅ FIXED: Send value-label pairs from API
+              options={programTypes.map((t) => ({
+                label: t.name,
+                value: t.id,
+              }))}
               required
             />
             <FormFieldHorizontal
@@ -118,13 +116,11 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ onSubmit, onCancel }) => {
               type="select"
               value={formData.duration.toString()}
               onChange={(value) => handleChange("duration", parseInt(value))}
-              options={[
-                { label: "Select an Option", value: "" },
-                ...DURATION_OPTIONS.map((d) => ({
-                  label: `${d} year${d !== "1" ? "s" : ""}`,
-                  value: d,
-                }))
-              ]}
+              // ✅ FIXED: Send value-label pairs for duration too
+              options={DURATION_OPTIONS.map((d) => ({
+                label: `${d} year${d !== "1" ? "s" : ""}`,
+                value: d,
+              }))}
               required
             />
           </div>
