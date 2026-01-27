@@ -48,14 +48,22 @@ export default function PaymentsPage() {
             idCardFee: feeData.idCardFee || "",
             transcriptFee: feeData.transcriptFee || "",
           });
+          setOriginalFees({
+            departmentDues: feeData.departmentDues || "",
+            accessFee: feeData.accessFee || "",
+            idCardFee: feeData.idCardFee || "",
+            transcriptFee: feeData.transcriptFee || "",
+          });
         } else {
              // Reset if no data found
-             setFees({
+             const emptyFees = {
                 departmentDues: "",
                 accessFee: "",
                 idCardFee: "",
                 transcriptFee: "",
-              });
+              };
+             setFees(emptyFees);
+             setOriginalFees(emptyFees); // Also reset backup
         }
       } catch (error) {
         console.error("Failed to fetch fees:", error);
@@ -82,6 +90,8 @@ export default function PaymentsPage() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalFees, setOriginalFees] = useState(fees); // Backup for reset
 
   /* ============================
      FETCH & FILTER ACTIVE SESSION
@@ -143,6 +153,21 @@ export default function PaymentsPage() {
     setFees((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleReset = () => {
+    setFees(originalFees);
+    setIsEditing(false); // Optionally exit edit mode
+    toast("Changes discarded", { icon: "↩️" });
+  };
+  
+  const handleToggleEdit = () => {
+    if (isEditing) {
+        // If canceling edit mode, existing reset logic applies
+        handleReset();
+    } else {
+        setIsEditing(true);
+    }
+  };
+
   const handleSave = async () => {
     if (!activeSessionId) {
       toast.error("No active session selected.");
@@ -186,6 +211,8 @@ export default function PaymentsPage() {
       );
 
       toast.success("Payment settings saved successfully.");
+      setIsEditing(false); // Exit edit mode on success
+      setOriginalFees(fees); // Update backup to current
       
       // Optionally refresh fees here if needed, but we essentially just set them
     } catch (error: any) {
@@ -238,34 +265,23 @@ export default function PaymentsPage() {
             </div>
           </section>
 
-          {/* PROGRAM TYPE TABS */}
-          <section className="mb-8">
-            <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Layers size={18} className="text-blue-600"/> Program Levels
-            </h2>
-            <div className="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-xl w-fit">
-                {programTypes.map((type) => (
-                    <TabButton 
-                        key={type.id} 
-                        active={selectedProgramTypeId === type.id} 
-                        onClick={() => setSelectedProgramTypeId(type.id)} 
-                        icon={null} 
-                        label={type.name} 
-                    />
-                ))}
-            </div>
-            {programTypes.length === 0 && !loading && (
-                <p className="text-sm text-slate-400 mt-2">No program types found. Fees will be applied generally if not selected.</p>
-            )}
-          </section>
 
           <PaymentSettings />
+          
 
-          <PaymentSplitKeysSection values={fees} onChange={handleChange} />
-
-
-
-          <PageActions onSave={handleSave} isSaving={isSaving} />
+          <PaymentSplitKeysSection 
+            values={fees} 
+            onChange={handleChange}
+            programTypes={programTypes}
+            selectedProgramTypeId={selectedProgramTypeId}
+            onSelectProgramType={setSelectedProgramTypeId}
+            loading={loading}
+            onSave={handleSave}
+            isSaving={isSaving}
+            onReset={handleReset}
+            isEditing={isEditing}
+            onToggleEdit={handleToggleEdit}
+          />
         </div>
       </div>
     </div>

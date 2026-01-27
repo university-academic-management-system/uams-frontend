@@ -4,7 +4,6 @@ import api from "./axios";
 export const studentsApi = {
   /**
    * Bulk upload students via CSV
-   * POST /university-admin/students/bulk-upload
    */
   bulkUploadStudents: async (file: File) => {
     const formData = new FormData();
@@ -19,6 +18,31 @@ export const studentsApi = {
         },
       }
     );
+    return response.data;
+  },
+
+  /**
+   * Bulk download student template/data
+   */
+  bulkDownloadStudents: async (studentIds: string[]) => {
+    const response = await api.post(
+      "/university-admin/students/bulk-download",
+      { studentIds },
+      {
+        responseType: "blob", 
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Bulk delete students
+   */
+  bulkDeleteStudents: async (studentIds: string[], reason: string) => {
+    const response = await api.post("/university-admin/students/bulk-delete", {
+      studentIds,
+      reason,
+    });
     return response.data;
   },
 

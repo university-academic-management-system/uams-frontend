@@ -10,6 +10,9 @@ interface StudentsTableProps {
   setSelectedStudent: (student: Student | null) => void;
   searchTerm: string;
   onEdit: (student: Student) => void;
+  onBulkDownload?: (ids: string[]) => void;
+  allMatchingStudents?: Student[]; // New prop for full selection
+  onBulkDelete?: (ids: string[]) => void;
 }
 
 export const StudentsTable: React.FC<StudentsTableProps> = ({
@@ -17,6 +20,9 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
   selectedStudent,
   setSelectedStudent,
   onEdit,
+  onBulkDownload,
+  allMatchingStudents = [], // Default to empty
+  onBulkDelete
 }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDropdownId, setActiveDropdownId] = React.useState<string | null>(
@@ -32,10 +38,17 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
 
   // Toggle select all
   const toggleSelectAll = () => {
-    if (selectedIds.length === filteredStudents.length) {
+    // If we have allMatchingStudents (from parent filter), use that. Otherwise fallback to current filtered view.
+    const targetStudents = allMatchingStudents.length > 0 ? allMatchingStudents : filteredStudents;
+    const targetIds = targetStudents.map(s => s.id);
+    
+    // Check if ALL are currently selected
+    const allSelected = targetIds.every(id => selectedIds.includes(id));
+
+    if (allSelected) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(filteredStudents.map((s) => s.id));
+      setSelectedIds(targetIds);
     }
   };
 
@@ -92,8 +105,9 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
                   type="checkbox"
                   className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
                   checked={
-                    filteredStudents.length > 0 &&
-                    selectedIds.length === filteredStudents.length
+                    allMatchingStudents.length > 0 
+                        ? selectedIds.length > 0 && selectedIds.length === allMatchingStudents.length
+                        : filteredStudents.length > 0 && selectedIds.length === filteredStudents.length
                   }
                   onChange={toggleSelectAll}
                 />
@@ -252,11 +266,17 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
             {selectedIds.length} items selected
           </span>
           <div className="h-6 w-px bg-slate-200"></div>
-          <button className="flex items-center gap-2 bg-[#1D7AD9] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors">
+          <button 
+            onClick={() => onBulkDownload?.(selectedIds)}
+            className="flex items-center gap-2 bg-[#1D7AD9] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+          >
             <Download size={16} />
             Bulk Download
           </button>
-          <button className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors">
+          <button 
+            onClick={() => onBulkDelete?.(selectedIds)}
+            className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
+          >
             <Trash size={16} />
             Bulk Delete
           </button>

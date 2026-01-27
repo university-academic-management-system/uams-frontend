@@ -8,6 +8,7 @@ import { StudentsTable } from "../components/StudentsTable";
 import { Pagination } from "../components/Pagination";
 import { StudentDetailsSidebar } from "../components/StudentDetailsSidedbar";
 import { AddStudentForm } from "../components/AddStudentForm";
+import { DeleteConfirmationModal } from "../components/DeleteConfirmationModal";
 import { studentsApi } from "../api/studentsapi";
 import { toast } from "react-hot-toast";
 
@@ -47,6 +48,8 @@ export const StudentsView: React.FC = () => {
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [idsToDelete, setIdsToDelete] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Fetch students
@@ -223,6 +226,59 @@ export const StudentsView: React.FC = () => {
     }
   };
 
+  const handleBulkDownload = async (ids: string[]) => {
+    try {
+        const loadingToast = toast.loading("Downloading students data...");
+        const blob = await studentsApi.bulkDownloadStudents(ids);
+        
+        // Create download link
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'students_data.csv');
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        link.parentNode?.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast.dismiss(loadingToast);
+        toast.success("Download started successfully");
+    } catch (error) {
+        console.error("Download failed:", error);
+        toast.error("Failed to download file");
+    }
+  };
+
+  const handleBulkDelete = (ids: string[]) => {
+    setIdsToDelete(ids);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmBulkDelete = async (reason: string) => {
+    try {
+        await studentsApi.bulkDeleteStudents(idsToDelete, reason);
+        toast.success("Students deleted successfully");
+        setIsDeleteModalOpen(false);
+        setIdsToDelete([]);
+        fetchStudents(); // Refresh list
+    } catch (error: any) {
+        console.error("Delete failed:", error);
+        toast.error(error.response?.data?.message || "Failed to delete students");
+        // Keep modal open on error or close it? usually keep open to show error, but here using toast
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    const link = document.createElement('a');
+    link.href = '/documents/Students_Sample_File.csv';
+    link.setAttribute('download', 'Students_Sample_File.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -270,7 +326,10 @@ export const StudentsView: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#1D7AD9] text-[#1D7AD9] rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors">
+            <button 
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#1D7AD9] text-[#1D7AD9] rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors"
+            >
               <FileDown size={18} />
               Download Sample File
             </button>
@@ -317,6 +376,7 @@ export const StudentsView: React.FC = () => {
         <StudentsTable
           students={students}
           filteredStudents={paginatedStudents}
+          allMatchingStudents={filteredStudents} // Pass full filtered list for select-all
           selectedStudent={selectedStudent}
           setSelectedStudent={setSelectedStudent}
           searchTerm={searchTerm}
@@ -324,6 +384,8 @@ export const StudentsView: React.FC = () => {
             setStudentToEdit(student);
             setIsAddStudentModalOpen(true);
           }}
+          onBulkDownload={handleBulkDownload}
+          onBulkDelete={handleBulkDelete}
         />
 
         {filteredStudents.length > 0 && (
@@ -374,6 +436,15 @@ export const StudentsView: React.FC = () => {
           }}
         />
       )}
+
+      <DeleteConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmBulkDelete}
+        title="Delete Students"
+        description="This action cannot be undone. This will permanently delete the selected student records from the system."
+        itemCount={idsToDelete.length}
+      />
     </div>
   );
 };
