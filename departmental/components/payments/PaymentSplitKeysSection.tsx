@@ -13,11 +13,11 @@ interface Props {
 export const PaymentSplitKeysSection = ({ values, onChange }: Props) => {
   return (
     <div className="pt-8 border-t border-gray-200">
-      <h2 className="text-xl font-semibold text-gray-900 mb-3">
+      <h2 className="text-2xl font-semibold text-gray-900 mb-3">
         Payment Settings
       </h2>
       <p className="text-sm text-gray-600 mb-8">
-        Input split keys for the different payments below
+        Input the amount for the different payments below
       </p>
 
       <div className="max-w-2xl space-y-6">
