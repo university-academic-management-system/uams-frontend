@@ -44,6 +44,7 @@ import {
   AuthData,
 } from "./components/types";
 import StatsContainer from "./components/StatsContainer";
+import { Toaster } from "react-hot-toast";
 
 const SESSION_KEY = "uniedu_session";
 
@@ -243,7 +244,7 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter basename="/departmental-admin">
- 
+      <Toaster position="top-right" />
       {!authData ? (
         <Routes>
           <Route path="*" element={<Login />} />
