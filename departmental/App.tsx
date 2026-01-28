@@ -244,7 +244,10 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter basename="/departmental-admin">
-      <Toaster position="top-right" />
+      <Toaster 
+        position="top-right" 
+        containerStyle={{ zIndex: 99999 }} // Force high z-index
+      />
       {!authData ? (
         <Routes>
           <Route path="*" element={<Login />} />

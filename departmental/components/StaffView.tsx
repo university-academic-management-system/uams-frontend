@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, FileUp, Filter, MoreHorizontal, UserCog, Pencil, Trash, Download, FileDown } from 'lucide-react';
 import { AssignCourseModal } from "./AssignCourseModal";
+import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 import { staffApi } from "../api/staffapi";
 import { toast } from "react-hot-toast";
-
-
+import { StaffTable, StaffListItem } from "./StaffTable";
+import { AddStaffForm } from "./AddStaffForm";
 
 const STAFF_MOCK_DATA: StaffListItem[] = Array(12).fill(null).map((_, i) => ({
   id: `${i + 1}`,
@@ -18,13 +19,15 @@ const STAFF_MOCK_DATA: StaffListItem[] = Array(12).fill(null).map((_, i) => ({
   program: 'Bachelors'
 }));
 
-import { StaffTable, StaffListItem } from "./StaffTable";
-import { AddStaffForm } from "./AddStaffForm";
-
 export const StaffView: React.FC = () => {
   const [isAssignCourseModalOpen, setIsAssignCourseModalOpen] = useState(false);
   const [isAddStaffModalOpen, setIsAddStaffModalOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  
+  // Bulk Delete State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [idsToDelete, setIdsToDelete] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   /* Updated to match backend payload requirement */
   const handleAssignCourse = async (data: { courseId: string; role: string }) => {
@@ -51,8 +54,6 @@ export const StaffView: React.FC = () => {
     }
   };
 
-
-
   const handleDownloadTemplate = () => {
     const link = document.createElement('a');
     link.href = '/documents/Staff_Sample_File.csv';
@@ -60,6 +61,49 @@ export const StaffView: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     link.parentNode?.removeChild(link);
+  };
+
+  const handleBulkDownload = async (ids: string[]) => {
+    try {
+      const toastId = toast.loading("Downloading staff data...");
+      const blob = await staffApi.bulkDownloadStaff(ids);
+      
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Staff_Data.csv'); // Or get filename from headers if needed
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      
+      toast.success("Download started", { id: toastId });
+    } catch (error: any) {
+      console.error("Bulk download failed:", error);
+      toast.error(error.response?.data?.message || "Failed to download staff data");
+    }
+  };
+
+  const handleBulkDelete = (ids: string[]) => {
+    setIdsToDelete(ids);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async (reason: string) => {
+    if (idsToDelete.length === 0) return;
+
+    try {
+      setIsDeleting(true);
+      await staffApi.bulkDeleteStaff(idsToDelete);
+      toast.success("Selected staff members deleted successfully");
+      setIsDeleteModalOpen(false);
+      setIdsToDelete([]);
+      // Here you would typically trigger a refresh of the staff list
+    } catch (error: any) {
+      console.error("Failed to delete staff:", error);
+      toast.error(error.response?.data?.message || "Failed to delete staff");
+    } finally {
+        setIsDeleting(false);
+    }
   };
 
   return (
@@ -110,8 +154,8 @@ export const StaffView: React.FC = () => {
              setIsAssignCourseModalOpen(true);
          }}
          onEdit={(item) => console.log("Edit", item)}
-         onBulkDownload={(ids) => console.log("Bulk Download", ids)}
-         onBulkDelete={(ids) => console.log("Bulk Delete", ids)}
+         onBulkDownload={handleBulkDownload}
+         onBulkDelete={handleBulkDelete}
       />
 
       <AssignCourseModal
@@ -133,6 +177,16 @@ export const StaffView: React.FC = () => {
           }}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Staff Members"
+        description={`Are you sure you want to delete ${idsToDelete.length} selected staff member(s)? This action cannot be undone.`}
+        itemCount={idsToDelete.length}
+      />
     </div>
   );
 };

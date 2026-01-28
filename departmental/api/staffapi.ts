@@ -9,4 +9,28 @@ export const staffApi = {
     );
     return response.data;
   },
+
+  bulkDownloadStaff: async (lecturerIds: string[]) => {
+    const response = await api.post(
+      "/university-admin/lecturers/bulk/download",
+      {
+        lecturerId: lecturerIds,
+        format: "csv",
+      },
+      {
+        responseType: "blob", // Important for file download
+      }
+    );
+    return response.data;
+  },
+
+  bulkDeleteStaff: async (lecturerIds: string[]) => {
+    const response = await api.post(
+      "/university-admin/lecturers/bulk/delete",
+      {
+        lecturerId: lecturerIds,
+      }
+    );
+    return response.data;
+  },
 };
