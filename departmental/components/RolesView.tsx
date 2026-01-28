@@ -15,6 +15,7 @@ import {
   Trash,
 } from "lucide-react";
 import api from "../api/axios";
+import { idCardApi } from "../api/idcardapi";
 import toast, { Toaster } from "react-hot-toast";
 
 // --- Interfaces ---
@@ -519,6 +520,62 @@ export const RolesView: React.FC = () => {
     }
   };
 
+  // --- Bulk Download Handlers ---
+  const handleBulkDownloadIDCards = async () => {
+    if (selectedIds.length === 0) return;
+    try {
+        const toastId = toast.loading("Fetching template & downloading ID Cards...");
+        
+        // 1. Fetch default template ID
+        const templateResponse = await idCardApi.getDefaultIDCard();
+        const templateId = templateResponse?.template?.id;
+
+        if (!templateId) {
+             toast.error("Could not find default ID Card template", { id: toastId });
+             return;
+        }
+
+        // 2. Trigger download with templateId
+        const blob = await idCardApi.bulkDownloadIDCards(selectedIds, templateId);
+        
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'ID_Cards.zip'); 
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode?.removeChild(link);
+        
+        toast.success("Download started", { id: toastId });
+        setSelectedIds([]); 
+    } catch (error: any) {
+        console.error("Failed to download ID Cards:", error);
+        toast.error("Failed to download items");
+    }
+  };
+
+  const handleBulkDownloadBanner = async () => {
+    if (selectedIds.length === 0) return;
+    try {
+        const toastId = toast.loading("Downloading Banner...");
+        const blob = await idCardApi.bulkDownloadBanner(selectedIds);
+        
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Banners.zip'); // Adjust extension if needed (e.g. .pdf)
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode?.removeChild(link);
+        
+        toast.success("Download started", { id: toastId });
+        setSelectedIds([]);
+    } catch (error: any) {
+        console.error("Failed to download Banner:", error);
+        toast.error("Failed to download items");
+    }
+  };
+
   // --- Handle PDF Generation with Options ---
   const handleGeneratePDF = async () => {
     // Show confirmation toast with options
@@ -889,13 +946,19 @@ export const RolesView: React.FC = () => {
             {selectedIds.length} items selected
           </span>
           <div className="h-6 w-px bg-slate-200"></div>
-          <button className="flex items-center gap-2 bg-[#1D7AD9] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors">
+          <button 
+            onClick={handleBulkDownloadBanner}
+            className="flex items-center gap-2 bg-[#1D7AD9] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+          >
             <Download size={16} />
-            Bulk Download
+            Bulk Download Banner
           </button>
-          <button className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors">
-            <Trash size={16} />
-            Bulk Delete
+          <button 
+            onClick={handleBulkDownloadIDCards}
+            className="flex items-center gap-2 bg-[#1D7AD9] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+          >
+            <Download size={16} />
+            Bulk Download ID-Cards
           </button>
         </div>
       )}
