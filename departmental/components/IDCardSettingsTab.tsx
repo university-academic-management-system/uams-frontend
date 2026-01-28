@@ -50,9 +50,9 @@ export const IDCardSettingsTab: React.FC = () => {
                 setFormData({
                     templateId: template.id || "",
                     schoolName: template.institutionName || "",
-                    department: template.departments?.[0]?.name || "Department of Computer Science",
+                    department: template.departments?.[0]?.name || "",
                     backDescription: template.backDescription || "",
-                    faculty: template.faculties?.[0]?.name || "Faculty of Computing",
+                    faculty: template.faculties?.[0]?.name || "",
                     backDisclaimer: template.backDisclaimer || "",
                     schoolAddress: template.institutionAddress || ""
                 });
@@ -65,29 +65,37 @@ export const IDCardSettingsTab: React.FC = () => {
         }
     };
 
+    const convertFileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+        });
+    };
+
     const handleSave = async () => {
         setIsSaving(true);
         const toastId = toast.loading("Updating ID Card settings...");
 
         try {
-            const formDataToSend = new FormData();
-            formDataToSend.append("institutionName", formData.schoolName);
-            formDataToSend.append("institutionAddress", formData.schoolAddress);
-            formDataToSend.append("department", formData.department);
-            formDataToSend.append("faculty", formData.faculty);
-            formDataToSend.append("backDescription", formData.backDescription);
-            formDataToSend.append("backDisclaimer", formData.backDisclaimer);
+            // Construct JSON payload
+            const payload: any = {
+                institutionName: formData.schoolName,
+                institutionAddress: formData.schoolAddress,
+                department: formData.department,
+                faculty: formData.faculty,
+                backDescription: formData.backDescription,
+                backDisclaimer: formData.backDisclaimer,
+            };
 
+            // Convert files to Base64 if selected
             if (logoFile) {
-                formDataToSend.append("logo", logoFile);
+                payload.logo = await convertFileToBase64(logoFile);
             }
 
             if (signatureFile) {
-                formDataToSend.append("hodSignature", signatureFile);
-            }
-
-            if (signatureFile) {
-                formDataToSend.append("hodSignature", signatureFile);
+                payload.hodSignature = await convertFileToBase64(signatureFile);
             }
 
             if (!formData.templateId) {
@@ -96,7 +104,7 @@ export const IDCardSettingsTab: React.FC = () => {
                 return;
             }
 
-            await idCardApi.updateIDCard(formData.templateId, formDataToSend);
+            await idCardApi.updateIDCard(formData.templateId, payload);
             toast.success("ID Card settings updated", { id: toastId });
             setIsEditing(false);
         } catch (error: any) {
