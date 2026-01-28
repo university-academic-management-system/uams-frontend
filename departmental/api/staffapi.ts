@@ -14,7 +14,7 @@ export const staffApi = {
     const response = await api.post(
       "/university-admin/lecturers/bulk/download",
       {
-        lecturerId: lecturerIds,
+        lecturerIds: lecturerIds,
         format: "csv",
       },
       {
@@ -28,7 +28,7 @@ export const staffApi = {
     const response = await api.post(
       "/university-admin/lecturers/bulk/delete",
       {
-        lecturerId: lecturerIds,
+        lecturerIds: lecturerIds,
       }
     );
     return response.data;
