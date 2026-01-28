@@ -13,9 +13,9 @@ export const idCardApi = {
   /**
    * Update ID Card settings
    */
-  updateIDCard: async (data: any) => {
+  updateIDCard: async (id: string, data: any) => {
     // Using FormData for potential file uploads
-    const response = await api.put("/university-admin/id-card", data, {
+    const response = await api.put(`/university-admin/id-card/${id}`, data, {
         headers: {
             "Content-Type": "multipart/form-data",
         }

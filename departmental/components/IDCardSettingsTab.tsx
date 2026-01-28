@@ -11,6 +11,7 @@ export const IDCardSettingsTab: React.FC = () => {
 
     // Form fields
     const [formData, setFormData] = useState({
+        templateId: "",
         schoolName: "",
         department: "", // Assuming this is fixed or from context
         backDescription: "",
@@ -47,6 +48,7 @@ export const IDCardSettingsTab: React.FC = () => {
             if (data && data.success && data.template) {
                 const template = data.template;
                 setFormData({
+                    templateId: template.id || "",
                     schoolName: template.institutionName || "",
                     department: template.departments?.[0]?.name || "Department of Computer Science",
                     backDescription: template.backDescription || "",
@@ -84,7 +86,17 @@ export const IDCardSettingsTab: React.FC = () => {
                 formDataToSend.append("hodSignature", signatureFile);
             }
 
-            await idCardApi.updateIDCard(formDataToSend);
+            if (signatureFile) {
+                formDataToSend.append("hodSignature", signatureFile);
+            }
+
+            if (!formData.templateId) {
+                toast.error("Template ID not found", { id: toastId });
+                setIsSaving(false);
+                return;
+            }
+
+            await idCardApi.updateIDCard(formData.templateId, formDataToSend);
             toast.success("ID Card settings updated", { id: toastId });
             setIsEditing(false);
         } catch (error: any) {
