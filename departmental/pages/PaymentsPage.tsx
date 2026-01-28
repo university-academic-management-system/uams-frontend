@@ -192,9 +192,9 @@ export default function PaymentsPage() {
     setIsSaving(true);
 
     try {
-      // PUT /department-annual-due/{programTypeId}
-      const response = await axios.put(
-        `${BASE_URL}/department-annual-due/${selectedProgramTypeId}`,
+      // PUT /department-annual-due
+      const response = await axios.post(
+        `${BASE_URL}/department-annual-due`,
         {
           programTypeId: selectedProgramTypeId,
           sessionId: activeSessionId,
