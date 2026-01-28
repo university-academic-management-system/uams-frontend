@@ -27,7 +27,7 @@ export const studentsApi = {
   bulkDownloadStudents: async (studentIds: string[]) => {
     const response = await api.post(
       "/university-admin/students/bulk-download",
-      { studentIds },
+      { studentIds, format: "csv" },
       {
         responseType: "blob", 
       }

@@ -19,9 +19,11 @@ const STAFF_MOCK_DATA: StaffListItem[] = Array(12).fill(null).map((_, i) => ({
 }));
 
 import { StaffTable, StaffListItem } from "./StaffTable";
+import { AddStaffForm } from "./AddStaffForm";
 
 export const StaffView: React.FC = () => {
   const [isAssignCourseModalOpen, setIsAssignCourseModalOpen] = useState(false);
+  const [isAddStaffModalOpen, setIsAddStaffModalOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
 
   /* Updated to match backend payload requirement */
@@ -76,7 +78,10 @@ export const StaffView: React.FC = () => {
             <FileUp size={18} />
             Upload CSV
           </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-[#1D7AD9] text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+          <button 
+            onClick={() => setIsAddStaffModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1D7AD9] text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
+          >
             <Plus size={18} />
             Add Staff
           </button>
@@ -115,6 +120,19 @@ export const StaffView: React.FC = () => {
         onAssign={handleAssignCourse}
         staffName={STAFF_MOCK_DATA.find((s) => s.id === selectedStaffId)?.name}
       />
+
+      {isAddStaffModalOpen && (
+        <AddStaffForm
+          onClose={() => setIsAddStaffModalOpen(false)}
+          onSubmit={async (data) => {
+            console.log("Adding staff:", data);
+            // Simulate API call
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            toast.success("Staff added successfully");
+            setIsAddStaffModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };
