@@ -40,22 +40,26 @@ export default function PaymentsPage() {
           }
         );
 
-        if (response.data.success && response.data.data.length > 0) {
-          const feeData = response.data.data[0].fees; // Assuming we take the first matching record for this session/program
-          setFees({
-            departmentDues: feeData.departmentDues || "",
-            accessFee: feeData.accessFee || "",
-            idCardFee: feeData.idCardFee || "",
-            transcriptFee: feeData.transcriptFee || "",
-          });
-          setOriginalFees({
-            departmentDues: feeData.departmentDues || "",
-            accessFee: feeData.accessFee || "",
-            idCardFee: feeData.idCardFee || "",
-            transcriptFee: feeData.transcriptFee || "",
-          });
-        } else {
-             // Reset if no data found
+        if (response.data.success && Array.isArray(response.data.data)) {
+          // Filter for the specific session
+          const match = response.data.data.find((item: any) => item.sessionId === activeSessionId);
+          
+          if (match && match.fees) {
+              const feeData = match.fees;
+              setFees({
+                departmentDues: feeData.departmentDues || "",
+                accessFee: feeData.accessFee || "",
+                idCardFee: feeData.idCardFee || "",
+                transcriptFee: feeData.transcriptFee || "",
+              });
+              setOriginalFees({
+                departmentDues: feeData.departmentDues || "",
+                accessFee: feeData.accessFee || "",
+                idCardFee: feeData.idCardFee || "",
+                transcriptFee: feeData.transcriptFee || "",
+              });
+          } else {
+             // Reset if no matching session data found
              const emptyFees = {
                 departmentDues: "",
                 accessFee: "",
@@ -63,7 +67,18 @@ export default function PaymentsPage() {
                 transcriptFee: "",
               };
              setFees(emptyFees);
-             setOriginalFees(emptyFees); // Also reset backup
+             setOriginalFees(emptyFees);
+          }
+        } else {
+             // Reset if response format is unexpected or empty
+             const emptyFees = {
+                departmentDues: "",
+                accessFee: "",
+                idCardFee: "",
+                transcriptFee: "",
+              };
+             setFees(emptyFees);
+             setOriginalFees(emptyFees); 
         }
       } catch (error) {
         console.error("Failed to fetch fees:", error);
@@ -192,7 +207,7 @@ export default function PaymentsPage() {
     setIsSaving(true);
 
     try {
-      // PUT /department-annual-due
+      // POST /department-annual-due
       const response = await axios.post(
         `${BASE_URL}/department-annual-due`,
         {
