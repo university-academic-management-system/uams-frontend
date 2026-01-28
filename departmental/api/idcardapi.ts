@@ -34,7 +34,7 @@ export const idCardApi = {
 
   bulkDownloadBanner: async (studentIds: string[]) => {
     const response = await api.post(
-      "/university-admin/id-card/bulk/student-banner",
+      "/university-admin/id-card/student-banner",
       { 
         studentIds,
         format: "pdf" 
