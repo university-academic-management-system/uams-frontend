@@ -11,12 +11,29 @@ export const IDCardSettingsTab: React.FC = () => {
     // Form fields
     const [formData, setFormData] = useState({
         schoolName: "",
-        department: "Department of Computer Science", // Assuming this is fixed or from context
+        department: "", // Assuming this is fixed or from context
         backDescription: "",
-        faculty: "Faculty of Computing", // Assuming this is fixed or from context
+        faculty: "", // Assuming this is fixed or from context
         backDisclaimer: "",
         schoolAddress: ""
     });
+
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [signatureFile, setSignatureFile] = useState<File | null>(null);
+    
+    const logoInputRef = React.useRef<HTMLInputElement>(null);
+    const signatureInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'signature') => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            if (type === 'logo') {
+                setLogoFile(file);
+            } else {
+                setSignatureFile(file);
+            }
+        }
+    };
 
     useEffect(() => {
         fetchIDCardSettings();
@@ -120,9 +137,20 @@ export const IDCardSettingsTab: React.FC = () => {
                 <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-400">Upload Logo</label>
                     <div>
-                        <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-500 text-sm font-bold hover:bg-slate-100 transition-colors">
+                        <input 
+                            type="file" 
+                            ref={logoInputRef}
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(e, 'logo')}
+                        />
+                        <button 
+                            onClick={() => isEditing && logoInputRef.current?.click()}
+                            disabled={!isEditing}
+                            className={`flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-500 text-sm font-bold transition-colors ${isEditing ? 'hover:bg-slate-100 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                        >
                             <Upload size={16} />
-                            Upload Document
+                            {logoFile ? logoFile.name : "Upload Document"}
                         </button>
                     </div>
                 </div>
@@ -176,9 +204,20 @@ export const IDCardSettingsTab: React.FC = () => {
                  <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-400">Upload HOD Signature</label>
                     <div>
-                        <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-500 text-sm font-bold hover:bg-slate-100 transition-colors">
+                        <input 
+                            type="file" 
+                            ref={signatureInputRef}
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(e, 'signature')}
+                        />
+                        <button 
+                            onClick={() => isEditing && signatureInputRef.current?.click()}
+                            disabled={!isEditing}
+                            className={`flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-500 text-sm font-bold transition-colors ${isEditing ? 'hover:bg-slate-100 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                        >
                             <Upload size={16} />
-                            Upload Document
+                            {signatureFile ? signatureFile.name : "Upload Document"}
                         </button>
                     </div>
                 </div>
