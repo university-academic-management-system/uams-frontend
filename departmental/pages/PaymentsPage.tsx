@@ -44,19 +44,19 @@ export default function PaymentsPage() {
           // Filter for the specific session
           const match = response.data.data.find((item: any) => item.sessionId === activeSessionId);
           
-          if (match && match.fees) {
-              const feeData = match.fees;
+          if (match) {
+              // The fees are directly on the object, not in a nested 'fees' property
               setFees({
-                departmentDues: feeData.departmentDues || "",
-                accessFee: feeData.accessFee || "",
-                idCardFee: feeData.idCardFee || "",
-                transcriptFee: feeData.transcriptFee || "",
+                departmentDues: match.departmentDues || "",
+                accessFee: match.accessFee || "",
+                idCardFee: match.idCardFee || "",
+                transcriptFee: match.transcriptFee || "",
               });
               setOriginalFees({
-                departmentDues: feeData.departmentDues || "",
-                accessFee: feeData.accessFee || "",
-                idCardFee: feeData.idCardFee || "",
-                transcriptFee: feeData.transcriptFee || "",
+                departmentDues: match.departmentDues || "",
+                accessFee: match.accessFee || "",
+                idCardFee: match.idCardFee || "",
+                transcriptFee: match.transcriptFee || "",
               });
           } else {
              // Reset if no matching session data found
