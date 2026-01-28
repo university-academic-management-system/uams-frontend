@@ -11,6 +11,7 @@ import {
   FileText,
   Edit
 } from 'lucide-react';
+import { IDCardSettingsTab } from './IDCardSettingsTab';
 
 type SettingsTab = 'SMS' | 'Email' | 'General' | 'ID Card' | 'Payment' | 'Website' | 'Academic' | 'Documents';
 
@@ -33,7 +34,10 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Content Area */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 min-h-[600px]">
+      {activeTab === 'ID Card' ? (
+        <IDCardSettingsTab />
+      ) : activeTab === 'SMS' || activeTab === 'Email' ? (
+         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 min-h-[600px]">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-bold text-slate-900">Notification</h2>
           <button className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors">
@@ -59,6 +63,12 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
       </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-16 text-center min-h-[600px] flex flex-col items-center justify-center">
+             <SettingsIcon className="h-16 w-16 text-slate-200 mb-4" />
+             <h3 className="text-lg font-bold text-slate-400">Settings for {activeTab} coming soon</h3>
+        </div>
+      )}
     </div>
   );
 };
