@@ -193,7 +193,7 @@ export default function PaymentsPage() {
 
     try {
       // PUT /department-annual-due/{programTypeId}
-      await axios.put(
+      const response = await axios.put(
         `${BASE_URL}/department-annual-due/${selectedProgramTypeId}`,
         {
           programTypeId: selectedProgramTypeId,
@@ -210,14 +210,20 @@ export default function PaymentsPage() {
         }
       );
 
+      // Check for logical error in 200 OK response
+      if (response.data && response.data.success === false) {
+          throw new Error(response.data.message || "Operation failed");
+      }
+
       toast.success("Payment settings saved successfully.");
       setIsEditing(false); // Exit edit mode on success
       setOriginalFees(fees); // Update backup to current
       
-      // Optionally refresh fees here if needed, but we essentially just set them
     } catch (error: any) {
-      console.error("Save Error:", error.response?.data || error.message);
-      toast.error(error?.response?.data?.message || "Failed to save payment settings");
+      console.error("Save Error Details:", error);
+      // Safe error extraction
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to save payment settings";
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }

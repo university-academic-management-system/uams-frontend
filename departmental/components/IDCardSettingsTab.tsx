@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 export const IDCardSettingsTab: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Form fields
     const [formData, setFormData] = useState({
@@ -59,6 +60,39 @@ export const IDCardSettingsTab: React.FC = () => {
             toast.error("Failed to load ID card settings");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        const toastId = toast.loading("Updating ID Card settings...");
+
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append("institutionName", formData.schoolName);
+            formDataToSend.append("institutionAddress", formData.schoolAddress);
+            formDataToSend.append("department", formData.department);
+            formDataToSend.append("faculty", formData.faculty);
+            formDataToSend.append("backDescription", formData.backDescription);
+            formDataToSend.append("backDisclaimer", formData.backDisclaimer);
+
+            if (logoFile) {
+                formDataToSend.append("logo", logoFile);
+            }
+
+            if (signatureFile) {
+                formDataToSend.append("hodSignature", signatureFile);
+            }
+
+            await idCardApi.updateIDCard(formDataToSend);
+            toast.success("ID Card settings updated", { id: toastId });
+            setIsEditing(false);
+        } catch (error: any) {
+            console.error("Failed to update ID Card:", error);
+            const message = error.response?.data?.message || "Failed to update settings";
+            toast.error(message, { id: toastId });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -225,7 +259,12 @@ export const IDCardSettingsTab: React.FC = () => {
 
             {isEditing && (
                 <div className="mt-12 flex justify-end">
-                    <button className="px-8 py-2.5 bg-[#1D7AD9] text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+                    <button 
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="px-8 py-2.5 bg-[#1D7AD9] text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                         {isSaving && <Loader2 size={16} className="animate-spin" />}
                         Save Changes
                     </button>
                 </div>

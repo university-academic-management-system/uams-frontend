@@ -11,11 +11,15 @@ export const idCardApi = {
   },
 
   /**
-   * Update ID Card settings (Placeholder for Save functionality)
-   * PUT /university-admin/id-card/{id} - assuming this will be needed later
+   * Update ID Card settings
    */
-  updateIDCard: async (id: string, data: any) => {
-    // This is distinct from the save logic requested later or if implied by "Save Changes"
-    // For now the user only asked for GET
+  updateIDCard: async (data: any) => {
+    // Using FormData for potential file uploads
+    const response = await api.put("/university-admin/id-card", data, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        }
+    });
+    return response.data;
   }
 };
