@@ -7,9 +7,9 @@ import authService from "../services/authService";
  * Uses <Outlet /> to render child routes when authenticated.
  */
 const SessionGuard: React.FC = () => {
-  if (!authService.isAuthenticated()) {
-    return <Navigate to="/students/login" replace />;
-  }
+  // if (!authService.isAuthenticated()) {
+  //   return <Navigate to="/students/login" replace />;
+  // }
 
   return <Outlet />;
 };

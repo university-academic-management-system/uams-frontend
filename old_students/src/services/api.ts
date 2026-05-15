@@ -47,7 +47,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem("role");
       
       setTimeout(() => {
-        window.location.href = "/login";
+        // window.location.href = "/login";
       }, 1000);
     }
     return Promise.reject(error);

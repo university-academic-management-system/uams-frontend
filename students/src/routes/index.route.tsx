@@ -1,24 +1,20 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
-import authRoutes from "./auth.route";
-import profileRoutes from "./profile.route";
-import { lazy } from "react";
-import RootLayout from "@app/layout";
+// import { lazy } from "react";
+import { AuthMiddleware } from "@middlewares/auth.middleware";
 
-const DashboardPage = lazy(() => import("../app/dashboard/page"));
 
 const router = createBrowserRouter([
     {
-        element: <RootLayout />,
+        element: <AuthMiddleware />,
         children: [
-            { path: "/", element: <DashboardPage /> },
-            { path: "/about", element: <p>About</p> },
-            { path: "/contact", element: <p>Login</p> },
-        ]
-    },
-    {
-        children: [
-            ...authRoutes,
-            ...profileRoutes
+            { path: "/", element: <p>dashbaord</p> },
+            { path: "/courses", element: <p>Courses</p> },
+            { path: "/registrations", element: <p>Registrations</p> },
+            { path: "/payments", element: <p>Payments</p> },
+            { path: "/projects", element: <p>Projects</p> },
+            { path: "/timetable", element: <p>Time Table</p> },
+            { path: "/notifications", element: <p>Notifications</p> },
+            { path: "/settings", element: <p>Settings</p> },
         ]
     }
 ]);
