@@ -10,18 +10,24 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const { user, clearAuth } = useAuthStore();
 
-    const userRole = useMemo(() => user?.role, [user]);
+    const userRoles = useMemo(() => {
+        const roles: string[] = [];
+        if (user?.role) roles.push(user.role);
+        if (user?.roles) roles.push(...user.roles);
+        return roles;
+    }, [user]);
 
     const filteredItems = useMemo(() => {
-        if (userRole === "LECTURER") {
-            return sidebarItems.filter((item) => item.accessLevel.includes("LECTURER") || item.accessLevel === "ALL");
-        } else if (userRole === "ERO") {
-            return sidebarItems.filter((item) => item.accessLevel.includes("ERO") || item.accessLevel === "ALL");
-        } else if (userRole === "HOD") {
-            return sidebarItems.filter((item) => item.accessLevel.includes("HOD") || item.accessLevel === "ALL");
-        }
-        return sidebarItems;
-    }, [userRole]);
+        if (userRoles.includes("ADMIN")) return sidebarItems;
+
+        return sidebarItems.filter((item) => {
+            if (item.accessLevel === "ALL") return true;
+            if (Array.isArray(item.accessLevel)) {
+                return item.accessLevel.some((level) => userRoles.includes(level));
+            }
+            return userRoles.includes(item.accessLevel);
+        });
+    }, [userRoles]);
 
     const handleLogout = () => {
         clearAuth();
