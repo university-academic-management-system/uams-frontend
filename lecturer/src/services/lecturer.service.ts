@@ -1,11 +1,9 @@
-import axiosClient from "@configs/axios.config";
-import type { Lecturer } from "@type/lecturer.type";
+import axiosClient from "@configs/axios.config"
 
-export const LecturerService = {
-    getLecturers: async (): Promise<Lecturer[]> => {
-        const { data } = await axiosClient.get<{data:Lecturer[]}>(
-            "/hod/lecturers"
-        );
-        return data.data;
+
+export const StaffServices = {
+    getDepartmentLecturers: async () => {
+        const { data } = await axiosClient.get("/users?role=STAFF");
+        return data;
     },
-};
+}

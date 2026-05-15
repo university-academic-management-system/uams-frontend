@@ -43,9 +43,6 @@ const Dashboard = () => {
               {displayName},
             </Text>
           </Heading>
-          <Text color="fg.subtle" fontSize="15px">
-            Welcome back
-          </Text>
         </Box>
 
         {/* Four stat cards */}
@@ -72,22 +69,12 @@ const Dashboard = () => {
           border="1px solid"
           borderColor="border.muted"
         >
-          <Flex align="center" justify="space-between" mb="4">
-            <Heading color="fg.muted">Timetable</Heading>
-            <Button
-              bg="accent.500"
-              variant="solid"
-              size="sm"
-              onClick={() => navigate("/timetable")}
-            >
-              View Full Timetable
-            </Button>
-          </Flex>
 
           <Box maxH="300px" overflowY="auto">
             <TimetablePanel
               selectedFilter={timetableFilter}
               onFilterChange={setTimetableFilter}
+              onViewFullTimetable={() => navigate("/timetable")}
             />
           </Box>
         </Box>

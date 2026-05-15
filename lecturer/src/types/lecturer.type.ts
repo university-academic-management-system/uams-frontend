@@ -1,44 +1,43 @@
-export interface Lecturer {
-    id: string;
-    tenantId: string | null;
-    departmentId: string;
-    userId: string;
-    staffNumber: string;
-    gender: string | null;
-    isActive: boolean;
-    specialization: string;
-    maxSupervisionLoad: number;
-    academicRank: string;
-    additionalRoles: string[];
-    currentAdminRole: string;
-    bio: string;
-    qualifications: string;
-    contactEmail: string;
-    officeLocation: string;
-    expertiseAreas: string[];
-    profileVisibility: "STUDENTS" | "STAFF" | "PUBLIC";
-    createdAt: string;
-    updatedAt: string;
-    universityId: string;
-    courseCount: number;
-    User: {
-        fullName: string;
-        email: string;
-        phone: string;
-    };
-    courseAssignments: Array<{
-        id: string;
-        role: "MAIN" | "ASSISTANT";
-        course: {
-            id: string;
-            code: string;
-            title: string;
-        };
-    }>;
-    courses: Array<{
-        id: string;
-        code: string;
-        title: string;
-        role: "MAIN" | "ASSISTANT";
-    }>;
+export interface StaffProfile {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  otherName: string;
+  staffNumber: string;
+  phone: string;
+  department: string;
+  staffRoles: string[];     
+  title: string;
+  specialization: string;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export interface Staff {
+  id: string;              
+  email: string;
+  role: string;              
+  status: string;           
+  staffProfile: StaffProfile;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface ApiResponse<T> {
+  status: "success" | "error";
+  message: string;
+  data: T[];
+  pagination: PaginationMeta;
+}
+
+export type StaffResponse = ApiResponse<Staff>;
