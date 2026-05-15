@@ -8,3 +8,19 @@ export interface AuditLog {
   ipAddress: string;
   createdAt: string;
 }
+
+export interface PaginationMetadata {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AuditLogsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    data: AuditLog[];
+    pagination: PaginationMetadata;
+  };
+}

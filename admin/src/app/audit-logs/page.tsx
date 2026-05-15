@@ -1,10 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
-import { Search, History } from "lucide-react";
-import { toaster } from "@components/ui/toaster";
+import { useState, useMemo } from "react";
+import { History, RotateCcw } from "lucide-react";
+import { LuSearch, LuCalendar } from "react-icons/lu";
+import { useQuery } from "@tanstack/react-query";
 import {
   Box, Flex, Text, Input, Spinner,
+  EmptyState,
+  Button,
   InputGroup,
-  EmptyState
+  Portal,
+  Select,
+  createListCollection,
+  DatePicker,
 } from "@chakra-ui/react";
 import {
   TimelineConnector,
@@ -14,51 +20,69 @@ import {
   TimelineRoot,
   TimelineTitle,
 } from "@components/ui/timeline";
+import {
+    PaginationItems,
+    PaginationNextTrigger,
+    PaginationPrevTrigger,
+    PaginationRoot,
+} from "@components/ui/pagination";
 import { AuditLogServices } from "@services/auditLog.service";
 import type { AuditLog } from "@type/audit.type";
 
 const ITEMS_PER_PAGE = 10;
 
 const AuditLogsPage = () => {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [action, setAction] = useState("");
+  const [entity, setEntity] = useState("");
+  const [dateRange, setDateRange] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchLogs = async () => {
-    try {
-      setLoading(true);
-      const response = await AuditLogServices.getAuditLogs();
-      const data = response?.data?.data || [];
-      setLogs(data);
-    } catch (err) {
-      console.error("Failed to fetch audit logs", err);
-      toaster.error({ title: "Failed to load audit logs" });
-    } finally {
-      setLoading(false);
-    }
+  // TanStack Query for data fetching
+  const { data: response, isLoading, isError, refetch } = useQuery({
+      queryKey: ["audit-logs", currentPage, searchQuery, action, entity, dateRange],
+      queryFn: () => {
+          const [startDate, endDate] = dateRange;
+          return AuditLogServices.getAuditLogs(
+              currentPage, 
+              ITEMS_PER_PAGE, 
+              searchQuery,
+              action,
+              entity,
+              startDate,
+              endDate
+          );
+      },
+  });
+
+  const logs = response?.data?.data || [];
+  const pagination = response?.data?.pagination;
+
+  // Dynamically derive unique actions and entities from the fetched logs
+  const actionsCollection = useMemo(() => {
+      const uniqueActions = Array.from(new Set(logs.map(log => log.action)));
+      return createListCollection({
+          items: [
+              { label: "All Actions", value: "" },
+              ...uniqueActions.map(a => ({ label: a, value: a }))
+          ],
+      });
+  }, [logs]);
+
+  const entitiesCollection = useMemo(() => {
+      const uniqueEntities = Array.from(new Set(logs.map(log => log.entity)));
+      return createListCollection({
+          items: [
+              { label: "All Entities", value: "" },
+              ...uniqueEntities.map(e => ({ label: e, value: e }))
+          ],
+      });
+  }, [logs]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      setCurrentPage(1); 
   };
-
-  useEffect(() => {
-    fetchLogs();
-  }, []);
-
-  const filteredLogs = useMemo(() => {
-    let result = logs;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (log) =>
-          log.action.toLowerCase().includes(q) ||
-          log.entity.toLowerCase().includes(q) ||
-          log.userId.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [logs, searchQuery]);
-
-  const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
-  const paginatedLogs = filteredLogs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -66,50 +90,182 @@ const AuditLogsPage = () => {
   };
 
   return (
-    <Box>
-      <Flex direction={{ base: "column", md: "row" }} justifyContent="space-between" alignItems={{ base: "flex-start", md: "center" }} mb="6" gap="4">
-        <Box>
-          <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Audit Logs</Text>
-          <Text fontSize="sm" color="fg.muted">Monitor system activity and user actions</Text>
-        </Box>
-        <Flex gap="3" flexWrap="nowrap" alignItems="center" w={{ base: "full", md: "auto" }}>
-          <InputGroup startElement={<Search size={18} color="#94a3b8" />} flex="1">
-            <Input
-              placeholder="Search by action, entity or user ID"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              bg="white"
-              border="xs"
-              borderColor="border.muted"
-              borderRadius="md"
-              py="2.5"
-              pl="10"
-              pr="4"
-              fontSize="sm"
-              w="full"
-              maxW={{ base: "full", md: "320px" }}
-              _focus={{ borderColor: "blue.500", boxShadow: "none" }}
-            />
-          </InputGroup>
+    <Box minH="80vh">
+      <Flex direction="column" mb="8" gap="6">
+        <Flex direction={{ base: "column", md: "row" }} justifyContent="space-between" alignItems={{ base: "flex-start", md: "center" }} gap="4">
+            <Box>
+            <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Audit Logs</Text>
+            <Text fontSize="sm" color="fg.muted">Monitor system activity and user actions</Text>
+            </Box>
+            <Flex gap="3" flexWrap="nowrap" alignItems="center" w={{ base: "full", md: "auto" }}>
+            <InputGroup flex="1" startElement={<LuSearch color="#94a3b8" />}>
+                <Input
+                placeholder="Search by ID, User..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                bg="white"
+                borderRadius="md"
+                fontSize="sm"
+                w="full"
+                maxW={{ base: "full", md: "280px" }}
+                />
+            </InputGroup>
+            <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => refetch()}
+                disabled={isLoading}
+            >
+                <RotateCcw size={16} />
+                Refresh
+            </Button>
+            </Flex>
+        </Flex>
+
+        {/* Filters Row */}
+        <Flex gap="4" flexWrap="wrap" alignItems="flex-end" bg="bg.subtle" p="5" borderRadius="xl" border="1px solid" borderColor="border.muted">
+            <Box flex="1" minW="200px">
+                <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">ACTION</Text>
+                <Select.Root 
+                    collection={actionsCollection} 
+                    size="sm" 
+                    value={[action]}
+                    onValueChange={(e) => setAction(e.value[0])}
+                >
+                    <Select.HiddenSelect />
+                    <Select.Control>
+                        <Select.Trigger bg="white">
+                            <Select.ValueText placeholder="Filter Action" />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                            <Select.Indicator />
+                        </Select.IndicatorGroup>
+                    </Select.Control>
+                    <Portal>
+                        <Select.Positioner>
+                            <Select.Content>
+                                {actionsCollection.items.map((item) => (
+                                    <Select.Item item={item} key={item.value}>
+                                        {item.label}
+                                        <Select.ItemIndicator />
+                                    </Select.Item>
+                                ))}
+                            </Select.Content>
+                        </Select.Positioner>
+                    </Portal>
+                </Select.Root>
+            </Box>
+
+            <Box flex="1" minW="200px">
+                <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">ENTITY</Text>
+                <Select.Root 
+                    collection={entitiesCollection} 
+                    size="sm" 
+                    value={[entity]}
+                    onValueChange={(e) => setEntity(e.value[0])}
+                >
+                    <Select.HiddenSelect />
+                    <Select.Control>
+                        <Select.Trigger bg="white">
+                            <Select.ValueText placeholder="Filter Entity" />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                            <Select.Indicator />
+                        </Select.IndicatorGroup>
+                    </Select.Control>
+                    <Portal>
+                        <Select.Positioner>
+                            <Select.Content>
+                                {entitiesCollection.items.map((item) => (
+                                    <Select.Item item={item} key={item.value}>
+                                        {item.label}
+                                        <Select.ItemIndicator />
+                                    </Select.Item>
+                                ))}
+                            </Select.Content>
+                        </Select.Positioner>
+                    </Portal>
+                </Select.Root>
+            </Box>
+
+            <Box flex="2" minW="300px">
+                <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">DATE RANGE</Text>
+                <DatePicker.Root 
+                    selectionMode="range" 
+                    onValueChange={(e) => {
+                        const range = e.value.map(d => {
+                            // Convert CalendarDate to JS Date for toISOString()
+                            const date = new Date(d.year, d.month - 1, d.day);
+                            return date.toISOString();
+                        });
+                        setDateRange(range);
+                    }}
+                >
+                    <DatePicker.Control>
+                        <DatePicker.Input index={0} bg="white" fontSize="xs" placeholder="Start Date" />
+                        <DatePicker.Input index={1} bg="white" fontSize="xs" placeholder="End Date" />
+                        <DatePicker.IndicatorGroup>
+                            <DatePicker.Trigger>
+                                <LuCalendar />
+                            </DatePicker.Trigger>
+                        </DatePicker.IndicatorGroup>
+                    </DatePicker.Control>
+                    <Portal>
+                        <DatePicker.Positioner>
+                            <DatePicker.Content>
+                                <DatePicker.View view="day">
+                                    <DatePicker.Header />
+                                    <DatePicker.DayTable />
+                                </DatePicker.View>
+                                <DatePicker.View view="month">
+                                    <DatePicker.Header />
+                                    <DatePicker.MonthTable />
+                                </DatePicker.View>
+                                <DatePicker.View view="year">
+                                    <DatePicker.Header />
+                                    <DatePicker.YearTable />
+                                </DatePicker.View>
+                            </DatePicker.Content>
+                        </DatePicker.Positioner>
+                    </Portal>
+                </DatePicker.Root>
+            </Box>
+
+            <Button 
+                variant="ghost" 
+                size="sm" 
+                colorPalette="red"
+                onClick={() => {
+                    setAction("");
+                    setEntity("");
+                    setDateRange([]);
+                    setSearchQuery("");
+                }}
+            >
+                Clear Filters
+            </Button>
         </Flex>
       </Flex>
 
-      {/* Timeline */}
-      <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" overflow="hidden">
+      <Box bg="white" borderRadius="md" border="1px solid" borderColor="border.muted" overflow="hidden">
         <Box p={{ base: "4", md: "8" }}>
-        {loading ? (
-          <Flex direction="column" alignItems="center" justify="center" py="12" gap="4">
-            <Spinner size="xl" color="blue.500" borderWidth="3px" />
-            <Text color="fg.muted">Loading audit logs...</Text>
+        {isLoading ? (
+          <Flex direction="column" alignItems="center" justify="center" py="20" gap="4">
+            <Spinner size="xl" color="accent" borderWidth="3px" />
+            <Text color="fg.muted" fontWeight="medium">Fetching latest activity...</Text>
           </Flex>
-        ) : paginatedLogs.length === 0 ? (
-          <Flex justify="center" py="12">
+        ) : isError ? (
+            <Flex justify="center" py="20">
+              <Text color="red.500">Failed to load audit logs. Please try again.</Text>
+            </Flex>
+        ) : logs.length === 0 ? (
+          <Flex justify="center" py="20">
             <EmptyState.Root>
                 <EmptyState.Content>
                     <EmptyState.Indicator>
-                        <History />
+                        <History size={40} />
                     </EmptyState.Indicator>
-                    <EmptyState.Title>No Logs Found</EmptyState.Title>
+                    <EmptyState.Title mt="4">No Logs Found</EmptyState.Title>
                     <EmptyState.Description>
                         {searchQuery ? "Try adjusting your search criteria" : "No activity has been logged yet"}
                     </EmptyState.Description>
@@ -118,39 +274,45 @@ const AuditLogsPage = () => {
           </Flex>
         ) : (
           <TimelineRoot maxW="3xl" mx="auto">
-            {paginatedLogs.map((log) => (
+            {logs.map((log: AuditLog) => (
               <TimelineItem key={log.id}>
-                <TimelineContent width="auto" minW="140px" textAlign="right" pr="4">
-                  <Text fontSize="sm" fontWeight="semibold" color="fg.muted">
+                <TimelineContent width="auto" minW="140px" textAlign="right" pr="6">
+                  <Text fontSize="sm" fontWeight="bold" color="fg.muted">
                     {formatDate(log.createdAt).split(",")[0]}
                   </Text>
                   <Text fontSize="xs" color="fg.subtle">
                     {formatDate(log.createdAt).split(",")[1]?.trim()}
                   </Text>
                 </TimelineContent>
-                <TimelineConnector bg="white" color="blue.500">
+                <TimelineConnector bg="white" color="accent">
                   <History size={14} />
                 </TimelineConnector>
-                <TimelineContent pl="4" pb="8">
+                <TimelineContent pl="6" pb="10">
                   <TimelineTitle>
-                    <Flex gap="2" align="center" flexWrap="wrap">
-                      <Text as="span" px="2" py="0.5" bg="blue.50" color="blue.600" borderRadius="md" fontSize="xs" fontWeight="bold">
+                    <Flex gap="3" align="center" flexWrap="wrap">
+                      <Text as="span" px="2.5" py="1" bg="blue.50" color="blue.700" borderRadius="full" fontSize="xs" fontWeight="extrabold" textTransform="uppercase" letterSpacing="wider">
                         {log.action}
                       </Text>
-                      <Text as="span" fontWeight="bold" color="fg.muted">
+                      <Text as="span" fontWeight="bold" color="fg.muted" fontSize="md">
                         {log.entity}
                       </Text>
                       {log.entityId && (
-                        <Text as="span" fontSize="xs" color="fg.subtle">
-                          #{log.entityId}
+                        <Text as="span" fontSize="xs" color="fg.subtle" bg="bg.subtle" px="2" py="0.5" borderRadius="md" border="1px solid" borderColor="border.muted">
+                          ID: {log.entityId.slice(0, 8)}...
                         </Text>
                       )}
                     </Flex>
                   </TimelineTitle>
-                  <TimelineDescription mt="2" color="fg.muted" fontSize="sm">
-                    <Flex gap="4" mt="1" flexWrap="wrap">
-                      <Text><strong>User:</strong> {log.userId}</Text>
-                      <Text><strong>IP:</strong> {log.ipAddress || "Unknown"}</Text>
+                  <TimelineDescription mt="3" color="fg.muted" fontSize="sm">
+                    <Flex gap="6" mt="1" flexWrap="wrap">
+                      <Box>
+                        <Text fontSize="xs" color="fg.subtle" fontWeight="bold" mb="0.5">PERFORMED BY</Text>
+                        <Text fontWeight="medium">{log.userId}</Text>
+                      </Box>
+                      <Box>
+                        <Text fontSize="xs" color="fg.subtle" fontWeight="bold" mb="0.5">IP ADDRESS</Text>
+                        <Text fontWeight="medium">{log.ipAddress || "N/A"}</Text>
+                      </Box>
                     </Flex>
                   </TimelineDescription>
                 </TimelineContent>
@@ -160,42 +322,29 @@ const AuditLogsPage = () => {
         )}
         </Box>
 
-        {totalPages > 0 && (
-            <Flex alignItems="center" justifyContent="space-between" bg="white" p="4" borderTop="xs" borderColor="border.muted">
+        {/* Standardized Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+            <Flex alignItems="center" justifyContent="space-between" bg="bg.subtle" p="6" borderTop="1px solid" borderColor="border.muted">
               <Text fontSize="sm" color="fg.muted">
-                Showing{" "}
-                <Text as="span" fontWeight="semibold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredLogs.length)}</Text>
-                {" "}of <Text as="span" fontWeight="semibold">{filteredLogs.length}</Text> logs
-                (Total: {logs.length})
+                Showing page <Text as="span" fontWeight="bold" color="fg.default">{pagination.page}</Text> of <Text as="span" fontWeight="bold" color="fg.default">{pagination.totalPages}</Text>
+                {" "}(<Text as="span" fontWeight="bold">{pagination.total}</Text> total logs)
               </Text>
-              <Flex alignItems="center" gap="2">
-                <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} style={{ padding: "8px 12px", background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", fontWeight: 500, color: "#334155", cursor: currentPage === 1 ? "not-allowed" : "pointer", opacity: currentPage === 1 ? 0.5 : 1 }}>
-                  Previous
-                </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  return (
-                    <Box as="button" key={pageNum} onClick={() => setCurrentPage(pageNum)} px="3" py="2" borderRadius="md" fontSize="sm" fontWeight="medium" cursor="pointer" border={currentPage === pageNum ? "none" : "1px solid"} borderColor="border.muted" bg={currentPage === pageNum ? "#1D7AD9" : "white"} color={currentPage === pageNum ? "white" : "fg.muted"} _hover={{ bg: currentPage === pageNum ? "#1D7AD9" : "slate.50" }}>
-                      {pageNum}
-                    </Box>
-                  );
-                })}
-                <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} style={{ padding: "8px 12px", background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", fontWeight: 500, color: "#334155", cursor: currentPage === totalPages ? "not-allowed" : "pointer", opacity: currentPage === totalPages ? 0.5 : 1 }}>
-                  Next
-                </button>
-              </Flex>
+              
+              <PaginationRoot
+                count={pagination.total}
+                pageSize={ITEMS_PER_PAGE}
+                page={currentPage}
+                onPageChange={(e) => setCurrentPage(e.page)}
+              >
+                <Flex gap="2">
+                  <PaginationPrevTrigger />
+                  <PaginationItems />
+                  <PaginationNextTrigger />
+                </Flex>
+              </PaginationRoot>
             </Flex>
           )}
-        </Box>
+      </Box>
     </Box>
   );
 };
