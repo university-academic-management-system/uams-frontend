@@ -1,6 +1,6 @@
-export type CourseLevel = "L100" | "L200" | "L300" | "L400" | "L500" | "MSC" | "PHD";
-export type Semester = "FIRST" | "SECOND";
-export type CourseType = "CORE" | "ELECTIVE" | "REMEDIAL";
+export type CourseLevel = "L100" | "L200" | "L300" | "L400";
+export type Semester = "FIRST" | "SECOND" | "THIRD";
+export type CourseType = "CORE" | "ELECTIVE" | "GST" | "SIWES" | "PROJECT";
 
 export interface Course {
   id: string;
