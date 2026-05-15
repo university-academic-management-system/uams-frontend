@@ -29,7 +29,7 @@ import {
 import { AuditLogServices } from "@services/auditLog.service";
 import type { AuditLog } from "@type/audit.type";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 const AuditLogsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
