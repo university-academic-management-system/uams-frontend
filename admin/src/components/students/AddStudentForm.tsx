@@ -27,8 +27,9 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
         register,
         handleSubmit,
         reset,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, isValid },
     } = useForm<StudentFormData>({
+        mode: "onChange",
         resolver: zodResolver(StudentSchema) as any,
         defaultValues: {
             registrationNo: "",
@@ -105,10 +106,10 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
     };
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) onClose() }}>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) onClose() }} placement="center" closeOnInteractOutside={false}>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content bg="white" borderRadius="md" maxW="4xl" p="8">
+                <Dialog.Content bg="white" borderRadius="md" maxW="4xl" p="8" colorPalette="accent">
                     <Flex justifyContent="space-between" alignItems="center" mb="8">
                         <Text fontSize="2xl" fontWeight="bold" color="#1D7AD9">
                             {initialData ? "Edit Student" : "Add Student"}
@@ -229,7 +230,7 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                             <Button type="button" onClick={onClose} px="8" py="2.5" fontSize="sm" fontWeight="bold" color="fg.muted" bg="white" border="xs" borderColor="border.muted" borderRadius="md" cursor="pointer" _hover={{ bg: "slate.50" }}>
                                 Cancel
                             </Button>
-                            <Button type="submit" px="8" py="2.5" fontSize="sm" fontWeight="bold" color="white" bg="#1D7AD9" borderRadius="md" cursor={isSubmitting ? "not-allowed" : "pointer"} opacity={isSubmitting ? 0.7 : 1} alignItems="center" gap="2">
+                            <Button type="submit" px="8" py="2.5" fontSize="sm" fontWeight="bold" color="white" bg="#1D7AD9" borderRadius="md" disabled={!isValid || isSubmitting} cursor={isSubmitting || !isValid ? "not-allowed" : "pointer"} opacity={isSubmitting || !isValid ? 0.7 : 1} alignItems="center" gap="2">
                                 {isSubmitting && <Spinner size="sm" />}
                                 {initialData ? "Save Changes" : "Add Student"}
                             </Button>

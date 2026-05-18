@@ -271,6 +271,7 @@ const IDCardSettingsTab = () => {
                                             <Dialog.Root 
                                                 open={templateToDelete === t.id} 
                                                 onOpenChange={(e) => setTemplateToDelete(e.open ? t.id : null)}
+                                                placement="center" closeOnInteractOutside={false}
                                             >
                                                 <Dialog.Trigger asChild>
                                                     <Button size="xs" colorPalette="red" variant="ghost" title="Delete">
@@ -280,7 +281,7 @@ const IDCardSettingsTab = () => {
                                                 <Portal>
                                                     <Dialog.Backdrop />
                                                     <Dialog.Positioner>
-                                                        <Dialog.Content>
+                                                        <Dialog.Content colorPalette="accent">
                                                             <Dialog.Header>
                                                                 <Dialog.Title>Confirm Deletion</Dialog.Title>
                                                             </Dialog.Header>
@@ -335,11 +336,12 @@ const IDCardSettingsTab = () => {
                 open={isFormVisible} 
                 onOpenChange={(e) => setIsFormVisible(e.open)}
                 size="lg"
+                placement="center" closeOnInteractOutside={false}
             >
                 <Portal>
                     <Dialog.Backdrop />
                     <Dialog.Positioner>
-                        <Dialog.Content maxH="90vh" overflowY="auto">
+                        <Dialog.Content maxH="90vh" overflowY="auto" colorPalette="accent">
                             <Dialog.Header>
                                 <Dialog.Title>
                                     {templateId ? "Edit Template Details" : "Create New Template"}
@@ -452,7 +454,15 @@ const IDCardSettingsTab = () => {
                                     onClick={handleSave}
                                     loading={isSaving}
                                     loadingText="Saving..."
-                                    disabled={isSaving}
+                                    disabled={
+                                        isSaving ||
+                                        !formData.schoolName.trim() ||
+                                        !formData.faculty.trim() ||
+                                        !formData.department.trim() ||
+                                        !formData.schoolAddress.trim() ||
+                                        !formData.backDescription.trim() ||
+                                        !formData.backDisclaimer.trim()
+                                    }
                                     colorPalette="accent"
                                     size="sm"
                                 >

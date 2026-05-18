@@ -63,10 +63,10 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
     };
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) onClose() }}>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) onClose() }} placement="center" closeOnInteractOutside={false}>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content bg="white" borderRadius="md" boxShadow="none" w="full" maxW="lg" overflow="hidden">
+                <Dialog.Content bg="white" borderRadius="md" boxShadow="none" w="full" maxW="lg" overflow="hidden" colorPalette="accent">
                     {/* Header */}
                     <Flex p="6" borderBottom="xs" borderColor="border.muted" alignItems="center" justifyContent="space-between">
                         <Text fontSize="xl" fontWeight="bold" color="#1D7AD9">Assign Course To Lecturer</Text>

@@ -1,6 +1,6 @@
 import { CourseServices } from "@services/course.service";
 import { ProgramServices } from "@services/program.service";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toaster } from "@components/ui/toaster";
 
 export const CourseHook = {
@@ -14,6 +14,7 @@ export const CourseHook = {
                     : (response as any)?.data || (response as any)?.courses || [];
                 return data;
             },
+            placeholderData: keepPreviousData,
         }),
 
     useProgramTypes: () =>
@@ -35,6 +36,9 @@ export const CourseHook = {
                 return await CourseServices.createCourse({
                     ...formData,
                     units: Number(formData.units),
+                    isElective: formData.courseType === "ELECTIVE",
+                    programmeTypeId: formData.programTypeId,
+                    isCarryoverAllowed: formData.allowCarryover,
                 } as any);
             },
             onSuccess: () => {
@@ -44,6 +48,30 @@ export const CourseHook = {
             onError: (error: any) => {
                 toaster.error({
                     title: error.response?.data?.message || "Failed to create course",
+                });
+            },
+        });
+    },
+
+    useUpdateCourse: () => {
+        const queryClient = useQueryClient();
+        return useMutation({
+            mutationFn: async ({ id, data }: { id: string; data: any }) => {
+                return await CourseServices.updateCourse(id, {
+                    ...data,
+                    units: Number(data.units),
+                    isElective: data.courseType === "ELECTIVE",
+                    programmeTypeId: data.programTypeId,
+                    isCarryoverAllowed: data.allowCarryover,
+                });
+            },
+            onSuccess: () => {
+                toaster.success({ title: "Course updated successfully" });
+                queryClient.invalidateQueries({ queryKey: ["courses"] });
+            },
+            onError: (error: any) => {
+                toaster.error({
+                    title: error.response?.data?.message || "Failed to update course",
                 });
             },
         });

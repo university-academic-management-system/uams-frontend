@@ -58,10 +58,10 @@ const BulkUploadStudentsModal = ({ isOpen, onClose, onUploaded }: Props) => {
     };
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) handleClose() }}>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) handleClose() }} placement="center" closeOnInteractOutside={false}>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content bg="white" borderRadius="md" p="8" maxW="lg" w="full" boxShadow="none" border="xs" borderColor="border.muted">
+                <Dialog.Content bg="white" borderRadius="md" p="8" maxW="lg" w="full" boxShadow="none" border="xs" borderColor="border.muted" colorPalette="accent">
                     <Dialog.CloseTrigger asChild>
                         <Box as="button" position="absolute" top="4" right="4" p="1" _hover={{ bg: "fg.subtle" }} borderRadius="full" cursor="pointer" border="none" bg="transparent" color="fg.subtle">
                             <X size={20} />
