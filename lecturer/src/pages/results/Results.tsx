@@ -1,3 +1,4 @@
+// Results.tsx
 import { useState, useMemo } from "react";
 import {
   Box,
@@ -11,13 +12,12 @@ import {
   Portal,
   EmptyState,
   VStack,
+  Spinner,
 } from "@chakra-ui/react";
 import { ChevronRight, Search } from "lucide-react";
 import { LuBookOpen } from "react-icons/lu";
 import { CourseHook } from "@hooks/course.hook";
 import { useNavigate } from "react-router";
-import type { AuthUser } from "@type/user.type";
-import useAuthStore from "@stores/auth.store";
 
 const Results = () => {
   const navigate = useNavigate();
@@ -25,17 +25,10 @@ const Results = () => {
   const [selectedLevelId, setSelectedLevelId] = useState<string>("all");
   const [selectedSemesterId, setSelectedSemesterId] = useState<string>("all");
 
-  // Get current user role from store
-  const user = useAuthStore((state) => state.user) as AuthUser | null;
-  const isHOD = user?.role === "HOD";
 
-  // Conditionally fetch courses based on role
-  const { data: allCourses = [], isLoading: allLoading } = CourseHook.useAllCourses();
-  const { data: assignedCourses = [], isLoading: assignedLoading } = CourseHook.useAllCourses();
+  const { data: courses = [], isLoading } = CourseHook.useAllCourses();
 
-  const courses = isHOD ? allCourses : assignedCourses;
-  const isLoading = allLoading || assignedLoading; // only one query runs
-
+  // Level filter options
   const levelCollection = useMemo(() => {
     const opts = new Set<string>();
     courses.forEach((c) => {
@@ -43,15 +36,16 @@ const Results = () => {
     });
     return createListCollection({
       items: [
-        { label: "Level", value: "all" },
+        { label: "All Levels", value: "all" },
         ...Array.from(opts).map((opt) => ({
-          label: String(opt).replace(/^L/, "") + " Level",
+          label: `${opt} Level`,
           value: opt,
         })),
       ],
     });
   }, [courses]);
 
+  // Semester filter options
   const semesterCollection = useMemo(() => {
     const opts = new Set<string>();
     courses.forEach((c) => {
@@ -59,63 +53,58 @@ const Results = () => {
     });
     return createListCollection({
       items: [
-        { label: "Semester", value: "all" },
+        { label: "All Semesters", value: "all" },
         ...Array.from(opts).map((opt) => ({
-          label: String(opt).charAt(0).toUpperCase() + String(opt).slice(1).toLowerCase() + " Semester",
+          label: opt.charAt(0).toUpperCase() + opt.slice(1).toLowerCase() + " Semester",
           value: opt,
         })),
       ],
     });
   }, [courses]);
 
-  // Apply search + level + semester filters
+  // Apply filters
   const filteredCourses = useMemo(() => {
     let filtered = courses;
-
     if (search.trim()) {
       const query = search.toLowerCase();
       filtered = filtered.filter(
         (c) => c.title.toLowerCase().includes(query) || c.code.toLowerCase().includes(query)
       );
     }
-
     if (selectedLevelId !== "all") {
       filtered = filtered.filter((c) => c.level === selectedLevelId);
     }
-
     if (selectedSemesterId !== "all") {
       filtered = filtered.filter((c) => c.semester === selectedSemesterId);
     }
-
     return filtered;
   }, [courses, search, selectedLevelId, selectedSemesterId]);
 
-  if (isLoading) return <Text>Loading courses...</Text>;
+  if (isLoading) {
+    return (
+      <Flex justify="center" align="center" h="200px">
+        <Spinner size="xl" color="accent"/>
+      </Flex>
+    );
+  }
 
   return (
     <Box>
       <Heading color="fg.muted" mb="5">
         Results
       </Heading>
-
       <Box bg="white" rounded="md" border="1px solid" borderColor="border.muted" p="5">
-        <Flex align="center" justify="space-between" mb="5" gap="4" colorPalette={"accent"}>
-          {/* Search */}
+        <Flex align="center" justify="space-between" mb="5" gap="4">
           <InputGroup startElement={<Search />} width="300px" ml="auto">
             <Input
               placeholder="Search Course"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                outline: "none",
-                fontSize: "13px",
-              }}
+              fontSize="13px"
             />
           </InputGroup>
 
-          {/* Level & Semester Filters (Chakra Select) */}
           <Flex gap="3">
-            {/* Level Filter */}
             <Select.Root
               value={[selectedLevelId]}
               onValueChange={(e) => setSelectedLevelId(e.value[0])}
@@ -126,7 +115,7 @@ const Results = () => {
             >
               <Select.Control>
                 <Select.Trigger>
-                  <Select.ValueText placeholder="Levels" />
+                  <Select.ValueText placeholder="All Levels" />
                 </Select.Trigger>
                 <Select.IndicatorGroup>
                   <Select.Indicator />
@@ -145,7 +134,6 @@ const Results = () => {
               </Portal>
             </Select.Root>
 
-            {/* Semester Filter */}
             <Select.Root
               value={[selectedSemesterId]}
               onValueChange={(e) => setSelectedSemesterId(e.value[0])}
@@ -153,11 +141,10 @@ const Results = () => {
               size="sm"
               variant="outline"
               width="150px"
-              fontSize="xs"
             >
               <Select.Control>
                 <Select.Trigger>
-                  <Select.ValueText placeholder="Semesters" />
+                  <Select.ValueText placeholder="All Semesters" />
                 </Select.Trigger>
                 <Select.IndicatorGroup>
                   <Select.Indicator />
@@ -178,18 +165,11 @@ const Results = () => {
           </Flex>
         </Flex>
 
-        {/* Course List Table */}
         <Box bg="white" rounded="md" border="1px solid" borderColor="border.muted">
-          <Flex px="6" py="3" borderBottom="1px solid" borderColor="border.muted" >
-            <Text fontSize="xs"  color="fg.muted" w="60px">
-              S/N
-            </Text>
-            <Text fontSize="xs" fontWeight="600" color="fg.muted" w="120px">
-              Code
-            </Text>
-            <Text fontSize="xs" fontWeight="600" color="fg.muted" flex="1">
-              Course Title
-            </Text>
+          <Flex px="6" py="3" borderBottom="1px solid" borderColor="border.muted">
+            <Text fontSize="xs" color="fg.muted" w="60px">S/N</Text>
+            <Text fontSize="xs" fontWeight="600" color="fg.muted" w="120px">Code</Text>
+            <Text fontSize="xs" fontWeight="600" color="fg.muted" flex="1">Course Title</Text>
             <Box w="30px" />
           </Flex>
 
@@ -223,18 +203,10 @@ const Results = () => {
                 cursor="pointer"
                 onClick={() => navigate(`/results/${course.id}`, { state: { course } })}
               >
-                <Text fontSize="xs" color="fg.muted" w="60px">
-                  {index + 1}
-                </Text>
-                <Text fontSize="xs" color="fg.muted" w="120px">
-                  {course.code}
-                </Text>
-                <Text fontSize="xs" color="fg.muted" flex="1">
-                  {course.title}
-                </Text>
-                <Box w="30px" textAlign="right">
-                  <ChevronRight size={14} />
-                </Box>
+                <Text fontSize="xs" color="fg.muted" w="60px">{index + 1}</Text>
+                <Text fontSize="xs" color="fg.muted" w="120px">{course.code}</Text>
+                <Text fontSize="xs" color="fg.muted" flex="1">{course.title}</Text>
+                <Box w="30px" textAlign="right"><ChevronRight size={14} /></Box>
               </Flex>
             ))
           )}

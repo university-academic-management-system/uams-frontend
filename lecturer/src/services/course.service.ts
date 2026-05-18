@@ -1,9 +1,9 @@
 import axiosClient from "@configs/axios.config";
-import type { Course, ApiResponse } from "@type/course.type";
+import type { ApiResponse, Course } from "@type/course.type";
 
 export const CourseService = {
-  getAllCourses: async (): Promise<Course[]> => {
-    const { data } = await axiosClient.get<ApiResponse<Course[]>>("/courses");
-    return data.data;
+  getAllCourses: async (filters?: { level?: string; semester?: string }): Promise<ApiResponse<Course[]>> => {
+    const { data } = await axiosClient.get<ApiResponse<Course[]>>("/courses", { params: filters });
+    return data;
   },
 };

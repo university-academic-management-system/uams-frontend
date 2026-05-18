@@ -14,16 +14,17 @@ import {
   Button,
   Center,
   Spinner,
+  IconButton,
+  Pagination,
+  ButtonGroup,
 } from "@chakra-ui/react";
-import { LuSearch, LuBookOpen, LuCircleAlert } from "react-icons/lu";
+import { LuSearch, LuBookOpen, LuCircleAlert, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { CourseHook } from "@hooks/course.hook";
 import { useCurrentUser } from "@hooks/currentUser.hook";
 import useAuthStore from "@stores/auth.store";
-import type { CourseLevel, Semester as CourseSemester } from "@/types/course.type";
+import type { CourseLevel, Semester as CourseSemester } from "../../types/course.type";
 
 const ITEMS_PER_PAGE = 10;
-
-// --- Static filter collections (defined outside component, like Students page) ---
 
 const COURSE_LEVELS: CourseLevel[] = ["L100", "L200", "L300", "L400"];
 const levelCollection = createListCollection({
@@ -64,8 +65,6 @@ const sessionCollection = createListCollection({
     value: opt,
   })),
 });
-
-// ---------------------------------------------------------------------------------
 
 const Courses = () => {
   const { user } = useAuthStore();
@@ -306,94 +305,41 @@ const Courses = () => {
         </Table.ScrollArea>
 
         {/* Pagination */}
-        {filteredCourses.length > 0 && (
-          <Flex
-            alignItems="center"
-            justifyContent="space-between"
-            bg="bg"
-            rounded="md"
-            border="1px solid"
-            borderColor="border.muted"
-            p="4"
-            mt="4"
-            wrap="wrap"
-            gap="2"
-          >
-            <Text fontSize="sm" color="fg.muted">
-              Showing{" "}
-              <Text as="span" fontWeight="semibold">
-                {filteredCourses.length === 0 ? 0 : startIndex + 1}-
-                {Math.min(endIndex, filteredCourses.length)}
-              </Text>{" "}
-              of <Text as="span" fontWeight="semibold">{filteredCourses.length}</Text> courses
-            </Text>
-            <Flex alignItems="center" gap="2">
-              <Button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1 || totalPages === 0}
-                size="sm"
-                variant="outline"
-                borderColor="border.muted"
-                bg="white"
-                color="fg.muted"
-              >
-                Previous
-              </Button>
+        <Box flex={1} display="flex" alignItems="center" justifyContent="right" mt={4}>
 
-              {totalPages === 0 ? (
-                <Button
-                  size="sm"
-                  variant="solid"
-                  bg="accent.500"
-                  color="white"
-                  minW="36px"
-                >
-                  1
-                </Button>
-              ) : (
-                Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  const isActive = currentPage === pageNum;
-                  return (
-                    <Button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      size="sm"
-                      variant={isActive ? "solid" : "outline"}
-                      bg={isActive ? "accent.500" : "white"}
-                      color={isActive ? "white" : "fg.muted"}
-                      borderColor={isActive ? "transparent" : "border.muted"}
-                      minW="36px"
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })
-              )}
+          {filteredCourses.length >= 20 && (
+            <Pagination.Root
+              count={filteredCourses.length}
+              pageSize={ITEMS_PER_PAGE}
+              page={currentPage}
+              onPageChange={(e) => setCurrentPage(e.page)}
+            >
+              <ButtonGroup variant="ghost" size="sm" gap="1">
+                <Pagination.PrevTrigger asChild>
+                  <IconButton>
+                    <LuChevronLeft />
+                  </IconButton>
+                </Pagination.PrevTrigger>
 
-              <Button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages || totalPages === 0}
-                size="sm"
-                variant="outline"
-                borderColor="border.muted"
-                bg="white"
-                color="fg.muted"
-              >
-                Next
-              </Button>
-            </Flex>
-          </Flex>
-        )}
+                <Pagination.Items
+                  render={(page) => (
+                    <IconButton
+                      variant={{ base: "ghost", _selected: "outline" }}>
+
+                      {page.value}
+                    </IconButton>
+                  )}
+                />
+
+                <Pagination.NextTrigger asChild>
+                  <IconButton>
+                    <LuChevronRight />
+                  </IconButton>
+                </Pagination.NextTrigger>
+              </ButtonGroup>
+            </Pagination.Root>
+          )}
+        </Box>
       </Box>
     </Box>
   );

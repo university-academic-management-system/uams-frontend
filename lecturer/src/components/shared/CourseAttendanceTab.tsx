@@ -218,8 +218,8 @@ const CourseAttendanceTab = () => {
                                                                         <Checkbox.Control />
                                                                     </Checkbox.Root>
                                                                 </Table.Cell>
-                                                                <Table.Cell>{student.fullName}</Table.Cell>
-                                                                <Table.Cell>{student.studentId || student.registrationNo}</Table.Cell>
+                                                                <Table.Cell>{student.studentProfile.firstName + " " + student.studentProfile.lastName + (student.studentProfile.otherName ? " " + student.studentProfile.otherName : "")}</Table.Cell>
+                                                                <Table.Cell>{student.studentProfile.matricNumber}</Table.Cell>
                                                             </Table.Row>
                                                         ))}
                                                     </Table.Body>
