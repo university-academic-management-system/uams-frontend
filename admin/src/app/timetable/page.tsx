@@ -63,12 +63,18 @@ const TimeTable = () => {
                         <Portal>
                             <Select.Positioner>
                                 <Select.Content>
-                                    {levels.items.map((level) => (
-                                        <Select.Item item={level} key={level.value}>
-                                            {level.label}
-                                            <Select.ItemIndicator />
-                                        </Select.Item>
-                                    ))}
+                                    {levels.items.length === 0 ? (
+                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                            No options available
+                                        </Box>
+                                    ) : (
+                                        levels.items.map((level) => (
+                                            <Select.Item item={level} key={level.value}>
+                                                {level.label}
+                                                <Select.ItemIndicator />
+                                            </Select.Item>
+                                        ))
+                                    )}
                                 </Select.Content>
                             </Select.Positioner>
                         </Portal>
@@ -407,7 +413,7 @@ const TimetableUploadDialog = () => {
 
 
     return (
-        <Dialog.Root size="xl">
+        <Dialog.Root size="xl" placement="center" closeOnInteractOutside={false}>
             <Dialog.Trigger asChild>
                 <Button size="xs" variant="surface">
                     <UploadCloud /> Upload Timetable
@@ -416,7 +422,7 @@ const TimetableUploadDialog = () => {
             <Portal>
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
-                    <Dialog.Content>
+                    <Dialog.Content colorPalette="accent">
                         <Dialog.Header>
                             <Dialog.Title>Upload Timetable</Dialog.Title>
                         </Dialog.Header>
@@ -454,12 +460,18 @@ const TimetableUploadDialog = () => {
                                         <Portal>
                                             <Select.Positioner>
                                                 <Select.Content>
-                                                    {sessions.items.map((session: { label: string; value: string; }) => (
-                                                        <Select.Item item={session} key={session.value}>
-                                                            {session.label}
-                                                            <Select.ItemIndicator />
-                                                        </Select.Item>
-                                                    ))}
+                                                    {sessions.items.length === 0 ? (
+                                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                            No options available
+                                                        </Box>
+                                                    ) : (
+                                                        sessions.items.map((session: { label: string; value: string; }) => (
+                                                            <Select.Item item={session} key={session.value}>
+                                                                {session.label}
+                                                                <Select.ItemIndicator />
+                                                            </Select.Item>
+                                                        ))
+                                                    )}
                                                 </Select.Content>
                                             </Select.Positioner>
                                         </Portal>
@@ -480,12 +492,18 @@ const TimetableUploadDialog = () => {
                                         <Portal>
                                             <Select.Positioner>
                                                 <Select.Content>
-                                                    {levels.items.map((level: { label: string; value: string; }) => (
-                                                        <Select.Item item={level} key={level.value}>
-                                                            {level.label}
-                                                            <Select.ItemIndicator />
-                                                        </Select.Item>
-                                                    ))}
+                                                    {levels.items.length === 0 ? (
+                                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                            No options available
+                                                        </Box>
+                                                    ) : (
+                                                        levels.items.map((level: { label: string; value: string; }) => (
+                                                            <Select.Item item={level} key={level.value}>
+                                                                {level.label}
+                                                                <Select.ItemIndicator />
+                                                            </Select.Item>
+                                                        ))
+                                                    )}
                                                 </Select.Content>
                                             </Select.Positioner>
                                         </Portal>
@@ -507,12 +525,18 @@ const TimetableUploadDialog = () => {
                                         <Portal>
                                             <Select.Positioner>
                                                 <Select.Content>
-                                                    {semesters.items.map((semester: { label: string; value: string; }) => (
-                                                        <Select.Item item={semester} key={semester.value}>
-                                                            {semester.label}
-                                                            <Select.ItemIndicator />
-                                                        </Select.Item>
-                                                    ))}
+                                                    {semesters.items.length === 0 ? (
+                                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                            No options available
+                                                        </Box>
+                                                    ) : (
+                                                        semesters.items.map((semester: { label: string; value: string; }) => (
+                                                            <Select.Item item={semester} key={semester.value}>
+                                                                {semester.label}
+                                                                <Select.ItemIndicator />
+                                                            </Select.Item>
+                                                        ))
+                                                    )}
                                                 </Select.Content>
                                             </Select.Positioner>
                                         </Portal>
@@ -532,12 +556,18 @@ const TimetableUploadDialog = () => {
                                         <Portal>
                                             <Select.Positioner>
                                                 <Select.Content>
-                                                    {programmes.items.map((programme: { label: string; value: string; }) => (
-                                                        <Select.Item item={programme} key={programme.value}>
-                                                            {programme.label}
-                                                            <Select.ItemIndicator />
-                                                        </Select.Item>
-                                                    ))}
+                                                    {programmes.items.length === 0 ? (
+                                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                            No options available
+                                                        </Box>
+                                                    ) : (
+                                                        programmes.items.map((programme: { label: string; value: string; }) => (
+                                                            <Select.Item item={programme} key={programme.value}>
+                                                                {programme.label}
+                                                                <Select.ItemIndicator />
+                                                            </Select.Item>
+                                                        ))
+                                                    )}
                                                 </Select.Content>
                                             </Select.Positioner>
                                         </Portal>

@@ -144,12 +144,18 @@ const AuditLogsPage = () => {
                     <Portal>
                         <Select.Positioner>
                             <Select.Content>
-                                {actionsCollection.items.map((item) => (
-                                    <Select.Item item={item} key={item.value}>
-                                        {item.label}
-                                        <Select.ItemIndicator />
-                                    </Select.Item>
-                                ))}
+                                {actionsCollection.items.length === 0 ? (
+                                    <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                        No options available
+                                    </Box>
+                                ) : (
+                                    actionsCollection.items.map((item) => (
+                                        <Select.Item item={item} key={item.value}>
+                                            {item.label}
+                                            <Select.ItemIndicator />
+                                        </Select.Item>
+                                    ))
+                                )}
                             </Select.Content>
                         </Select.Positioner>
                     </Portal>
@@ -176,12 +182,18 @@ const AuditLogsPage = () => {
                     <Portal>
                         <Select.Positioner>
                             <Select.Content>
-                                {entitiesCollection.items.map((item) => (
-                                    <Select.Item item={item} key={item.value}>
-                                        {item.label}
-                                        <Select.ItemIndicator />
-                                    </Select.Item>
-                                ))}
+                                {entitiesCollection.items.length === 0 ? (
+                                    <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                        No options available
+                                    </Box>
+                                ) : (
+                                    entitiesCollection.items.map((item) => (
+                                        <Select.Item item={item} key={item.value}>
+                                            {item.label}
+                                            <Select.ItemIndicator />
+                                        </Select.Item>
+                                    ))
+                                )}
                             </Select.Content>
                         </Select.Positioner>
                     </Portal>
@@ -190,7 +202,7 @@ const AuditLogsPage = () => {
 
             <Box flex="2" minW="300px">
                 <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">DATE RANGE</Text>
-                <DatePicker.Root 
+                <DatePicker.Root openOnClick
                     selectionMode="range" 
                     onValueChange={(e) => {
                         const range = e.value.map(d => {

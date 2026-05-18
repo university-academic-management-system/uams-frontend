@@ -99,7 +99,7 @@ const AnnouncementsPage = () => {
 
             {/* Date Filters */}
             <Flex justifyContent={{ base: "flex-start", md: "flex-end" }} alignItems="flex-end" mb="8" gap="3" flexWrap="wrap">
-                <DatePickerRoot 
+                <DatePickerRoot openOnClick
                     selectionMode="range" 
                     maxWidth="24rem" 
                     value={dateRange}

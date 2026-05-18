@@ -196,9 +196,18 @@ const TransactionsList = ({ onBack, programTypeId, programTypeName }: Transactio
                         <Portal>
                             <Select.Positioner>
                                 <Select.Content>
-                                    {statusCollection.items.map(item => (
-                                        <Select.Item item={item} key={item.value}>{item.label}</Select.Item>
-                                    ))}
+                                    {statusCollection.items.length === 0 ? (
+                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                            No options available
+                                        </Box>
+                                    ) : (
+                                        statusCollection.items.map(item => (
+                                            <Select.Item item={item} key={item.value}>
+                                                <Select.ItemText>{item.label}</Select.ItemText>
+                                                <Select.ItemIndicator />
+                                            </Select.Item>
+                                        ))
+                                    )}
                                 </Select.Content>
                             </Select.Positioner>
                         </Portal>
@@ -220,9 +229,18 @@ const TransactionsList = ({ onBack, programTypeId, programTypeName }: Transactio
                         <Portal>
                             <Select.Positioner>
                                 <Select.Content>
-                                    {(typeCollection.items.length > 0 ? typeCollection : createListCollection({ items: [{ label: "All Types", value: "" }] })).items.map(item => (
-                                        <Select.Item item={item} key={item.value}>{item.label}</Select.Item>
-                                    ))}
+                                    {typeCollection.items.length === 0 ? (
+                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                            No options available
+                                        </Box>
+                                    ) : (
+                                        (typeCollection.items.length > 0 ? typeCollection : createListCollection({ items: [{ label: "All Types", value: "" }] })).items.map(item => (
+                                            <Select.Item item={item} key={item.value}>
+                                                <Select.ItemText>{item.label}</Select.ItemText>
+                                                <Select.ItemIndicator />
+                                            </Select.Item>
+                                        ))
+                                    )}
                                 </Select.Content>
                             </Select.Positioner>
                         </Portal>
@@ -243,9 +261,18 @@ const TransactionsList = ({ onBack, programTypeId, programTypeName }: Transactio
                         <Portal>
                             <Select.Positioner>
                                 <Select.Content>
-                                    {sessionCollection.items.map(item => (
-                                        <Select.Item item={item} key={item.value}>{item.label}</Select.Item>
-                                    ))}
+                                    {sessionCollection.items.length === 0 ? (
+                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                            No options available
+                                        </Box>
+                                    ) : (
+                                        sessionCollection.items.map(item => (
+                                            <Select.Item item={item} key={item.value}>
+                                                <Select.ItemText>{item.label}</Select.ItemText>
+                                                <Select.ItemIndicator />
+                                            </Select.Item>
+                                        ))
+                                    )}
                                 </Select.Content>
                             </Select.Positioner>
                         </Portal>
@@ -266,9 +293,18 @@ const TransactionsList = ({ onBack, programTypeId, programTypeName }: Transactio
                         <Portal>
                             <Select.Positioner>
                                 <Select.Content>
-                                    {levelCollection.items.map(item => (
-                                        <Select.Item item={item} key={item.value}>{item.label}</Select.Item>
-                                    ))}
+                                    {levelCollection.items.length === 0 ? (
+                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                            No options available
+                                        </Box>
+                                    ) : (
+                                        levelCollection.items.map(item => (
+                                            <Select.Item item={item} key={item.value}>
+                                                <Select.ItemText>{item.label}</Select.ItemText>
+                                                <Select.ItemIndicator />
+                                            </Select.Item>
+                                        ))
+                                    )}
                                 </Select.Content>
                             </Select.Positioner>
                         </Portal>
@@ -289,9 +325,18 @@ const TransactionsList = ({ onBack, programTypeId, programTypeName }: Transactio
                         <Portal>
                             <Select.Positioner>
                                 <Select.Content>
-                                    {semesterCollection.items.map(item => (
-                                        <Select.Item item={item} key={item.value}>{item.label}</Select.Item>
-                                    ))}
+                                    {semesterCollection.items.length === 0 ? (
+                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                            No options available
+                                        </Box>
+                                    ) : (
+                                        semesterCollection.items.map(item => (
+                                            <Select.Item item={item} key={item.value}>
+                                                <Select.ItemText>{item.label}</Select.ItemText>
+                                                <Select.ItemIndicator />
+                                            </Select.Item>
+                                        ))
+                                    )}
                                 </Select.Content>
                             </Select.Positioner>
                         </Portal>

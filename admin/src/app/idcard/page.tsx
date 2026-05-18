@@ -426,7 +426,7 @@ const IDCardPage = () => {
                 </Flex>
 
                 <Box overflowX="auto">
-                    <Table.Root w="full" textAlign="left">
+                    <Table.Root w="full" textAlign="left" colorPalette="accent">
                         <Table.Header bg="slate.50">
                             <Table.Row borderBottom="xs" borderColor="border.muted">
                                 <Table.ColumnHeader px="6" py="4" w="12" textAlign="center" fontSize="11px" textTransform="uppercase" fontWeight="bold" color="fg.muted" letterSpacing="wider">
@@ -532,10 +532,10 @@ const IDCardPage = () => {
             </Box>
 
             {/* Capture Modal */}
-            <Dialog.Root open={showModal} onOpenChange={(e) => { if (!e.open) { setShowModal(false); stopCamera(); setCapturedPhoto(null); } }}>
+            <Dialog.Root open={showModal} onOpenChange={(e) => { if (!e.open) { setShowModal(false); stopCamera(); setCapturedPhoto(null); } }} placement="center" closeOnInteractOutside={false}>
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
-                    <Dialog.Content bg="white" borderRadius="md" boxShadow="none" w="full" maxW="2xl" overflow="hidden">
+                    <Dialog.Content bg="white" borderRadius="md" boxShadow="none" w="full" maxW="2xl" overflow="hidden" colorPalette="accent">
                         <Flex p="6" borderBottom="xs" borderColor="border.muted" alignItems="center" justifyContent="space-between">
                             <Heading size="md" fontWeight="bold" color="fg.muted">Capture & Issue: {currentStudent?.name}</Heading>
                             <Dialog.CloseTrigger asChild>

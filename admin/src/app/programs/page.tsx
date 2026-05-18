@@ -9,12 +9,12 @@ const ProgramCoursesPage = () => {
     return (
         <Flex direction="column" gap="6">
             <Box>
-                <Heading size="xl" color="fg.muted" mb="2">
+                <Heading size="xl" color="fg.muted" mb="6">
                     Programs & Courses
                 </Heading>
                 
-                <Tabs.Root defaultValue="courses">
-                    <Tabs.List mb="8">
+                <Tabs.Root defaultValue="courses" variant="enclosed">
+                    <Tabs.List mb="6">
                         <Tabs.Trigger value="courses">
                             <BookOpen size={16} /> Courses
                         </Tabs.Trigger>

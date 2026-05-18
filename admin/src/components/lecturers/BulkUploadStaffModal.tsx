@@ -42,10 +42,10 @@ const BulkUploadStaffModal = ({ isOpen, onClose, onUploaded }: Props) => {
     };
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) handleClose() }}>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) handleClose() }} placement="center" closeOnInteractOutside={false}>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content bg="white" borderRadius="md" shadow="none" w="full" maxW="lg" position="relative">
+                <Dialog.Content bg="white" borderRadius="md" shadow="none" w="full" maxW="lg" position="relative" colorPalette="accent">
                     {/* Header */}
                     <Box p="6" borderBottom="xs" borderColor="border.muted">
                         <Dialog.CloseTrigger asChild>
