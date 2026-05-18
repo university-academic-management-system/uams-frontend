@@ -10,18 +10,24 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const { user, clearAuth } = useAuthStore();
 
-    const userRole = useMemo(() => user?.role, [user]);
+    const userRoles = useMemo(() => {
+        const roles: string[] = [];
+        if (user?.role) roles.push(user.role);
+        if (user?.roles) roles.push(...user.roles);
+        return roles;
+    }, [user]);
 
     const filteredItems = useMemo(() => {
-        if (userRole === "LECTURER") {
-            return sidebarItems.filter((item) => item.accessLevel.includes("LECTURER") || item.accessLevel === "ALL");
-        } else if (userRole === "ERO") {
-            return sidebarItems.filter((item) => item.accessLevel.includes("ERO") || item.accessLevel === "ALL");
-        } else if (userRole === "HOD") {
-            return sidebarItems.filter((item) => item.accessLevel.includes("HOD") || item.accessLevel === "ALL");
-        }
-        return sidebarItems;
-    }, [userRole]);
+        if (userRoles.includes("ADMIN")) return sidebarItems;
+
+        return sidebarItems.filter((item) => {
+            if (item.accessLevel === "ALL") return true;
+            if (Array.isArray(item.accessLevel)) {
+                return item.accessLevel.some((level) => userRoles.includes(level));
+            }
+            return userRoles.includes(item.accessLevel);
+        });
+    }, [userRoles]);
 
     const handleLogout = () => {
         clearAuth();
@@ -47,7 +53,7 @@ const Sidebar = () => {
             zIndex="10"
         >
             {/* University Logo / Branding */}
-            <Flex justify="center" align="center" px="5" py="2" h="14" borderBottom="1px solid" borderColor="gray.100">
+            <Flex justify="center" align="center" px="5" py="2" h="14" borderBottom="1px solid" borderColor="border.muted">
                 <Image
                     src="/lecturer/assets/sidebar-image.png"
                     alt="University of Port Harcourt"
@@ -71,14 +77,13 @@ const Sidebar = () => {
                             py="2.5"
                             rounded="md"
                             cursor="pointer"
-                            bg={active ? "#f8fafc" : "transparent"}
-                            color={active ? "accent.500" : "gray.600"}
+                            bg={active ? "bg" : "transparent"}
+                            color={active ? "accent.500" : "fg.muted"}
                             fontWeight={active ? "600" : "500"}
-                            fontFamily={"sans-serif"}
                             transition="all 0.15s ease"
                             _hover={{
-                                bg: active ? "accent.50" : "gray.50",
-                                color: active ? "accent.500" : "gray.800",
+                                bg: active ? "accent.50" : "fg.subtle",
+                                color: active ? "accent.500" : "fg.muted",
                             }}
                             onClick={() => navigate(item.path)}
                         >

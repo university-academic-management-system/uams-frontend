@@ -1,6 +1,6 @@
 import { Box, Table, Text, Flex, Menu, Button, Portal, Drawer, CloseButton, For, Heading, Spinner, InputGroup, Input, Dialog } from "@chakra-ui/react";
 import { MoreHorizontal, Search, User, UserRoundPen } from "lucide-react";
-import type { Lecturer } from "@type/lecturer.type";
+import type { Staff } from "@type/lecturer.type";
 import { StudentHook } from "@hooks/student.hook";
 import React, { useState, useEffect } from "react";
 import { AcademicHook } from "@hooks/academic.hook";
@@ -9,7 +9,7 @@ import { toaster } from "@components/ui/toaster";
 import type { Student } from "@type/student.type";
 
 interface LecturersTableProps {
-    lecturers: Lecturer[];
+    lecturers: Staff[];
     isLoading?: boolean;
 }
 
@@ -95,22 +95,22 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
                                     {startIndex + index + 1}
                                 </Table.Cell>
                                 <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.700" whiteSpace="nowrap">
-                                    {lecturer.staffNumber}
+                                    {lecturer.staffProfile?.staffNumber || "—"}
                                 </Table.Cell>
                                 <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.700" fontWeight="600" whiteSpace="nowrap">
-                                    {lecturer.User.fullName}
+                                    {`${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""} ${lecturer.staffProfile?.otherName || ""}`.trim() || "—"}
                                 </Table.Cell>
                                 <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.500" whiteSpace="nowrap">
-                                    {lecturer.User.email}
+                                    {lecturer.email || "—"}
                                 </Table.Cell>
                                 <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.700" whiteSpace="nowrap">
-                                    {lecturer.User.phone}
+                                    {lecturer.staffProfile?.phone || "—"}
                                 </Table.Cell>
                                 <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.700" whiteSpace="nowrap">
-                                    {lecturer.currentAdminRole}
+                                    {lecturer.staffProfile?.title || "—"}
                                 </Table.Cell>
                                 <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.700" whiteSpace="nowrap">
-                                    {lecturer.courseAssignments.length}
+                                    {0}
                                 </Table.Cell>
                                 <Table.Cell px="4" py="3.5" whiteSpace="nowrap">
                                     <Menu.Root>
@@ -123,12 +123,12 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
                                             <Menu.Positioner>
                                                 <Menu.Content>
                                                     <Menu.Item value="courses" asChild>
-                                                        <CourseDrawer courses={lecturer.courseAssignments} lecturer={lecturer.User.fullName} />
+                                                        <CourseDrawer courses={[]} lecturer={`${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""}`.trim() || "Staff"} />
                                                     </Menu.Item>
                                                     <Menu.Item value="students" asChild>
                                                         <StudentDrawer
                                                             lecturerId={lecturer.id}
-                                                            lecturer={lecturer.User.fullName}
+                                                            lecturer={`${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""}`.trim() || "Staff"}
                                                         />
                                                     </Menu.Item>
                                                 </Menu.Content>
@@ -194,7 +194,7 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
 export default LecturersTable;
 
 
-const CourseDrawer = ({ courses, lecturer }: { courses: Lecturer["courseAssignments"], lecturer: Lecturer["User"]["fullName"] }) => {
+const CourseDrawer = ({ courses, lecturer }: { courses: any[], lecturer: string }) => {
     return (
         <Drawer.Root>
             <Drawer.Trigger asChild>
@@ -242,7 +242,7 @@ const CourseDrawer = ({ courses, lecturer }: { courses: Lecturer["courseAssignme
     )
 }
 
-const StudentDrawer = ({ lecturerId, lecturer }: { lecturerId: string, lecturer: Lecturer["User"]["fullName"] }) => {
+const StudentDrawer = ({ lecturerId, lecturer }: { lecturerId: string, lecturer: string }) => {
     const [open, setOpen] = useState(false);
     const [showAssigned, setShowAssigned] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");

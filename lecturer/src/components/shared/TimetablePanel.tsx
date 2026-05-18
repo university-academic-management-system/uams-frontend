@@ -1,4 +1,3 @@
-// components/shared/TimetablePanel.tsx
 import {
   Box,
   Flex,
@@ -11,19 +10,20 @@ import {
   Select,
   Portal,
   createListCollection,
+  Button,
+  Heading,
 } from "@chakra-ui/react";
-import { Clock } from "lucide-react";
 import { TimetableHook } from "@hooks/timetable.hooks";
 import useAuthStore from "@stores/auth.store";
 import { useMemo } from "react";
-import { LuCircleAlert } from "react-icons/lu";
+import { LuCircleAlert, LuClock } from "react-icons/lu";
 
 interface TimetablePanelProps {
   selectedFilter: "today" | "tomorrow" | "week";
   onFilterChange: (value: "today" | "tomorrow" | "week") => void;
+  onViewFullTimetable: () => void; 
 }
 
-// Create collection for filter options
 const filterCollection = createListCollection({
   items: [
     { label: "Today", value: "today" },
@@ -50,7 +50,7 @@ const getRemainingWeekDays = (): string[] => {
   return [...days.slice(todayIndex), ...days.slice(0, todayIndex)];
 };
 
-const TimetablePanel = ({ selectedFilter, onFilterChange }: TimetablePanelProps) => {
+const TimetablePanel = ({ selectedFilter, onFilterChange, onViewFullTimetable }: TimetablePanelProps) => {
   const { user } = useAuthStore();
   const session = user?.currentSession;
   const semester = user?.currentSemester;
@@ -104,38 +104,48 @@ const TimetablePanel = ({ selectedFilter, onFilterChange }: TimetablePanelProps)
 
   return (
     <Box>
-      <Flex align="center" justify="space-between" px="5" py="4.5" borderBottom="1px solid" borderColor="gray.50">
-        <Text fontSize="md" fontWeight="600" color="gray.800">
+      <Flex align="center" justify="space-between" px="5" py="4.5" borderBottom="1px solid" borderColor="border.muted">
+        <Heading  color="fg.muted">
           Timetable
-        </Text>
-        <Select.Root
-          collection={filterCollection}
-          value={[selectedFilter]}
-          onValueChange={(e) => onFilterChange(e.value[0] as "today" | "tomorrow" | "week")}
-          size="sm"
-          width="120px"
-        >
-          <Select.HiddenSelect />
-          <Select.Control>
-            <Select.Trigger>
-              <Select.ValueText placeholder="Select filter" />
-            </Select.Trigger>
-            <Select.IndicatorGroup>
-              <Select.Indicator />
-            </Select.IndicatorGroup>
-          </Select.Control>
-          <Portal>
-            <Select.Positioner>
-              <Select.Content>
-                {filterCollection.items.map((item) => (
-                  <Select.Item item={item} key={item.value}>
-                    {item.label}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select.Positioner>
-          </Portal>
-        </Select.Root>
+        </Heading>
+        <Flex gap="2">
+          <Select.Root
+            collection={filterCollection}
+            value={[selectedFilter]}
+            onValueChange={(e) => onFilterChange(e.value[0] as "today" | "tomorrow" | "week")}
+            size="sm"
+            width="120px"
+          >
+            <Select.HiddenSelect />
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText placeholder="Select filter" />
+              </Select.Trigger>
+              <Select.IndicatorGroup>
+                <Select.Indicator />
+              </Select.IndicatorGroup>
+            </Select.Control>
+            <Portal>
+              <Select.Positioner>
+                <Select.Content>
+                  {filterCollection.items.map((item) => (
+                    <Select.Item item={item} key={item.value}>
+                      {item.label}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Positioner>
+            </Portal>
+          </Select.Root>
+          <Button
+            bg="accent.500"
+            variant="solid"
+            size="sm"
+            onClick={onViewFullTimetable}
+          >
+            View Full Timetable
+          </Button>
+        </Flex>
       </Flex>
 
       <Box flex="1" overflowY="auto" px="5" py="5">
@@ -151,15 +161,15 @@ const TimetablePanel = ({ selectedFilter, onFilterChange }: TimetablePanelProps)
               return (
                 <Box
                   key={entry.id}
-                  bg={isActive ? "accent.500" : "gray.50"}
-                  color={isActive ? "white" : "gray.800"}
+                  bg={isActive ? "accent.500" : "fg.subtle"}
+                  color={isActive ? "white" : "fg.muted"}
                   borderRadius="lg"
                   px="4.5"
                   py="4"
                   borderLeft="4px solid"
-                  borderLeftColor={isActive ? "accent.600" : "gray.200"}
+                  borderLeftColor={isActive ? "accent.600" : "border.muted"}
                 >
-                  <Text fontSize="14px" fontWeight="600" mb="1.5">
+                  <Text fontSize="14px" mb="1.5">
                     {entry.courseId}
                   </Text>
                   <Flex align="center" gap="3.5">
@@ -167,7 +177,7 @@ const TimetablePanel = ({ selectedFilter, onFilterChange }: TimetablePanelProps)
                       {entry.venue}
                     </Text>
                     <Flex align="center" gap="1.5">
-                      <Icon as={Clock} boxSize="3" />
+                      <Icon size="xs"><LuClock /></Icon>
                       <Text fontSize="11px">
                         {entry.startTime.slice(11, 16)} - {entry.endTime.slice(11, 16)}
                       </Text>
@@ -179,8 +189,8 @@ const TimetablePanel = ({ selectedFilter, onFilterChange }: TimetablePanelProps)
           </Flex>
         ) : (
           <Flex h="full" direction="column" align="center" justify="center" textAlign="center" py="10">
-            <Icon as={Clock} boxSize="8" color="gray.200" mb="3" />
-            <Text fontSize="13px" fontWeight="500" color="gray.500">
+            <Icon size="lg" color="fg.subtle" mb="3"><LuClock /></Icon>
+            <Text fontSize="13px" color="fg.muted">
               No classes scheduled for{" "}
               {selectedFilter === "today"
                 ? "today"

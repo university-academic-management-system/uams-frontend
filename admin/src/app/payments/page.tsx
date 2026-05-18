@@ -1,4 +1,7 @@
+"use client";
+
 import { useState } from "react";
+import { Box } from "@chakra-ui/react";
 import PaymentsSummaryView from "@components/payments/PaymentsSummaryView";
 import TransactionsList from "@components/payments/TransactionsList";
 
@@ -6,33 +9,30 @@ type ViewState = "summary" | "transactions";
 
 const PaymentsPage = () => {
     const [currentView, setCurrentView] = useState<ViewState>("summary");
-    const [selectedProgramTypeId, setSelectedProgramTypeId] = useState<string | null>(null);
-    const [selectedProgramTypeName, setSelectedProgramTypeName] = useState<string>("");
+    const [selectedProgram, setSelectedProgram] = useState<{ id: string; name: string } | null>(null);
 
     const handleViewAllRevenue = (programTypeId: string, programTypeName: string) => {
-        setSelectedProgramTypeId(programTypeId);
-        setSelectedProgramTypeName(programTypeName);
+        setSelectedProgram({ id: programTypeId, name: programTypeName });
         setCurrentView("transactions");
     };
 
     const handleBackToSummary = () => {
         setCurrentView("summary");
-        setSelectedProgramTypeId(null);
-        setSelectedProgramTypeName("");
+        setSelectedProgram(null);
     };
 
     return (
-        <div>
+        <Box minH="100vh" bg="bg.canvas">
             {currentView === "summary" ? (
                 <PaymentsSummaryView onViewAllRevenue={handleViewAllRevenue} />
             ) : (
-                <TransactionsList
-                    onBack={handleBackToSummary}
-                    programTypeId={selectedProgramTypeId}
-                    programTypeName={selectedProgramTypeName}
+                <TransactionsList 
+                    onBack={handleBackToSummary} 
+                    programTypeId={selectedProgram?.id} 
+                    programTypeName={selectedProgram?.name}
                 />
             )}
-        </div>
+        </Box>
     );
 };
 

@@ -7,7 +7,6 @@ import {
   InputGroup,
   Input,
   Select,
-  Portal,
   createListCollection,
   EmptyState,
   VStack,
@@ -20,9 +19,53 @@ import { LuSearch, LuBookOpen, LuCircleAlert } from "react-icons/lu";
 import { CourseHook } from "@hooks/course.hook";
 import { useCurrentUser } from "@hooks/currentUser.hook";
 import useAuthStore from "@stores/auth.store";
-
+import type { CourseLevel, Semester as CourseSemester } from "@/types/course.type";
 
 const ITEMS_PER_PAGE = 10;
+
+// --- Static filter collections (defined outside component, like Students page) ---
+
+const COURSE_LEVELS: CourseLevel[] = ["L100", "L200", "L300", "L400"];
+const levelCollection = createListCollection({
+  items: [
+    { label: "All Levels", value: "All" },
+    ...COURSE_LEVELS.map((l) => ({
+      label: l.replace(/^L/, "") + " Level",
+      value: l,
+    })),
+  ],
+});
+
+const COURSE_SEMESTERS: CourseSemester[] = ["FIRST", "SECOND", "THIRD"];
+const semesterCollection = createListCollection({
+  items: [
+    { label: "All Semesters", value: "All" },
+    ...COURSE_SEMESTERS.map((s) => ({
+      label: s.charAt(0) + s.slice(1).toLowerCase() + " Semester",
+      value: s,
+    })),
+  ],
+});
+
+const getSessionOptions = () => {
+  const currentYear = new Date().getFullYear();
+  const startYear = 1999;
+  const sessions = ["All"];
+  for (let year = currentYear; year >= startYear; year--) {
+    sessions.push(`${year}/${year + 1}`);
+  }
+  return sessions;
+};
+
+const SESSION_OPTIONS = getSessionOptions();
+const sessionCollection = createListCollection({
+  items: SESSION_OPTIONS.map((opt) => ({
+    label: opt === "All" ? "All Sessions" : opt,
+    value: opt,
+  })),
+});
+
+// ---------------------------------------------------------------------------------
 
 const Courses = () => {
   const { user } = useAuthStore();
@@ -36,7 +79,6 @@ const Courses = () => {
   const [session, setSession] = useState(currentSession);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Correctly fetch data based on role
   const { data: allCourses = [], isLoading: allLoading, error: allError } = CourseHook.useAllCourses();
   const { data: assignedCourses = [], isLoading: assignedLoading, error: assignedError } = CourseHook.useAllCourses();
 
@@ -44,51 +86,7 @@ const Courses = () => {
   const isLoading = allLoading || assignedLoading;
   const error = isHOD ? allError : assignedError;
 
-  const dynamicSessionCollection = useMemo(() => {
-    const opts = new Set<string>();
-    opts.add("All");
-    if (currentSession !== "All") opts.add(currentSession);
-    courses.forEach(c => {
-      if (c.session) opts.add(c.session);
-    });
-    return createListCollection({
-      items: Array.from(opts).map((opt) => ({
-        label: opt === "All" ? "Session" : opt,
-        value: opt,
-      })),
-    });
-  }, [currentSession, courses]);
-
-  const dynamicLevelCollection = useMemo(() => {
-    const opts = new Set<string>();
-    opts.add("All");
-    courses.forEach(c => {
-      if (c.level) opts.add(c.level);
-    });
-    return createListCollection({
-      items: Array.from(opts).map((opt) => ({
-        label: opt === "All" ? "Level" : String(opt).replace(/^L/, "") + " Level",
-        value: opt,
-      })),
-    });
-  }, [courses]);
-
-  const dynamicSemesterCollection = useMemo(() => {
-    const opts = new Set<string>();
-    opts.add("All");
-    courses.forEach(c => {
-      if (c.semester) opts.add(c.semester);
-    });
-    return createListCollection({
-      items: Array.from(opts).map((opt) => {
-        if (opt === "All") return { label: "Semester", value: opt };
-        const label = String(opt).charAt(0).toUpperCase() + String(opt).slice(1).toLowerCase() + " Semester";
-        return { label, value: opt };
-      }),
-    });
-  }, [courses]);
-
-  // Debounce search input
+  // Debounce search
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(handler);
@@ -98,7 +96,6 @@ const Courses = () => {
     setCurrentPage(1);
   }, [debouncedSearch, level, semester, session]);
 
-  // Filtering
   const filteredCourses = useMemo(() => {
     let filtered = courses;
     if (debouncedSearch.trim()) {
@@ -107,15 +104,9 @@ const Courses = () => {
         (c) => c.title.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
       );
     }
-    if (level !== "All") {
-      filtered = filtered.filter((c) => c.level === level);
-    }
-    if (semester !== "All") {
-      filtered = filtered.filter((c) => c.semester === semester);
-    }
-    if (session !== "All") {
-      filtered = filtered.filter((c) => c.session === session);
-    }
+    if (level !== "All") filtered = filtered.filter((c) => c.level === level);
+    if (semester !== "All") filtered = filtered.filter((c) => c.semester === semester);
+    if (session !== "All") filtered = filtered.filter((c) => c.session === session);
     return filtered;
   }, [courses, debouncedSearch, level, semester, session]);
 
@@ -125,32 +116,22 @@ const Courses = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
 
-  // Column headers (adjust based on your Course type)
-  const columns = [
-    "Code",
-    "Title",
-    "Units",
-    "Level",
-    "Semester",
-    "Session",
-    "Course Type",
-  ];
+  const columns = ["Code", "Title", "Units", "Level", "Semester", "Session", "Course Type"];
 
   return (
     <Box>
-      {/* Heading */}
-      <Flex align="baseline" gap="2" mb="6">
-        <Heading color="fg.muted" mb="0">
-          Courses
+      <Flex mb="6" gap="1" align="baseline">
+        <Heading color="fg.muted" mb="1">
+          Courses{" "}
         </Heading>
-        <Text as="span" color="fg.subtle" fontSize="lg">
-          ({totalCount})
+        <Text as="span" color="fg.subtle" lineHeight="1.5">
+          ({totalCount} total)
         </Text>
       </Flex>
 
-      <Box bg="white" rounded="md" border="1px solid" borderColor="border.muted" p="5">
+      <Box bg="bg" rounded="md" p="4">
         {/* Filters row */}
-        <Flex align="center" justify="flex-end" mb="5" gap="4" wrap="wrap" colorPalette={"accent"}>
+        <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
           <InputGroup startElement={<LuSearch />} width="260px">
             <Input
               placeholder="Search by title or code"
@@ -160,95 +141,89 @@ const Courses = () => {
             />
           </InputGroup>
 
-          <Flex gap="3" wrap="wrap">
+          <Flex gap="3" align="center">
             {/* Level filter */}
             <Select.Root
-              collection={dynamicLevelCollection}
+              collection={levelCollection}
               value={[level]}
               onValueChange={(e) => setLevel(e.value[0])}
-              size="md"
-              width="100px"
-            >
-              <Select.HiddenSelect />
-              <Select.Control>
-                <Select.Trigger>
-                  <Select.ValueText placeholder="Level" />
-                </Select.Trigger>
-                <Select.IndicatorGroup>
-                  <Select.Indicator />
-                </Select.IndicatorGroup>
-              </Select.Control>
-              <Portal>
-                <Select.Positioner>
-                  <Select.Content>
-                    {dynamicLevelCollection.items.map((item) => (
-                      <Select.Item key={item.value} item={item}>
-                        {item.label}
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Positioner>
-              </Portal>
-            </Select.Root>
-
-            {/* Semester filter */}
-            <Select.Root
-              collection={dynamicSemesterCollection}
-              value={[semester]}
-              onValueChange={(e) => setSemester(e.value[0])}
               size="md"
               width="140px"
             >
               <Select.HiddenSelect />
               <Select.Control>
                 <Select.Trigger>
-                  <Select.ValueText placeholder="Semester" />
+                  <Select.ValueText placeholder="All Levels" />
                 </Select.Trigger>
                 <Select.IndicatorGroup>
                   <Select.Indicator />
                 </Select.IndicatorGroup>
               </Select.Control>
-              <Portal>
-                <Select.Positioner>
-                  <Select.Content>
-                    {dynamicSemesterCollection.items.map((item) => (
-                      <Select.Item key={item.value} item={item}>
-                        {item.label}
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Positioner>
-              </Portal>
+              <Select.Positioner>
+                <Select.Content>
+                  {levelCollection.items.map((item) => (
+                    <Select.Item key={item.value} item={item}>
+                      {item.label}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Positioner>
             </Select.Root>
 
-            {/* Session (season) filter */}
+            {/* Semester filter */}
             <Select.Root
-              collection={dynamicSessionCollection}
-              value={[session]}
-              onValueChange={(e) => setSession(e.value[0])}
+              collection={semesterCollection}
+              value={[semester]}
+              onValueChange={(e) => setSemester(e.value[0])}
               size="md"
-              width="120px"
+              width="160px"
             >
               <Select.HiddenSelect />
               <Select.Control>
                 <Select.Trigger>
-                  <Select.ValueText placeholder="Session" />
+                  <Select.ValueText placeholder="All Semesters" />
                 </Select.Trigger>
                 <Select.IndicatorGroup>
                   <Select.Indicator />
                 </Select.IndicatorGroup>
               </Select.Control>
-              <Portal>
-                <Select.Positioner>
-                  <Select.Content>
-                    {dynamicSessionCollection.items.map((item) => (
-                      <Select.Item key={item.value} item={item}>
-                        {item.label}
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Positioner>
-              </Portal>
+              <Select.Positioner>
+                <Select.Content>
+                  {semesterCollection.items.map((item) => (
+                    <Select.Item key={item.value} item={item}>
+                      {item.label}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Positioner>
+            </Select.Root>
+
+            {/* Session filter */}
+            <Select.Root
+              collection={sessionCollection}
+              value={[session]}
+              onValueChange={(e) => setSession(e.value[0])}
+              size="md"
+              width="160px"
+            >
+              <Select.HiddenSelect />
+              <Select.Control>
+                <Select.Trigger>
+                  <Select.ValueText placeholder="All Sessions" />
+                </Select.Trigger>
+                <Select.IndicatorGroup>
+                  <Select.Indicator />
+                </Select.IndicatorGroup>
+              </Select.Control>
+              <Select.Positioner>
+                <Select.Content>
+                  {SESSION_OPTIONS.map((opt) => (
+                    <Select.Item key={opt} item={opt}>
+                      {opt === "All" ? "All Sessions" : opt}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Positioner>
             </Select.Root>
           </Flex>
         </Flex>
@@ -330,95 +305,95 @@ const Courses = () => {
           </Table.Root>
         </Table.ScrollArea>
 
-        {/* Pagination – always visible */}
-        <Flex
-          alignItems="center"
-          justifyContent="space-between"
-          bg="white"
-          rounded="md"
-          border="1px solid"
-          borderColor="border.muted"
-          p="4"
-          mt="4"
-          wrap="wrap"
-          gap="2"
-        >
-          <Text color="fg.muted">
-            Showing{" "}
-            <Text as="span" >
-              {filteredCourses.length === 0 ? 0 : startIndex + 1}-
-              {Math.min(endIndex, filteredCourses.length)}
-            </Text>{" "}
-            of <Text as="span">{filteredCourses.length}</Text> courses
-          </Text>
-          <Flex alignItems="center" gap="2">
-            <Button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1 || totalPages === 0}
-              size="sm"
-              variant="outline"
-              borderColor="border.muted"
-              bg="white"
-              color="fg.muted"
-              fontWeight="500"
-            >
-              Previous
-            </Button>
-
-            {totalPages === 0 ? (
+        {/* Pagination */}
+        {filteredCourses.length > 0 && (
+          <Flex
+            alignItems="center"
+            justifyContent="space-between"
+            bg="bg"
+            rounded="md"
+            border="1px solid"
+            borderColor="border.muted"
+            p="4"
+            mt="4"
+            wrap="wrap"
+            gap="2"
+          >
+            <Text fontSize="sm" color="fg.muted">
+              Showing{" "}
+              <Text as="span" fontWeight="semibold">
+                {filteredCourses.length === 0 ? 0 : startIndex + 1}-
+                {Math.min(endIndex, filteredCourses.length)}
+              </Text>{" "}
+              of <Text as="span" fontWeight="semibold">{filteredCourses.length}</Text> courses
+            </Text>
+            <Flex alignItems="center" gap="2">
               <Button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1 || totalPages === 0}
                 size="sm"
-                variant="solid"
-                bg="accent"
-                color="white"
-                minW="36px"
+                variant="outline"
+                borderColor="border.muted"
+                bg="white"
+                color="fg.muted"
               >
-                1
+                Previous
               </Button>
-            ) : (
-              Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                const isActive = currentPage === pageNum;
-                return (
-                  <Button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    size="sm"
-                    variant={isActive ? "solid" : "outline"}
-                    bg={isActive ? "#1D7AD9" : "white"}
-                    color={isActive ? "white" : "gray.700"}
-                    borderColor={isActive ? "transparent" : "gray.200"}
-                    fontWeight="medium"
-                    minW="36px"
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })
-            )}
 
-            <Button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              size="sm"
-              variant="outline"
-              borderColor="border.muted"
-              bg="white"
-              color="fg.muted"
-            >
-              Next
-            </Button>
+              {totalPages === 0 ? (
+                <Button
+                  size="sm"
+                  variant="solid"
+                  bg="accent.500"
+                  color="white"
+                  minW="36px"
+                >
+                  1
+                </Button>
+              ) : (
+                Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  const isActive = currentPage === pageNum;
+                  return (
+                    <Button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      size="sm"
+                      variant={isActive ? "solid" : "outline"}
+                      bg={isActive ? "accent.500" : "white"}
+                      color={isActive ? "white" : "fg.muted"}
+                      borderColor={isActive ? "transparent" : "border.muted"}
+                      minW="36px"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })
+              )}
+
+              <Button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                size="sm"
+                variant="outline"
+                borderColor="border.muted"
+                bg="white"
+                color="fg.muted"
+              >
+                Next
+              </Button>
+            </Flex>
           </Flex>
-        </Flex>
+        )}
       </Box>
     </Box>
   );

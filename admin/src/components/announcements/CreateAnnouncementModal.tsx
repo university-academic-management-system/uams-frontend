@@ -11,15 +11,9 @@ import {
     Textarea, 
     Box, 
     CloseButton,
-    createListCollection
+    createListCollection,
+    Select
 } from "@chakra-ui/react";
-import { 
-    SelectContent, 
-    SelectItem, 
-    SelectRoot, 
-    SelectTrigger, 
-    SelectValueText 
-} from "@components/ui/select";
 
 interface Props {
     isOpen: boolean;
@@ -117,24 +111,25 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                     <Field.Label fontWeight="bold" color="fg.subtle">
                                         Recipient(s) <Box as="span" color="red.500">*</Box>
                                     </Field.Label>
-                                    <SelectRoot
+                                    <Select.Root
                                         multiple
                                         collection={recipientCollection}
                                         value={selectedRecipients}
                                         onValueChange={(e) => setSelectedRecipients(e.value)}
                                         size="lg"
                                     >
-                                        <SelectTrigger>
-                                            <SelectValueText placeholder="Select Recipient(s)" />
-                                        </SelectTrigger>
-                                        <SelectContent>
+                                        <Select.Trigger>
+                                            <Select.ValueText placeholder="Select Recipient(s)" />
+                                        </Select.Trigger>
+                                        <Select.Content>
                                             {recipientCollection.items.map((item) => (
-                                                <SelectItem item={item} key={item.value}>
-                                                    {item.label}
-                                                </SelectItem>
+                                                <Select.Item item={item} key={item.value}>
+                                                    <Select.ItemText>{item.label}</Select.ItemText>
+                                                    <Select.ItemIndicator />
+                                                </Select.Item>
                                             ))}
-                                        </SelectContent>
-                                    </SelectRoot>
+                                        </Select.Content>
+                                    </Select.Root>
                                 </Field.Root>
 
                                 {/* Description Textarea */}

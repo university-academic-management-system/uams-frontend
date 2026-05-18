@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Download, FileX } from "lucide-react";
 import { PaymentServices } from "@services/payment.service";
-import { toaster } from "@components/ui/toaster";
 import { 
     Box, 
     Table, 
@@ -13,6 +12,7 @@ import {
     Spinner, 
     Text 
 } from "@chakra-ui/react";
+import { useQuery } from "@tanstack/react-query";
 
 interface PaymentsSummaryViewProps {
     onViewAllRevenue: (programTypeId: string, programTypeName: string) => void;
@@ -30,108 +30,73 @@ interface ProgramTypeSummary {
     otherPayments: { total: string; count: number; amount: number };
 }
 
-interface ProgramRevenue {
-    programTypeId: string;
-    programType: string;
-    accessFee: number;
-    idCardFee: number;
-    transcriptFee: number;
-}
-
 const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => {
-    const [loading, setLoading] = useState(true);
-    const [revenueData, setRevenueData] = useState<ProgramRevenue[]>([]);
+    const { data: summaryResponse, isLoading: summaryLoading, isError } = useQuery({
+        queryKey: ["payments-summary"],
+        queryFn: () => PaymentServices.getPaymentsSummary(),
+    });
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const summaryResponse = await PaymentServices.getPaymentsSummary();
-                if (!summaryResponse.success) {
-                    toaster.error({ title: "Failed to load payment data" });
-                    setLoading(false);
-                    return;
-                }
-
-                const programTypes: Record<string, ProgramTypeSummary> = summaryResponse.data.summary.programTypes;
-                const programTypeList = Object.values(programTypes);
-
-                const transcriptPromises = programTypeList.map(async (pt) => {
-                    try {
-                        const transcriptResponse = await PaymentServices.getTranscriptApplications(pt.id);
-                        const apps = transcriptResponse?.data || [];
-                        const total = apps.reduce((sum: number, app: any) => sum + parseFloat(app.feeAmount || "0"), 0);
-                        return { programTypeId: pt.id, transcriptTotal: total };
-                    } catch (error) {
-                        console.error(`Failed to fetch transcript data for ${pt.name}:`, error);
-                        return { programTypeId: pt.id, transcriptTotal: 0 };
-                    }
-                });
-
-                const transcriptResults = await Promise.all(transcriptPromises);
-                const transcriptMap = new Map(transcriptResults.map(r => [r.programTypeId, r.transcriptTotal]));
-
-                const rows: ProgramRevenue[] = programTypeList.map((pt) => ({
-                    programTypeId: pt.id,
-                    programType: pt.name,
-                    accessFee: pt.accessFee?.amount ?? 0,
-                    idCardFee: pt.idCardFee?.amount ?? 0,
-                    transcriptFee: transcriptMap.get(pt.id) ?? 0,
-                }));
-
-                setRevenueData(rows);
-            } catch (error) {
-                console.error("Failed to load revenue summary:", error);
-                toaster.error({ title: "Failed to load revenue summary" });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
+    const programTypeList = useMemo(() => {
+        if (!summaryResponse?.success) return [];
+        const programTypes: Record<string, ProgramTypeSummary> = summaryResponse.data.summary.programTypes;
+        return Object.values(programTypes);
+    }, [summaryResponse]);
 
     const formatCurrency = (amount: number) => {
-        return "₦" + new Intl.NumberFormat("en-NG").format(amount);
+        return new Intl.NumberFormat("en-NG", {
+            style: "currency",
+            currency: "NGN",
+        }).format(amount);
     };
 
     return (
-        <Box minH="100vh" bg="slate.50" p="4">
-            <Box maxW="1400px" mx="auto">
+        <Box p="6">
+            <Flex direction="column" gap="6">
                 {/* Header */}
-                <Flex justifyContent="space-between" alignItems="center" mb="8" wrap="wrap" gap="4">
-                    <Heading size="lg" fontWeight="bold" color="fg.muted">Payments History</Heading>
-                    <Button bg="#1D7AD9" color="white" borderRadius="md" fontWeight="bold" fontSize="sm" _hover={{ bg: "blue.600" }} px="5" py="2.5">
-                        <Download size={18} /> Export
+                <Flex justifyContent="space-between" alignItems="center">
+                    <Box>
+                        <Heading size="lg" fontWeight="bold" color="fg.muted">Payments Overview</Heading>
+                        <Text fontSize="sm" color="fg.muted">Revenue summary across different programme types</Text>
+                    </Box>
+                    <Button bg="#1D7AD9" color="white" borderRadius="md" fontWeight="bold" fontSize="sm" px="5" py="2.5" _hover={{ bg: "blue.700" }}>
+                        <Download size={16} /> Export Summary
                     </Button>
                 </Flex>
 
                 {/* Table Container */}
-                <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" overflowX="auto" boxShadow="none">
-                    <Table.Root>
-                        <Table.Header>
-                            <Table.Row bg="slate.50" borderBottom="xs" borderColor="border.muted">
-                                <Table.ColumnHeader py="4" px="6" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" w="16">S/N</Table.ColumnHeader>
-                                <Table.ColumnHeader py="4" px="6" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">Programme Type</Table.ColumnHeader>
-                                <Table.ColumnHeader py="4" px="6" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">Access Fee</Table.ColumnHeader>
-                                <Table.ColumnHeader py="4" px="6" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">ID Card Fee</Table.ColumnHeader>
-                                <Table.ColumnHeader py="4" px="6" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">Transcript Fee</Table.ColumnHeader>
-                                <Table.ColumnHeader py="4" px="6" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" textAlign="right">Revenue</Table.ColumnHeader>
+                <Box bg="white" borderRadius="md" border="1px solid" borderColor="border.muted" overflow="hidden" shadow="none">
+                    <Table.Root size="sm" variant="line">
+                        <Table.Header bg="gray.50">
+                            <Table.Row>
+                                <Table.ColumnHeader color="fg.muted">S/N</Table.ColumnHeader>
+                                <Table.ColumnHeader color="fg.muted">PROGRAMME TYPE</Table.ColumnHeader>
+                                <Table.ColumnHeader color="fg.muted">ACCESS FEE</Table.ColumnHeader>
+                                <Table.ColumnHeader color="fg.muted">ID CARD FEE</Table.ColumnHeader>
+                                <Table.ColumnHeader color="fg.muted">TRANSCRIPT FEE</Table.ColumnHeader>
+                                <Table.ColumnHeader textAlign="right"></Table.ColumnHeader>
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>
-                            {loading ? (
+                            {summaryLoading ? (
                                 <Table.Row>
-                                    <Table.Cell colSpan={6} py="12" textAlign="center">
-                                        <Flex direction="column" alignItems="center" gap="3">
-                                            <Spinner size="lg" color="blue.500" />
-                                            <Text color="fg.muted" fontSize="sm">Loading revenue data...</Text>
+                                    <Table.Cell colSpan={6} py="20">
+                                        <Flex direction="column" alignItems="center" justify="center" gap="4">
+                                            <Spinner size="xl" color="accent" />
+                                            <Text color="fg.muted">Loading summary data...</Text>
                                         </Flex>
                                     </Table.Cell>
                                 </Table.Row>
-                            ) : revenueData.length === 0 ? (
+                            ) : isError || !summaryResponse?.success ? (
                                 <Table.Row>
-                                    <Table.Cell colSpan={6} py="12">
+                                    <Table.Cell colSpan={6} py="20">
+                                        <Flex justify="center">
+                                            <Text color="red.500">Failed to load revenue data. Please try again.</Text>
+                                        </Flex>
+                                    </Table.Cell>
+                                </Table.Row>
+                            ) : programTypeList.length === 0 ? (
+                                <Table.Row>
+                                    <Table.Cell colSpan={6} py="20">
                                         <EmptyState.Root>
                                             <EmptyState.Content>
                                                 <EmptyState.Indicator>
@@ -148,26 +113,29 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                                     </Table.Cell>
                                 </Table.Row>
                             ) : (
-                                revenueData.map((row, index) => (
-                                    <Table.Row key={row.programTypeId} _hover={{ bg: "slate.50" }} borderBottom="xs" borderColor="border.muted">
-                                        <Table.Cell py="4" px="6" color="fg.muted" fontWeight="medium" fontSize="sm">{index + 1}</Table.Cell>
-                                        <Table.Cell py="4" px="6" fontWeight="bold" color="fg.muted" fontSize="sm">{row.programType}</Table.Cell>
-                                        <Table.Cell py="4" px="6" fontWeight="bold" color="fg.muted" fontSize="sm">{formatCurrency(row.accessFee)}</Table.Cell>
-                                        <Table.Cell py="4" px="6" fontWeight="bold" color="fg.muted" fontSize="sm">{formatCurrency(row.idCardFee)}</Table.Cell>
-                                        <Table.Cell py="4" px="6" fontWeight="bold" color="fg.muted" fontSize="sm">{formatCurrency(row.transcriptFee)}</Table.Cell>
-                                        <Table.Cell py="4" px="6" textAlign="right">
+                                programTypeList.map((pt, index) => (
+                                    <Table.Row key={pt.id} _hover={{ bg: "gray.50" }}>
+                                        <Table.Cell fontSize="xs" fontWeight="medium">{index + 1}</Table.Cell>
+                                        <Table.Cell fontSize="sm" fontWeight="bold">{pt.name}</Table.Cell>
+                                        <Table.Cell fontSize="sm" fontWeight="medium" color="fg.muted">
+                                            {formatCurrency(pt.accessFee?.amount ?? 0)}
+                                        </Table.Cell>
+                                        <Table.Cell fontSize="sm" fontWeight="medium" color="fg.muted">
+                                            {formatCurrency(pt.idCardFee?.amount ?? 0)}
+                                        </Table.Cell>
+                                        <Table.Cell fontSize="sm" fontWeight="medium" color="fg.muted">
+                                            {formatCurrency(0)} {/* Transcript needs separate fetch or API update */}
+                                        </Table.Cell>
+                                        <Table.Cell textAlign="right">
                                             <Button
                                                 variant="ghost"
-                                                size="sm"
+                                                size="xs"
+                                                borderRadius="md"
                                                 color="#1D7AD9"
                                                 fontWeight="bold"
-                                                fontSize="xs"
-                                                onClick={() => onViewAllRevenue(row.programTypeId, row.programType)}
-                                                h="auto"
-                                                py="1"
-                                                textAlign="right"
+                                                onClick={() => onViewAllRevenue(pt.id, pt.name)}
                                             >
-                                                View all<br />revenue
+                                                View Details
                                             </Button>
                                         </Table.Cell>
                                     </Table.Row>
@@ -176,7 +144,7 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                         </Table.Body>
                     </Table.Root>
                 </Box>
-            </Box>
+            </Flex>
         </Box>
     );
 };

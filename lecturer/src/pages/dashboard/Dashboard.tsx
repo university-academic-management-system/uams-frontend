@@ -11,6 +11,8 @@ import StatCard from "@components/shared/StatCard";
 import TimetablePanel from "@components/shared/TimetablePanel";
 import { useNavigate } from "react-router";
 import useAuthStore from "@stores/auth.store";
+import { StudentHook } from "@hooks/student.hook";
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -20,18 +22,18 @@ const Dashboard = () => {
   const { data: allCourses = [], isLoading: isCoursesLoading, error: coursesError } =
     CourseHook.useAllCourses();
 
+  const { data: students = [], isLoading: isStudentsLoading } = StudentHook.useStudents();
+
   // Role check for showing Total Students stat card
   const role = user?.role;
-  const isEligible = role === "HOD" || role === "ERO";
+  const isEligible = role === "HOD" || role === "ERO" || role === "ADMIN";
 
-  const currentSession = user?.currentSession ?? "N/A";
-  const currentSemester = user?.currentSemester ?? "N/A";
+  const currentSession = user?.currentSession || "N/A";
+  const currentSemester = user?.currentSemester || "N/A";
   const displayName = user?.name || "User";
 
   const totalCourses = isCoursesLoading ? 0 : coursesError ? 0 : allCourses.length;
-
-  // Placeholder – replace with real endpoint when available
-  const totalStudents = 0; // TODO: fetch from /students/total
+  const totalStudents = isStudentsLoading ? 0 : students.length;
 
   return (
     <Flex gap="10" h="100%" direction="column">
@@ -43,9 +45,6 @@ const Dashboard = () => {
               {displayName},
             </Text>
           </Heading>
-          <Text color="fg.subtle" fontSize="15px">
-            Welcome back
-          </Text>
         </Box>
 
         {/* Four stat cards */}
@@ -61,7 +60,7 @@ const Dashboard = () => {
           <Box mb="8" width="100%">
             <StatCard label="Total Students" value={totalStudents} />
           </Box>
-        )}
+       )}
 
         {/* Timetable section */}
         <Box
@@ -72,22 +71,12 @@ const Dashboard = () => {
           border="1px solid"
           borderColor="border.muted"
         >
-          <Flex align="center" justify="space-between" mb="4">
-            <Heading color="fg.muted">Timetable</Heading>
-            <Button
-              bg="accent.500"
-              variant="solid"
-              size="sm"
-              onClick={() => navigate("/timetable")}
-            >
-              View Full Timetable
-            </Button>
-          </Flex>
 
           <Box maxH="300px" overflowY="auto">
             <TimetablePanel
               selectedFilter={timetableFilter}
               onFilterChange={setTimetableFilter}
+              onViewFullTimetable={() => navigate("/timetable")}
             />
           </Box>
         </Box>

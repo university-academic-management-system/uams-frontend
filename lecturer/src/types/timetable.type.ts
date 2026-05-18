@@ -7,9 +7,12 @@ export type DayOfWeek =
   | "SATURDAY" 
   | "SUNDAY";
 
-export type Semester = "FIRST" | "SECOND";
+export type Semester = "FIRST" | "SECOND" | "THIRD";
 
-export type Level = "L100" | "L200" | "L300" | "L400" | "L500" | "MSC" | "PHD";
+export type Level = "L100" | "L200" | "L300" | "L400" | "L500" | "GRADUATED" | "WITHDRAWN";
+
+export const SEMESTERS: Semester[] = ["FIRST", "SECOND", "THIRD"];
+export const LEVELS: Level[] = ["L100", "L200", "L300", "L400", "L500", "GRADUATED", "WITHDRAWN"];
 
 export interface TimetableEntry {
   id: string;

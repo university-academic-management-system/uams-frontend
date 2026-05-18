@@ -1,60 +1,62 @@
-export interface Student {
-    id: string;
-    studentId: string;
-    registrationNo: string;
-    matricNumber: string;
-    fullName?: string;
-    name?: string; // from /project-supervisor/final-year-unassigned
-    lastName?: string;
-    otherNames?: string;
-    email: string;
-    phone?: string | null;
-    gender?: string | null;
-    dateOfBirth?: string | null;
-    admissionMode?: string;
-    entryYear?: string | null;
-    entryQualification?: string;
-    admissionDate?: string | null;
-    sponsorship?: string | null;
-    level?: string | { // can be just string from new endpoint
-        id: string;
-        name: string;
-        code: string;
-        duration: number;
-    };
-    programDuration?: number; // from new endpoint
-    department: {
-        id: string;
-        name: string;
-        code: string;
-        faculty: {
-            id: string;
-            name: string;
-            code: string;
-        };
-    };
-    program: {
-        id: string;
-        name: string;
-        code: string;
-        duration: number;
-    };
-    courses: {
-        id: string,
-        code: string,
-        title: string,
-        registrationId: string,
-        semesterId: string,
-    };
-    totalCourses: number;
-    currentGPA: string;
-    totalCreditsEarned: number;
-    academicStanding: string;
+// @type/student.type.ts
+
+export type StudentLevel = 
+  | "L100" | "L200" | "L300" | "L400" 
+  | "L500" | "L600" | "L700" | "L800";
+
+export const STUDENT_LEVELS: StudentLevel[] = ["L100", "L200", "L300", "L400", "L500", "L600", "L700", "L800"];
+
+export type RegistrationStatus = "PENDING" | "REGISTERED" | "INCOMPLETE" | "CLEARED";
+export type AcademicStanding = "GOOD_STANDING" | "PROBATION" | "SUSPENDED" | "WARNING" | "WITHDRAWN";
+
+export interface StudentProfile {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  otherName: string;
+  matricNumber: string;
+  registrationNo: string;
+  phone: string;
+  level: StudentLevel;
+  admissionYear: number;
+  admissionSession: string;
+  currentSession: string;
+  registrationStatus: RegistrationStatus;
+  academicStanding: AcademicStanding;
+  totalCreditsEarned: number;
+  totalCreditsAttempted: number;
+  cgpa: number;
+  gpa: number;
+  sgpa: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface StudentFilters {
-    level: string;
-    page: number;
-    limit: number;
-    search?: string;
+export interface Student {
+  id: string;              
+  email: string;
+  role: string;              
+  status: string;           
+  studentProfile: StudentProfile;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface ApiResponse<T> {
+  status: "success" | "error";
+  message: string;
+  data: T[];
+  pagination: PaginationMeta;
+}
+
+export type StudentsResponse = ApiResponse<Student>;

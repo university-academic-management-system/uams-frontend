@@ -18,6 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { TimetableHook } from "@hooks/timetable.hooks";
 import type { TimetableEntry } from "@type/timetable.type";
+import { LEVELS, SEMESTERS } from "@type/timetable.type";
 import { memo, useMemo, useState } from "react";
 import { LuCircleAlert, LuCalendarX } from "react-icons/lu";
 import useAuthStore from "@stores/auth.store";
@@ -29,19 +30,23 @@ const formatTime = (isoString: string) => {
 const levelOptions = createListCollection({
   items: [
     { label: "All Levels", value: "" },
-    { label: "L100", value: "L100" },
-    { label: "L200", value: "L200" },
-    { label: "L300", value: "L300" },
-    { label: "L400", value: "L400" },
-    { label: "L500", value: "L500" },
+    ...LEVELS.map((level) => ({ label: level, value: level })),
   ],
 });
+
+const semesterLabels: Record<string, string> = {
+  FIRST: "First Semester",
+  SECOND: "Second Semester",
+  THIRD: "Third Semester",
+};
 
 const semesterOptions = createListCollection({
   items: [
     { label: "All Semesters", value: "" },
-    { label: "First Semester", value: "FIRST" },
-    { label: "Second Semester", value: "SECOND" },
+    ...SEMESTERS.map((semester) => ({
+      label: semesterLabels[semester] || semester,
+      value: semester,
+    })),
   ],
 });
 
@@ -58,14 +63,19 @@ const Timetable = () => {
   const [selectedSession, setSelectedSession] = useState("");
 
   const sessionOptions = useMemo(() => {
-    const uniqueSessions = Array.from(new Set(timetables.map((t: TimetableEntry) => t.session))).filter(Boolean);
+    const currentYear = new Date().getFullYear();
+    const startYear = 1999;
+    const sessions = [];
+    for (let year = currentYear; year >= startYear; year--) {
+      sessions.push(`${year}/${year + 1}`);
+    }
     return createListCollection({
       items: [
         { label: "All Sessions", value: "" },
-        ...uniqueSessions.map((s) => ({ label: s as string, value: s as string })),
+        ...sessions.map((s) => ({ label: s, value: s })),
       ],
     });
-  }, [timetables]);
+  }, []);
 
   const filteredTimetables = useMemo(() => {
     let filtered = timetables;
@@ -116,7 +126,7 @@ const Timetable = () => {
       <Heading>Timetable</Heading>
 
       <Box bg="bg" rounded="md" p="4">
-        <HStack gap="4" mb="4">
+        <HStack gap="4" mb="4" justify="flex-end">
           <Select.Root
             collection={sessionOptions}
             value={[selectedSession]}
