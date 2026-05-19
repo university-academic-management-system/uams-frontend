@@ -61,7 +61,7 @@ const ProgramTypeTab = () => {
       const list = Array.isArray(data) ? data : (data as any)?.data || [];
       setProgramTypes(list);
     } catch (err) {
-      toaster.error({ title: "Failed to load program types" });
+      // Error toast handled by axios interceptor
     } finally {
       setIsLoading(false);
     }
@@ -99,9 +99,7 @@ const ProgramTypeTab = () => {
       setIsCreating(false);
       await fetchProgramTypes();
     } catch (error: any) {
-      toaster.error({
-        title: error.response?.data?.message || "Failed to create program type",
-      });
+      // Error toast handled by axios interceptor
     } finally {
       setIsSaving(false);
     }
@@ -121,9 +119,7 @@ const ProgramTypeTab = () => {
       handleCancel();
       await fetchProgramTypes();
     } catch (error: any) {
-      toaster.error({
-        title: error.response?.data?.message || "Failed to update",
-      });
+      // Error toast handled by axios interceptor
     } finally {
       setIsSaving(false);
     }
@@ -136,7 +132,7 @@ const ProgramTypeTab = () => {
         toaster.success({ title: "Program type deleted" });
         await fetchProgramTypes();
       } catch (err) {
-        toaster.error({ title: "Failed to delete" });
+        // Error toast handled by axios interceptor
       }
     }
   }, [fetchProgramTypes]);
@@ -172,7 +168,7 @@ const ProgramTypeTab = () => {
         setSelectedIds([]);
         await fetchProgramTypes();
       } catch (err) {
-        toaster.error({ title: "Failed to delete some program types" });
+        // Error toast handled by axios interceptor
       }
     }
   }, [selectedIds, fetchProgramTypes]);

@@ -38,7 +38,7 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
             setPrograms(progList);
             setProgramTypes(typeList);
         } catch (err) {
-            toaster.error({ title: "Failed to load programs" });
+            // Error toast handled by axios interceptor
         } finally {
             setIsLoading(false);
         }
@@ -52,7 +52,7 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
             await fetchPrograms();
             navigate("/program-courses/programs");
         } catch (error: any) {
-            toaster.error({ title: error.response?.data?.message || "Failed to create program" });
+            // Error toast handled by axios interceptor
         } finally {
             setIsSaving(false);
         }
@@ -65,7 +65,7 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
                 toaster.success({ title: "Program deleted" });
                 await fetchPrograms();
             } catch (err: any) {
-                toaster.error({ title: "Failed to delete" });
+                // Error toast handled by axios interceptor
             }
         }
     };
@@ -87,7 +87,7 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
                 setSelectedIds([]);
                 await fetchPrograms();
             } catch (err) {
-                toaster.error({ title: "Failed to delete some programs" });
+                // Error toast handled by axios interceptor
             }
         }
     };

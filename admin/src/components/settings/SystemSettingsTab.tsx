@@ -92,7 +92,7 @@ const SystemSettingsTab = () => {
       await fetchSettings();
     } catch (err) {
       console.error("Failed to update system settings", err);
-      toaster.error({ title: "Failed to update system settings" });
+      // Error toast handled by axios interceptor
     } finally {
       setIsSaving(false);
     }

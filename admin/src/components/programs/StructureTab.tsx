@@ -77,7 +77,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
         const list = Array.isArray(sessionsData) ? sessionsData : (sessionsData as any)?.data || (sessionsData as any)?.sessions || [];
         setSessions(list);
       } catch (err) {
-        toaster.error({ title: "Failed to load sessions" });
+        // Error toast handled by axios interceptor
       } finally {
         setIsLoading(false);
       }
@@ -139,7 +139,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
       setSessions(Array.isArray(updated) ? updated : []);
       navigate("/program-courses");
     } catch (error: any) {
-      toaster.error({ title: error.response?.data?.message || "Failed to save session" });
+      // Error toast handled by axios interceptor
     } finally {
       setIsSaving(false);
     }
@@ -153,7 +153,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
         const updated = await AcademicServices.getSessions();
         setSessions(Array.isArray(updated) ? updated : []);
       } catch (error: any) {
-        toaster.error({ title: error.response?.data?.message || "Failed to delete session" });
+        // Error toast handled by axios interceptor
       }
     }
   };
@@ -168,7 +168,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
         const updated = await AcademicServices.getSessions();
         setSessions(Array.isArray(updated) ? updated : []);
       } catch (err) {
-        toaster.error({ title: "Failed to delete some sessions" });
+        // Error toast handled by axios interceptor
       }
     }
   };

@@ -214,7 +214,7 @@ const CoursesTab = () => {
         setSelectedIds([]);
         queryClient.invalidateQueries({ queryKey: ["courses"] });
       } catch (err) {
-        toaster.error({ title: "Failed to delete some courses" });
+        // Error toast handled by axios interceptor
       }
     }
   }, [selectedIds, queryClient]);

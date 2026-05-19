@@ -27,7 +27,7 @@ const AcademicSettingsTab = () => {
             toaster.success({ title: "Program Type created successfully" });
             handleCancel();
         } catch (error: any) {
-            toaster.error({ title: error.response?.data?.message || "Failed to create program type" });
+            // Error toast handled by axios interceptor
         } finally {
             setIsSaving(false);
         }

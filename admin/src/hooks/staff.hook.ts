@@ -36,8 +36,8 @@ export const StaffHook = {
                 queryClient.invalidateQueries({ queryKey: ["staff"] });
                 toaster.success({ title: "Lecturer added successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to add lecturer" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -51,8 +51,8 @@ export const StaffHook = {
                 queryClient.invalidateQueries({ queryKey: ["staff"] });
                 toaster.success({ title: "Lecturer updated successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to update lecturer" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -65,8 +65,8 @@ export const StaffHook = {
                 queryClient.invalidateQueries({ queryKey: ["staff"] });
                 toaster.success({ title: "Lecturer deleted successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to delete lecturer" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -79,8 +79,8 @@ export const StaffHook = {
                 queryClient.invalidateQueries({ queryKey: ["staff"] });
                 toaster.success({ title: "Selected lecturers deleted successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to delete selected lecturers" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -93,8 +93,8 @@ export const StaffHook = {
                 queryClient.invalidateQueries({ queryKey: ["staff"] });
                 toaster.success({ title: "Lecturers uploaded successfully!" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to upload lecturers" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -108,8 +108,8 @@ export const StaffHook = {
                 queryClient.invalidateQueries({ queryKey: ["staff"] });
                 toaster.success({ title: "Course assigned successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to assign course" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },

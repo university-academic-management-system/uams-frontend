@@ -372,7 +372,7 @@ const TimetableUploadDialog = () => {
                 qc.invalidateQueries({ queryKey: ["timetables"] });
             },
             onError() {
-                toaster.error({ description: "Failed to upload timetable" });
+                // Error toast handled by axios interceptor
             }
         });
     }, [file, uploadTimetable, isValid, qc]);

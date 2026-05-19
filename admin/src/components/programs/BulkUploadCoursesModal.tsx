@@ -31,7 +31,7 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
             });
             return response.data;
         } catch (err) {
-            toaster.error({ title: "Failed to download sample file" });
+            // Error toast handled by axios interceptor
             throw err;
         }
     };

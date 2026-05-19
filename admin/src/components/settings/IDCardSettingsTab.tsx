@@ -79,7 +79,7 @@ const IDCardSettingsTab = () => {
             }
         } catch (err) {
             console.error("Failed to fetch ID card templates", err);
-            toaster.error({ title: "Failed to load ID card templates" });
+            // Error toast handled by axios interceptor
         } finally {
             setIsLoading(false);
         }
@@ -115,7 +115,7 @@ const IDCardSettingsTab = () => {
             if (templateId === id) handleCreateNew();
             await fetchSettings();
         } catch (err: any) {
-            toaster.error({ title: err.response?.data?.message || "Failed to delete template" });
+            // Error toast handled by axios interceptor
         } finally {
             setTemplateToDelete(null);
         }
@@ -127,7 +127,7 @@ const IDCardSettingsTab = () => {
             toaster.success({ title: "Template set as default" });
             await fetchSettings();
         } catch (err: any) {
-            toaster.error({ title: err.response?.data?.message || "Failed to set template as default" });
+            // Error toast handled by axios interceptor
         }
     };
 
@@ -205,7 +205,7 @@ const IDCardSettingsTab = () => {
             setIsFormVisible(false);
             await fetchSettings();
         } catch (err: any) {
-            toaster.error({ title: err.response?.data?.message || "Failed to update settings" });
+            // Error toast handled by axios interceptor
         } finally {
             setIsSaving(false);
         }

@@ -64,7 +64,7 @@ const PaymentSettingsTab = () => {
       return data;
     } catch (error) {
       console.error("Failed to fetch credentials:", error);
-      toaster.error({ title: "Failed to fetch credentials" });
+      // Error toast handled by axios interceptor
       return null;
     }
   }, [activeProgramType.id]); 
@@ -159,7 +159,7 @@ const PaymentSettingsTab = () => {
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save payment config:", error);
-      toaster.error({ title: "Failed to save payment config" });
+      // Error toast handled by axios interceptor
     } finally {
       setIsSaving(false);
     }
