@@ -44,8 +44,9 @@ const SystemSettingsTab = () => {
     setValue,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<SystemSettingsData>({
+    mode: "onChange",
     resolver: zodResolver(systemSettingsSchema),
     defaultValues: {
       caPercentage: 30,
@@ -91,7 +92,7 @@ const SystemSettingsTab = () => {
       await fetchSettings();
     } catch (err) {
       console.error("Failed to update system settings", err);
-      toaster.error({ title: "Failed to update system settings" });
+      // Error toast handled by axios interceptor
     } finally {
       setIsSaving(false);
     }
@@ -149,7 +150,7 @@ const SystemSettingsTab = () => {
   };
 
   return (
-    <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" p={{ base: "6", md: "10" }}>
+    <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" p={{ base: "6", md: "10" }} colorPalette="accent">
       <form onSubmit={handleSubmit(onSubmit)}>
         <Flex justifyContent="space-between" alignItems="center" mb="8">
           <Flex alignItems="center" gap="3">
@@ -168,6 +169,7 @@ const SystemSettingsTab = () => {
             variant={isEditing ? "solid" : "subtle"}
             loading={isSaving}
             loadingText="Saving..."
+            disabled={isEditing ? (!isValid || isSaving) : false}
           >
             {isEditing ? "Save Changes" : "Edit Configuration"}
           </Button>
@@ -251,6 +253,7 @@ const SystemSettingsTab = () => {
               colorPalette="accent"
               loading={isSaving}
               loadingText="Saving..."
+              disabled={!isValid || isSaving}
             >
               Save Changes
             </Button>

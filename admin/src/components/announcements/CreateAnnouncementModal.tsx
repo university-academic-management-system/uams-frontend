@@ -68,7 +68,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
             setSelectedRecipients([]);
         } catch (error) {
             console.error("Failed to create announcement:", error);
-            toaster.error({ title: "Failed to create announcement" });
+            // Error toast handled by axios interceptor
         } finally {
             setLoading(false);
         }
@@ -79,11 +79,12 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
             open={isOpen} 
             onOpenChange={(e) => !e.open && onClose()}
             size="lg"
+            placement="center" closeOnInteractOutside={false}
         >
             <Portal>
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
-                    <Dialog.Content rounded="md">
+                    <Dialog.Content rounded="md" colorPalette="accent">
                         <Dialog.Header borderBottom="1px solid" borderColor="border.muted" py="6" px="8">
                             <Dialog.Title color="accent" fontWeight="bold">
                                 Create New Announcement
@@ -122,12 +123,18 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                             <Select.ValueText placeholder="Select Recipient(s)" />
                                         </Select.Trigger>
                                         <Select.Content>
-                                            {recipientCollection.items.map((item) => (
-                                                <Select.Item item={item} key={item.value}>
-                                                    <Select.ItemText>{item.label}</Select.ItemText>
-                                                    <Select.ItemIndicator />
-                                                </Select.Item>
-                                            ))}
+                                            {recipientCollection.items.length === 0 ? (
+                                                <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                    No options available
+                                                </Box>
+                                            ) : (
+                                                recipientCollection.items.map((item) => (
+                                                    <Select.Item item={item} key={item.value}>
+                                                        <Select.ItemText>{item.label}</Select.ItemText>
+                                                        <Select.ItemIndicator />
+                                                    </Select.Item>
+                                                ))
+                                            )}
                                         </Select.Content>
                                     </Select.Root>
                                 </Field.Root>
@@ -165,7 +172,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                 size="xl"
                                 px="8"
                                 loading={loading}
-                                disabled={loading || !title || !description || selectedRecipients.length === 0}
+                                disabled={loading || !title.trim() || !description.trim() || selectedRecipients.length === 0}
                                 onClick={handleSubmit}
                             >
                                 Create Announcement

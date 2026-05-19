@@ -58,7 +58,7 @@ const StudentsTable = ({ students, isLoading, error }: StudentsTableProps) => {
             bg="white"
             maxW="calc(100vw - 260px - 48px)"
         >
-            <Table.Root size="sm" variant="line" css={{ tableLayout: "auto" }}>
+            <Table.Root size="lg" variant="outline" css={{ tableLayout: "auto" }}>
                 <Table.Header>
                     <Table.Row bg="gray.50">
                         {COLUMNS.map((col, i) => (

@@ -140,7 +140,7 @@ const StudentsPage = () => {
             window.URL.revokeObjectURL(url);
             toaster.success({ title: "Download started" });
         } catch {
-            toaster.error({ title: "Failed to download" });
+            // Error toast handled by axios interceptor
         }
     };
 

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { X, Upload, FileUp } from "lucide-react";
 import { toaster } from "@components/ui/toaster";
-import { Box, Flex, Text, Spinner, Dialog, Button } from "@chakra-ui/react";
+import { Box, Flex, Text, Dialog, Button } from "@chakra-ui/react";
 import { StaffHook } from "@hooks/staff.hook";
 
 interface Props {
@@ -42,10 +42,10 @@ const BulkUploadStaffModal = ({ isOpen, onClose, onUploaded }: Props) => {
     };
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) handleClose() }}>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) handleClose() }} placement="center" closeOnInteractOutside={false}>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content bg="white" borderRadius="md" shadow="none" w="full" maxW="lg" position="relative">
+                <Dialog.Content bg="white" borderRadius="md" shadow="none" w="full" maxW="lg" position="relative" colorPalette="accent">
                     {/* Header */}
                     <Box p="6" borderBottom="xs" borderColor="border.muted">
                         <Dialog.CloseTrigger asChild>
@@ -100,11 +100,10 @@ const BulkUploadStaffModal = ({ isOpen, onClose, onUploaded }: Props) => {
 
                     {/* Actions */}
                     <Flex p="6" borderTop="xs" borderColor="border.muted" justifyContent="flex-end" gap="3">
-                        <Button variant="subtle" onClick={handleClose} px="5" py="2.5" borderRadius="md" fontSize="sm" fontWeight="bold">Cancel</Button>
-                        <Flex as="button" onClick={handleUpload} px="5" py="2.5" borderRadius="md" fontSize="sm" fontWeight="bold" bg="#1D7AD9" color="white" cursor={(!file || uploadMutation.isPending) ? "not-allowed" : "pointer"} border="none" _hover={{ bg: (!file || uploadMutation.isPending) ? "#1D7AD9" : "blue.700" }} opacity={(!file || uploadMutation.isPending) ? 0.5 : 1} alignItems="center" gap="2">
-                            {uploadMutation.isPending && <Spinner size="sm" />}
-                            {uploadMutation.isPending ? "Uploading..." : "Upload"}
-                        </Flex>
+                        <Button variant="subtle" onClick={handleClose} size="xl" borderRadius="md">Cancel</Button>
+                        <Button onClick={handleUpload} size="xl" borderRadius="md" bg="#1D7AD9" color="white" cursor={(!file || uploadMutation.isPending) ? "not-allowed" : "pointer"} _hover={{ bg: (!file || uploadMutation.isPending) ? "#1D7AD9" : "blue.700" }} opacity={(!file || uploadMutation.isPending) ? 0.5 : 1} alignItems="center" gap="2" disabled={!file || uploadMutation.isPending} loading={uploadMutation.isPending}>
+                            Upload
+                        </Button>
                     </Flex>
                 </Dialog.Content>
             </Dialog.Positioner>

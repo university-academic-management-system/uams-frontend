@@ -11,7 +11,6 @@ import {
   VStack,
   DownloadTrigger,
   CloseButton,
-  Icon,
   FileUpload
 } from "@chakra-ui/react";
 import { CourseHook } from "@hooks/course.hook";
@@ -32,7 +31,7 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
             });
             return response.data;
         } catch (err) {
-            toaster.error({ title: "Failed to download sample file" });
+            // Error toast handled by axios interceptor
             throw err;
         }
     };
@@ -49,25 +48,22 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
 
 
     return (
-        <Dialog.Root size="lg" role="alertdialog" onExitComplete={() => setFile(null)}>
+        <Dialog.Root size="lg" role="alertdialog" onExitComplete={() => setFile(null)} placement="center" closeOnInteractOutside={false}>
             <Dialog.Trigger asChild>
                 {children}
             </Dialog.Trigger>
             <Portal>
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
-                    <Dialog.Content rounded="md" overflow="hidden">
+                    <Dialog.Content rounded="md" overflow="hidden" colorPalette="accent">
                         <Dialog.Header p="6" borderBottom="xs" borderColor="border.muted">
-                            <Flex alignItems="center" gap="3">
-                                <Icon bg="blue.50" p="2.5" rounded="lg" boxSize="10">
-                                    <Upload />
-                                </Icon>
-                                <Box>
+                            <Flex justifyContent="space-between" alignItems="start" w="full">
+                                <VStack align="start" gap={1}>
                                     <Dialog.Title fontSize="lg" fontWeight="bold" color="fg.muted">Bulk Upload Courses</Dialog.Title>
-                                    <Dialog.Description fontSize="sm" color="fg.muted" mt="1">
+                                    <Dialog.Description fontSize="sm" color="fg.muted">
                                         Upload an Excel file containing courses data.
                                     </Dialog.Description>
-                                </Box>
+                                </VStack>
                                 <Dialog.CloseTrigger asChild>
                                     <CloseButton />
                                 </Dialog.CloseTrigger>

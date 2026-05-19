@@ -19,7 +19,7 @@ import {
 import { TimetableHook } from "@hooks/timetable.hooks";
 import type { TimetableEntry } from "@type/timetable.type";
 import { LEVELS, SEMESTERS } from "@type/timetable.type";
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { LuCircleAlert, LuCalendarX } from "react-icons/lu";
 import useAuthStore from "@stores/auth.store";
 
@@ -41,26 +41,38 @@ const semesterLabels: Record<string, string> = {
 };
 
 const semesterOptions = createListCollection({
-  items: [
-    { label: "All Semesters", value: "" },
-    ...SEMESTERS.map((semester) => ({
-      label: semesterLabels[semester] || semester,
-      value: semester,
-    })),
-  ],
+  items: SEMESTERS.map((semester) => ({
+    label: semesterLabels[semester] || semester,
+    value: semester,
+  })),
 });
 
 const Timetable = () => {
   const { user } = useAuthStore();
 
-  const session = user?.currentSession;
-  const semester = user?.currentSemester;
-
-  const { data: timetables = [], isLoading, error } = TimetableHook.useTimetable({ session, semester });
+  const currentYear = new Date().getFullYear();
+  const fallbackSession = `${currentYear}/${currentYear + 1}`;
 
   const [selectedLevel, setSelectedLevel] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState("");
-  const [selectedSession, setSelectedSession] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState(user?.currentSemester || "FIRST");
+  const [selectedSession, setSelectedSession] = useState(user?.currentSession || fallbackSession);
+
+  // Synchronize state when user details load
+  useEffect(() => {
+    if (user?.currentSemester) {
+      setSelectedSemester(user.currentSemester);
+    }
+    if (user?.currentSession) {
+      setSelectedSession(user.currentSession);
+    }
+  }, [user]);
+
+  const { data: timetables = [], isLoading: isQueryLoading, error } = TimetableHook.useTimetable(
+    { session: selectedSession, semester: selectedSemester },
+    !!selectedSession && !!selectedSemester
+  );
+
+  const isLoading = isQueryLoading || !selectedSession || !selectedSemester;
 
   const sessionOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -70,10 +82,7 @@ const Timetable = () => {
       sessions.push(`${year}/${year + 1}`);
     }
     return createListCollection({
-      items: [
-        { label: "All Sessions", value: "" },
-        ...sessions.map((s) => ({ label: s, value: s })),
-      ],
+      items: sessions.map((s) => ({ label: s, value: s })),
     });
   }, []);
 
@@ -91,7 +100,7 @@ const Timetable = () => {
     return filtered;
   }, [timetables, selectedSession, selectedLevel, selectedSemester]);
 
-  
+
   if (isLoading) {
     return (
       <Center minH="100vh">
@@ -100,7 +109,7 @@ const Timetable = () => {
     );
   }
 
-  
+
   if (error) {
     return (
       <Center minH="100vh">
@@ -226,7 +235,7 @@ const Timetable = () => {
                 <Table.ColumnHeader>Level</Table.ColumnHeader>
                 <Table.ColumnHeader>Semester</Table.ColumnHeader>
                 <Table.ColumnHeader>Session</Table.ColumnHeader>
-                <Table.ColumnHeader>Course ID</Table.ColumnHeader>
+                <Table.ColumnHeader>Course Code</Table.ColumnHeader>
                 <Table.ColumnHeader>Actions</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
@@ -261,7 +270,7 @@ const Timetable = () => {
                     <Table.Cell>{item.level}</Table.Cell>
                     <Table.Cell>{item.semester}</Table.Cell>
                     <Table.Cell>{item.session}</Table.Cell>
-                    <Table.Cell>{item.courseId}</Table.Cell>
+                    <Table.Cell>{item.course.code}</Table.Cell>
                     <Table.Cell>
                       <DetailsDrawer item={item} />
                     </Table.Cell>
@@ -294,8 +303,8 @@ const DetailsDrawer = memo(({ item }: { item: TimetableEntry }) => {
             <Drawer.Body>
               <Stack gap="3">
                 <HStack>
-                  <Text fontWeight="bold">Course ID:</Text>
-                  <Text>{item.courseId}</Text>
+                  <Text fontWeight="bold">Course Code:</Text>
+                  <Text>{item.course.code}</Text>
                 </HStack>
                 <HStack>
                   <Text fontWeight="bold">Day:</Text>

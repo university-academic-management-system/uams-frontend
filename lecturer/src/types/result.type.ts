@@ -1,33 +1,61 @@
-export interface ResultFile {
-    filename: string;
-    fileSize: number;
-    mimeType: string;
-    downloadUrl: string;
-}
-export interface FinalResult {
-    id: string;
-    filename: string;
-    mimeType: string;
-    fileSize: number;
-    downloadUrl: string;
+// Common API response wrapper (adjust if your backend uses a different shape)
+export interface ApiResponse<T> {
+  status: string;       // "success" | "error"
+  message: string;
+  data: T;
 }
 
-export interface ResultResponse {
-    id: string;
-    isApproved: boolean;
-    semester: {
-        id: string;
-        name: string;
-    };
-    level: {
-        id: string;
-        name: string;
-    };
-    session: {
-        id: string;
-        name: string;
-        isActive: boolean;
-    };
-    file: ResultFile;
-    finalResult: FinalResult;
+// A single result upload record (pending or approved)
+export interface ResultUpload {
+  id: string;
+  courseId: string;
+  courseCode: string;
+  courseTitle: string;
+  session: string;          // e.g., "2024/2025"
+  semester: string;         // "FIRST" | "SECOND"
+  level: string;            // e.g., "100", "200"
+  uploaderId: string;
+  uploaderName: string;
+  status: "DRAFT" | "REJECTED" | "APPROVED";
+  rejectionReason?: string;
+  fileUrl?: string;         // available after final upload
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Response for endpoints that return a list of ResultUpload
+export type ResultUploadsResponse = ApiResponse<ResultUpload[]>;
+
+// Payload for uploading draft results (Lecturer)
+export interface UploadDraftPayload {
+  courseId: string;
+  session: string;
+  semester: string;
+  level: string;
+  file: File;
+}
+
+// Payload for rejecting draft results
+export interface RejectPayload {
+  reason: string;
+}
+
+
+export interface TranscriptResponse {
+  studentId: string;
+  studentName: string;
+  program: string;
+  sessionResults: Array<{
+    session: string;
+    semester: string;
+    gpa: number;
+    cgpa: number;
+    courses: Array<{
+      code: string;
+      title: string;
+      creditUnit: number;
+      grade: string;
+      gradePoint: number;
+    }>;
+  }>;
 }

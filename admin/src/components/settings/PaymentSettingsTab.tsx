@@ -11,6 +11,7 @@ import { Box, Button, Flex, Text, Field, Input, Stack } from "@chakra-ui/react";
 
 const usePaymentConfigForm = () => {
   return useForm<PaymentConfigData>({
+    mode: "onChange",
     resolver: zodResolver(paymentConfigSchema),
     defaultValues: {
       program_type_id: "",
@@ -63,7 +64,7 @@ const PaymentSettingsTab = () => {
       return data;
     } catch (error) {
       console.error("Failed to fetch credentials:", error);
-      toaster.error({ title: "Failed to fetch credentials" });
+      // Error toast handled by axios interceptor
       return null;
     }
   }, [activeProgramType.id]); 
@@ -158,7 +159,7 @@ const PaymentSettingsTab = () => {
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save payment config:", error);
-      toaster.error({ title: "Failed to save payment config" });
+      // Error toast handled by axios interceptor
     } finally {
       setIsSaving(false);
     }
@@ -167,7 +168,7 @@ const PaymentSettingsTab = () => {
 
 
   return (
-    <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" p={{ base: "6", md: "10" }}>
+    <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" p={{ base: "6", md: "10" }} colorPalette="accent">
       <Flex wrap="wrap" gap="4" justifyContent="space-between" alignItems="flex-start" mb="6">
         <Text fontSize="xl" fontWeight="bold">Payment Settings</Text>
         <Button 
@@ -384,7 +385,7 @@ const PaymentSettingsTab = () => {
           type="submit"
           loading={isSaving}
           loadingText="Saving..."
-          disabled={isSaving}
+          disabled={isSaving || !paymentConfigForm.formState.isValid}
           colorPalette="accent"
           mt="6"
         >

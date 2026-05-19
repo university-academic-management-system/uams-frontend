@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SessionSchema, type SessionFormData } from "@schemas/program.schema";
 import { useNavigate, useLocation, useParams } from "react-router";
 import { Download, Edit, Plus, Search, Trash2, X } from "lucide-react";
 import { AcademicServices } from "@services/academic.service";
@@ -18,6 +21,7 @@ import {
   Textarea,
   Checkbox,
   Table,
+  Field,
 } from "@chakra-ui/react";
 
 interface StructureTabProps {
@@ -52,13 +56,17 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    semesters: "2",
-    duration: "12 Months",
-    startDate: "",
-    description: "",
-    isActive: true,
+  const form = useForm<SessionFormData>({
+    mode: "onChange",
+    resolver: zodResolver(SessionSchema),
+    defaultValues: {
+      name: "",
+      semesters: "2",
+      duration: "12 Months",
+      startDate: "",
+      description: "",
+      isActive: true,
+    }
   });
 
   useEffect(() => {
@@ -69,7 +77,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
         const list = Array.isArray(sessionsData) ? sessionsData : (sessionsData as any)?.data || (sessionsData as any)?.sessions || [];
         setSessions(list);
       } catch (err) {
-        toaster.error({ title: "Failed to load sessions" });
+        // Error toast handled by axios interceptor
       } finally {
         setIsLoading(false);
       }
@@ -81,7 +89,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
     if (isEditingRoute && id && sessions.length > 0) {
       const sessionToEdit = sessions.find((s) => s.id === id);
       if (sessionToEdit) {
-        setFormData({
+        form.reset({
           name: sessionToEdit.name || "",
           semesters: sessionToEdit.semesterCount?.toString() || "2",
           duration: sessionToEdit.duration?.toString() || "12 Months",
@@ -91,11 +99,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
         });
       }
     }
-  }, [isEditingRoute, id, sessions]);
-
-  const handleFormChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, [isEditingRoute, id, sessions, form]);
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
@@ -105,22 +109,22 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
     setSelectedIds(selectedIds.length === sessions.length ? [] : sessions.map((s) => s.id));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (data: SessionFormData) => {
     try {
       setIsSaving(true);
-      const durationInt = parseInt(formData.duration) || 12;
-      const startDateObj = new Date(formData.startDate);
+      const durationInt = parseInt(data.duration) || 12;
+      const startDateObj = new Date(data.startDate);
       const endDateObj = new Date(startDateObj);
       endDateObj.setMonth(startDateObj.getMonth() + durationInt);
 
       const payload = {
-        name: formData.name,
+        name: data.name,
         duration: durationInt,
-        startDate: formData.startDate,
+        startDate: data.startDate,
         endDate: endDateObj.toISOString().split("T")[0],
-        semesterCount: Number(formData.semesters),
-        description: formData.description,
-        isActive: formData.isActive,
+        semesterCount: Number(data.semesters),
+        description: data.description,
+        isActive: data.isActive,
       };
 
       if (isEditingRoute && id) {
@@ -135,7 +139,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
       setSessions(Array.isArray(updated) ? updated : []);
       navigate("/program-courses");
     } catch (error: any) {
-      toaster.error({ title: error.response?.data?.message || "Failed to save session" });
+      // Error toast handled by axios interceptor
     } finally {
       setIsSaving(false);
     }
@@ -149,7 +153,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
         const updated = await AcademicServices.getSessions();
         setSessions(Array.isArray(updated) ? updated : []);
       } catch (error: any) {
-        toaster.error({ title: error.response?.data?.message || "Failed to delete session" });
+        // Error toast handled by axios interceptor
       }
     }
   };
@@ -164,7 +168,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
         const updated = await AcademicServices.getSessions();
         setSessions(Array.isArray(updated) ? updated : []);
       } catch (err) {
-        toaster.error({ title: "Failed to delete some sessions" });
+        // Error toast handled by axios interceptor
       }
     }
   };
@@ -181,164 +185,206 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
   // Create/Edit Form
   if (isCreatingRoute || isEditingRoute) {
     return (
-      <Box bg="white" borderRadius="md" p="8" border="xs" borderColor="border.muted">
+      <Box bg="white" borderRadius="md" p="8" border="xs" borderColor="border.muted" colorPalette="accent">
         <Text fontSize="xl" fontWeight="bold" color="fg.muted" mb="8">
           {isEditingRoute ? "Edit Session" : "Create Session"}
         </Text>
 
-        <Flex direction={{ base: "column", lg: "row" }} gap="8">
-          <Flex direction="column" gap="6" flex="1">
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" color="fg.muted" mb="2">Session Name</Text>
-              <Input
-                value={formData.name}
-                onChange={(e) => handleFormChange("name", e.target.value)}
-                placeholder="e.g. 2024/2025 Academic Session"
-                bg="slate.50"
-                border="xs"
-                borderColor="border.muted"
-                borderRadius="md"
-              />
-            </Box>
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" color="fg.muted" mb="2">Semesters</Text>
-              <Select.Root
-                collection={semesterCollection}
-                value={[formData.semesters]}
-                onValueChange={(e) => handleFormChange("semesters", e.value[0])}
-                size="sm"
-                width="full"
-              >
-                <Select.HiddenSelect />
-                <Select.Control>
-                  <Select.Trigger>
-                    <Select.ValueText placeholder="Select number of semesters" />
-                  </Select.Trigger>
-                  <Select.IndicatorGroup>
-                    <Select.Indicator />
-                  </Select.IndicatorGroup>
-                </Select.Control>
-                <Portal>
-                  <Select.Positioner>
-                    <Select.Content>
-                      {semesterCollection.items.map((item) => (
-                        <Select.Item key={item.value} item={item}>
-                          {item.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Positioner>
-                </Portal>
-              </Select.Root>
-            </Box>
-            <Box>
-              <Flex alignItems="center" gap="2">
-                <Checkbox.Root
-                  id="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(details) => setFormData({ ...formData, isActive: !!details.checked })}
-                >
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control>
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Label fontSize="sm" fontWeight="medium" color="fg.muted">
-                    Activate Session
-                  </Checkbox.Label>
-                </Checkbox.Root>
-              </Flex>
-            </Box>
-          </Flex>
-          <Flex direction="column" gap="6" flex="1">
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" color="fg.muted" mb="2">Duration</Text>
-              <Select.Root
-                collection={durationCollection}
-                value={[formData.duration]}
-                onValueChange={(e) => handleFormChange("duration", e.value[0])}
-                size="sm"
-                width="full"
-              >
-                <Select.HiddenSelect />
-                <Select.Control>
-                  <Select.Trigger>
-                    <Select.ValueText placeholder="Select duration" />
-                  </Select.Trigger>
-                  <Select.IndicatorGroup>
-                    <Select.Indicator />
-                  </Select.IndicatorGroup>
-                </Select.Control>
-                <Portal>
-                  <Select.Positioner>
-                    <Select.Content>
-                      {durationCollection.items.map((item) => (
-                        <Select.Item key={item.value} item={item}>
-                          {item.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Positioner>
-                </Portal>
-              </Select.Root>
-            </Box>
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" color="fg.muted" mb="2">Start Date</Text>
-              <Input
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => handleFormChange("startDate", e.target.value)}
-                bg="slate.50"
-                border="xs"
-                borderColor="border.muted"
-                borderRadius="md"
-              />
-            </Box>
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" color="fg.muted" mb="2">Description</Text>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => handleFormChange("description", e.target.value)}
-                rows={3}
-                bg="slate.50"
-                border="xs"
-                borderColor="border.muted"
-                borderRadius="md"
-              />
-            </Box>
-          </Flex>
-        </Flex>
+        <form onSubmit={form.handleSubmit(handleSave)}>
+          <Flex direction={{ base: "column", lg: "row" }} gap="8">
+            <Flex direction="column" gap="6" flex="1">
+              <Field.Root invalid={!!form.formState.errors.name}>
+                <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Session Name</Field.Label>
+                <Input
+                  {...form.register("name")}
+                  placeholder="e.g. 2024/2025 Academic Session"
+                  bg="slate.50"
+                  border="xs"
+                  borderColor="border.muted"
+                  borderRadius="md"
+                />
+                <Field.ErrorText>{form.formState.errors.name?.message}</Field.ErrorText>
+              </Field.Root>
 
-        <Flex justifyContent="flex-end" gap="3" mt="8">
-          <Button
-            onClick={() => navigate("/program-courses")}
-            px="8"
-            py="2.5"
-            borderRadius="md"
-            fontSize="sm"
-            fontWeight="medium"
-            variant="outline"
-            borderColor="border.muted"
-            color="fg.muted"
-            _hover={{ bg: "slate.50" }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            loading={isSaving}
-            loadingText="Saving..."
-            px="8"
-            py="2.5"
-            borderRadius="md"
-            fontSize="sm"
-            fontWeight="bold"
-            bg="#00B01D"
-            color="white"
-            _hover={{ bg: "green.700" }}
-          >
-            {isEditingRoute ? "Update Session" : "Create Session"}
-          </Button>
-        </Flex>
+              <Field.Root invalid={!!form.formState.errors.semesters}>
+                <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Semesters</Field.Label>
+                <Controller
+                  control={form.control}
+                  name="semesters"
+                  render={({ field }) => (
+                    <Select.Root
+                      collection={semesterCollection}
+                      value={field.value ? [field.value] : []}
+                      onValueChange={(e) => field.onChange(e.value[0])}
+                      size="sm"
+                      width="full"
+                    >
+                      <Select.HiddenSelect />
+                      <Select.Control>
+                        <Select.Trigger>
+                          <Select.ValueText placeholder="Select number of semesters" />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                          <Select.Indicator />
+                        </Select.IndicatorGroup>
+                      </Select.Control>
+                      <Portal>
+                        <Select.Positioner>
+                          <Select.Content>
+                            {semesterCollection.items.length === 0 ? (
+                              <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                No options available
+                              </Box>
+                            ) : (
+                              semesterCollection.items.map((item) => (
+                                <Select.Item key={item.value} item={item}>
+                                  <Select.ItemText>{item.label}</Select.ItemText>
+                                  <Select.ItemIndicator />
+                                </Select.Item>
+                              ))
+                            )}
+                          </Select.Content>
+                        </Select.Positioner>
+                      </Portal>
+                    </Select.Root>
+                  )}
+                />
+                <Field.ErrorText>{form.formState.errors.semesters?.message}</Field.ErrorText>
+              </Field.Root>
+
+              <Box>
+                <Flex alignItems="center" gap="2">
+                  <Controller
+                    control={form.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <Checkbox.Root
+                        id="isActive"
+                        checked={field.value}
+                        onCheckedChange={(details) => field.onChange(!!details.checked)}
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Checkbox.Label fontSize="sm" fontWeight="medium" color="fg.muted">
+                          Activate Session
+                        </Checkbox.Label>
+                      </Checkbox.Root>
+                    )}
+                  />
+                </Flex>
+              </Box>
+            </Flex>
+            <Flex direction="column" gap="6" flex="1">
+              <Field.Root invalid={!!form.formState.errors.duration}>
+                <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Duration</Field.Label>
+                <Controller
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <Select.Root
+                      collection={durationCollection}
+                      value={field.value ? [field.value] : []}
+                      onValueChange={(e) => field.onChange(e.value[0])}
+                      size="sm"
+                      width="full"
+                    >
+                      <Select.HiddenSelect />
+                      <Select.Control>
+                        <Select.Trigger>
+                          <Select.ValueText placeholder="Select duration" />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                          <Select.Indicator />
+                        </Select.IndicatorGroup>
+                      </Select.Control>
+                      <Portal>
+                        <Select.Positioner>
+                          <Select.Content>
+                            {durationCollection.items.length === 0 ? (
+                              <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                No options available
+                              </Box>
+                            ) : (
+                              durationCollection.items.map((item) => (
+                                <Select.Item key={item.value} item={item}>
+                                  <Select.ItemText>{item.label}</Select.ItemText>
+                                  <Select.ItemIndicator />
+                                </Select.Item>
+                              ))
+                            )}
+                          </Select.Content>
+                        </Select.Positioner>
+                      </Portal>
+                    </Select.Root>
+                  )}
+                />
+                <Field.ErrorText>{form.formState.errors.duration?.message}</Field.ErrorText>
+              </Field.Root>
+
+              <Field.Root invalid={!!form.formState.errors.startDate}>
+                <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Start Date</Field.Label>
+                <Input
+                  type="date"
+                  {...form.register("startDate")}
+                  bg="slate.50"
+                  border="xs"
+                  borderColor="border.muted"
+                  borderRadius="md"
+                />
+                <Field.ErrorText>{form.formState.errors.startDate?.message}</Field.ErrorText>
+              </Field.Root>
+
+              <Field.Root invalid={!!form.formState.errors.description}>
+                <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Description</Field.Label>
+                <Textarea
+                  {...form.register("description")}
+                  rows={3}
+                  bg="slate.50"
+                  border="xs"
+                  borderColor="border.muted"
+                  borderRadius="md"
+                />
+                <Field.ErrorText>{form.formState.errors.description?.message}</Field.ErrorText>
+              </Field.Root>
+            </Flex>
+          </Flex>
+
+          <Flex justifyContent="flex-end" gap="3" mt="8">
+            <Button
+              type="button"
+              onClick={() => navigate("/program-courses")}
+              px="8"
+              py="2.5"
+              borderRadius="md"
+              fontSize="sm"
+              fontWeight="medium"
+              variant="outline"
+              borderColor="border.muted"
+              color="fg.muted"
+              _hover={{ bg: "slate.50" }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              loading={isSaving}
+              loadingText="Saving..."
+              disabled={!form.formState.isValid || isSaving}
+              px="8"
+              py="2.5"
+              borderRadius="md"
+              fontSize="sm"
+              fontWeight="bold"
+              bg="#00B01D"
+              color="white"
+              _hover={{ bg: "green.700" }}
+            >
+              {isEditingRoute ? "Update Session" : "Create Session"}
+            </Button>
+          </Flex>
+        </form>
       </Box>
     );
   }

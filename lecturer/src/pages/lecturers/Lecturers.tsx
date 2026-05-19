@@ -10,13 +10,15 @@ import {
   InputGroup,
   Input,
   Table,
-  Button,
   Center,
   Spinner,
   EmptyState,
   VStack,
+  Pagination,
+  IconButton,
+  ButtonGroup,
 } from "@chakra-ui/react";
-import { LuCircleAlert, LuSearch, LuUsers } from "react-icons/lu";
+import { LuCircleAlert, LuSearch, LuUsers, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { StaffHook } from "@hooks/lecturer.hook";
 import type { Staff } from "@type/lecturer.type";
 
@@ -43,12 +45,12 @@ const Lecturers = () => {
   const { data: lecturers = [], isLoading, error } = StaffHook.useStaff();
 
   // Get unique roles from data
-  const uniqueRoles = useMemo(() => {
+  const uniqueRoles = useMemo<string[]>(() => {
     if (!lecturers.length) return [];
-    const roles = new Set(
+    const roles = new Set<string>(
       lecturers
-        .flatMap((l) => l.staffProfile?.staffRoles || [])
-        .filter((role) => role && role.trim() !== "")
+        .flatMap((l) => (l.staffProfile?.staffRoles || []) as string[])
+        .filter((role: string) => role && role.trim() !== "")
     );
     return Array.from(roles).sort();
   }, [lecturers]);
@@ -56,14 +58,14 @@ const Lecturers = () => {
   const roleCollection = useMemo(() => {
     if (uniqueRoles.length === 0) {
       return createListCollection({
-        items: [{ label: "No roles", value: "" }],
+        items: [{ label: "No roles", value: "" }] as { label: string; value: string; }[],
       });
     }
     return createListCollection({
       items: [
         { label: "All Roles", value: "" },
         ...uniqueRoles.map((role) => ({ label: role, value: role })),
-      ],
+      ] as { label: string; value: string; }[],
     });
   }, [uniqueRoles]);
 
@@ -93,7 +95,6 @@ const Lecturers = () => {
   }, [lecturers, debouncedSearch, roleFilter]);
 
   const totalCount = lecturers.length;
-  const totalPages = Math.ceil(filteredLecturers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedLecturers = filteredLecturers.slice(startIndex, endIndex);
@@ -109,16 +110,16 @@ const Lecturers = () => {
           ({filteredLecturers.length} / {totalCount})
         </Text>
       </Flex>
-       
-      <Box bg="bg" rounded="md" p="4">  
+
+      <Box bg="bg" rounded="md" p="4">
         {/* Filters – always visible */}
-        <Flex align="center" justify="flex-end" gap="3" mb="5" wrap="wrap" colorPalette={"accent"}>
+        <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette={"accent"}>
           <InputGroup startElement={<LuSearch />} width="260px">
             <Input
               placeholder="Search by Name, Email or Code"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              fontSize="xs"
+              size="lg"
             />
           </InputGroup>
 
@@ -126,8 +127,8 @@ const Lecturers = () => {
             collection={roleCollection}
             value={roleFilter ? [roleFilter] : []}
             onValueChange={(e) => setRoleFilter(e.value[0] || "")}
-            size="md"
-            width="140px"
+            size="lg"
+            width="180px"
           >
             <Select.HiddenSelect />
             <Select.Control>
@@ -154,7 +155,7 @@ const Lecturers = () => {
 
         {/* Table – header always visible */}
         <Table.ScrollArea>
-          <Table.Root size="sm" variant="outline">
+          <Table.Root size="lg" variant="outline">
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeader>Staff Number</Table.ColumnHeader>
@@ -222,7 +223,7 @@ const Lecturers = () => {
 
               {/* Data rows */}
               {!isLoading && !error && paginatedLecturers.length > 0 &&
-                paginatedLecturers.map((lecturer) => (
+                paginatedLecturers.map((lecturer: Staff) => (
                   <Table.Row key={lecturer.id}>
                     <Table.Cell>{lecturer.staffProfile?.staffNumber || "—"}</Table.Cell>
                     <Table.Cell>{`${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""} ${lecturer.staffProfile?.otherName || ""}`.trim() || "—"}</Table.Cell>
@@ -239,94 +240,43 @@ const Lecturers = () => {
           </Table.Root>
         </Table.ScrollArea>
 
-        {/* Pagination – hidden when no lecturers to show */}
-        {filteredLecturers.length > 0 && (
+    
+        {filteredLecturers.length >= 20 && (
           <Flex
             alignItems="center"
-            justifyContent="space-between"
-            bg="white"
-            rounded="md"
-            border="1px solid"
-            borderColor="border.muted"
-            p="4"
+            justifyContent="flex-end"
             mt="4"
-            wrap="wrap"
-            gap="2"
           >
-            <Text fontSize="sm" color="fg.muted">
-              Showing{" "}
-              <Text as="span">
-                {filteredLecturers.length === 0 ? 0 : startIndex + 1}-
-                {Math.min(endIndex, filteredLecturers.length)}
-              </Text>{" "}
-              of <Text as="span">{filteredLecturers.length}</Text> lecturers
-            </Text>
-            <Flex alignItems="center" gap="2">
-              <Button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1 || totalPages === 0}
-                size="sm"
-                variant="outline"
-                borderColor="border.muted"
-                bg="white"
-                color="fg.muted"
-              >
-                Previous
-              </Button>
+            <Pagination.Root
+              count={filteredLecturers.length}
+              pageSize={ITEMS_PER_PAGE}
+              page={currentPage}
+              onPageChange={(e) => setCurrentPage(e.page)}
+            >
+              <ButtonGroup variant="ghost" size="sm" gap="1">
+                <Pagination.PrevTrigger asChild>
+                  <IconButton>
+                    <LuChevronLeft />
+                  </IconButton>
+                </Pagination.PrevTrigger>
 
-              {totalPages === 0 ? (
-                <Button
-                  size="sm"
-                  variant="solid"
-                  bg="accent"
-                  color="white"
-                  minW="36px"
-                >
-                  1
-                </Button>
-              ) : (
-                Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  const isActive = currentPage === pageNum;
-                  return (
-                    <Button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      size="sm"
-                      variant={isActive ? "solid" : "outline"}
-                      bg={isActive ? "#1D7AD9" : "white"}
-                      color={isActive ? "white" : "gray.700"}
-                      borderColor={isActive ? "transparent" : "gray.200"}
-                      fontWeight="medium"
-                      minW="36px"
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })
-              )}
+                <Pagination.Items
+                  render={(page) => (
+                      <IconButton
+                    variant={{ base: "ghost", _selected: "outline" }}
+                      >
+                        {page.value}
+                      </IconButton>
+                  )}
+                />
 
-              <Button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages || totalPages === 0}
-                size="sm"
-                variant="outline"
-                borderColor="border.muted"
-                bg="white"
-                color="fg.muted"
-              >
-                Next
-              </Button>
-            </Flex>
+                <Pagination.NextTrigger asChild>
+                  <IconButton>
+                    <LuChevronRight />
+                  </IconButton>
+                </Pagination.NextTrigger>
+              </ButtonGroup>
+            </Pagination.Root>
           </Flex>
         )}
       </Box>

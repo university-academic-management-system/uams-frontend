@@ -11,12 +11,14 @@ import {
     Button, 
     Dialog, 
     Input, 
-    Field 
+    Field,
+    SimpleGrid
 } from "@chakra-ui/react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { StaffSchema, type StaffFormData } from "@schemas/staff.schema";
 import useAuthStore from "@stores/auth.store";
+import { getCurrentDepartmentId } from "@utils/auth.util";
 import { PasswordInput } from "@components/ui/password-input";
 
 interface Props {
@@ -65,15 +67,17 @@ const categoryCollection = createListCollection({
 });
 
 const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
-    const { departmentId: authDepartmentId, user } = useAuthStore();
+    const { user } = useAuthStore();
+    const authDepartmentId = getCurrentDepartmentId();
     
     const {
         register,
         handleSubmit,
         control,
         reset,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, isValid },
     } = useForm<StaffFormData>({
+        mode: "onChange",
         resolver: zodResolver(StaffSchema) as any,
         defaultValues: {
             staffNumber: "",
@@ -147,48 +151,48 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
     };
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) onClose() }}>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) onClose() }} placement="center" closeOnInteractOutside={false}>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content bg="white" borderRadius="md" maxW="4xl" p="8">
+                <Dialog.Content bg="white" borderRadius="md" maxW="4xl" p="8" colorPalette="accent">
                     <Flex justifyContent="space-between" alignItems="center" mb="8">
-                        <Text fontSize="2xl" fontWeight="bold" color="#1D7AD9">
+                        <Text fontSize="2xl" fontWeight="bold" color="fg.muted">
                             {initialData ? "Edit Lecturer" : "Add Lecturer"}
                         </Text>
                         <Dialog.CloseTrigger asChild>
-                            <Box as="button" p="2" _hover={{ bg: "fg.subtle" }} borderRadius="full" cursor="pointer" border="none" bg="transparent">
+                            <Button bg="transparent" p="2"  borderRadius="full" cursor="pointer" border="none" >
                                 <X size={24} color="#94a3b8" />
-                            </Box>
+                             </Button>
                         </Dialog.CloseTrigger>
                     </Flex>
 
                     <form onSubmit={handleSubmit(onFormSubmit as any)}>
-                        <Flex direction={{ base: "column", md: "row" }} gap="8" flexWrap="wrap">
-                            <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.staffNumber}>
+                        <SimpleGrid columns={{ base: 1, md: 2 }} gap="6">
+                            <Field.Root invalid={!!errors.staffNumber}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Staff ID</Field.Label>
                                 <Input size="xl" {...register("staffNumber")} readOnly={!!initialData} bg={initialData ? "slate.50" : "white"} color={initialData ? "fg.muted" : "inherit"} border="xs" borderColor="border.muted" />
                                 <Field.ErrorText>{errors.staffNumber?.message}</Field.ErrorText>
                             </Field.Root>
 
-                            <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.title}>
+                            <Field.Root invalid={!!errors.title}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Title</Field.Label>
                                 <Input size="xl" placeholder="E.g Dr, Mr etc" {...register("title")} bg="white" border="xs" borderColor="border.muted" />
                                 <Field.ErrorText>{errors.title?.message}</Field.ErrorText>
                             </Field.Root>
 
-                            <Field.Root w={{ base: "full", md: "calc(33.33% - 16px)" }} invalid={!!errors.firstName}>
+                            <Field.Root invalid={!!errors.firstName}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">First Name</Field.Label>
                                 <Input size="xl" {...register("firstName")} bg="white" border="xs" borderColor="border.muted" />
                                 <Field.ErrorText>{errors.firstName?.message}</Field.ErrorText>
                             </Field.Root>
 
-                            <Field.Root w={{ base: "full", md: "calc(33.33% - 16px)" }} invalid={!!errors.surname}>
+                            <Field.Root invalid={!!errors.surname}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Surname</Field.Label>
                                 <Input size="xl" {...register("surname")} bg="white" border="xs" borderColor="border.muted" />
                                 <Field.ErrorText>{errors.surname?.message}</Field.ErrorText>
                             </Field.Root>
 
-                            <Field.Root w={{ base: "full", md: "calc(33.33% - 16px)" }} invalid={!!errors.otherName}>
+                            <Field.Root invalid={!!errors.otherName}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Other Name</Field.Label>
                                 <Input size="xl" {...register("otherName")} bg="white" border="xs" borderColor="border.muted" />
                                 <Field.ErrorText>{errors.otherName?.message}</Field.ErrorText>
@@ -198,7 +202,7 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                                 name="gender"
                                 control={control}
                                 render={({ field }) => (
-                                    <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.gender}>
+                                    <Field.Root invalid={!!errors.gender}>
                                         <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Sex</Field.Label>
                                         <Select.Root
                                             collection={sexCollection}
@@ -218,11 +222,18 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                                             <Portal>
                                                 <Select.Positioner>
                                                     <Select.Content>
-                                                        {sexCollection.items.map((item) => (
-                                                            <Select.Item key={item.value} item={item}>
-                                                                {item.label}
-                                                            </Select.Item>
-                                                        ))}
+                                                        {sexCollection.items.length === 0 ? (
+                                                            <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                                No options available
+                                                            </Box>
+                                                        ) : (
+                                                            sexCollection.items.map((item) => (
+                                                                <Select.Item key={item.value} item={item}>
+                                                                    <Select.ItemText>{item.label}</Select.ItemText>
+                                                                    <Select.ItemIndicator />
+                                                                </Select.Item>
+                                                            ))
+                                                        )}
                                                     </Select.Content>
                                                 </Select.Positioner>
                                             </Portal>
@@ -232,25 +243,25 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                                 )}
                             />
 
-                            <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.highestDegree}>
+                            <Field.Root invalid={!!errors.highestDegree}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Highest Degree</Field.Label>
                                 <Input size="xl" placeholder="PhD" {...register("highestDegree")} bg="white" border="xs" borderColor="border.muted" />
                                 <Field.ErrorText>{errors.highestDegree?.message}</Field.ErrorText>
                             </Field.Root>
 
-                            <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.phone}>
+                            <Field.Root invalid={!!errors.phone}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Phone Number</Field.Label>
                                 <Input size="xl" placeholder="Enter Phone Number" {...register("phone")} bg="white" border="xs" borderColor="border.muted" />
                                 <Field.ErrorText>{errors.phone?.message}</Field.ErrorText>
                             </Field.Root>
 
-                            <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.email}>
+                            <Field.Root invalid={!!errors.email}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Email</Field.Label>
                                 <Input size="xl" type="email" {...register("email")} bg="white" border="xs" borderColor="border.muted" />
                                 <Field.ErrorText>{errors.email?.message}</Field.ErrorText>
                             </Field.Root>
 
-                            <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.password}>
+                            <Field.Root invalid={!!errors.password}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Password</Field.Label>
                                 <PasswordInput size="xl" placeholder="Use Phone Number as Default Password" {...register("password")} bg="white" />
                                 <Field.ErrorText>{errors.password?.message}</Field.ErrorText>
@@ -260,7 +271,7 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                                 name="staffRoles"
                                 control={control}
                                 render={({ field }) => (
-                                    <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.staffRoles}>
+                                    <Field.Root invalid={!!errors.staffRoles}>
                                         <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Role</Field.Label>
                                         <Select.Root
                                             multiple
@@ -281,11 +292,18 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                                             <Portal>
                                                 <Select.Positioner>
                                                     <Select.Content>
-                                                        {roleCollection.items.map((item) => (
-                                                            <Select.Item key={item.value} item={item}>
-                                                                {item.label}
-                                                            </Select.Item>
-                                                        ))}
+                                                        {roleCollection.items.length === 0 ? (
+                                                            <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                                No options available
+                                                            </Box>
+                                                        ) : (
+                                                            roleCollection.items.map((item) => (
+                                                                <Select.Item key={item.value} item={item}>
+                                                                    <Select.ItemText>{item.label}</Select.ItemText>
+                                                                    <Select.ItemIndicator />
+                                                                </Select.Item>
+                                                            ))
+                                                        )}
                                                     </Select.Content>
                                                 </Select.Positioner>
                                             </Portal>
@@ -299,7 +317,7 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                                 name="category"
                                 control={control}
                                 render={({ field }) => (
-                                    <Field.Root w={{ base: "full", md: "calc(50% - 16px)" }} invalid={!!errors.category}>
+                                    <Field.Root invalid={!!errors.category}>
                                         <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Category</Field.Label>
                                         <Select.Root
                                             collection={categoryCollection}
@@ -319,11 +337,18 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                                             <Portal>
                                                 <Select.Positioner>
                                                     <Select.Content>
-                                                        {categoryCollection.items.map((item) => (
-                                                            <Select.Item key={item.value} item={item}>
-                                                                {item.label}
-                                                            </Select.Item>
-                                                        ))}
+                                                        {categoryCollection.items.length === 0 ? (
+                                                            <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                                No options available
+                                                            </Box>
+                                                        ) : (
+                                                            categoryCollection.items.map((item) => (
+                                                                <Select.Item key={item.value} item={item}>
+                                                                    <Select.ItemText>{item.label}</Select.ItemText>
+                                                                    <Select.ItemIndicator />
+                                                                </Select.Item>
+                                                            ))
+                                                        )}
                                                     </Select.Content>
                                                 </Select.Positioner>
                                             </Portal>
@@ -332,13 +357,13 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                                     </Field.Root>
                                 )}
                             />
-                        </Flex>
+                        </SimpleGrid>
 
                         <Flex justifyContent="flex-end" gap="3" mt="8" pt="6">
-                            <Button type="button" onClick={onClose} px="8" py="2.5" fontSize="sm" fontWeight="bold" color="fg.muted" bg="white" border="xs" borderColor="border.muted" borderRadius="md" cursor="pointer" _hover={{ bg: "slate.50" }}>
+                            <Button type="button" onClick={onClose} size="xl" variant="outline" color="fg.muted" border="xs" borderColor="border.muted" borderRadius="md" cursor="pointer" _hover={{ bg: "slate.50" }}>
                                 Cancel
                             </Button>
-                            <Button type="submit" px="8" py="2.5" fontSize="sm" fontWeight="bold" color="white" bg="#1D7AD9" borderRadius="md" cursor={isSubmitting ? "not-allowed" : "pointer"} opacity={isSubmitting ? 0.7 : 1} alignItems="center" gap="2">
+                            <Button type="submit" size="xl" color="white" bg="accent" borderRadius="md" disabled={!isValid || isSubmitting} cursor={isSubmitting || !isValid ? "not-allowed" : "pointer"} opacity={isSubmitting || !isValid ? 0.7 : 1} alignItems="center" gap="2">
                                 {isSubmitting && <Spinner size="sm" />}
                                 {initialData ? "Save Changes" : "Add Lecturer"}
                             </Button>

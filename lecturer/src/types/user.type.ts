@@ -3,6 +3,7 @@ export type AuthUser = {
     name: string;
     email: string;
     role: string;
+    roles: string[];
 };
 
 export type AuthPermissions = string[];

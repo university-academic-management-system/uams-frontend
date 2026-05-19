@@ -1,6 +1,7 @@
 import { Box, Flex, Text, Grid } from "@chakra-ui/react";
 import { User } from "lucide-react";
-import type { Course, CourseLecturer } from "@type/course.type";
+import type { Course } from "@type/course.type";
+import type { Lecturer } from "@type/project.type";
 import type { AttendanceDataPoint } from "@type/dashboard.type";
 import AttendanceChart from "@components/shared/AttendanceChart";
 import { useState } from "react";
@@ -8,7 +9,7 @@ import { LuArrowRight } from "react-icons/lu";
 
 interface CourseInfoPanelProps {
     course: Course;
-    lecturers: CourseLecturer[];
+    lecturers: Lecturer[];
 }
 
 // Mock attendance data for the chart

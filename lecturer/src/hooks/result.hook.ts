@@ -1,26 +1,88 @@
+// hooks/result.hook.ts
 import { ResultService } from "@services/result.service";
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import type { ResultResponse } from "@type/result.type";
-
-// ── Hooks ────────────────────────────────────────────────────────────
+import type {
+  ResultUpload,
+  TranscriptResponse,
+  UploadDraftPayload,
+  RejectPayload,
+} from "@type/result.type";
 
 export const ResultHook = {
-    useResults: (courseCode: string, options?: Partial<UseQueryOptions<ResultResponse[]>>
-    ) =>
-        useQuery<ResultResponse[]>({
-            queryKey: ["results", courseCode],
-            queryFn: async () => ResultService.getResults(courseCode),
-            staleTime: 5 * 60 * 1000,
-            ...options,
-        }),
+  // Get academic transcript for a student
+  useTranscript: (studentId: string, options?: Partial<UseQueryOptions<TranscriptResponse>>) =>
+    useQuery<TranscriptResponse>({
+      queryKey: ["transcript", studentId],
+      queryFn: async () => ResultService.getTranscript(studentId),
+      enabled: !!studentId,
+      staleTime: 5 * 60 * 1000,
+      ...options,
+    }),
 
-    useUploadResult: () => {
-        const queryClient = useQueryClient();
-        return useMutation({
-            mutationFn: (formData: FormData) => ResultService.uploadResult(formData),
-            onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ["results"] });
-            },
-        });
-    },
+  // Get all pending results (ERO/Admin)
+  usePendingResults: (options?: Partial<UseQueryOptions<ResultUpload[]>>) =>
+    useQuery<ResultUpload[]>({
+      queryKey: ["results", "pending"],
+      queryFn: async () => ResultService.getPendingResults(),
+      staleTime: 5 * 60 * 1000,
+      ...options,
+    }),
+
+  // Get all approved results (ERO/Admin) 
+  useApprovedResults: (
+    session?: string,
+    semester?: string,
+    options?: Partial<UseQueryOptions<ResultUpload[]>>
+  ) =>
+    useQuery<ResultUpload[]>({
+      queryKey: ["results", "approved", { session, semester }],
+      queryFn: async () => ResultService.getApprovedResults(session, semester),
+      staleTime: 5 * 60 * 1000,
+      ...options,
+    }),
+
+  // Upload draft results (Lecturer)
+  useUploadDraft: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (payload: UploadDraftPayload) => ResultService.uploadDraftResults(payload),
+      onSuccess: () => {
+        // Invalidate pending results list to show new upload
+        queryClient.invalidateQueries({ queryKey: ["results", "pending"] });
+      },
+    });
+  },
+
+  // Download draft results file (returns a download URL)
+  useDownloadDraft: () => {
+    return useMutation({
+      mutationFn: (resultUploadId: string) => ResultService.downloadDraftResults(resultUploadId),
+    });
+  },
+
+  // Reject draft results (ERO/Admin)
+  useRejectDraft: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({ id, payload }: { id: string; payload: RejectPayload }) =>
+        ResultService.rejectDraftResults(id, payload),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["results", "pending"] });
+        queryClient.invalidateQueries({ queryKey: ["results", "approved"] });
+      },
+    });
+  },
+
+  // Upload final approved results (ERO/Admin)
+  useUploadFinal: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({ id, file }: { id: string; file: File }) =>
+        ResultService.uploadFinalResults(id, file),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["results", "pending"] });
+        queryClient.invalidateQueries({ queryKey: ["results", "approved"] });
+      },
+    });
+  },
 };

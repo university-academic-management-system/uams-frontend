@@ -17,11 +17,10 @@ export const StatCard = ({ label, value, icon, bgColor, description }: StatCardP
             alignItems="center"
             gap="5"
             transition="transform 0.2s"
-            _hover={{ transform: "scale(1.02)" }}
             cursor="default"
             border="xs"
             borderColor="border.muted"
-        >
+        > 
             <Flex
                 bg="whiteAlpha.400"
                 p="3"
@@ -38,7 +37,7 @@ export const StatCard = ({ label, value, icon, bgColor, description }: StatCardP
                     {value}
                 </Text>
                 {description && (
-                    <Text fontSize="xs" color="fg.muted" mt="1">{description}</Text>
+                    <Text fontSize="xs" color="fg.subtle" mt="1">{description}</Text>
                 )}
             </Box>
         </Flex>

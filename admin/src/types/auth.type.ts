@@ -33,31 +33,53 @@ export interface UserDepartment {
     };
 }
 
+export interface StaffProfile {
+    id: string;
+    userId: string;
+    surname: string;
+    firstName: string;
+    otherName: string | null;
+    staffNumber: string;
+    phone: string | null;
+    department: string;
+    faculty: string;
+    staffRoles: string[];
+    title: string;
+    gender: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface UserData {
     id: string;
     email: string;
-    name: string;
+    name?: string; // Optional because /auth/me returns first/surname instead of 'name' at root
     role: string;
     roles?: string[];
     phone?: string | null;
     avatar?: string | null;
+    status?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    studentProfile?: any | null;
+    staffProfile?: StaffProfile | null;
+}
+
+export interface ProfileResponse {
+    status: string;
+    message: string;
+    data: UserData;
 }
 
 // ── Auth store state ────────────────────────────────────────────────
 
 export interface AuthState {
     token: string;
-    role: string;
-    tenantId: string;
-    universityId: string;
-    facultyId: string | null;
-    departmentId: string | null;
-    email?: string;
-    username?: string;
+    expiresIn: string;
     user: UserData | null;
+    isAuthenticated: boolean;
     setAuth: (auth: Partial<AuthState>) => void;
     clearAuth: () => void;
-    isAuthenticated: boolean;
 }
 
 // ── Login ────────────────────────────────────────────────────────────
@@ -68,15 +90,12 @@ export interface LoginData {
 }
 
 export interface LoginResponse {
-    success: boolean;
-    token: string;
-    expiresIn: string;
-    user: UserData;
-    permissions: {
-        facultyId: string;
-        departmentId: string;
-        universityId: string;
-        tenantId: string;
+    status: string;
+    message: string;
+    data: {
+        token: string;
+        expiresIn: string;
+        user: UserData;
     };
 }
 
