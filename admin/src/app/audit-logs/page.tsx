@@ -37,6 +37,7 @@ const AuditLogsPage = () => {
   const [entity, setEntity] = useState("");
   const [dateRange, setDateRange] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [resetKey, setResetKey] = useState(0);
 
   // TanStack Query for data fetching
   const { data: response, isLoading, isError, refetch } = useQuery({
@@ -92,170 +93,190 @@ const AuditLogsPage = () => {
   return (
     <Box minH="80vh">
       <Flex direction="column" mb="8" gap="6">
-        <Flex direction={{ base: "column", md: "row" }} justifyContent="space-between" alignItems={{ base: "flex-start", md: "center" }} gap="4">
+        <Flex direction="row" justifyContent="space-between" alignItems="center" gap="4">
             <Box>
             <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Audit Logs</Text>
-            <Text fontSize="sm" color="fg.muted">Monitor system activity and user actions</Text>
+            <Text fontSize="sm" color="fg.subtle">Monitor system activity and user actions</Text>
             </Box>
-            <Flex gap="3" flexWrap="nowrap" alignItems="center" w={{ base: "full", md: "auto" }}>
-            <InputGroup flex="1" startElement={<LuSearch color="#94a3b8" />}>
-                <Input
-                placeholder="Search by ID, User..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                bg="white"
-                borderRadius="md"
-                fontSize="sm"
-                w="full"
-                maxW={{ base: "full", md: "280px" }}
-                />
-            </InputGroup>
             <Button 
                 variant="outline" 
-                size="sm" 
+                size="lg" 
                 onClick={() => refetch()}
                 disabled={isLoading}
             >
                 <RotateCcw size={16} />
                 Refresh
             </Button>
-            </Flex>
         </Flex>
 
-        {/* Filters Row */}
-        <Flex gap="4" flexWrap="wrap" alignItems="flex-end" bg="bg.subtle" p="5" borderRadius="xl" border="1px solid" borderColor="border.muted">
-            <Box flex="1" minW="200px">
-                <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">ACTION</Text>
-                <Select.Root 
-                    collection={actionsCollection} 
-                    size="sm" 
-                    value={[action]}
-                    onValueChange={(e) => setAction(e.value[0])}
-                >
-                    <Select.HiddenSelect />
-                    <Select.Control>
-                        <Select.Trigger bg="white">
-                            <Select.ValueText placeholder="Filter Action" />
-                        </Select.Trigger>
-                        <Select.IndicatorGroup>
-                            <Select.Indicator />
-                        </Select.IndicatorGroup>
-                    </Select.Control>
-                    <Portal>
-                        <Select.Positioner>
-                            <Select.Content>
-                                {actionsCollection.items.length === 0 ? (
-                                    <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
-                                        No options available
-                                    </Box>
-                                ) : (
-                                    actionsCollection.items.map((item) => (
-                                        <Select.Item item={item} key={item.value}>
-                                            {item.label}
-                                            <Select.ItemIndicator />
-                                        </Select.Item>
-                                    ))
-                                )}
-                            </Select.Content>
-                        </Select.Positioner>
-                    </Portal>
-                </Select.Root>
+        {/* Filters & Search Row */}
+        <Flex 
+            direction={{ base: "column", lg: "row" }} 
+            justifyContent="space-between" 
+            alignItems={{ base: "stretch", lg: "flex-end" }} 
+            gap="5" 
+            colorPalette="accent" 
+        >
+            {/* Search Input on the Left */}
+            <Box w={{ base: "full", lg: "300px" }}>
+                <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">SEARCH</Text>
+                <InputGroup w="full" startElement={<LuSearch color="#94a3b8" />}>
+                    <Input
+                        placeholder="Search by ID, User..."
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        bg="white"
+                        h="12"
+                        w="full"
+                    />
+                </InputGroup>
             </Box>
 
-            <Box flex="1" minW="200px">
-                <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">ENTITY</Text>
-                <Select.Root 
-                    collection={entitiesCollection} 
-                    size="sm" 
-                    value={[entity]}
-                    onValueChange={(e) => setEntity(e.value[0])}
-                >
-                    <Select.HiddenSelect />
-                    <Select.Control>
-                        <Select.Trigger bg="white">
-                            <Select.ValueText placeholder="Filter Entity" />
-                        </Select.Trigger>
-                        <Select.IndicatorGroup>
-                            <Select.Indicator />
-                        </Select.IndicatorGroup>
-                    </Select.Control>
-                    <Portal>
-                        <Select.Positioner>
-                            <Select.Content>
-                                {entitiesCollection.items.length === 0 ? (
-                                    <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
-                                        No options available
-                                    </Box>
-                                ) : (
-                                    entitiesCollection.items.map((item) => (
-                                        <Select.Item item={item} key={item.value}>
-                                            {item.label}
-                                            <Select.ItemIndicator />
-                                        </Select.Item>
-                                    ))
-                                )}
-                            </Select.Content>
-                        </Select.Positioner>
-                    </Portal>
-                </Select.Root>
-            </Box>
+            {/* Filters on the Right */}
+            <Flex 
+                flex="1" 
+                gap="4" 
+                flexWrap="wrap" 
+                justifyContent={{ base: "flex-start", lg: "flex-end" }} 
+                alignItems="flex-end"
+                w="full"
+            >
+                <Box minW="180px" maxW={{ lg: "220px" }} flex="1">
+                    <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">ACTION</Text>
+                    <Select.Root 
+                        collection={actionsCollection} 
+                        size="lg" 
+                        value={[action]}
+                        onValueChange={(e) => setAction(e.value[0])}
+                    >
+                        <Select.HiddenSelect />
+                        <Select.Control>
+                            <Select.Trigger bg="white" h="11">
+                                <Select.ValueText placeholder="Filter Action" />
+                            </Select.Trigger>
+                            <Select.IndicatorGroup>
+                                <Select.Indicator />
+                            </Select.IndicatorGroup>
+                        </Select.Control>
+                        <Portal>
+                            <Select.Positioner>
+                                <Select.Content>
+                                    {actionsCollection.items.length === 0 ? (
+                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                            No options available
+                                        </Box>
+                                    ) : (
+                                        actionsCollection.items.map((item) => (
+                                            <Select.Item item={item} key={item.value}>
+                                                {item.label}
+                                                <Select.ItemIndicator />
+                                            </Select.Item>
+                                        ))
+                                    )}
+                                </Select.Content>
+                            </Select.Positioner>
+                        </Portal>
+                    </Select.Root>
+                </Box>
 
-            <Box flex="2" minW="300px">
-                <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">DATE RANGE</Text>
-                <DatePicker.Root openOnClick
-                    selectionMode="range" 
-                    onValueChange={(e) => {
-                        const range = e.value.map(d => {
-                            // Convert CalendarDate to JS Date for toISOString()
-                            const date = new Date(d.year, d.month - 1, d.day);
-                            return date.toISOString();
-                        });
-                        setDateRange(range);
+                <Box minW="180px" maxW={{ lg: "220px" }} flex="1">
+                    <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">ENTITY</Text>
+                    <Select.Root 
+                        collection={entitiesCollection} 
+                        size="lg" 
+                        value={[entity]}
+                        onValueChange={(e) => setEntity(e.value[0])}
+                    >
+                        <Select.HiddenSelect />
+                        <Select.Control>
+                            <Select.Trigger bg="white" h="11">
+                                <Select.ValueText placeholder="Filter Entity" />
+                            </Select.Trigger>
+                            <Select.IndicatorGroup>
+                                <Select.Indicator />
+                            </Select.IndicatorGroup>
+                        </Select.Control>
+                        <Portal>
+                            <Select.Positioner>
+                                <Select.Content>
+                                    {entitiesCollection.items.length === 0 ? (
+                                        <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                            No options available
+                                        </Box>
+                                    ) : (
+                                        entitiesCollection.items.map((item) => (
+                                            <Select.Item item={item} key={item.value}>
+                                                {item.label}
+                                                <Select.ItemIndicator />
+                                            </Select.Item>
+                                        ))
+                                    )}
+                                </Select.Content>
+                            </Select.Positioner>
+                        </Portal>
+                    </Select.Root>
+                </Box>
+
+                <Box minW="260px" maxW={{ lg: "320px" }} flex="1">
+                    <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb="2">DATE RANGE</Text>
+                    <DatePicker.Root openOnClick
+                        key={resetKey}
+                        size="lg"
+                        selectionMode="range" 
+                        onValueChange={(e) => {
+                            const range = e.value.map(d => {
+                                // Convert CalendarDate to JS Date for toISOString()
+                                const date = new Date(d.year, d.month - 1, d.day);
+                                return date.toISOString();
+                            });
+                            setDateRange(range);
+                        }}
+                    >
+                        <DatePicker.Control>
+                            <DatePicker.Input index={0} bg="white" h="12" px="4" fontSize="sm" placeholder="Start Date" />
+                            <DatePicker.Input index={1} bg="white" h="12" px="4" fontSize="sm" placeholder="End Date" />
+                            <DatePicker.IndicatorGroup>
+                                <DatePicker.Trigger>
+                                    <LuCalendar />
+                                </DatePicker.Trigger>
+                            </DatePicker.IndicatorGroup>
+                        </DatePicker.Control>
+                        <Portal>
+                            <DatePicker.Positioner>
+                                <DatePicker.Content>
+                                    <DatePicker.View view="day">
+                                        <DatePicker.Header />
+                                        <DatePicker.DayTable />
+                                    </DatePicker.View>
+                                    <DatePicker.View view="month">
+                                        <DatePicker.Header />
+                                        <DatePicker.MonthTable />
+                                    </DatePicker.View>
+                                    <DatePicker.View view="year">
+                                        <DatePicker.Header />
+                                        <DatePicker.YearTable />
+                                    </DatePicker.View>
+                                </DatePicker.Content>
+                            </DatePicker.Positioner>
+                        </Portal>
+                    </DatePicker.Root>
+                </Box>
+
+                <Button 
+                    variant="ghost" 
+                    size="xl"
+                    colorPalette="red"
+                    onClick={() => {
+                        setAction("");
+                        setEntity("");
+                        setDateRange([]);
+                        setSearchQuery("");
+                        setResetKey(prev => prev + 1);
                     }}
                 >
-                    <DatePicker.Control>
-                        <DatePicker.Input index={0} bg="white" fontSize="xs" placeholder="Start Date" />
-                        <DatePicker.Input index={1} bg="white" fontSize="xs" placeholder="End Date" />
-                        <DatePicker.IndicatorGroup>
-                            <DatePicker.Trigger>
-                                <LuCalendar />
-                            </DatePicker.Trigger>
-                        </DatePicker.IndicatorGroup>
-                    </DatePicker.Control>
-                    <Portal>
-                        <DatePicker.Positioner>
-                            <DatePicker.Content>
-                                <DatePicker.View view="day">
-                                    <DatePicker.Header />
-                                    <DatePicker.DayTable />
-                                </DatePicker.View>
-                                <DatePicker.View view="month">
-                                    <DatePicker.Header />
-                                    <DatePicker.MonthTable />
-                                </DatePicker.View>
-                                <DatePicker.View view="year">
-                                    <DatePicker.Header />
-                                    <DatePicker.YearTable />
-                                </DatePicker.View>
-                            </DatePicker.Content>
-                        </DatePicker.Positioner>
-                    </Portal>
-                </DatePicker.Root>
-            </Box>
-
-            <Button 
-                variant="ghost" 
-                size="sm" 
-                colorPalette="red"
-                onClick={() => {
-                    setAction("");
-                    setEntity("");
-                    setDateRange([]);
-                    setSearchQuery("");
-                }}
-            >
-                Clear Filters
-            </Button>
+                    Clear Filters
+                </Button>
+            </Flex>
         </Flex>
       </Flex>
 
