@@ -1,13 +1,41 @@
-import { useState } from "react";
-import { Box, Flex, Text, Grid, Button, Field, Stack } from "@chakra-ui/react";
-import { PasswordInput } from "@components/ui/password-input";
-import { User, Lock, CheckCircle } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Box, Flex, Text, Button, Field, Stack, Spinner, DataList } from "@chakra-ui/react";
+import { PasswordInput, PasswordStrengthMeter } from "@components/ui/password-input";
+import { Lock, CheckCircle } from "lucide-react";
 import useAuthStore from "@stores/auth.store";
 import { UserServices } from "@services/user.service";
+import { AuthServices } from "@services/auth.service";
+import { type Options, passwordStrength } from "check-password-strength";
 import { toaster } from "@components/ui/toaster";
 
+const strengthOptions: Options<string> = [
+  { id: 1, value: "weak", minDiversity: 0, minLength: 0 },
+  { id: 2, value: "medium", minDiversity: 2, minLength: 6 },
+  { id: 3, value: "strong", minDiversity: 3, minLength: 8 },
+  { id: 4, value: "very-strong", minDiversity: 4, minLength: 10 },
+];
+
 const ProfilePage = () => {
-    const { user, email, role } = useAuthStore();
+    const { user, setAuth } = useAuthStore();
+    const [isLoadingProfile, setIsLoadingProfile] = useState(!user?.staffProfile);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await AuthServices.getProfile();
+                if (res.status === "success" && res.data) {
+                    setAuth({ user: res.data });
+                }
+            } catch (error) {
+                console.error("Error fetching profile:", error);
+                toaster.error({ title: "Failed to load profile details" });
+            } finally {
+                setIsLoadingProfile(false);
+            }
+        };
+
+        fetchProfile();
+    }, [setAuth]);
 
     // Password change state
     const [currentPassword, setCurrentPassword] = useState("");
@@ -15,7 +43,7 @@ const ProfilePage = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-    const roleDisplay = (user?.role || role || "User").replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
+    const roleDisplay = (user?.role || "User").replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
 
     const handleChangePassword = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
@@ -45,26 +73,21 @@ const ProfilePage = () => {
         }
     };
 
-    // Password strength meter
-    const getPasswordStrength = (pw: string) => {
-        if (!pw) return { label: "", color: "", width: "0%" };
-        let score = 0;
-        if (pw.length >= 6) score++;
-        if (pw.length >= 10) score++;
-        if (/[A-Z]/.test(pw)) score++;
-        if (/[0-9]/.test(pw)) score++;
-        if (/[^A-Za-z0-9]/.test(pw)) score++;
-
-        if (score <= 1) return { label: "Weak", color: "#ef4444", width: "20%" };
-        if (score === 2) return { label: "Fair", color: "#f97316", width: "40%" };
-        if (score === 3) return { label: "Good", color: "#eab308", width: "60%" };
-        if (score === 4) return { label: "Strong", color: "#22c55e", width: "80%" };
-        return { label: "Excellent", color: "#10b981", width: "100%" };
-    };
-
-    const strength = getPasswordStrength(newPassword);
+    const strength = useMemo(() => {
+        if (!newPassword) return 0;
+        const result = passwordStrength(newPassword, strengthOptions);
+        return result.id;
+    }, [newPassword]);
 
 
+
+    if (isLoadingProfile) {
+        return (
+            <Flex h="400px" alignItems="center" justifyContent="center">
+                <Spinner size="xl" color="#1D7AD9" />
+            </Flex>
+        );
+    }
 
     return (
         <Box>
@@ -74,34 +97,65 @@ const ProfilePage = () => {
                 {/* Account Details Card */}
                 <Box flex="5" bg="white" borderRadius="md" border="xs" borderColor="border.muted" p="8">
                             <Flex alignItems="center" gap="2" mb="6">
-                                <User size={20} color="#1D7AD9" />
                                 <Text fontSize="lg" fontWeight="bold" color="fg.muted">Account Details</Text>
                             </Flex>
 
-                            <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="5">
-                                <ReadOnlyField label="Title" value={(user as any)?.staffProfile?.title || "—"} />
-                                <ReadOnlyField label="First Name" value={(user as any)?.staffProfile?.firstName || "—"} />
-                                <ReadOnlyField label="Surname" value={(user as any)?.staffProfile?.surname || "—"} />
-                                <ReadOnlyField label="Other Names" value={(user as any)?.staffProfile?.otherName || "—"} />
-                                <ReadOnlyField label="Staff ID" value={(user as any)?.staffProfile?.staffNumber || "—"} />
-                                <ReadOnlyField label="Email Address" value={user?.email || email || "—"} />
-                                <ReadOnlyField label="Phone Number" value={(user as any)?.staffProfile?.phone || "—"} />
-                                <ReadOnlyField label="Gender" value={(user as any)?.staffProfile?.gender || "—"} />
-                                <ReadOnlyField label="Department" value={(user as any)?.staffProfile?.department || "—"} />
-                                <ReadOnlyField label="Faculty" value={(user as any)?.staffProfile?.faculty || "—"} />
-                                <ReadOnlyField label="Role" value={((user as any)?.staffProfile?.staffRoles?.[0] || roleDisplay).replace(/_/g, " ")} />
-                            </Grid>
+                            <DataList.Root size="lg" display="grid" gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="5">
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Title</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.title || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">First Name</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.firstName || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Surname</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.surname || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Other Names</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.otherName || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Staff ID</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.staffNumber || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Email Address</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{user?.email || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Phone Number</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.phone || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Gender</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.gender || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Department</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.department || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Faculty</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.faculty || "—"}</DataList.ItemValue>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Role</DataList.ItemLabel>
+                                    <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{((user as any)?.staffProfile?.staffRoles?.[0] || roleDisplay).replace(/_/g, " ")}</DataList.ItemValue>
+                                </DataList.Item>
+                            </DataList.Root>
                         </Box>
 
                 {/* Password Change Card */}
                 <Box flex="4" bg="white" borderRadius="md" border="xs" borderColor="border.muted" p="8">
                             <Flex alignItems="center" gap="2" mb="2">
-                                <Lock size={20} color="#1D7AD9" />
                                 <Text fontSize="lg" fontWeight="bold" color="fg.muted">Change Password</Text>
                             </Flex>
                             <Text fontSize="sm" color="fg.subtle" mb="6">Update your password to keep your account secure.</Text>
 
-                            <Stack gap="5">
+                            <Stack gap="5" colorPalette={"accent"}>
                                 {/* Current Password */}
                                 <Field.Root>
                                     <Field.Label>Current Password</Field.Label>
@@ -125,12 +179,7 @@ const ProfilePage = () => {
                                         size="xl"
                                     />
                                     {newPassword && (
-                                        <Box mt="2">
-                                            <Box w="full" h="4px" bg="bg.muted" borderRadius="full" overflow="hidden">
-                                                <Box h="full" bg={strength.color} w={strength.width} borderRadius="full" transition="all 0.3s" />
-                                            </Box>
-                                            <Text fontSize="xs" color={strength.color} fontWeight="bold" mt="1">{strength.label}</Text>
-                                        </Box>
+                                        <PasswordStrengthMeter value={strength} mt="2" width="full" />
                                     )}
                                 </Field.Root>
 
@@ -178,14 +227,5 @@ const ProfilePage = () => {
 };
 
 // ── Reusable sub-components ─────────────────────────────────────────
-
-
-
-const ReadOnlyField = ({ label, value }: { label: string; value: string }) => (
-    <Box>
-        <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1">{label}</Text>
-        <Text fontSize="sm" fontWeight="medium" color="fg.muted">{value}</Text>
-    </Box>
-);
 
 export default ProfilePage;
