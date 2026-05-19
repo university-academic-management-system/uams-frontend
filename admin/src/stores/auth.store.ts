@@ -1,4 +1,3 @@
-// @stores/auth.store.ts
 import type { AuthState } from "@type/auth.type";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -7,13 +6,15 @@ const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
             token: "",
-            expireAt: "",
-            user: undefined,
+            expiresIn: "",
+            user: null,
+            isAuthenticated: false,
             setAuth: (auth) => set((state) => ({ ...state, ...auth })),
             clearAuth: () => set({ 
                 token: "", 
-                expireAt: "",
-                user: undefined 
+                expiresIn: "",
+                user: null,
+                isAuthenticated: false
             }),
         }),
         {
@@ -21,8 +22,9 @@ const useAuthStore = create<AuthState>()(
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 token: state.token,
-                expireAt: state.expireAt,
+                expiresIn: state.expiresIn,
                 user: state.user,
+                isAuthenticated: state.isAuthenticated,
             }),
         }
     )

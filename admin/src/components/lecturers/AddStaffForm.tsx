@@ -18,6 +18,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { StaffSchema, type StaffFormData } from "@schemas/staff.schema";
 import useAuthStore from "@stores/auth.store";
+import { getCurrentDepartmentId } from "@utils/auth.util";
 import { PasswordInput } from "@components/ui/password-input";
 
 interface Props {
@@ -66,7 +67,8 @@ const categoryCollection = createListCollection({
 });
 
 const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
-    const { departmentId: authDepartmentId, user } = useAuthStore();
+    const { user } = useAuthStore();
+    const authDepartmentId = getCurrentDepartmentId();
     
     const {
         register,
@@ -154,13 +156,13 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
             <Dialog.Positioner>
                 <Dialog.Content bg="white" borderRadius="md" maxW="4xl" p="8" colorPalette="accent">
                     <Flex justifyContent="space-between" alignItems="center" mb="8">
-                        <Text fontSize="2xl" fontWeight="bold" color="#1D7AD9">
+                        <Text fontSize="2xl" fontWeight="bold" color="fg.muted">
                             {initialData ? "Edit Lecturer" : "Add Lecturer"}
                         </Text>
                         <Dialog.CloseTrigger asChild>
-                            <Box as="button" p="2" _hover={{ bg: "fg.subtle" }} borderRadius="full" cursor="pointer" border="none" bg="transparent">
+                            <Button bg="transparent" p="2"  borderRadius="full" cursor="pointer" border="none" >
                                 <X size={24} color="#94a3b8" />
-                             </Box>
+                             </Button>
                         </Dialog.CloseTrigger>
                     </Flex>
 
@@ -358,10 +360,10 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                         </SimpleGrid>
 
                         <Flex justifyContent="flex-end" gap="3" mt="8" pt="6">
-                            <Button type="button" onClick={onClose} px="8" py="2.5" fontSize="sm" fontWeight="bold" color="fg.muted" bg="white" border="xs" borderColor="border.muted" borderRadius="md" cursor="pointer" _hover={{ bg: "slate.50" }}>
+                            <Button type="button" onClick={onClose} size="xl" variant="outline" color="fg.muted" border="xs" borderColor="border.muted" borderRadius="md" cursor="pointer" _hover={{ bg: "slate.50" }}>
                                 Cancel
                             </Button>
-                            <Button type="submit" px="8" py="2.5" fontSize="sm" fontWeight="bold" color="white" bg="#1D7AD9" borderRadius="md" disabled={!isValid || isSubmitting} cursor={isSubmitting || !isValid ? "not-allowed" : "pointer"} opacity={isSubmitting || !isValid ? 0.7 : 1} alignItems="center" gap="2">
+                            <Button type="submit" size="xl" color="white" bg="accent" borderRadius="md" disabled={!isValid || isSubmitting} cursor={isSubmitting || !isValid ? "not-allowed" : "pointer"} opacity={isSubmitting || !isValid ? 0.7 : 1} alignItems="center" gap="2">
                                 {isSubmitting && <Spinner size="sm" />}
                                 {initialData ? "Save Changes" : "Add Lecturer"}
                             </Button>
