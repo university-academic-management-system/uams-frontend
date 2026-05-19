@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 export type CourseLevel = "100" | "200" | "300" | "400";
+=======
+export type CourseLevel = "L100" | "L200" | "L300" | "L400";
+>>>>>>> 3a7a3705d69314048601013ec2698c1171c7afb4
 export type Semester = "FIRST" | "SECOND" | "THIRD";
 export type CourseType = "CORE" | "ELECTIVE" | "GST" | "SIWES" | "PROJECT";
 
