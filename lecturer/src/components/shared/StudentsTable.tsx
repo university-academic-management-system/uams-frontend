@@ -24,47 +24,18 @@ const COLUMNS = [
     { key: "cgpa", label: "CGPA", width: "80px" },
 ] as const;
 
-/* Left sticky cell – highest z-index */
-const stickyLeft = {
-    position: "sticky" as const,
-    left: 0,
-    bg: "white",
-    zIndex: 5,
-    borderRight: "1px solid",
-    borderColor: "border.muted",
-};
-
-/* Right sticky cell – lower z-index + shadow for separation */
-const stickyRight = {
-    position: "sticky" as const,
-    right: 0,
-    bg: "white",
-    zIndex: 4,
-    borderLeft: "1px solid",
-    borderColor: "border.muted",
-    boxShadow: "-2px 0 5px -2px rgba(0,0,0,0.1)",
-};
-
-const stickyLeftHeader = { ...stickyLeft, bg: "gray.50", zIndex: 6 };
-const stickyRightHeader = { ...stickyRight, bg: "gray.50", zIndex: 5, boxShadow: "-2px 0 5px -2px rgba(0,0,0,0.1)" };
-
 const StudentsTable = ({ students, isLoading, error }: StudentsTableProps) => {
     return (
-        <Box
-            overflowX="auto"
-            rounded="md"
-            border="1px solid"
-            borderColor="border.muted"
-            bg="white"
-            maxW="calc(100vw - 260px - 48px)"
-        >
-            <Table.Root size="lg" variant="outline" css={{ tableLayout: "auto" }}>
+        <Box>
+            <Table.ScrollArea>
+            <Table.Root size="lg" variant="line" css={{ tableLayout: "auto", minWidth: "1200px" }} stickyHeader>
                 <Table.Header>
-                    <Table.Row bg="gray.50">
+                    <Table.Row>
                         {COLUMNS.map((col, i) => (
                             <Table.ColumnHeader
                                 key={col.key}
-                                fontSize="xs"
+                                fontSize="lg"
+                                bg="#f8fafc"
                                 fontWeight="600"
                                 color="fg.muted"
                                 textTransform="none"
@@ -72,8 +43,6 @@ const StudentsTable = ({ students, isLoading, error }: StudentsTableProps) => {
                                 px="3"
                                 py="3"
                                 whiteSpace="nowrap"
-                                {...(i === 0 ? stickyLeftHeader : {})}
-                                {...(i === COLUMNS.length - 1 ? stickyRightHeader : {})}
                             >
                                 {col.label}
                             </Table.ColumnHeader>
@@ -128,43 +97,43 @@ const StudentsTable = ({ students, isLoading, error }: StudentsTableProps) => {
                     ) : (
                         students.map((student, index) => (
                             <Table.Row key={student.id}>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap"  fontSize="12px" color="fg.muted" fontWeight="500" {...stickyLeft}>
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap"  fontSize="md" color="fg.muted" fontWeight="500">
                                     {index + 1}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.registrationNo || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.matricNumber || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="13px" color="fg.muted" fontWeight="700">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="700">
                                     {`${student.studentProfile?.firstName || ""} ${student.studentProfile?.lastName || ""} ${student.studentProfile?.otherName || ""}`.trim() || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.email}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.phone || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.level || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.admissionYear || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.admissionSession || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.currentSession || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.registrationStatus?.replace("_", " ") || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500">
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.academicStanding?.replace("_", " ") || "—"}
                                 </Table.Cell>
-                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="12px" color="fg.muted" fontWeight="500" {...stickyRight}>
+                                <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
                                     {student.studentProfile?.cgpa ?? "—"}
                                 </Table.Cell>
                             </Table.Row>
@@ -172,6 +141,7 @@ const StudentsTable = ({ students, isLoading, error }: StudentsTableProps) => {
                     )}
                 </Table.Body>
             </Table.Root>
+            </Table.ScrollArea>
         </Box>
     );
 };

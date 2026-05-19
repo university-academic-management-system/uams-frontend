@@ -84,7 +84,7 @@ const Sidebar = () => {
                             fontWeight="semibold"
                             transition="all 0.15s ease"
                             _hover={{
-                                bg: active ? "accent.muted" : "accent.subtle",
+                                bg: active ? "accent.subtle" : "accent.subtle",
                                 color: active ? "accent" : "fg.muted",
                             }}
                             onClick={() => navigate(item.path)}

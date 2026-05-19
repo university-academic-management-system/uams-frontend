@@ -26,7 +26,7 @@ import type { CourseLevel, Semester as CourseSemester } from "../../types/course
 
 const ITEMS_PER_PAGE = 10;
 
-const COURSE_LEVELS: CourseLevel[] = ["100", "200", "300", "400"];
+const COURSE_LEVELS: CourseLevel[] = ["L100", "L200", "L300", "L400"];
 const levelCollection = createListCollection({
   items: [
     { label: "All Levels", value: "All" },
@@ -131,12 +131,12 @@ const Courses = () => {
       <Box bg="bg" rounded="md" p="4">
         {/* Filters row */}
         <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
-          <InputGroup startElement={<LuSearch />} width="260px">
+          <InputGroup startElement={<LuSearch />} width="300px">
             <Input
               placeholder="Search by title or code"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              fontSize="xs"
+              size="lg"
             />
           </InputGroup>
 
@@ -146,7 +146,7 @@ const Courses = () => {
               collection={levelCollection}
               value={[level]}
               onValueChange={(e) => setLevel(e.value[0])}
-              size="md"
+              size="lg"
               width="140px"
             >
               <Select.HiddenSelect />
@@ -174,7 +174,7 @@ const Courses = () => {
               collection={semesterCollection}
               value={[semester]}
               onValueChange={(e) => setSemester(e.value[0])}
-              size="md"
+              size="lg"
               width="160px"
             >
               <Select.HiddenSelect />
@@ -202,7 +202,7 @@ const Courses = () => {
               collection={sessionCollection}
               value={[session]}
               onValueChange={(e) => setSession(e.value[0])}
-              size="md"
+              size="lg"
               width="160px"
             >
               <Select.HiddenSelect />
@@ -229,11 +229,11 @@ const Courses = () => {
 
         {/* Table */}
         <Table.ScrollArea>
-          <Table.Root size="sm" variant="outline">
+          <Table.Root size="lg" variant="line" stickyHeader>
             <Table.Header>
               <Table.Row>
                 {columns.map((col) => (
-                  <Table.ColumnHeader key={col}>{col}</Table.ColumnHeader>
+                  <Table.ColumnHeader bg="#f8fafc" key={col}>{col}</Table.ColumnHeader>
                 ))}
               </Table.Row>
             </Table.Header>

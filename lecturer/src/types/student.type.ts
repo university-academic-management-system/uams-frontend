@@ -1,10 +1,10 @@
 // @type/student.type.ts
 
 export type StudentLevel = 
-  | "100" | "200" | "300" | "400" 
-  | "500" | "600" | "700" | "800";
+  | "L100" | "L200" | "L300" | "L400" 
+  | "L500" | "L600" | "L700" | "L800";
 
-export const STUDENT_LEVELS: StudentLevel[] = ["100", "200", "300", "400", "500", "600", "700", "800"];
+export const STUDENT_LEVELS: StudentLevel[] = ["L100", "L200", "L300", "L400", "L500", "L600", "L700", "L800"];
 
 export type RegistrationStatus = "PENDING" | "REGISTERED" | "INCOMPLETE" | "CLEARED";
 export type AcademicStanding = "GOOD_STANDING" | "PROBATION" | "SUSPENDED" | "WARNING" | "WITHDRAWN";

@@ -11,43 +11,54 @@ import {
   Pagination,
   IconButton,
   ButtonGroup,
+  Button,
 } from "@chakra-ui/react";
-import { LuSearch, LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { LuSearch, LuChevronLeft, LuChevronRight, LuDownload } from "react-icons/lu";
 import type { Student } from "@type/student.type";
 import { STUDENT_LEVELS } from "@type/student.type";
 import { StudentHook } from "@hooks/student.hook";
 import StudentsTable from "@components/shared/StudentsTable";
+import { exportToExcel } from "@utils/excel.util";
+import { toaster } from "@components/ui/toaster";
+import useAuthStore from "@stores/auth.store";
 
 const LEVEL_OPTIONS = ["All", ...STUDENT_LEVELS];
 const ITEMS_PER_PAGE = 10;
 
 const levelCollection = createListCollection({
   items: LEVEL_OPTIONS.map((opt) => ({
-    label: opt === "All" ? "All Levels" : opt,
+    label: opt === "All" ? "All Levels" : opt.replace(/^L/, ""),
     value: opt,
   })),
 });
 
-const getSessionOptions = () => {
-  const currentYear = new Date().getFullYear();
-  const startYear = 1999;
-  const sessions = ["All"];
-  for (let year = currentYear; year >= startYear; year--) {
-    sessions.push(`${year}/${year + 1}`);
-  }
-  return sessions;
-};
-
-const SESSION_OPTIONS = getSessionOptions();
-
-const sessionCollection = createListCollection({
-  items: SESSION_OPTIONS.map((opt) => ({
-    label: opt === "All" ? "All Sessions" : opt,
-    value: opt,
-  })),
-});
+// Dynamic session generation moved inside the component
 
 const Students = () => {
+  const { user } = useAuthStore();
+
+  const sessionCollection = useMemo(() => {
+    let currentYear = new Date().getFullYear();
+    if (user?.currentSession) {
+      const yearStr = user.currentSession.split("/")[0];
+      const parsedYear = parseInt(yearStr, 10);
+      if (!isNaN(parsedYear)) {
+        currentYear = parsedYear;
+      }
+    }
+    const startYear = 1999;
+    const sessions = ["All"];
+    for (let year = currentYear; year >= startYear; year--) {
+      sessions.push(`${year}/${year + 1}`);
+    }
+    return createListCollection({
+      items: sessions.map((opt) => ({
+        label: opt === "All" ? "All Sessions" : opt,
+        value: opt,
+      })),
+    });
+  }, [user?.currentSession]);
+
   const { data: students = [], isLoading, error } = StudentHook.useStudents();
 
   const [search, setSearch] = useState("");
@@ -84,6 +95,24 @@ const Students = () => {
     });
   }, [students, level, sessionFilter, debouncedSearch]);
 
+  // Export handler
+  const handleExport = () => {
+    const exportData = filteredStudents.map((s) => ({
+      "Full Name": `${s.studentProfile?.firstName || ""} ${s.studentProfile?.lastName || ""} ${s.studentProfile?.otherName || ""}`.trim(),
+      "Email": s.email,
+      "Matric Number": s.studentProfile?.matricNumber || "—",
+      "Registration Number": s.studentProfile?.registrationNo || "—",
+      "Phone": s.studentProfile?.phone || "—",
+      "Level": s.studentProfile?.level || "—",
+      "Admission Year": s.studentProfile?.admissionYear || "—",
+      "Admission Session": s.studentProfile?.admissionSession || "—",
+      "Current Session": s.studentProfile?.currentSession || "—",
+      "Academic Standing": s.studentProfile?.academicStanding || "—",
+    }));
+    exportToExcel(exportData, "Students_List", "Students");
+    toaster.success({ title: "Exported successfully" });
+  };
+
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
@@ -105,7 +134,7 @@ const Students = () => {
 
       <Box bg="bg" rounded="md" p="4">
         <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
-          <InputGroup startElement={<LuSearch />} width="260px">
+          <InputGroup startElement={<LuSearch />} width="300px">
             <Input
               placeholder="Search by Name, Email or Mat. Num"
               value={search}
@@ -168,6 +197,23 @@ const Students = () => {
                 </Select.Content>
               </Select.Positioner>
             </Select.Root>
+
+            
+            <Button
+              onClick={handleExport}
+              display="flex"
+              alignItems="center"
+              size="lg"
+              gap="2"
+              px="4"
+              py="2"
+              bg="accent"
+              rounded="md"
+              color="white"
+              cursor="pointer"
+            >
+              <LuDownload size={16} /> Export Table
+            </Button>
           </Flex>
         </Flex>
 
@@ -183,7 +229,6 @@ const Students = () => {
             justifyContent="flex-end"
             mt="4"
           >
-
             <Pagination.Root
               count={filteredStudents.length}
               pageSize={ITEMS_PER_PAGE}
@@ -198,15 +243,13 @@ const Students = () => {
                 </Pagination.PrevTrigger>
 
                 <Pagination.Items
-                  render={(page) => {
-                    return (
-                      <IconButton
-                        variant={{ base: "ghost", _selected: "outline" }}
-                      >
-                        {page.value}
-                      </IconButton>
-                    );
-                  }}
+                  render={(page) => (
+                    <IconButton
+                      variant={{ base: "ghost", _selected: "outline" }}
+                    >
+                      {page.value}
+                    </IconButton>
+                  )}
                 />
 
                 <Pagination.NextTrigger asChild>
