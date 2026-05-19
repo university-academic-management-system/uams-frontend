@@ -93,7 +93,7 @@ const IDCardPage = () => {
                 setStudents(transformed);
             } catch (err) {
                 console.error("Failed to fetch students", err);
-                toaster.error({ title: "Failed to load students" });
+                // Error toast handled by axios interceptor
             } finally {
                 setLoading(false);
             }
@@ -174,7 +174,7 @@ const IDCardPage = () => {
             await axiosClient.put(`/admin/students/avatar?studentId=${currentStudent.matric}`, formData, { headers: { "Content-Type": "multipart/form-data" } });
             return true;
         } catch (err: any) {
-            toaster.error({ title: err.response?.data?.message || "Failed to upload photo" });
+            // Error toast handled by axios interceptor
             return false;
         } finally {
             setUploadingPhoto(false);
@@ -321,7 +321,7 @@ const IDCardPage = () => {
             setSelectedIds([]);
         } catch (err) { 
             if (toastId) toaster.dismiss(toastId);
-            toaster.error({ title: "Failed to download" }); 
+            // Error toast handled by axios interceptor
         }
     };
 
@@ -340,7 +340,7 @@ const IDCardPage = () => {
             setSelectedIds([]);
         } catch (err) { 
             if (toastId) toaster.dismiss(toastId);
-            toaster.error({ title: "Failed to download" }); 
+            // Error toast handled by axios interceptor
         }
     };
 

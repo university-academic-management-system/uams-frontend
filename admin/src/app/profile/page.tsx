@@ -28,7 +28,6 @@ const ProfilePage = () => {
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error);
-                toaster.error({ title: "Failed to load profile details" });
             } finally {
                 setIsLoadingProfile(false);
             }
@@ -67,7 +66,7 @@ const ProfilePage = () => {
             setNewPassword("");
             setConfirmPassword("");
         } catch (error: any) {
-            toaster.error({ title: error.response?.data?.message || "Failed to change password" });
+            // Error toast handled by axios interceptor
         } finally {
             setIsChangingPassword(false);
         }

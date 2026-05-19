@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Megaphone } from "lucide-react";
 import { AnnouncementServices } from "@services/announcement.service";
-import { toaster } from "@components/ui/toaster";
 import { Box, Flex, Text, Spinner, EmptyState, Button, Portal } from "@chakra-ui/react";
 import CreateAnnouncementModal from "@components/announcements/CreateAnnouncementModal";
 import type { Announcement } from "@type/announcement.type";
@@ -46,7 +45,7 @@ const AnnouncementsPage = () => {
             setAnnouncements(transformed);
         } catch (err) {
             console.error("Failed to fetch announcements", err);
-            toaster.error({ title: "Failed to load announcements" });
+            // Error toast handled by axios interceptor
         } finally {
             setLoading(false);
         }

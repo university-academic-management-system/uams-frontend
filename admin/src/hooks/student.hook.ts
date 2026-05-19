@@ -47,8 +47,8 @@ export const StudentHook = {
                 queryClient.invalidateQueries({ queryKey: ["students"] });
                 toaster.success({ title: "Student added successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to add student" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -62,8 +62,8 @@ export const StudentHook = {
                 queryClient.invalidateQueries({ queryKey: ["students"] });
                 toaster.success({ title: "Student updated successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to update student" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -76,8 +76,8 @@ export const StudentHook = {
                 queryClient.invalidateQueries({ queryKey: ["students"] });
                 toaster.success({ title: "Student deleted successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to delete student" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -90,8 +90,8 @@ export const StudentHook = {
                 queryClient.invalidateQueries({ queryKey: ["students"] });
                 toaster.success({ title: "Students uploaded successfully!" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to upload students" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -105,8 +105,8 @@ export const StudentHook = {
                 queryClient.invalidateQueries({ queryKey: ["students"] });
                 toaster.success({ title: "Selected students deleted successfully" });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to delete selected students" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },

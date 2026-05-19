@@ -68,7 +68,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
             setSelectedRecipients([]);
         } catch (error) {
             console.error("Failed to create announcement:", error);
-            toaster.error({ title: "Failed to create announcement" });
+            // Error toast handled by axios interceptor
         } finally {
             setLoading(false);
         }

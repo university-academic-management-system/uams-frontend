@@ -45,10 +45,8 @@ export const CourseHook = {
                 toaster.success({ title: "Course created successfully" });
                 queryClient.invalidateQueries({ queryKey: ["courses"] });
             },
-            onError: (error: any) => {
-                toaster.error({
-                    title: error.response?.data?.message || "Failed to create course",
-                });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -69,10 +67,8 @@ export const CourseHook = {
                 toaster.success({ title: "Course updated successfully" });
                 queryClient.invalidateQueries({ queryKey: ["courses"] });
             },
-            onError: (error: any) => {
-                toaster.error({
-                    title: error.response?.data?.message || "Failed to update course",
-                });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -88,7 +84,7 @@ export const CourseHook = {
                 queryClient.invalidateQueries({ queryKey: ["courses"] });
             },
             onError: () => {
-                toaster.error({ title: "Failed to delete course" });
+                // Error toast handled by axios interceptor
             },
         });
     },
@@ -103,8 +99,8 @@ export const CourseHook = {
                 toaster.success({ title: "Courses uploaded successfully!" });
                 queryClient.invalidateQueries({ queryKey: ["courses"] });
             },
-            onError: (err: any) => {
-                toaster.error({ title: err.response?.data?.message || "Failed to upload courses" });
+            onError: () => {
+                // Error toast handled by axios interceptor
             },
         });
     },
