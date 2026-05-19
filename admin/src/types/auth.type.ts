@@ -33,14 +33,42 @@ export interface UserDepartment {
     };
 }
 
+export interface StaffProfile {
+    id: string;
+    userId: string;
+    surname: string;
+    firstName: string;
+    otherName: string | null;
+    staffNumber: string;
+    phone: string | null;
+    department: string;
+    faculty: string;
+    staffRoles: string[];
+    title: string;
+    gender: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface UserData {
     id: string;
     email: string;
-    name: string;
+    name?: string; // Optional because /auth/me returns first/surname instead of 'name' at root
     role: string;
     roles?: string[];
     phone?: string | null;
     avatar?: string | null;
+    status?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    studentProfile?: any | null;
+    staffProfile?: StaffProfile | null;
+}
+
+export interface ProfileResponse {
+    status: string;
+    message: string;
+    data: UserData;
 }
 
 // ── Auth store state ────────────────────────────────────────────────
