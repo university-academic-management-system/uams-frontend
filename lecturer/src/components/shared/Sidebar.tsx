@@ -1,4 +1,4 @@
-import { Box, Flex, Image, Text, Icon } from "@chakra-ui/react";
+import { Box, Flex, Image, Text, Icon, Button } from "@chakra-ui/react";
 import { useLocation, useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
 import sidebarItems from "@configs/sidebar.config";
@@ -69,21 +69,23 @@ const Sidebar = () => {
                     const active = isActive(item.path);
 
                     return (
-                        <Flex
+                        <Button
                             key={item.path}
-                            align="center"
+                            width="full"
+                            alignItems="center"
+                            justifyContent="flex-start"
                             gap="3"
                             px="3"
                             py="2.5"
                             rounded="md"
                             cursor="pointer"
-                            bg={active ? "bg" : "transparent"}
-                            color={active ? "accent.500" : "fg.muted"}
-                            fontWeight={active ? "600" : "500"}
+                            bg={active ? "accent.subtle" : "transparent"}
+                            color={active ? "accent" : "fg.muted"}
+                            fontWeight="semibold"
                             transition="all 0.15s ease"
                             _hover={{
-                                bg: active ? "accent.50" : "fg.subtle",
-                                color: active ? "accent.500" : "fg.muted",
+                                bg: active ? "accent.muted" : "accent.subtle",
+                                color: active ? "accent" : "fg.muted",
                             }}
                             onClick={() => navigate(item.path)}
                         >
@@ -93,7 +95,8 @@ const Sidebar = () => {
                                 strokeWidth={active ? 2.2 : 1.8}
                             />
                             <Text fontSize="sm">{item.label}</Text>
-                        </Flex>
+                        </Button>
+                     
                     );
                 })}
             </Flex>

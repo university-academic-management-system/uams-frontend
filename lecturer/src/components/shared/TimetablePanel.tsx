@@ -21,7 +21,7 @@ import { LuCircleAlert, LuClock } from "react-icons/lu";
 interface TimetablePanelProps {
   selectedFilter: "today" | "tomorrow" | "week";
   onFilterChange: (value: "today" | "tomorrow" | "week") => void;
-  onViewFullTimetable: () => void; 
+  onViewFullTimetable: () => void;
 }
 
 const filterCollection = createListCollection({
@@ -52,10 +52,18 @@ const getRemainingWeekDays = (): string[] => {
 
 const TimetablePanel = ({ selectedFilter, onFilterChange, onViewFullTimetable }: TimetablePanelProps) => {
   const { user } = useAuthStore();
-  const session = user?.currentSession;
-  const semester = user?.currentSemester;
+  const currentYear = new Date().getFullYear();
+  const fallbackSession = `${currentYear}/${currentYear + 1}`;
 
-  const { data: timetableData = [], isLoading, error } = TimetableHook.useTimetable({ session, semester });
+  const session = user?.currentSession || fallbackSession;
+  const semester = user?.currentSemester || "FIRST";
+
+  const { data: timetableData = [], isLoading: isQueryLoading, error } = TimetableHook.useTimetable(
+    { session, semester },
+    !!session && !!semester
+  );
+
+  const isLoading = isQueryLoading || !session || !semester;
 
   const filteredEntries = useMemo(() => {
     if (!timetableData.length) return [];
@@ -78,36 +86,11 @@ const TimetablePanel = ({ selectedFilter, onFilterChange, onViewFullTimetable }:
 
   const sortedEntries = [...filteredEntries].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  if (isLoading) {
-    return (
-      <Center py={10}>
-        <Spinner size="lg" color="accent.500" />
-      </Center>
-    );
-  }
-
-  if (error) {
-    return (
-      <EmptyState.Root>
-        <EmptyState.Content>
-          <EmptyState.Indicator>
-            <LuCircleAlert />
-          </EmptyState.Indicator>
-          <VStack textAlign="center">
-            <EmptyState.Title>Error loading timetable</EmptyState.Title>
-            <EmptyState.Description>{error.message}</EmptyState.Description>
-          </VStack>
-        </EmptyState.Content>
-      </EmptyState.Root>
-    );
-  }
-
   return (
     <Box>
+      {/* Header – always visible */}
       <Flex align="center" justify="space-between" px="5" py="4.5" borderBottom="1px solid" borderColor="border.muted">
-        <Heading  color="fg.muted">
-          Timetable
-        </Heading>
+        <Heading color="fg.muted">Timetable</Heading>
         <Flex gap="2">
           <Select.Root
             collection={filterCollection}
@@ -137,19 +120,33 @@ const TimetablePanel = ({ selectedFilter, onFilterChange, onViewFullTimetable }:
               </Select.Positioner>
             </Portal>
           </Select.Root>
-          <Button
-            bg="accent.500"
-            variant="solid"
-            size="sm"
-            onClick={onViewFullTimetable}
-          >
+          <Button bg="accent.500" variant="solid" size="sm" onClick={onViewFullTimetable}>
             View Full Timetable
           </Button>
         </Flex>
       </Flex>
 
+      {/* Scrollable content area – contains loading, error, or timetable list/empty state */}
       <Box flex="1" overflowY="auto" px="5" py="5">
-        {sortedEntries.length > 0 ? (
+        {isLoading ? (
+          <Center py={10}>
+            <Spinner size="lg" color="accent.500" />
+          </Center>
+        ) : error ? (
+          <EmptyState.Root>
+            <EmptyState.Content>
+              <EmptyState.Indicator>
+                <LuCircleAlert />
+              </EmptyState.Indicator>
+              <VStack textAlign="center">
+                <EmptyState.Title>Error loading timetable</EmptyState.Title>
+                <EmptyState.Description>
+                  There seems to be a temporary issue. Please try again later.
+                </EmptyState.Description>
+              </VStack>
+            </EmptyState.Content>
+          </EmptyState.Root>
+        ) : sortedEntries.length > 0 ? (
           <Flex direction="column" gap="3">
             {sortedEntries.map((entry) => {
               const now = new Date();
@@ -161,23 +158,25 @@ const TimetablePanel = ({ selectedFilter, onFilterChange, onViewFullTimetable }:
               return (
                 <Box
                   key={entry.id}
-                  bg={isActive ? "accent.500" : "fg.subtle"}
+                  bg={isActive ? "accent.500" : "white"}
                   color={isActive ? "white" : "fg.muted"}
                   borderRadius="lg"
                   px="4.5"
                   py="4"
                   borderLeft="4px solid"
-                  borderLeftColor={isActive ? "accent.600" : "border.muted"}
+                  borderLeftColor={isActive ? "accent.600" : "accent.300"}
                 >
                   <Text fontSize="14px" mb="1.5">
-                    {entry.courseId}
+                    {entry.course.code}
                   </Text>
                   <Flex align="center" gap="3.5">
                     <Text fontSize="11px" opacity={isActive ? 0.9 : 0.6}>
                       {entry.venue}
                     </Text>
                     <Flex align="center" gap="1.5">
-                      <Icon size="xs"><LuClock /></Icon>
+                      <Icon size="xs">
+                        <LuClock />
+                      </Icon>
                       <Text fontSize="11px">
                         {entry.startTime.slice(11, 16)} - {entry.endTime.slice(11, 16)}
                       </Text>
@@ -189,7 +188,9 @@ const TimetablePanel = ({ selectedFilter, onFilterChange, onViewFullTimetable }:
           </Flex>
         ) : (
           <Flex h="full" direction="column" align="center" justify="center" textAlign="center" py="10">
-            <Icon size="lg" color="fg.subtle" mb="3"><LuClock /></Icon>
+            <Icon size="lg" color="fg.subtle" mb="3">
+              <LuClock />
+            </Icon>
             <Text fontSize="13px" color="fg.muted">
               No classes scheduled for{" "}
               {selectedFilter === "today"
