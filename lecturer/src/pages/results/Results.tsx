@@ -30,37 +30,31 @@ const Results = () => {
 
   // Level filter options
   const levelCollection = useMemo(() => {
-    const opts = new Set<string>();
-    courses.forEach((c) => {
-      if (c.level) opts.add(c.level);
-    });
+    const COURSE_LEVELS = ["L100", "L200", "L300", "L400"];
     return createListCollection({
       items: [
         { label: "All Levels", value: "all" },
-        ...Array.from(opts).map((opt) => ({
-          label: `${opt} Level`,
+        ...COURSE_LEVELS.map((opt) => ({
+          label: `${opt.replace(/^L/i, "")} Level`,
           value: opt,
         })),
       ],
     });
-  }, [courses]);
+  }, []);
 
   // Semester filter options
   const semesterCollection = useMemo(() => {
-    const opts = new Set<string>();
-    courses.forEach((c) => {
-      if (c.semester) opts.add(c.semester);
-    });
+    const COURSE_SEMESTERS = ["FIRST", "SECOND"];
     return createListCollection({
       items: [
         { label: "All Semesters", value: "all" },
-        ...Array.from(opts).map((opt) => ({
+        ...COURSE_SEMESTERS.map((opt) => ({
           label: opt.charAt(0).toUpperCase() + opt.slice(1).toLowerCase() + " Semester",
           value: opt,
         })),
       ],
     });
-  }, [courses]);
+  }, []);
 
   // Apply filters
   const filteredCourses = useMemo(() => {
@@ -94,13 +88,13 @@ const Results = () => {
         Results
       </Heading>
       <Box bg="white" rounded="md" border="1px solid" borderColor="border.muted" p="5">
-        <Flex align="center" justify="space-between" mb="5" gap="4">
-          <InputGroup startElement={<Search />} width="300px" ml="auto">
+        <Flex align="center" justify="space-between" mb="5" gap="4" colorPalette="accent">
+          <InputGroup startElement={<Search />} width="300px">
             <Input
               placeholder="Search Course"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              fontSize="13px"
+              size="lg"
             />
           </InputGroup>
 
@@ -109,9 +103,9 @@ const Results = () => {
               value={[selectedLevelId]}
               onValueChange={(e) => setSelectedLevelId(e.value[0])}
               collection={levelCollection}
-              size="sm"
+              size="lg"
               variant="outline"
-              width="120px"
+              width="140px"
             >
               <Select.Control>
                 <Select.Trigger>
@@ -138,9 +132,9 @@ const Results = () => {
               value={[selectedSemesterId]}
               onValueChange={(e) => setSelectedSemesterId(e.value[0])}
               collection={semesterCollection}
-              size="sm"
+              size="lg"
               variant="outline"
-              width="150px"
+              width="180px"
             >
               <Select.Control>
                 <Select.Trigger>

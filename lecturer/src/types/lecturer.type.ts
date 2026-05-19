@@ -20,6 +20,7 @@ export interface Staff {
   role: string;              
   status: string;           
   staffProfile: StaffProfile;
+  courses?: any[];
   createdAt: string;
   updatedAt: string;
 }
