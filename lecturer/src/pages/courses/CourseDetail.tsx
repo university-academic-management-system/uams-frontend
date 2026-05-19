@@ -30,7 +30,7 @@ const CourseDetail = () => {
             },
             {
                 label: "Credit unit",
-                value: course?.creditUnits || "No credit unit available.",
+                value: course?.units || "No credit unit available.",
             },
         ]
     }, [course])

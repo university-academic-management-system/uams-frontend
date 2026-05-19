@@ -1,10 +1,9 @@
 import axiosClient from "@configs/axios.config";
-import type { TimetableEntry, TimetableResponse } from "@type/timetable.type";
+import type { ApiResponse, TimetableEntry } from "@type/timetable.type";
 
 export const TimetableService = {
-  // Fetch all timetables (optionally filter by session/semester)
-  getTimetable: async (params?: { session?: string; semester?: string }): Promise<TimetableEntry[]> => {
-    const { data } = await axiosClient.get<TimetableResponse>("/timetables", { params });
-    return data.data;
+  getTimetable: async (filters?: { session?: string; semester?: string }): Promise<ApiResponse<TimetableEntry []>> => {
+    const { data } = await axiosClient.get<ApiResponse<TimetableEntry[]>>("/timetables", { params: filters });
+    return data;
   },
 };

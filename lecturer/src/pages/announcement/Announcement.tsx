@@ -1,19 +1,15 @@
-"use client";
-
 import { useState } from "react";
 import {
   Box,
   Flex,
-  Text,
   Heading,
   Portal,
   DatePicker,
-  Icon,
   EmptyState,
   VStack,
 } from "@chakra-ui/react";
 import type { DateValue } from "@internationalized/date";
-import { LuCalendar, LuMegaphone } from "react-icons/lu";
+import { LuMegaphone } from "react-icons/lu";
 import { AnnouncementHook } from "@hooks/announcement.hook";
 import AnnouncementList from "@components/shared/AnnouncementList";
 
@@ -49,15 +45,15 @@ const Announcement = () => {
   const hasNoAnnouncements = !isLoading && announcements.length === 0;
 
   return (
-    <Box p="8" maxW="1400px" mx="auto">
+    <Box p="8" maxW="full" mx="auto">
       <Flex align="center" justify="space-between" mb="8" flexWrap="wrap" gap="4">
         <Heading color="fg.muted">
           Announcement
         </Heading>
 
         <Flex align="center" gap="3" flexWrap="wrap" colorPalette={"accent"}>
-          <Text fontSize="xs" fontWeight="500" color="fg.muted">Date Range</Text>
           <DatePicker.Root
+            openOnClick
             selectionMode="range"
             value={dateRange}
             onValueChange={(e) => setDateRange(e.value)}
@@ -67,11 +63,6 @@ const Announcement = () => {
             <DatePicker.Control>
               <DatePicker.Input index={0} />
               <DatePicker.Input index={1} />
-              <DatePicker.IndicatorGroup>
-                <DatePicker.Trigger>
-                  <LuCalendar />
-                </DatePicker.Trigger>
-              </DatePicker.IndicatorGroup>
             </DatePicker.Control>
             <Portal>
               <DatePicker.Positioner>
