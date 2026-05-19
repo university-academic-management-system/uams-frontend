@@ -47,17 +47,11 @@ export interface UserData {
 
 export interface AuthState {
     token: string;
-    role: string;
-    tenantId: string;
-    universityId: string;
-    facultyId: string | null;
-    departmentId: string | null;
-    email?: string;
-    username?: string;
+    expiresIn: string;
     user: UserData | null;
+    isAuthenticated: boolean;
     setAuth: (auth: Partial<AuthState>) => void;
     clearAuth: () => void;
-    isAuthenticated: boolean;
 }
 
 // ── Login ────────────────────────────────────────────────────────────
@@ -68,15 +62,12 @@ export interface LoginData {
 }
 
 export interface LoginResponse {
-    success: boolean;
-    token: string;
-    expiresIn: string;
-    user: UserData;
-    permissions: {
-        facultyId: string;
-        departmentId: string;
-        universityId: string;
-        tenantId: string;
+    status: string;
+    message: string;
+    data: {
+        token: string;
+        expiresIn: string;
+        user: UserData;
     };
 }
 

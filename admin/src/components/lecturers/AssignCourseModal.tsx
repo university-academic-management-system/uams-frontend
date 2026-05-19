@@ -1,42 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { X } from "lucide-react";
 import { CourseServices } from "@services/course.service";
-import Select from "react-select";
-import { Box, Flex, Text, Button, Input, Dialog } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, Input, Dialog, Portal, Select, createListCollection } from "@chakra-ui/react";
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    onAssign: (data: { courseId: string; session: string }) => Promise<void>;
+    onAssign: (data: { courseIds: string[]; session: string }) => Promise<void>;
     staffName?: string;
 }
 
-interface CourseOption {
-    value: string;
-    label: string;
-}
-
 const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
-    const [courseId, setCourseId] = useState("");
+    const [courseIds, setCourseIds] = useState<string[]>([]);
     const [session, setSession] = useState("2025/2026");
     const [courses, setCourses] = useState<any[]>([]);
     const [isLoadingCourses, setIsLoadingCourses] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const courseOptions: CourseOption[] = courses.map((c: any) => ({
-        value: c.id,
-        label: `${c.code} - ${c.title || c.name}`,
-    }));
+    const courseCollection = useMemo(() => {
+        return createListCollection({
+            items: courses.map((c: any) => ({
+                value: c.id,
+                label: `${c.code} - ${c.title || c.name}`,
+            }))
+        });
+    }, [courses]);
 
-    useEffect(() => {
-        if (isOpen) {
-            setCourseId("");
-            setSession("2025/2026");
-            fetchCourses();
-        }
-    }, [isOpen]);
-
-    const fetchCourses = async () => {
+    const fetchCourses = useCallback(async () => {
         try {
             setIsLoadingCourses(true);
             const response = await CourseServices.getCourses();
@@ -47,20 +37,28 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
         } finally {
             setIsLoadingCourses(false);
         }
-    };
+    }, []);
 
-    const handleSubmit = async () => {
-        if (!courseId || !session) return;
+    useEffect(() => {
+        if (isOpen) {
+            setCourseIds([]);
+            setSession("2025/2026");
+            fetchCourses();
+        }
+    }, [isOpen, fetchCourses]);
+
+    const handleSubmit = useCallback(async () => {
+        if (courseIds.length === 0 || !session) return;
         setIsSubmitting(true);
         try {
-            await onAssign({ courseId, session });
+            await onAssign({ courseIds, session });
             onClose();
         } catch (err) {
             console.error("Failed to assign course:", err);
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [courseIds, session, onAssign, onClose]);
 
     return (
         <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) onClose() }} placement="center" closeOnInteractOutside={false}>
@@ -86,24 +84,37 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
 
                             <Box>
                                 <Text fontSize="sm" fontWeight="bold" color="fg.muted" mb="2">Name of course</Text>
-                                <Select
-                                    options={courseOptions}
-                                    value={courseOptions.find((c) => c.value === courseId)}
-                                    onChange={(selected) => setCourseId(selected?.value || "")}
-                                    isLoading={isLoadingCourses}
-                                    placeholder="Select a course..."
-                                    styles={{
-                                        control: (base) => ({
-                                        ...base,
-                                        backgroundColor: "#F8FAFC",
-                                        borderColor: "#E2E8F0",
-                                        borderRadius: "6px",
-                                        minHeight: "40px",
-                                        boxShadow: "none",
-                                        "&:hover": { borderColor: "#CBD5E1" },
-                                        }),
-                                    }}
-                                />
+                                <Select.Root 
+                                    multiple 
+                                    collection={courseCollection} 
+                                    size="md" 
+                                    width="full"
+                                    value={courseIds}
+                                    onValueChange={(details) => setCourseIds(details.value)}
+                                    disabled={isLoadingCourses}
+                                >
+                                    <Select.HiddenSelect />
+                                    <Select.Control bg="#F8FAFC" borderColor="#E2E8F0" borderRadius="md" minHeight="40px" _hover={{ borderColor: "#CBD5E1" }}>
+                                        <Select.Trigger>
+                                            <Select.ValueText placeholder={isLoadingCourses ? "Loading courses..." : "Select course(s)..."} />
+                                        </Select.Trigger>
+                                        <Select.IndicatorGroup>
+                                            <Select.Indicator />
+                                        </Select.IndicatorGroup>
+                                    </Select.Control>
+                                    <Portal>
+                                        <Select.Positioner zIndex="popover">
+                                            <Select.Content>
+                                                {courseCollection.items.map((course) => (
+                                                    <Select.Item item={course} key={course.value}>
+                                                        {course.label}
+                                                        <Select.ItemIndicator />
+                                                    </Select.Item>
+                                                ))}
+                                            </Select.Content>
+                                        </Select.Positioner>
+                                    </Portal>
+                                </Select.Root>
                             </Box>
 
                             <Box>
@@ -124,10 +135,10 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
 
                     {/* Footer */}
                     <Flex p="6" borderTop="xs" borderColor="border.muted" justifyContent="flex-end" gap="3">
-                        <Button onClick={onClose} variant="outline" borderColor="border.muted" color="fg.muted" borderRadius="md">
+                        <Button onClick={onClose} variant="outline" size="xl" borderColor="border.muted" color="fg.muted" borderRadius="md">
                             Cancel
                         </Button>
-                        <Button onClick={handleSubmit} bg="#1D7AD9" color="white" borderRadius="md" loading={isSubmitting} disabled={!courseId}>
+                        <Button onClick={handleSubmit} size="xl" bg="#1D7AD9" color="white" borderRadius="md" loading={isSubmitting} disabled={courseIds.length === 0}>
                             Assign Course
                         </Button>
                     </Flex>

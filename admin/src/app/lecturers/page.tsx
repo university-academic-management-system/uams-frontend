@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, FileUp, MoreHorizontal, UserCog, Pencil, Trash2, Download, X, Users, Search } from "lucide-react";
 import { exportToExcel } from "@utils/excel.util";
 import {
@@ -9,7 +9,13 @@ import {
   InputGroup,
   Button,
   VStack,
-  Table
+  Table,
+  Dialog,
+  Badge,
+  Checkbox,
+  Popover,
+  ActionBar,
+  CloseButton
 } from "@chakra-ui/react";
 import BulkUploadStaffModal from "@components/lecturers/BulkUploadStaffModal";
 import AssignCourseModal from "@components/lecturers/AssignCourseModal";
@@ -36,8 +42,11 @@ const StaffPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLTableCellElement>(null);
+
+  // Confirmation state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmCallback, setConfirmCallback] = useState<(() => void) | null>(null);
+  const [confirmText, setConfirmText] = useState("");
 
   // Action modals state
   const [showAssignCourse, setShowAssignCourse] = useState(false);
@@ -46,12 +55,6 @@ const StaffPage = () => {
   const [staffToEdit, setStaffToEdit] = useState<any>(null);
 
   // Removed fetchStaff and useEffect as TanStack Query handles it now
-
-  useEffect(() => {
-    const handleClickOutside = () => setActiveDropdownId(null);
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
 
   const filteredStaff = useMemo(() => {
     let result = staffList;
@@ -70,61 +73,64 @@ const StaffPage = () => {
   const totalPages = Math.ceil(filteredStaff.length / ITEMS_PER_PAGE);
   const paginatedStaff = filteredStaff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
-  };
+  }, []);
 
-  const toggleSelectAll = () => {
+  const toggleSelectAll = useCallback(() => {
     const allIds = filteredStaff.map((s) => s.id);
     const allSelected = allIds.every((id) => selectedIds.includes(id));
     setSelectedIds(allSelected ? [] : allIds);
-  };
+  }, [filteredStaff, selectedIds]);
 
-  const toggleDropdown = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setActiveDropdownId(activeDropdownId === id ? null : id);
-  };
-
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(() => {
     if (selectedIds.length === 0) return;
-    if (window.confirm(`Delete ${selectedIds.length} selected lecturers?`)) {
+    setConfirmText(`This action cannot be undone. This will permanently delete ${selectedIds.length} selected lecturers and remove their data from our systems.`);
+    setConfirmCallback(() => async () => {
       try {
         await bulkDeleteMutation.mutateAsync(selectedIds);
         setSelectedIds([]);
       } catch (err) {
         // Error handled by mutation
       }
-    }
-  };
+    });
+    setConfirmOpen(true);
+  }, [selectedIds, bulkDeleteMutation]);
 
-  const handleDelete = async (staff: Staff) => {
-    if (window.confirm(`Delete lecturer "${staff.fullName}"?`)) {
+  const handleDelete = useCallback((staff: Staff) => {
+    setConfirmText(`This action cannot be undone. This will permanently delete lecturer "${staff.fullName}" and remove their data from our systems.`);
+    setConfirmCallback(() => async () => {
       try {
         await deleteMutation.mutateAsync(staff.id);
       } catch (err) {
         // Error handled by mutation
       }
-    }
-  };
+    });
+    setConfirmOpen(true);
+  }, [deleteMutation]);
 
-  const handleAssignCourse = async (data: { courseId: string; session: string }) => {
+  const handleAssignCourse = useCallback(async (data: { courseIds: string[]; session: string }) => {
     if (!selectedStaff) return;
     try {
-      await assignCourseMutation.mutateAsync({
-        courseId: data.courseId,
-        lecturerId: selectedStaff.id,
-        session: data.session
-      });
+      await Promise.all(
+        data.courseIds.map((courseId) =>
+          assignCourseMutation.mutateAsync({
+            courseId,
+            lecturerId: selectedStaff.id,
+            session: data.session
+          })
+        )
+      );
       setShowAssignCourse(false);
       setSelectedStaff(null);
     } catch (err) {
       // Error handled by mutation
     }
-  };
+  }, [selectedStaff, assignCourseMutation]);
 
-  const handleAddEditSubmit = async (payload: any) => {
+  const handleAddEditSubmit = useCallback(async (payload: any) => {
     try {
       if (staffToEdit) {
         await updateStaffMutation.mutateAsync({ id: staffToEdit.id, payload });
@@ -136,7 +142,7 @@ const StaffPage = () => {
     } catch (err) {
       // Error handled by mutation
     }
-  };
+  }, [staffToEdit, updateStaffMutation, addStaffMutation]);
 
   // const clearFilters = () => {
   //   setSearchQuery("");
@@ -146,70 +152,67 @@ const StaffPage = () => {
   // };
 
   return (
-    <Box>
-      <Flex direction={{ base: "column", md: "row" }} justifyContent="space-between" alignItems={{ base: "flex-start", md: "center" }} mb="6" gap="4">
-        <Box>
-          <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Lecturers</Text>
-          <Text fontSize="sm" color="fg.muted">Manage department lecturers and their roles</Text>
-        </Box>
-        <Flex gap="3" flexWrap="nowrap" alignItems="center" w={{ base: "full", md: "auto" }}>
-          <InputGroup startElement={<Search size={18} color="#94a3b8" />} flex="1">
-            <Input
-              placeholder="Search by name, email or staff ID"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              bg="white"
-              border="xs"
-              borderColor="border.muted"
-              borderRadius="md"
-              py="2.5"
-              pl="10"
-              pr="4"
-              fontSize="sm"
-              w="full"
-              maxW={{ base: "full", md: "320px" }}
-              _focus={{ borderColor: "blue.500", boxShadow: "none" }}
-            />
-          </InputGroup>
-          <Menu.Root>
-            <Menu.Trigger asChild>
-              <Box as="button" flexShrink={0} bg="#1D7AD9" color="white" px="5" py="2.5" fontSize="sm" fontWeight="bold" cursor="pointer" _hover={{ bg: "blue.700" }} border="none" display="flex" alignItems="center" gap="2" borderRadius="md">
-                <Plus size={16} /> Add Lecturer
-              </Box>
-            </Menu.Trigger>
-            <Portal>
-              <Menu.Positioner>
-                <Menu.Content bg="white" borderRadius="md" boxShadow="none" border="xs" borderColor="border.muted" minW="150px" overflow="hidden" py="1" zIndex="popover">
-                  <Menu.Item value="single" asChild>
-                    <Box as="button" onClick={() => { setStaffToEdit(null); setShowAddEditForm(true); }} w="full" textAlign="left" px="4" py="2.5" fontSize="sm" fontWeight="medium" color="fg.muted" _hover={{ bg: "slate.50" }} cursor="pointer" border="none" bg="transparent" display="flex" alignItems="center" gap="2">
-                      <UserCog size={16} /> Single
-                    </Box>
-                  </Menu.Item>
-                  <Menu.Item value="bulk" asChild>
-                    <Box as="button" onClick={() => setShowUploadModal(true)} w="full" textAlign="left" px="4" py="2.5" fontSize="sm" fontWeight="medium" color="fg.muted" _hover={{ bg: "slate.50" }} cursor="pointer" border="none" bg="transparent" display="flex" alignItems="center" gap="2">
-                      <FileUp size={16} /> Bulk
-                    </Box>
-                  </Menu.Item>
-                </Menu.Content>
-              </Menu.Positioner>
-            </Portal>
-          </Menu.Root>
-        </Flex>
+    <Box maxW={{ base: "100%", lg: "calc(100vw - 340px)" }}>
+      <Box mb="6">
+        <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Lecturers</Text>
+        <Text fontSize="sm" color="fg.subtle">Manage department lecturers and their roles</Text>
+      </Box>
+      <Flex justifyContent="space-between" gap="3" flexWrap="wrap" alignItems="center" w="full" mb="6">
+        <InputGroup startElement={<Search size={20} color="#94a3b8" />} flex="1" maxW={{ base: "full", md: "400px" }}>
+          <Input
+            size="xl"
+            placeholder="Search by name, email or staff ID"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+            bg="white"
+            border="1px"
+            borderColor="border.muted"
+            borderRadius="md"
+            w="full"
+            _focus={{ borderColor: "accent", boxShadow: "none" }}
+          />
+        </InputGroup>
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <Button size="xl" flexShrink={0} bg="accent" color="white" cursor="pointer" border="none" display="flex" alignItems="center" borderRadius="md">
+              <Plus size={16} /> Add Lecturer
+            </Button>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content bg="white" borderRadius="md" boxShadow="none" border="xs" borderColor="border.muted" minW="150px" overflow="hidden" py="1" zIndex="popover">
+                <Menu.Item value="single" asChild>
+                  <Box as="button" onClick={() => { setStaffToEdit(null); setShowAddEditForm(true); }} w="full" textAlign="left" px="4" py="2.5" fontSize="sm" fontWeight="medium" color="fg.muted" _hover={{ bg: "slate.50" }} cursor="pointer" border="none" bg="transparent" display="flex" alignItems="center" gap="2">
+                    <UserCog size={16} /> Single
+                  </Box>
+                </Menu.Item>
+                <Menu.Item value="bulk" asChild>
+                  <Box as="button" onClick={() => setShowUploadModal(true)} w="full" textAlign="left" px="4" py="2.5" fontSize="sm" fontWeight="medium" color="fg.muted" _hover={{ bg: "slate.50" }} cursor="pointer" border="none" bg="transparent" display="flex" alignItems="center" gap="2">
+                    <FileUp size={16} /> Bulk
+                  </Box>
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
       </Flex>
 
       {/* Table */}
-      <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" overflow="hidden" maxW={{ base: "100%", lg: "calc(100vw - 340px)" }}>
+      <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" overflow="hidden">
         <Box overflowX="auto">
-          <Table.Root w="full" textAlign="left" variant="line" interactive>
+          <Table.Root w="full" textAlign="left" variant="outline" interactive>
             <Table.Header bg="slate.50">
               <Table.Row borderY="xs" borderColor="border.muted">
                 <Table.ColumnHeader bg="slate.50" px="6" py="4" w="12" textAlign="center" position="sticky" left="0" zIndex="20" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
-                  <input
-                    type="checkbox"
+                  <Checkbox.Root
+                    variant="outline"
                     checked={filteredStaff.length > 0 && selectedIds.length > 0 && selectedIds.length === filteredStaff.length}
-                    onChange={toggleSelectAll}
-                    style={{ cursor: "pointer" }}
-                  />
+                    onCheckedChange={toggleSelectAll}
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                  </Checkbox.Root>
                 </Table.ColumnHeader>
                 <Table.ColumnHeader bg="slate.50" px="6" py="4" minW="150px" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">Staff ID</Table.ColumnHeader>
                 <Table.ColumnHeader bg="slate.50" px="6" py="4" minW="150px" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">Name</Table.ColumnHeader>
@@ -246,7 +249,7 @@ const StaffPage = () => {
                                 </EmptyState.Description>
                             </VStack>
                             {!searchQuery && (
-                                <Button onClick={() => { setStaffToEdit(null); setShowAddEditForm(true); }} bg="#1D7AD9" color="white" _hover={{ bg: "blue.700" }} px="6" fontSize="sm" fontWeight="bold">
+                                <Button onClick={() => { setStaffToEdit(null); setShowAddEditForm(true); }} size="xl" bg="accent" color="white" px="6">
                                     Add Lecturer
                                 </Button>
                             )}
@@ -258,9 +261,17 @@ const StaffPage = () => {
                 paginatedStaff.map((s) => (
                   <Table.Row key={s.id} _hover={{ bg: "slate.50" }} borderBottom="xs" borderColor="border.muted" bg={selectedIds.includes(s.id) ? "blue.50" : "transparent"} cursor="pointer" whiteSpace="nowrap">
                     <Table.Cell px="6" py="5" textAlign="center" position="sticky" left="0" zIndex="10" bg={selectedIds.includes(s.id) ? "blue.50" : "white"} borderBottom="xs" borderColor="border.muted">
-                      <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelection(s.id)} onClick={(e) => e.stopPropagation()} style={{ cursor: "pointer" }} />
+                      <Checkbox.Root 
+                        variant="outline"
+                        checked={selectedIds.includes(s.id)} 
+                        onCheckedChange={() => toggleSelection(s.id)} 
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()} 
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                      </Checkbox.Root>
                     </Table.Cell>
-                    <Table.Cell px="6" py="5" color="fg.subtle" fontWeight="medium">{s.staffNumber}</Table.Cell>
+                    <Table.Cell px="6" py="5" fontWeight="bold" color="fg.muted">{s.staffNumber}</Table.Cell>
                     <Table.Cell px="6" py="5" fontWeight="bold" color="fg.muted">{s.fullName}</Table.Cell>
                     <Table.Cell px="6" py="5" color="fg.muted">{s.email}</Table.Cell>
                     <Table.Cell px="6" py="5" color="fg.muted">{s.phone || "—"}</Table.Cell>
@@ -269,33 +280,37 @@ const StaffPage = () => {
                     <Table.Cell px="6" py="5">
                       <Flex gap="1.5" wrap="wrap" maxW="200px">
                         {s.courses?.split(", ").map((course, idx) => (
-                          <Text key={idx} as="span" bg="#2ECC71" color="white" px="3" py="1" borderRadius="md" fontSize="10px" fontWeight="bold" boxShadow="sm" display="inline-block" textAlign="center" minW={course === "N/A" ? "60px" : "auto"}>
+                          <Badge key={idx} px="2" py="1" fontSize="10px" fontWeight="bold" textAlign="center" minW={course === "N/A" ? "60px" : "auto"} bg={course === "N/A" ? "gray.50" : "green.50"} color={course === "N/A" ? "gray.600" : "green.600"}>
                             {course}
-                          </Text>
+                          </Badge>
                         ))}
                       </Flex>
                     </Table.Cell>
-                    <Table.Cell px="6" py="5" textAlign="right" pr="12" position="sticky" right="0" zIndex={activeDropdownId === s.id ? "50" : "10"} bg={selectedIds.includes(s.id) ? "blue.50" : "white"} borderBottom="xs" borderColor="border.muted" ref={dropdownRef}>
-                      <Box position="relative">
-                        <Box as="button" onClick={(e: React.MouseEvent) => toggleDropdown(s.id, e)} p="1" _hover={{ bg: "fg.subtle" }} borderRadius="full" cursor="pointer" border="none" bg="transparent" color="fg.subtle">
-                          <MoreHorizontal size={20} />
-                        </Box>
-                        {activeDropdownId === s.id && (
-                          <Box position="absolute" right="0" top="8" w="48" bg="white" borderRadius="md" boxShadow="none" border="xs" borderColor="border.muted" zIndex="50" overflow="hidden" textAlign="left">
-                            <Box p="1">
-                              <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setSelectedStaff(s); setShowAssignCourse(true); setActiveDropdownId(null); }} w="full" display="flex" alignItems="center" gap="2" px="3" py="2" fontSize="sm" fontWeight="medium" color="green.600" _hover={{ bg: "green.50" }} borderRadius="md" cursor="pointer" border="none" bg="transparent">
-                                <UserCog size={16} /> Assign Course
-                              </Box>
-                              <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setStaffToEdit(s); setShowAddEditForm(true); setActiveDropdownId(null); }} w="full" display="flex" alignItems="center" gap="2" px="3" py="2" fontSize="sm" fontWeight="medium" color="amber.600" _hover={{ bg: "amber.50" }} borderRadius="md" cursor="pointer" border="none" bg="transparent">
-                                <Pencil size={16} /> Edit details
-                              </Box>
-                              <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(s); setActiveDropdownId(null); }} w="full" display="flex" alignItems="center" gap="2" px="3" py="2" fontSize="sm" fontWeight="medium" color="red.600" _hover={{ bg: "red.50" }} borderRadius="md" cursor="pointer" border="none" bg="transparent">
-                                <Trash2 size={16} /> Delete Lecturer
-                              </Box>
-                            </Box>
+                    <Table.Cell px="6" py="5" textAlign="right" pr="12" position="sticky" right="0" zIndex="10" bg={selectedIds.includes(s.id) ? "blue.50" : "white"} borderBottom="xs" borderColor="border.muted">
+                      <Popover.Root positioning={{ placement: "bottom-end" }}>
+                        <Popover.Trigger asChild>
+                          <Box as="button" onClick={(e: React.MouseEvent) => e.stopPropagation()} p="1" _hover={{ bg: "fg.subtle" }} borderRadius="full" cursor="pointer" border="none" bg="transparent" color="fg.subtle">
+                            <MoreHorizontal size={20} />
                           </Box>
-                        )}
-                      </Box>
+                        </Popover.Trigger>
+                        <Portal>
+                          <Popover.Positioner zIndex="popover">
+                            <Popover.Content bg="white" borderRadius="md" boxShadow="md" border="xs" borderColor="border.muted" w="48" overflow="hidden" outline="none">
+                              <Popover.Body p="1">
+                                <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setSelectedStaff(s); setShowAssignCourse(true); }} w="full" display="flex" alignItems="center" gap="2" px="3" py="2" fontSize="sm" fontWeight="medium" color="green.600" _hover={{ bg: "green.50" }} borderRadius="md" cursor="pointer" border="none" bg="transparent">
+                                  <UserCog size={16} /> Assign Course
+                                </Box>
+                                <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setStaffToEdit(s); setShowAddEditForm(true); }} w="full" display="flex" alignItems="center" gap="2" px="3" py="2" fontSize="sm" fontWeight="medium" color="amber.600" _hover={{ bg: "amber.50" }} borderRadius="md" cursor="pointer" border="none" bg="transparent">
+                                  <Pencil size={16} /> Edit details
+                                </Box>
+                                <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(s); }} w="full" display="flex" alignItems="center" gap="2" px="3" py="2" fontSize="sm" fontWeight="medium" color="red.600" _hover={{ bg: "red.50" }} borderRadius="md" cursor="pointer" border="none" bg="transparent">
+                                  <Trash2 size={16} /> Delete Lecturer
+                                </Box>
+                              </Popover.Body>
+                            </Popover.Content>
+                          </Popover.Positioner>
+                        </Portal>
+                      </Popover.Root>
                     </Table.Cell>
                   </Table.Row>
                 ))
@@ -327,22 +342,55 @@ const StaffPage = () => {
           )}
         </Box>
 
-      {selectedIds.length > 1 && (
-        <Flex position="fixed" bottom="8" left="50%" transform="translateX(-50%)" bg="white" px={{ base: "4", md: "6" }} py="3" borderRadius="md" boxShadow="none" border="xs" borderColor="border.muted" alignItems="center" gap={{ base: "3", md: "6" }} zIndex="50" flexWrap="wrap" justifyContent="center" w={{ base: "90%", md: "auto" }}>
-          <Text fontSize="sm" fontWeight="bold" color="fg.muted">{selectedIds.length} items selected</Text>
-          <Box w="px" h="6" bg="fg.subtle" />
-          <Box as="button" onClick={() => { exportToExcel(staffList.filter((s) => selectedIds.includes(s.id)).map((s) => ({ "Staff ID": s.staffNumber, Name: s.fullName, Email: s.email, Phone: s.phone || "N/A", Department: s.department, Level: s.level, Courses: s.courses })), "selected_lecturers", "Lecturers"); }} display="flex" alignItems="center" gap="2" bg="#1D7AD9" color="white" px="4" py="2" borderRadius="md" fontSize="xs" fontWeight="bold" _hover={{ bg: "blue.700" }} cursor="pointer" border="none">
-            <Download size={16} /> Bulk Download
-          </Box>
-          <Box as="button" onClick={handleBulkDelete} display="flex" alignItems="center" gap="2" bg="red.500" color="white" px="4" py="2" borderRadius="md" fontSize="xs" fontWeight="bold" _hover={{ bg: "red.600" }} cursor="pointer" border="none">
-            <Trash2 size={16} /> Bulk Delete
-          </Box>
-          <Box w="px" h="6" bg="fg.subtle" />
-          <Box as="button" onClick={() => setSelectedIds([])} p="1" _hover={{ bg: "fg.subtle" }} borderRadius="full" color="fg.subtle" cursor="pointer" border="none" bg="transparent" title="Unselect all">
-            <X size={20} />
-          </Box>
-        </Flex>
-      )}
+      <ActionBar.Root
+        open={selectedIds.length > 1}
+        onOpenChange={(e) => {
+          if (!e.open) setSelectedIds([]);
+        }}
+        closeOnInteractOutside={false}
+      >
+        <Portal>
+          <ActionBar.Positioner zIndex="50">
+            <ActionBar.Content borderRadius="md" p="2">
+              <ActionBar.SelectionTrigger>
+                {selectedIds.length} items selected
+              </ActionBar.SelectionTrigger>
+              <ActionBar.Separator />
+              <Button 
+                onClick={() => { exportToExcel(staffList.filter((s) => selectedIds.includes(s.id)).map((s) => ({ "Staff ID": s.staffNumber, Name: s.fullName, Email: s.email, Phone: s.phone || "N/A", Department: s.department, Level: s.level, Courses: s.courses })), "selected_lecturers", "Lecturers"); }} 
+                size="xl" 
+                borderRadius="md" 
+                bg="#1D7AD9" 
+                color="white" 
+                display="flex" 
+                alignItems="center" 
+                gap="2" 
+                cursor="pointer" 
+                border="none"
+              >
+                <Download size={16} /> Bulk Download
+              </Button>
+              <Button 
+                onClick={handleBulkDelete} 
+                size="xl" 
+                borderRadius="md" 
+                bg="red.500" 
+                color="white" 
+                display="flex" 
+                alignItems="center" 
+                gap="2" 
+                cursor="pointer" 
+                border="none"
+              >
+                <Trash2 size={16} /> Bulk Delete
+              </Button>
+              <ActionBar.CloseTrigger asChild>
+                <CloseButton size="xl" />
+              </ActionBar.CloseTrigger>
+            </ActionBar.Content>
+          </ActionBar.Positioner>
+        </Portal>
+      </ActionBar.Root>
 
       <BulkUploadStaffModal
         isOpen={showUploadModal}
@@ -365,6 +413,40 @@ const StaffPage = () => {
         onSubmit={handleAddEditSubmit}
         initialData={staffToEdit}
       />
+
+      <Dialog.Root open={confirmOpen} onOpenChange={(e) => setConfirmOpen(e.open)} role="alertdialog" placement="center" closeOnInteractOutside={false}>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content bg="white" borderRadius="md" maxW="md" p="6" position="relative" colorPalette="accent">
+            <Dialog.CloseTrigger asChild>
+              <Box as="button" onClick={() => setConfirmOpen(false)} position="absolute" top="4" right="4" p="1" _hover={{ bg: "slate.50" }} borderRadius="full" cursor="pointer" border="none" bg="transparent" color="fg.subtle">
+                <X size={20} />
+              </Box>
+            </Dialog.CloseTrigger>
+
+            <Dialog.Header p="0" mb="3">
+              <Dialog.Title fontSize="lg" fontWeight="bold" color="fg.muted">
+                Are you sure?
+              </Dialog.Title>
+            </Dialog.Header>
+
+            <Dialog.Body p="0" mb="6">
+              <Text fontSize="sm" color="fg.muted">
+                {confirmText}
+              </Text>
+            </Dialog.Body>
+
+            <Dialog.Footer p="0" display="flex" justifyContent="flex-end" gap="3">
+              <Button onClick={() => setConfirmOpen(false)} size="xl" variant="outline" borderColor="border.muted" color="fg.muted" bg="white" _hover={{ bg: "slate.50" }}>
+                Cancel
+              </Button>
+              <Button onClick={() => { confirmCallback?.(); setConfirmOpen(false); }} size="xl" bg="red.500" color="white" _hover={{ bg: "red.600" }}>
+                Delete
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
     </Box>
   );
 };
