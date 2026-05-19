@@ -27,10 +27,19 @@ const formatTime = (isoString: string) => {
   return new Date(isoString).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
+const formatLevelDisplay = (level: string, includeLevelWord: boolean = false) => {
+  if (!level) return "—";
+  if (level === "GRADUATED" || level === "WITHDRAWN") {
+    return level.charAt(0).toUpperCase() + level.slice(1).toLowerCase();
+  }
+  const stripped = level.replace(/^L/i, "");
+  return includeLevelWord ? `${stripped} Level` : stripped;
+};
+
 const levelOptions = createListCollection({
   items: [
     { label: "All Levels", value: "" },
-    ...LEVELS.map((level) => ({ label: level, value: level })),
+    ...LEVELS.map((level) => ({ label: formatLevelDisplay(level, true), value: level })),
   ],
 });
 
@@ -140,7 +149,7 @@ const Timetable = () => {
             collection={sessionOptions}
             value={[selectedSession]}
             onValueChange={(e) => setSelectedSession(e.value[0])}
-            size="sm"
+            size="lg"
             width="160px"
           >
             <Select.HiddenSelect />
@@ -169,7 +178,7 @@ const Timetable = () => {
             collection={levelOptions}
             value={[selectedLevel]}
             onValueChange={(e) => setSelectedLevel(e.value[0])}
-            size="sm"
+            size="lg"
             width="140px"
           >
             <Select.HiddenSelect />
@@ -198,8 +207,8 @@ const Timetable = () => {
             collection={semesterOptions}
             value={[selectedSemester]}
             onValueChange={(e) => setSelectedSemester(e.value[0])}
-            size="sm"
-            width="160px"
+            size="lg"
+            width="180px"
           >
             <Select.HiddenSelect />
             <Select.Control>
@@ -267,7 +276,7 @@ const Timetable = () => {
                     <Table.Cell>{formatTime(item.startTime)}</Table.Cell>
                     <Table.Cell>{formatTime(item.endTime)}</Table.Cell>
                     <Table.Cell>{item.venue}</Table.Cell>
-                    <Table.Cell>{item.level}</Table.Cell>
+                    <Table.Cell>{formatLevelDisplay(item.level, false)}</Table.Cell>
                     <Table.Cell>{item.semester}</Table.Cell>
                     <Table.Cell>{item.session}</Table.Cell>
                     <Table.Cell>{item.course.code}</Table.Cell>
@@ -330,7 +339,7 @@ const DetailsDrawer = memo(({ item }: { item: TimetableEntry }) => {
                 </HStack>
                 <HStack>
                   <Text fontWeight="bold">Level:</Text>
-                  <Text>{item.level}</Text>
+                  <Text>{formatLevelDisplay(item.level, true)}</Text>
                 </HStack>
               </Stack>
             </Drawer.Body>
