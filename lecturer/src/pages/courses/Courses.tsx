@@ -26,7 +26,7 @@ import type { CourseLevel, Semester as CourseSemester } from "../../types/course
 
 const ITEMS_PER_PAGE = 10;
 
-const COURSE_LEVELS: CourseLevel[] = ["L100", "L200", "L300", "L400"];
+const COURSE_LEVELS: CourseLevel[] = ["100", "200", "300", "400"];
 const levelCollection = createListCollection({
   items: [
     { label: "All Levels", value: "All" },

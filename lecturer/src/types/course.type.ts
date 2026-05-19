@@ -1,4 +1,4 @@
-export type CourseLevel = "L100" | "L200" | "L300" | "L400";
+export type CourseLevel = "100" | "200" | "300" | "400";
 export type Semester = "FIRST" | "SECOND" | "THIRD";
 export type CourseType = "CORE" | "ELECTIVE" | "GST" | "SIWES" | "PROJECT";
 

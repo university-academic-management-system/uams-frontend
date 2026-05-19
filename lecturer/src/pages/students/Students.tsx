@@ -9,8 +9,11 @@ import {
   Select,
   Button,
   createListCollection,
+  Pagination,
+  IconButton,
+  ButtonGroup,
 } from "@chakra-ui/react";
-import { LuSearch } from "react-icons/lu";
+import { LuSearch, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import type { Student } from "@type/student.type";
 import { STUDENT_LEVELS } from "@type/student.type";
 import { StudentHook } from "@hooks/student.hook";
@@ -82,10 +85,11 @@ const Students = () => {
     });
   }, [students, level, sessionFilter, debouncedSearch]);
 
-  const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
+
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
 
   useEffect(() => {
     setCurrentPage(1);
@@ -104,12 +108,12 @@ const Students = () => {
 
       <Box bg="bg" rounded="md" p="4">
         <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
-          <InputGroup startElement={<LuSearch />} width="260px">
+          <InputGroup startElement={<LuSearch />} width="260px" size="lg">
             <Input
               placeholder="Search by Name, Email or Mat. Num"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              fontSize="xs"
+              size="lg"
             />
           </InputGroup>
 
@@ -118,7 +122,7 @@ const Students = () => {
               collection={levelCollection}
               value={[level]}
               onValueChange={(e) => setLevel(e.value[0])}
-              size="md"
+              size="lg"
               width="140px"
             >
               <Select.HiddenSelect />
@@ -132,9 +136,9 @@ const Students = () => {
               </Select.Control>
               <Select.Positioner>
                 <Select.Content>
-                  {LEVEL_OPTIONS.map((opt) => (
-                    <Select.Item key={opt} item={opt}>
-                      {opt === "All" ? "All Levels" : opt}
+                  {levelCollection.items.map((item) => (
+                    <Select.Item key={item.value} item={item}>
+                      {item.label}
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -145,7 +149,7 @@ const Students = () => {
               collection={sessionCollection}
               value={[sessionFilter]}
               onValueChange={(e) => setSessionFilter(e.value[0])}
-              size="md"
+              size="lg"
               width="160px"
             >
               <Select.HiddenSelect />
@@ -159,9 +163,9 @@ const Students = () => {
               </Select.Control>
               <Select.Positioner>
                 <Select.Content>
-                  {SESSION_OPTIONS.map((opt) => (
-                    <Select.Item key={opt} item={opt}>
-                      {opt === "All" ? "All Sessions" : opt}
+                  {sessionCollection.items.map((item) => (
+                    <Select.Item key={item.value} item={item}>
+                      {item.label}
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -170,99 +174,51 @@ const Students = () => {
           </Flex>
         </Flex>
 
-      
-        <StudentsTable 
-          students={paginatedStudents} 
-          isLoading={isLoading} 
-          error={error} 
+        <StudentsTable
+          students={paginatedStudents}
+          isLoading={isLoading}
+          error={error}
         />
 
-        {filteredStudents.length > 0 && (
+        {filteredStudents.length >= 20 && (
           <Flex
             alignItems="center"
-            justifyContent="space-between"
-            bg="bg"
-            rounded="md"
-            border="1px solid"
-            borderColor="border.muted"
-            p="4"
+            justifyContent="flex-end"
             mt="4"
-            wrap="wrap"
-            gap="2"
           >
-            <Text fontSize="sm" color="fg.muted">
-              Showing{" "}
-              <Text as="span" fontWeight="semibold">
-                {filteredStudents.length === 0 ? 0 : startIndex + 1}-
-                {Math.min(endIndex, filteredStudents.length)}
-              </Text>{" "}
-              of <Text as="span" fontWeight="semibold">{filteredStudents.length}</Text> students
-            </Text>
-            <Flex alignItems="center" gap="2">
-              <Button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1 || totalPages === 0}
-                size="sm"
-                variant="outline"
-                borderColor="border.muted"
-                bg="white"
-                color="fg.muted"
-              >
-                Previous
-              </Button>
 
-              {totalPages === 0 ? (
-                <Button
-                  size="sm"
-                  variant="solid"
-                  bg="accent.500"
-                  color="white"
-                  minW="36px"
-                >
-                  1
-                </Button>
-              ) : (
-                Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  const isActive = currentPage === pageNum;
-                  return (
-                    <Button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      size="sm"
-                      variant={isActive ? "solid" : "outline"}
-                      bg={isActive ? "accent.500" : "white"}
-                      color={isActive ? "white" : "fg.muted"}
-                      borderColor={isActive ? "transparent" : "border.muted"}
-                      minW="36px"
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })
-              )}
+            <Pagination.Root
+              count={filteredStudents.length}
+              pageSize={ITEMS_PER_PAGE}
+              page={currentPage}
+              onPageChange={(e) => setCurrentPage(e.page)}
+            >
+              <ButtonGroup variant="ghost" size="sm" gap="1">
+                <Pagination.PrevTrigger asChild>
+                  <IconButton>
+                    <LuChevronLeft />
+                  </IconButton>
+                </Pagination.PrevTrigger>
 
-              <Button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages || totalPages === 0}
-                size="sm"
-                variant="outline"
-                borderColor="border.muted"
-                bg="white"
-                color="fg.muted"
-              >
-                Next
-              </Button>
-            </Flex>
+                <Pagination.Items
+                  render={(page) => {
+                    return (
+                      <IconButton
+                        variant={{ base: "ghost", _selected: "outline" }}
+                      >
+                        {page.value}
+                      </IconButton>
+                    );
+                  }}
+                />
+
+                <Pagination.NextTrigger asChild>
+                  <IconButton>
+                    <LuChevronRight />
+                  </IconButton>
+                </Pagination.NextTrigger>
+              </ButtonGroup>
+            </Pagination.Root>
           </Flex>
         )}
       </Box>
