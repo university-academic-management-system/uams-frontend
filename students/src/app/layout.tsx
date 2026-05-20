@@ -1,4 +1,4 @@
-import { Flex, Stack } from "@chakra-ui/react";
+import { Box, Flex, Stack } from "@chakra-ui/react";
 import Header from "@components/shared/header";
 import Sidebar from "@components/shared/sidebar";
 import ToasterReseter from "@components/shared/ToasterReseter";
@@ -14,13 +14,15 @@ const RootLayout = () => {
         >
             {/* siderbar */}
             <Sidebar />
-            
-            <Stack flex="1" h="full" >
+
+            <Stack flex="1" h="full" gap="0">
                 {/* header */}
                 <Header />
 
                 {/* main */}
-                <Outlet />
+                <Box flex="1" border="xs" borderColor="border.muted" p="4" rounded="md">
+                    <Outlet />
+                </Box>
             </Stack>
         </Flex>
         <Toaster /> {/* global */}

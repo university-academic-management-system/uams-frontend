@@ -117,8 +117,8 @@ export const SidebarToggleButton = () => {
     const { isCollapsed, setIsCollapsed } = sidebarStore();
     return (
         <Tooltip content={isCollapsed ? "Expand" : "Collapse"}>
-            <IconButton size={"md"} variant="ghost">
-                <Icon onClick={() => setIsCollapsed(!isCollapsed)} as={isCollapsed ? GoSidebarCollapse : GoSidebarExpand} size="md" color="fg.muted" />
+            <IconButton size={"md"} variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)}>
+                <Icon as={isCollapsed ? GoSidebarCollapse : GoSidebarExpand} size="md" color="fg.muted" />
             </IconButton>
         </Tooltip>
     )
