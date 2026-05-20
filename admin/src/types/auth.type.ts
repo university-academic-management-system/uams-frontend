@@ -54,7 +54,7 @@ export interface UserData {
     id: string;
     email: string;
     name?: string; // Optional because /auth/me returns first/surname instead of 'name' at root
-    role: string;
+    role?: string;
     roles?: string[];
     phone?: string | null;
     avatar?: string | null;
@@ -75,7 +75,7 @@ export interface ProfileResponse {
 
 export interface AuthState {
     token: string;
-    expiresIn: string;
+    expiresAt: string;
     user: UserData | null;
     isAuthenticated: boolean;
     setAuth: (auth: Partial<AuthState>) => void;

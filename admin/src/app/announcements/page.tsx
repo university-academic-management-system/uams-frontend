@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { X, Plus, Megaphone } from "lucide-react";
-import { AnnouncementServices } from "@services/announcement.service";
 import { Box, Flex, Text, Spinner, EmptyState, Button, Portal } from "@chakra-ui/react";
 import CreateAnnouncementModal from "@components/announcements/CreateAnnouncementModal";
-import type { Announcement } from "@type/announcement.type";
+import { NotificationHook } from "@hooks/notification.hook";
 import { LuCalendar } from "react-icons/lu";
 import type { DateValue } from "@internationalized/date";
+import moment from "moment";
 import { 
     DatePickerRoot, 
     DatePickerControl, 
@@ -20,76 +20,75 @@ import {
     DatePickerYearTable, 
     DatePickerPositioner
 } from "@components/ui/date-picker";
+import { useQueryClient } from "@tanstack/react-query";
+
+const ADMIN_ROLES = ["SYSTEM_ADMIN", "ADMIN"];
 
 const AnnouncementsPage = () => {
-    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: notifications = [], isLoading } = NotificationHook.useNotifications();
+    const queryClient = useQueryClient();
+
     const [dateRange, setDateRange] = useState<DateValue[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const fetchAnnouncements = async () => {
-        try {
-            setLoading(true);
-            const response = await AnnouncementServices.getAnnouncements();
-            const data = response?.data || [];
+    // Filter for ROLE recipientType with SYSTEM_ADMIN or ADMIN targetRole
+    const announcements = useMemo(
+        () => notifications.filter(
+            (n) => n.recipientType === "ROLE" && ADMIN_ROLES.includes(n.targetRole)
+        ),
+        [notifications]
+    );
 
-            const transformed = data.map((item: any) => ({
-                id: item.id,
-                title: item.title,
-                content: item.body,
-                createdAt: item.createdAt,
-                isFor: item.isFor,
-                isRead: item.isRead,
-            }));
+    // Apply date range filter
+    const filteredAnnouncements = useMemo(() => {
+        if (dateRange.length === 0) return announcements;
 
-            setAnnouncements(transformed);
-        } catch (err) {
-            console.error("Failed to fetch announcements", err);
-            // Error toast handled by axios interceptor
-        } finally {
-            setLoading(false);
-        }
-    };
+        return announcements.filter((item) => {
+            const itemDate = new Date(item.createdAt).setHours(0, 0, 0, 0);
+            const from = dateRange[0] ? dateRange[0].toDate("UTC").getTime() : null;
+            const to = dateRange[1] ? dateRange[1].toDate("UTC").getTime() : null;
 
-    useEffect(() => {
-        fetchAnnouncements();
+            if (from && itemDate < from) return false;
+            if (to && itemDate > to) return false;
+            return true;
+        });
+    }, [announcements, dateRange]);
+
+    const handleClearFilters = useCallback(() => {
+        setDateRange([]);
     }, []);
 
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "";
-        return new Date(dateString).toLocaleDateString("en-CA");
-    };
+    const handleModalOpen = useCallback(() => {
+        setIsModalOpen(true);
+    }, []);
 
-    const filteredAnnouncements = announcements.filter((item) => {
-        if (dateRange.length === 0) return true;
-        
-        const itemDate = new Date(item.createdAt).setHours(0, 0, 0, 0);
-        const from = dateRange[0] ? dateRange[0].toDate("UTC").getTime() : null;
-        const to = dateRange[1] ? dateRange[1].toDate("UTC").getTime() : null;
-        
-        if (from && itemDate < from) return false;
-        if (to && itemDate > to) return false;
-        return true;
-    });
+    const handleModalClose = useCallback(() => {
+        setIsModalOpen(false);
+    }, []);
 
-    const handleClearFilters = () => {
-        setDateRange([]);
-    };
+    const handleCreated = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }, [queryClient]);
+
+    const formatDate = useCallback((dateString: string) => {
+        return moment(dateString).format("YYYY-MM-DD");
+    }, []);
 
     return (
         <Box maxW="1400px" mx="auto" pb="20">
             {/* Header */}
             <Flex direction={{ base: "column", md: "row" }} justifyContent="space-between" alignItems={{ base: "flex-start", md: "center" }} mb="6" gap="4">
-                <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Announcement</Text>
+                <Box>
+                    <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Announcement</Text>
+                    <Text color="fg.subtle" mt="1" fontSize="sm">Stay updated with the latest announcement across the department.</Text>
+                </Box>
                 <Button
-                    onClick={() => setIsModalOpen(true)}
-                    bg="#1D7AD9"
+                    onClick={handleModalOpen}
+                    bg="accent"
                     color="white"
-                    size="md"
+                    size="xl"
+                    borderRadius="md"
                     fontSize="sm"
-                    fontWeight="semibold"
-                    _hover={{ bg: "blue.700" }}
-                    gap="2"
                 >
                     <Plus size={18} />
                     Create Announcement
@@ -97,10 +96,12 @@ const AnnouncementsPage = () => {
             </Flex>
 
             {/* Date Filters */}
-            <Flex justifyContent={{ base: "flex-start", md: "flex-end" }} alignItems="flex-end" mb="8" gap="3" flexWrap="wrap">
+            <Flex colorPalette="accent" justifyContent={{ base: "flex-start", md: "flex-end" }} alignItems="flex-end" mb="8" gap="3" flexWrap="wrap">
                 <DatePickerRoot openOnClick
                     selectionMode="range" 
                     maxWidth="24rem" 
+                    size="xl"
+                    bg="white"
                     value={dateRange}
                     onValueChange={(e) => setDateRange(e.value)}
                 >
@@ -135,14 +136,11 @@ const AnnouncementsPage = () => {
 
                 {dateRange.length > 0 && (
                     <Button 
-                        variant="ghost" 
+                        variant="outline" 
                         onClick={handleClearFilters} 
-                        bg="#eff3f6" 
-                        _hover={{ bg: "fg.subtle" }} 
-                        h="10"
-                        px="4"
                         borderRadius="md" 
-                        color="fg.muted" 
+                        color="fg.muted"
+                        size="xl"
                     >
                         <X size={18} />
                     </Button>
@@ -151,7 +149,7 @@ const AnnouncementsPage = () => {
 
             {/* Announcements List */}
             <Flex direction="column" gap="4">
-                {loading ? (
+                {isLoading ? (
                     <Flex justifyContent="center" py="20" gap="3">
                         <Spinner size="md" color="#1D7AD9" />
                         <Text color="fg.muted" fontWeight="medium">Loading Announcements...</Text>
@@ -175,7 +173,7 @@ const AnnouncementsPage = () => {
                                 <Text fontSize="sm" fontWeight="bold" color="fg.muted">{item.title}</Text>
                                 <Text fontSize="10px" fontWeight="medium" color="fg.subtle">{formatDate(item.createdAt)}</Text>
                             </Flex>
-                            <Text fontSize="xs" color="fg.muted" lineHeight="relaxed" lineClamp={2}>{item.content}</Text>
+                            <Text fontSize="xs" color="fg.muted" lineHeight="relaxed" lineClamp={2}>{item.message}</Text>
                         </Box>
                     ))
                 )}
@@ -184,8 +182,8 @@ const AnnouncementsPage = () => {
             {/* Create Announcement Modal */}
             <CreateAnnouncementModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onCreated={fetchAnnouncements}
+                onClose={handleModalClose}
+                onCreated={handleCreated}
             />
         </Box>
     );
