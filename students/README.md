@@ -1,24 +1,38 @@
-# this app is not complete, keep working on it
-## this should be done by now
+# Frontend Project Template
 
+This repository serves as a foundational template for building and scaling modern frontend applications. It is designed to provide a consistent structure, pre-configured tooling, and best practices to accelerate the start of new projects.
 
-<div align="center">
-<!-- <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div> -->
+## Features
 
-# EduFlow Student Portal
+- **Standardized Directory Structure**: Organized for scalability and maintainability.
+- **Pre-configured Tooling**: Includes linting, formatting, and type-checking configurations.
+- **Production Ready**: Optimized build scripts and environment configuration.
+- **Modular Architecture**: Encourages component-driven development.
 
-This contains everything you need to run your app locally.
+## Getting Started
 
+To use this template for your next project, click the **"Use this template"** button on GitHub or clone the repository:
 
+```bash
+git clone https://github.com/your-username/frontend-template.git your-project-name
+cd your-project-name
+```
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+## Setup
 
 1. Install dependencies:
-   `npm install`
+   ```bash
+   pnpm install
+   ```
+2. Configure environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+3. Start the development server:
+   ```bash
+   pnpm dev
+   ```
 
-3. Run the app:
-   `npm run dev`
+## License
+
+This project is a private template repo.

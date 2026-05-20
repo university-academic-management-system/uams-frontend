@@ -1,0 +1,350 @@
+import React, { useState, useEffect } from 'react';
+import apiClient from '../services/api';
+import {
+  Box, Flex, Text, Image, Button, Input,
+  IconButton, HStack
+} from '@chakra-ui/react';
+import {
+  Search,
+  Bell,
+  History,
+  Menu,
+  X,
+  User,
+  LogOut,
+  Megaphone,
+  Activity
+} from 'lucide-react';
+import authService from '../services/authService';
+import { useLocation, useNavigate, Outlet } from 'react-router';
+import { NavigationItem } from '../types';
+import { getAssetPath } from '../utils/assetPath';
+
+const Logo = ({ collapsed }: { collapsed?: boolean }) => (
+  <Flex align="center" justify={collapsed ? "center" : "start"} w={collapsed ? "full" : "auto"}>
+    <Image
+      src={getAssetPath('assets/uphcscLG.png')}
+      alt="UniEdu Logo"
+      h={{ base: '10', lg: '12' }}
+      w={collapsed ? '10' : 'auto'}
+      objectFit="contain"
+      maxW="full"
+      onError={(e: any) => {
+        e.target.style.display = 'none';
+      }}
+    />
+  </Flex>
+);
+
+const SidebarItem = ({
+  iconSrc,
+  icon,
+  label,
+  active,
+  onClick,
+  collapsed = false,
+}: {
+  iconSrc?: string,
+  icon?: React.ReactNode,
+  label: string,
+  active: boolean,
+  onClick: () => void,
+  collapsed?: boolean,
+}) => {
+  const content = (
+    <Button
+      onClick={onClick}
+      variant="ghost"
+      w="full"
+      display="flex"
+      alignItems="center"
+      justifyContent={collapsed ? 'center' : 'flex-start'}
+      gap={collapsed ? 0 : 4}
+      px={collapsed ? 2 : 5}
+      py={collapsed ? 3 : 6}
+      rounded="2xl"
+      bg={active ? '#e8eff7' : 'transparent'}
+      color="#1e293b"
+      fontWeight={active ? 'bold' : 'normal'}
+      _hover={{ bg: active ? '#e8eff7' : 'gray.50' }}
+      role="group"
+      transition="all 0.2s"
+      title={collapsed ? label : undefined}
+    >
+      {/* Icon logic */}
+      {icon ? (
+        <Box boxSize={collapsed ? '20px' : '22px'} display="flex" alignItems="center" justifyContent="center">
+          {icon}
+        </Box>
+      ) : (
+        <Image
+          src={iconSrc}
+          alt={label}
+          boxSize={collapsed ? '20px' : '22px'}
+          objectFit="contain"
+        />
+      )}
+
+      <Box
+        as="span"
+        ml={collapsed ? 0 : 3}
+        style={{
+          transition: 'opacity 0.18s, width 0.18s',
+          opacity: collapsed ? 0 : 1,
+          width: collapsed ? 0 : 'auto',
+          overflow: 'hidden',
+          display: 'inline-block'
+        }}
+      >
+        <Text fontSize="15px" display="inline">{label}</Text>
+      </Box>
+    </Button>
+  );
+
+  return (
+    <Box px={collapsed ? 1 : 4} py={1.5}>
+      {content}
+    </Box>
+  );
+};
+
+
+const MainLayout: React.FC = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('sidebarCollapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebarCollapsed', isSidebarCollapsed ? 'true' : 'false');
+    } catch { }
+  }, [isSidebarCollapsed]);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getTabFromPath = (pathname: string): NavigationItem => {
+    if (pathname.startsWith('/courses')) return 'courses';
+    if (pathname.startsWith('/registration')) return 'registration';
+    if (pathname.startsWith('/payments')) return 'payments';
+    if (pathname.startsWith('/announcements')) return 'announcements';
+    if (pathname.startsWith('/projects')) return 'projects';
+    if (pathname.startsWith('/timetable')) return 'timetable';
+    if (pathname.startsWith('/profile')) return 'profile';
+    if (pathname.startsWith('/settings')) return 'settings';
+    return 'dashboard';
+  };
+
+  const activeTab = getTabFromPath(location.pathname);
+
+  // Notification count
+  const [notifCount, setNotifCount] = useState(0);
+  useEffect(() => {
+    apiClient.get('/notifications')
+      .then((res) => {
+        const data = res.data?.data ?? res.data;
+        if (Array.isArray(data)) {
+          setNotifCount(data.filter((n: any) => !n.isRead).length);
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  // Logout handler
+  const handleLogout = () => {
+    authService.logout();
+  };
+
+  // Build user object from local storage (matches LoginUser type)
+  const user = authService.getStoredUser();
+  const userName = user?.fullName || 'Student';
+  const userEmail = user?.email || 'student@uniedu.com';
+
+  return (
+    <Flex h="100vh" bg="#fcfdfe" overflow="hidden">
+      {/* Sidebar Overlay - Mobile */}
+      {isMobileMenuOpen && (
+        <Box
+          pos="fixed" inset={0} bg="blackAlpha.500" zIndex={40}
+          display={{ base: 'block', lg: 'none' }}
+          backdropFilter="blur(4px)"
+          transition="opacity 0.2s"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Desktop & Mobile Drawer */}
+      <Box
+        as="aside"
+        pos={{ base: 'fixed', lg: 'relative' }}
+        insetY={0} left={0} w={{ base: isSidebarCollapsed ? '20' : '72' }} minW={{ base: isSidebarCollapsed ? '20' : '72' }} bg="white" borderRight="1px" borderColor="gray.100"
+        display="flex" flexDirection="column" zIndex={50}
+        transform={{ base: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)', lg: 'none' }}
+        transition="transform 0.3s, width 200ms ease"
+        overflow="hidden"
+      >
+        <Flex
+          p={{ base: 6, lg: isSidebarCollapsed ? 4 : 8 }}
+          mb={4}
+          align="center"
+          justify={isSidebarCollapsed ? 'center' : 'space-between'}
+          direction={isSidebarCollapsed ? 'column' : 'row'}
+          gap={isSidebarCollapsed ? 4 : 0}
+        >
+          <Logo collapsed={isSidebarCollapsed} />
+
+          <IconButton
+            aria-label="Toggle sidebar"
+            display={{ base: 'none', lg: 'flex' }}
+            variant="ghost"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            color="gray.400"
+            _hover={{ bg: 'gray.100' }}
+          >
+            <Menu size={20} />
+          </IconButton>
+
+          <IconButton
+            aria-label="Close menu"
+            display={{ base: 'flex', lg: 'none' }}
+            variant="ghost"
+            onClick={() => setIsMobileMenuOpen(false)}
+            rounded="full"
+            color="gray.400"
+            _hover={{ bg: 'gray.100' }}
+          >
+            <X size={24} />
+          </IconButton>
+        </Flex>
+
+        <Box flex={1} overflowY="auto" css={{
+          '&::-webkit-scrollbar': { width: '4px' },
+          '&::-webkit-scrollbar-track': { background: 'transparent' },
+          '&::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '2px' },
+        }}>
+          <SidebarItem iconSrc={getAssetPath('assets/House (1).png')} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => { navigate('/dashboard'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/BookOpen (1).png')} label="Courses" active={activeTab === 'courses'} onClick={() => { navigate('/courses/courses'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/Books (1).png')} label="Registration" active={activeTab === 'registration'} onClick={() => { navigate('/registration'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem icon={<Activity />} label="Projects" active={activeTab === 'projects'} onClick={() => { navigate('/projects'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/CalendarDots (1).png')} label="Timetable" active={activeTab === 'timetable'} onClick={() => { navigate('/timetable'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/Money (1).png')} label="Payments" active={activeTab === 'payments'} onClick={() => { navigate('/payments'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem icon={<Megaphone size={20} />} label="Announcements" active={activeTab === 'announcements'} onClick={() => { navigate('/announcements'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+          <SidebarItem iconSrc={getAssetPath('assets/305ae6c7f315bb219eb3b785a763838d55d71e73 (1).png')} label="Profile" active={activeTab === 'profile'} onClick={() => { navigate('/profile'); setIsMobileMenuOpen(false); }} collapsed={isSidebarCollapsed} />
+        </Box>
+
+        <Box p={isSidebarCollapsed ? 4 : 6} borderTop="1px" borderColor="gray.100">
+          <Button
+            size="sm"
+            variant="ghost"
+            w="full"
+            onClick={handleLogout}
+            display="flex"
+            alignItems="center"
+            justifyContent={isSidebarCollapsed ? 'center' : 'flex-start'}
+            gap={3}
+            px={isSidebarCollapsed ? 2 : 4}
+            py={5}
+            rounded="xl"
+            color="red.500"
+            fontWeight="medium"
+            _hover={{ bg: 'red.50', color: 'red.500' }}
+            transition="all 0.2s"
+          >
+            <LogOut size={18} />
+            {!isSidebarCollapsed && <Text fontSize="14px" color='red.500'>Logout</Text>}
+          </Button>
+          {!isSidebarCollapsed && (
+            <Text mt={4} fontSize="10px" color="gray.400" fontWeight="bold" textTransform="uppercase" letterSpacing="widest" textAlign="center">
+              Version 1.0.4
+            </Text>
+          )}
+        </Box>
+      </Box>
+
+      {/* Main Content Area */}
+      <Flex flex={1} direction="column" minW={0} overflow="hidden">
+        {/* Header */}
+        <Flex
+          h={{ base: 20, lg: 24 }} bg="white" borderBottom="1px" borderColor="gray.50"
+          align="center" justify="space-between" px={{ base: 4, lg: 8 }} shrink={0}
+        >
+          <Flex align="center" gap={{ base: 2, lg: 4 }} flex={1}>
+            <IconButton
+              aria-label="Open menu"
+              hideFrom="lg"
+              variant="ghost"
+              onClick={() => setIsMobileMenuOpen(true)}
+              color="gray.500"
+              rounded="lg"
+            >
+              <Menu size={24} />
+            </IconButton>
+
+
+          </Flex>
+
+          <Flex align="center" gap={{ base: 4, lg: 6 }} ml={4} shrink={0}>
+            <HStack gap={3} display="flex">
+              <Box as="button" p={2} color="gray.400" _hover={{ color: 'gray.600' }} transition="colors 0.2s" position="relative" onClick={() => navigate('/announcements')}>
+                <Bell size={20} />
+                {notifCount > 0 && (
+                  <Box
+                    position="absolute"
+                    top="2px"
+                    right="2px"
+                    bg="red.500"
+                    color="white"
+                    fontSize="9px"
+                    fontWeight="bold"
+                    rounded="full"
+                    w="16px"
+                    h="16px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    lineHeight="1"
+                  >
+                    {notifCount > 9 ? '9+' : notifCount}
+                  </Box>
+                )}
+              </Box>
+              <Box as="button" p={2} color="gray.400" _hover={{ color: 'gray.600' }} transition="colors 0.2s">
+                <History size={20} />
+              </Box>
+            </HStack>
+
+            <Flex align="center" gap={{ base: 2, lg: 3 }}>
+              <Flex w={{ base: 9, lg: 10 }} h={{ base: 9, lg: 10 }} rounded="full" bg="#0891b2" align="center" justify="center" color="white" shadow="sm" overflow="hidden" shrink={0}>
+                {user?.avatar ? (
+                  <Image src={user.avatar} w="full" h="full" objectFit="cover" />
+                ) : (
+                  <User size={20} />
+                )}
+              </Flex>
+              <Flex direction="column" display={{ base: 'none', sm: 'flex' }}>
+                <Text fontSize={{ base: '12px', lg: '13px' }} fontWeight="bold" color="#1e293b" lineHeight="tight" maxW={{ base: '80px', lg: 'none' }}>{userName}</Text>
+                <Text fontSize="10px" color="gray.400" fontWeight="medium" lineHeight="tight" >{userEmail}</Text>
+              </Flex>
+            </Flex>
+          </Flex>
+        </Flex>
+
+        {/* Scrollable Content Container */}
+        <Box flex={1} overflowY="auto" bg="#f8f9fb" css={{
+          '&::-webkit-scrollbar': { width: '4px' },
+          '&::-webkit-scrollbar-track': { background: 'transparent' },
+          '&::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '2px' },
+        }}>
+          <Outlet />
+        </Box>
+      </Flex>
+    </Flex>
+  );
+};
+
+export default MainLayout;
