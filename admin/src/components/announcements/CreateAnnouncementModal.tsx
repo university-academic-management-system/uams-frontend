@@ -11,7 +11,6 @@ import {
     Input, 
     Stack, 
     Textarea, 
-    Box, 
     Flex,
     CloseButton,
     createListCollection,
@@ -127,7 +126,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                     {/* Title Input */}
                                     <Field.Root invalid={!!errors.title}>
                                         <Field.Label fontWeight="bold" color="fg.subtle">
-                                            Title <Box as="span" color="red.500">*</Box>
+                                            Title <Field.RequiredIndicator />
                                         </Field.Label>
                                         <Input
                                             size="xl"
@@ -149,7 +148,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                             render={({ field }) => (
                                                 <Field.Root invalid={!!errors.recipientType} flex="1">
                                                     <Field.Label fontWeight="bold" color="fg.subtle">
-                                                        Recipient Type <Box as="span" color="red.500">*</Box>
+                                                        Recipient Type <Field.RequiredIndicator />
                                                     </Field.Label>
                                                     <Select.Root
                                                         collection={recipientTypeCollection}
@@ -197,7 +196,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                                 render={({ field }) => (
                                                     <Field.Root invalid={!!errors.targetRole} flex="1">
                                                         <Field.Label fontWeight="bold" color="fg.subtle">
-                                                            Target Role(s) <Box as="span" color="red.500">*</Box>
+                                                            Target Role(s) <Field.RequiredIndicator />
                                                         </Field.Label>
                                                         <Select.Root
                                                             multiple
@@ -242,7 +241,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                         render={({ field }) => (
                                             <Field.Root invalid={!!errors.type}>
                                                 <Field.Label fontWeight="bold" color="fg.subtle">
-                                                    Type <Box as="span" color="red.500">*</Box>
+                                                    Type <Field.RequiredIndicator />
                                                 </Field.Label>
                                                 <Select.Root
                                                     collection={notificationTypeCollection}
@@ -280,7 +279,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                     {/* Message Textarea */}
                                     <Field.Root invalid={!!errors.message}>
                                         <Field.Label fontWeight="bold" color="fg.subtle">
-                                            Message <Box as="span" color="red.500">*</Box>
+                                            Message <Field.RequiredIndicator />
                                         </Field.Label>
                                         <Textarea
                                             size="xl"
