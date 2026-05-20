@@ -1,5 +1,6 @@
 import { Flex, Stack } from "@chakra-ui/react";
 import Header from "@components/shared/header";
+import Sidebar from "@components/shared/sidebar";
 import ToasterReseter from "@components/shared/ToasterReseter";
 import { Toaster } from "@components/ui/toaster";
 import { Outlet } from "react-router";
@@ -12,8 +13,9 @@ const RootLayout = () => {
             w="full"
         >
             {/* siderbar */}
-
-            <Stack w="full" h="full" >
+            <Sidebar />
+            
+            <Stack flex="1" h="full" >
                 {/* header */}
                 <Header />
 

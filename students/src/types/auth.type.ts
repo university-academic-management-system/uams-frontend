@@ -1,8 +1,13 @@
 
 export interface AuthState {
     token: string;
-    refreshToken: string;
-    expireAt: string;
+    expiresIn: string;
+    user?: {
+        id: string;
+        email: string;
+        name: string;
+        role: "STUDENT"
+    }
     setAuth: (auth: AuthState) => void;
     clearAuth: () => void;
 }

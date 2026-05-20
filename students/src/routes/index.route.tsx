@@ -17,7 +17,9 @@ const router = createBrowserRouter([
             { path: "/settings", element: <p>Settings</p> },
         ]
     }
-]);
+], {
+    basename: "/students"
+});
 
 const Router = () => {
     return <RouterProvider router={router} />;
