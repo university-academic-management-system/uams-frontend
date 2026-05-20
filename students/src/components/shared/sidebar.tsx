@@ -2,7 +2,7 @@ import { Avatar, Button, Flex, HStack, Icon, IconButton, Image, Separator, Stack
 import { sidebarStore } from "@stores/ui.store";
 import { useCallback, useMemo } from "react";
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
-import { LuBanknote, LuCalendarDays, LuFolderKanban, LuHouse, LuLibrary, LuLogOut } from "react-icons/lu";
+import { LuBanknote, LuCalendarDays, LuFolderKanban, LuHouse, LuLibrary, LuLogOut, LuUser } from "react-icons/lu";
 import LinkButton from "./buttons/LinkButton";
 import { Link, useLocation, useNavigate } from "react-router";
 import { PiAddressBook } from "react-icons/pi";
@@ -44,14 +44,14 @@ const Sidebar = () => {
             icon: LuBanknote
         },
         {
-            label: "Project",
-            href: "/projects",
+            label: "Announcements",
+            href: "/announcements",
             icon: LuFolderKanban
         },
         {
-            label: "Timetable",
-            href: "/timetable",
-            icon: LuCalendarDays
+            label: "Profile",
+            href: "/profile",
+            icon: LuUser
         }
     ], []);
 

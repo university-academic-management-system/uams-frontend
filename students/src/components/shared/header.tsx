@@ -5,8 +5,6 @@ import AuditLogs from "./audit-log";
 import { sidebarStore } from "@stores/ui.store";
 import { useLocation } from "react-router";
 import { useCallback, useMemo } from "react";
-import { LuHouse, LuLibrary, LuFolderKanban, LuCalendarDays, LuBanknote } from "react-icons/lu";
-import { PiAddressBook } from "react-icons/pi";
 
 const Header = () => {
     const { isCollapsed } = sidebarStore();
@@ -15,42 +13,34 @@ const Header = () => {
         {
             label: "Dashboard",
             href: "/",
-            icon: LuHouse
         },
         {
             label: "Courses",
             href: "/courses",
-            icon: LuLibrary
         },
         {
             label: "Registrations",
             href: "/registrations",
-            icon: PiAddressBook
         },
         {
             label: "Project",
             href: "/projects",
-            icon: LuFolderKanban
         },
         {
             label: "Timetable",
             href: "/timetable",
-            icon: LuCalendarDays
         },
         {
             label: "Payments",
             href: "/payments",
-            icon: LuBanknote
         },
         {
-            label: "Project",
-            href: "/projects",
-            icon: LuFolderKanban
+            label: "Announcements",
+            href: "/announcements",
         },
         {
-            label: "Timetable",
-            href: "/timetable",
-            icon: LuCalendarDays
+            label: "Profile",
+            href: "/profile",
         }
     ], []);
 

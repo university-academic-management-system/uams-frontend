@@ -13,8 +13,8 @@ const router = createBrowserRouter([
             { path: "/payments", element: <p>Payments</p> },
             { path: "/projects", element: <p>Projects</p> },
             { path: "/timetable", element: <p>Time Table</p> },
-            { path: "/notifications", element: <p>Notifications</p> },
-            { path: "/settings", element: <p>Settings</p> },
+            { path: "/announcements", element: <p>Announcements</p> },
+            { path: "/profile", element: <p>Profile</p> },
         ]
     }
 ], {
