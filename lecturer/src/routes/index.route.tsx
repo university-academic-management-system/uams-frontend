@@ -13,6 +13,8 @@ const Results = lazy(() => import("@pages/results/Results"));
 const ResultDetail = lazy(() => import("@pages/results/ResultDetail"));
 const Projects = lazy(() => import("@pages/projects/Projects"));
 const Announcement = lazy(() => import("@pages/announcement/Announcement"));
+const Profile = lazy(() => import("@pages/profile/Profile"));
+import Settings from "@pages/settings/Settings";
 
 const router = createBrowserRouter([
     {
@@ -31,6 +33,8 @@ const router = createBrowserRouter([
             { path: "projects", element: <Projects /> },
             { path: "timetable", element: <TimeTable /> },
             { path: "announcement", element: <Announcement /> },
+            { path: "profile", element: <Profile /> },
+            { path: "settings", element: <Settings /> },
         ],
     },
     {

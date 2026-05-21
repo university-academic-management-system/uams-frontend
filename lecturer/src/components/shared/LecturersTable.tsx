@@ -138,10 +138,17 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
                     {lecturer.staffProfile?.phone || "—"}
                   </Table.Cell>
                   <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" whiteSpace="nowrap">
-                    {lecturer.staffProfile?.title || "—"}
+                    {(() => {
+                      const r = lecturer.staffProfile?.staffRoles[0];
+                      if (!r) return "—";
+                      const KEEP_UPPER = ["HOD", "ERO"];
+                      return KEEP_UPPER.includes(r)
+                        ? r
+                        : r.charAt(0).toUpperCase() + r.slice(1).toLowerCase();
+                    })()}
                   </Table.Cell>
                   <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" whiteSpace="nowrap">
-                    {assignedCourses.length}
+                    {lecturer.courses?.length ?? 0}
                   </Table.Cell>
                   <Table.Cell px="4" py="3.5" whiteSpace="nowrap">
                     <Menu.Root>
@@ -155,7 +162,7 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
                           <Menu.Content>
                             <Menu.Item value="courses" asChild>
                               <CourseDrawer
-                                courses={assignedCourses}
+                                courses={lecturer.courses}
                                 lecturer={`${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""}`.trim() || "Staff"}
                               />
                             </Menu.Item>

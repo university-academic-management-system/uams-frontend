@@ -1,12 +1,44 @@
+import { useEffect } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { Outlet } from "react-router";
 import Sidebar from "@components/shared/Sidebar";
 import Navbar from "@components/shared/Navbar";
 import ToasterReseter from "@components/shared/ToasterReseter";
+import { AuthServices } from "@services/auth.service";
+import useAuthStore from "@stores/auth.store";
 
 const SIDEBAR_WIDTH = "255px";
 
 const DashboardLayout = () => {
+    const { user, setAuth } = useAuthStore();
+
+    useEffect(() => {
+        const syncProfile = async () => {
+            try {
+                const res = await AuthServices.getProfile();
+                if (res.status === "success" && res.data) {
+                    const sp = res.data.staffProfile;
+                    const staffRoles = sp?.staffRoles ?? [];
+                    const name = [sp?.firstName, sp?.otherName, sp?.surname]
+                        .filter(Boolean)
+                        .join(" ");
+                    setAuth({
+                        user: {
+                            ...user,
+                            ...res.data,
+                            name: name || user?.name,
+                            roles: staffRoles,
+                            role: staffRoles[0],
+                        },
+                    });
+                }
+            } catch {
+            }
+        };
+
+        syncProfile();
+    }, []);
+
     return (
         <Flex minH="100vh">
             {/* Sidebar */}
