@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import type { DateValue } from "@internationalized/date";
 import { LuMegaphone } from "react-icons/lu";
-import { AnnouncementHook } from "@hooks/announcement.hook";
+import { NotificationHook } from "@hooks/notification.hook";
 import AnnouncementList from "@components/shared/AnnouncementList";
 
 // Helper to convert any DateValue to YYYY-MM-DD string
@@ -39,7 +39,7 @@ const Announcement = () => {
     isLoading,
     error,
     refetch,
-  } = AnnouncementHook.useAnnouncements(startDate || undefined, endDate || undefined);
+  } = NotificationHook.useNotifications();
 
   // Check if no announcements and not loading
   const hasNoAnnouncements = !isLoading && announcements.length === 0;
