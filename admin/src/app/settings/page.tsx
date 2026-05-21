@@ -6,7 +6,7 @@ import SystemSettingsTab from "@components/settings/SystemSettingsTab";
 
 const SettingsPage = () => {
     return (
-        <Box maxW="1200px" mx="auto">
+        <Box maxW="1400px" mx="auto">
             <Tabs.Root defaultValue="id-card" variant="enclosed">
                 <Tabs.List mb="8">
                     <Tabs.Trigger value="id-card">

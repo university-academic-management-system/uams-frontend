@@ -21,7 +21,7 @@ import BulkUploadStaffModal from "@components/lecturers/BulkUploadStaffModal";
 import AssignCourseModal from "@components/lecturers/AssignCourseModal";
 import AddStaffForm from "@components/lecturers/AddStaffForm";
 import { StaffHook } from "@hooks/staff.hook";
-import type { Staff } from "@type/staff.type";
+import type { Staff, CreateLecturerPayload } from "@type/staff.type";
 import {
   PaginationRoot,
   PaginationItems,
@@ -52,7 +52,7 @@ const StaffPage = () => {
   const [showAssignCourse, setShowAssignCourse] = useState(false);
   const [showAddEditForm, setShowAddEditForm] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
-  const [staffToEdit, setStaffToEdit] = useState<any>(null);
+  const [staffToEdit, setStaffToEdit] = useState<Staff | null>(null);
 
   // Removed fetchStaff and useEffect as TanStack Query handles it now
 
@@ -92,7 +92,7 @@ const StaffPage = () => {
       try {
         await bulkDeleteMutation.mutateAsync(selectedIds);
         setSelectedIds([]);
-      } catch (err) {
+      } catch {
         // Error handled by mutation
       }
     });
@@ -104,7 +104,7 @@ const StaffPage = () => {
     setConfirmCallback(() => async () => {
       try {
         await deleteMutation.mutateAsync(staff.id);
-      } catch (err) {
+      } catch {
         // Error handled by mutation
       }
     });
@@ -125,12 +125,12 @@ const StaffPage = () => {
       );
       setShowAssignCourse(false);
       setSelectedStaff(null);
-    } catch (err) {
+    } catch {
       // Error handled by mutation
     }
   }, [selectedStaff, assignCourseMutation]);
 
-  const handleAddEditSubmit = useCallback(async (payload: any) => {
+  const handleAddEditSubmit = useCallback(async (payload: CreateLecturerPayload) => {
     try {
       if (staffToEdit) {
         await updateStaffMutation.mutateAsync({ id: staffToEdit.id, payload });
@@ -139,7 +139,7 @@ const StaffPage = () => {
       }
       setShowAddEditForm(false);
       setStaffToEdit(null);
-    } catch (err) {
+    } catch {
       // Error handled by mutation
     }
   }, [staffToEdit, updateStaffMutation, addStaffMutation]);
