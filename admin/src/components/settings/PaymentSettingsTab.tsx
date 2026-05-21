@@ -3,71 +3,44 @@ import { toaster } from "@components/ui/toaster";
 // import { AcademicServices } from "@services/academic.service";
 import { ProgramServices } from "@services/program.service";
 import { PaymentServices } from "@services/payment.service";
-import { useAsync } from "react-use";
-import { paymentConfigSchema, type PaymentConfigData } from "@schemas/payment.schema";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePaymentConfigForm } from "@forms/payment.form";
 import { Box, Button, Flex, Text, Field, Input, Stack } from "@chakra-ui/react";
-
-const usePaymentConfigForm = () => {
-  return useForm<PaymentConfigData>({
-    mode: "onChange",
-    resolver: zodResolver(paymentConfigSchema),
-    defaultValues: {
-      program_type_id: "",
-      paystack_public_key: "",
-      paystack_secret_key: "",
-      annual_access_fee: 0,
-      annual_access_merchant_fee: 0,
-      annual_access_split_key: "",
-      department_annual_access_dues: 0,
-      department_annual_access_merchant_fee: 0,
-      department_annual_access_split_key: "",
-      id_card_payment: 0,
-      id_card_merchant_fee: 0,
-      id_card_split_key: "",
-      transcript_fee: 0,
-      transcript_merchant_fee: 0,
-      transcript_split_key: "",
-      transcript_digital_fee: 0,
-      transcript_digital_merchant_fee: 0,
-      transcript_courier_fee: 0,
-      transcript_courier_merchant_fee: 0,
-      transcript_pickup_fee: 0,
-      transcript_pickup_merchant_fee: 0
-    }
-  })
-}
 
 const PaymentSettingsTab = () => {
   const [activeProgramType, setActiveProgramType] = useState<{id:string,name:string}>({id:"",name:""});
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
 
-  const programTypes = useAsync(async () => {
-      try {
+  type ProgramType = {
+    id: string;
+    name: string;
+    isActive?: boolean;
+  };
+
+  const { data: programTypes, isLoading: isLoadingTypes } = useQuery({
+      queryKey: ["programTypes"],
+      queryFn: async () => {
         const typesData = await ProgramServices.getProgramTypes();
-        const types = Array.isArray(typesData) ? typesData : (typesData as any)?.data || [];
-        const activeTypes = types?.filter((type: any) => type.isActive) || [];
-        if (activeTypes.length > 0) setActiveProgramType({ id: activeTypes[0].id, name: activeTypes[0].name });
-        return activeTypes;
-      } catch (err) {
-        console.error("Failed to fetch program types:", err);
+        const types = Array.isArray(typesData) ? typesData : (typesData as { data?: ProgramType[] })?.data || [];
+        const activeTypes = types?.filter((type: ProgramType) => type.isActive) || [];
+        return activeTypes as ProgramType[];
       }
-  }, [])
+  });
 
-  const getCredentials = useAsync(async () => {
-    try {
+  if (programTypes && programTypes.length > 0 && !activeProgramType.id) {
+    setActiveProgramType({ id: programTypes[0].id, name: programTypes[0].name });
+  }
+
+  const { data: credentialsData } = useQuery({
+    queryKey: ["paymentConfig", activeProgramType.id],
+    queryFn: async () => {
       if(!activeProgramType.id) return null;
-      const data = await PaymentServices.getPaymentConfig(activeProgramType.id);
-      return data;
-    } catch (error) {
-      console.error("Failed to fetch credentials:", error);
-      // Error toast handled by axios interceptor
-      return null;
-    }
-  }, [activeProgramType.id]); 
+      return await PaymentServices.getPaymentConfig(activeProgramType.id);
+    },
+    enabled: !!activeProgramType.id
+  });
 
   const paymentConfigForm = usePaymentConfigForm();
   const annualAccessSplitKey = paymentConfigForm.watch("annual_access_split_key");
@@ -77,8 +50,8 @@ const PaymentSettingsTab = () => {
   }, [annualAccessSplitKey, paymentConfigForm]);
 
   useEffect(() => {
-    if (getCredentials.value) {
-      const data = getCredentials.value;
+    if (credentialsData) {
+      const data = credentialsData;
       paymentConfigForm.reset({
         program_type_id: data.metadata?.program_type_id,
         paystack_public_key: data.paystack_config?.public_key,
@@ -102,7 +75,7 @@ const PaymentSettingsTab = () => {
         transcript_pickup_fee: data.payment_amount_settings?.transcript?.transcript_delivery_options?.physical_pickup?.base_amount || 0,
         transcript_pickup_merchant_fee: data.payment_amount_settings?.transcript?.transcript_delivery_options?.physical_pickup?.merchant_fee || 0
       });
-    } else if (getCredentials.value === null) { 
+    } else if (credentialsData === null) { 
       // Reset form if no config
       paymentConfigForm.reset({
         annual_access_fee: 0, annual_access_merchant_fee: 0, annual_access_split_key: "",
@@ -114,9 +87,21 @@ const PaymentSettingsTab = () => {
         transcript_pickup_fee: 0, transcript_pickup_merchant_fee: 0
       });
     }
-  }, [getCredentials.value, activeProgramType.id, paymentConfigForm]);
+  }, [credentialsData, activeProgramType.id, paymentConfigForm]);
 
-  const patchPaymentConfig = useCallback(async () => {
+  const updateMutation = useMutation({
+    mutationFn: (payload: Record<string, unknown>) => PaymentServices.patchPaymentConfig(payload),
+    onSuccess: () => {
+      toaster.success({ title: "Payment config updated successfully" });
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ["paymentConfig", activeProgramType.id] });
+    },
+    onError: (error) => {
+      console.error("Failed to save payment config:", error);
+    }
+  });
+
+  const onSubmit = useCallback(async () => {
     const payload = {
       program_type_id: activeProgramType.id,
       paystack_public_key: paymentConfigForm.getValues("paystack_public_key")?.trim(),
@@ -150,20 +135,10 @@ const PaymentSettingsTab = () => {
           description: "Pick up at registry"
         }
       }
-    }
+    };
     
-    setIsSaving(true);
-    try {
-      await PaymentServices.patchPaymentConfig(payload);
-      toaster.success({ title: "Payment config updated successfully" });
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Failed to save payment config:", error);
-      // Error toast handled by axios interceptor
-    } finally {
-      setIsSaving(false);
-    }
-  }, [activeProgramType.id, paymentConfigForm]); 
+    updateMutation.mutate(payload);
+  }, [activeProgramType.id, paymentConfigForm, updateMutation]);
 
 
 
@@ -173,10 +148,10 @@ const PaymentSettingsTab = () => {
         <Text fontSize="xl" fontWeight="bold">Payment Settings</Text>
         <Button 
           onClick={() => setIsEditing(!isEditing)} 
-          disabled={isSaving}
+          disabled={updateMutation.isPending}
           colorPalette={isEditing ? "red" : "gray"}
           variant={isEditing ? "solid" : "subtle"}
-          size="sm"
+          size="xl"
         >
           {isEditing ? "Cancel" : "Edit"}
         </Button>
@@ -186,11 +161,11 @@ const PaymentSettingsTab = () => {
 
       {/* program types */}
       <Flex mt="6" borderRadius="md" bg="gray.100" p="2" gap="2" w="fit" alignItems="center">
-        {programTypes.loading ? (
+        {isLoadingTypes ? (
           <Text fontSize="sm" color="gray.600" px="4" py="2">Loading program types...</Text>
         ) : (
            <>
-           {programTypes.value?.map((type: any) => (
+           {programTypes?.map((type: ProgramType) => (
             <Button 
               onClick={() => setActiveProgramType({ id: type.id, name: type.name })} 
               key={type.id} 
@@ -201,13 +176,16 @@ const PaymentSettingsTab = () => {
               {type.name}
             </Button>
            ))}
+           {programTypes?.length === 0 && (
+             <Text fontSize="sm" color="gray.600" px="4" py="2">No program types found</Text>
+           )}
            </>
         )}
       </Flex>
 
-      <form onSubmit={paymentConfigForm.handleSubmit(patchPaymentConfig)}>
+      <form onSubmit={paymentConfigForm.handleSubmit(onSubmit)}>
       {/* public /private keys */}
-      <Box p="6" borderRadius="md" border="xs" borderColor="border.muted" mt="12" bg="slate.50">
+      <Box p="6" borderRadius="md" border="xs" borderColor="border.muted" mt="12">
           <Text fontWeight="bold" mb="4">Paystack API Credentials</Text>
           <Flex gap="6" w="full" direction={{ base: "column", md: "row" }}>
               <Field.Root flex="1">
@@ -238,7 +216,7 @@ const PaymentSettingsTab = () => {
       <Box display="grid" gridTemplateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4" mt="10">
         
         {/* annual access fee */}
-        <Box p="6" borderRadius="md" border="xs" borderColor="border.muted" bg="slate.50">
+        <Box p="6" borderRadius="md" border="xs" borderColor="border.muted">
           <Text fontWeight="bold" mb="4">Annual Access Fee</Text>
           <Stack gap="5">
             <Field.Root invalid={!!paymentConfigForm.formState.errors.annual_access_split_key}>
@@ -262,7 +240,7 @@ const PaymentSettingsTab = () => {
         </Box>
 
         {/* annual department dues fee */}
-        <Box p="6" borderRadius="md" border="xs" borderColor="border.muted" bg="slate.50">
+        <Box p="6" borderRadius="md" border="xs" borderColor="border.muted">
           <Text fontWeight="bold" mb="4">Annual Department Dues</Text>
           <Stack gap="5">
             <Field.Root invalid={!!paymentConfigForm.formState.errors.department_annual_access_split_key}>
@@ -286,7 +264,7 @@ const PaymentSettingsTab = () => {
         </Box>
 
         {/* ID CARD payment */}
-        <Box p="6" borderRadius="md" border="xs" borderColor="border.muted" bg="slate.50">
+        <Box p="6" borderRadius="md" border="xs" borderColor="border.muted">
           <Text fontWeight="bold" mb="4">ID Card Payment</Text>
           <Stack gap="5">
             <Field.Root invalid={!!paymentConfigForm.formState.errors.id_card_split_key}>
@@ -310,7 +288,7 @@ const PaymentSettingsTab = () => {
         </Box>
 
         {/* transcript */}
-        <Box p="6" borderRadius="md" border="xs" borderColor="border.muted" gridColumn={{ base: "1", lg: "1 / -1" }} bg="slate.50">
+        <Box p="6" borderRadius="md" border="xs" borderColor="border.muted" gridColumn={{ base: "1", lg: "1 / -1" }}>
           <Text fontWeight="bold" mb="6">Transcript Delivery Options</Text>
           
           <Flex direction={{ base: "column", md: "row" }} gap="6" mb="8">
@@ -338,11 +316,11 @@ const PaymentSettingsTab = () => {
               <Stack gap="4">
                 <Field.Root>
                   <Field.Label fontSize="xs">Base Fee</Field.Label>
-                  <Input type="number" {...paymentConfigForm.register("transcript_digital_fee", { valueAsNumber: true })} readOnly={!isEditing} size="lg" bg={isEditing ? "slate.50" : "transparent"} />
+                  <Input type="number" {...paymentConfigForm.register("transcript_digital_fee", { valueAsNumber: true })} readOnly={!isEditing} size="xl" />
                 </Field.Root>
                 <Field.Root>
                   <Field.Label fontSize="xs">Merchant Fee</Field.Label>
-                  <Input type="number" {...paymentConfigForm.register("transcript_digital_merchant_fee", { valueAsNumber: true })} readOnly={!isEditing} size="lg" bg={isEditing ? "slate.50" : "transparent"} />
+                  <Input type="number" {...paymentConfigForm.register("transcript_digital_merchant_fee", { valueAsNumber: true })} readOnly={!isEditing} size="xl" />
                 </Field.Root>
               </Stack>
             </Box>
@@ -353,11 +331,11 @@ const PaymentSettingsTab = () => {
               <Stack gap="4">
                 <Field.Root>
                   <Field.Label fontSize="xs">Base Fee</Field.Label>
-                  <Input type="number" {...paymentConfigForm.register("transcript_courier_fee", { valueAsNumber: true })} readOnly={!isEditing} size="lg" bg={isEditing ? "slate.50" : "transparent"} />
+                  <Input type="number" {...paymentConfigForm.register("transcript_courier_fee", { valueAsNumber: true })} readOnly={!isEditing} size="xl" />
                 </Field.Root>
                 <Field.Root>
                   <Field.Label fontSize="xs">Merchant Fee</Field.Label>
-                  <Input type="number" {...paymentConfigForm.register("transcript_courier_merchant_fee", { valueAsNumber: true })} readOnly={!isEditing} size="lg" bg={isEditing ? "slate.50" : "transparent"} />
+                  <Input type="number" {...paymentConfigForm.register("transcript_courier_merchant_fee", { valueAsNumber: true })} readOnly={!isEditing} size="xl" />
                 </Field.Root>
               </Stack>
             </Box>
@@ -368,11 +346,11 @@ const PaymentSettingsTab = () => {
               <Stack gap="4">
                 <Field.Root>
                   <Field.Label fontSize="xs">Base Fee</Field.Label>
-                  <Input type="number" {...paymentConfigForm.register("transcript_pickup_fee", { valueAsNumber: true })} readOnly={!isEditing} size="lg" bg={isEditing ? "slate.50" : "transparent"} />
+                  <Input type="number" {...paymentConfigForm.register("transcript_pickup_fee", { valueAsNumber: true })} readOnly={!isEditing} size="xl" />
                 </Field.Root>
                 <Field.Root>
                   <Field.Label fontSize="xs">Merchant Fee</Field.Label>
-                  <Input type="number" {...paymentConfigForm.register("transcript_pickup_merchant_fee", { valueAsNumber: true })} readOnly={!isEditing} size="lg" bg={isEditing ? "slate.50" : "transparent"} />
+                  <Input type="number" {...paymentConfigForm.register("transcript_pickup_merchant_fee", { valueAsNumber: true })} readOnly={!isEditing} size="xl" />
                 </Field.Root>
               </Stack>
             </Box>
@@ -383,11 +361,12 @@ const PaymentSettingsTab = () => {
       {isEditing && (
         <Button 
           type="submit"
-          loading={isSaving}
+          loading={updateMutation.isPending}
           loadingText="Saving..."
-          disabled={isSaving || !paymentConfigForm.formState.isValid}
+          disabled={updateMutation.isPending || !paymentConfigForm.formState.isValid}
           colorPalette="accent"
           mt="6"
+          size="xl"
         >
           Save Changes
         </Button>
