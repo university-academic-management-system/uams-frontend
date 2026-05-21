@@ -124,7 +124,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                             <Dialog.Body p="8">
                                 <Stack gap="6" colorPalette="accent">
                                     {/* Title Input */}
-                                    <Field.Root invalid={!!errors.title}>
+                                    <Field.Root required invalid={!!errors.title}>
                                         <Field.Label fontWeight="bold" color="fg.subtle">
                                             Title <Field.RequiredIndicator />
                                         </Field.Label>
@@ -146,7 +146,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                             name="recipientType"
                                             control={control}
                                             render={({ field }) => (
-                                                <Field.Root invalid={!!errors.recipientType} flex="1">
+                                                <Field.Root required invalid={!!errors.recipientType} flex="1">
                                                     <Field.Label fontWeight="bold" color="fg.subtle">
                                                         Recipient Type <Field.RequiredIndicator />
                                                     </Field.Label>
@@ -194,7 +194,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                                 name="targetRole"
                                                 control={control}
                                                 render={({ field }) => (
-                                                    <Field.Root invalid={!!errors.targetRole} flex="1">
+                                                    <Field.Root required invalid={!!errors.targetRole} flex="1">
                                                         <Field.Label fontWeight="bold" color="fg.subtle">
                                                             Target Role(s) <Field.RequiredIndicator />
                                                         </Field.Label>
@@ -239,7 +239,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                         name="type"
                                         control={control}
                                         render={({ field }) => (
-                                            <Field.Root invalid={!!errors.type}>
+                                            <Field.Root required invalid={!!errors.type}>
                                                 <Field.Label fontWeight="bold" color="fg.subtle">
                                                     Type <Field.RequiredIndicator />
                                                 </Field.Label>
@@ -277,7 +277,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
                                     />
 
                                     {/* Message Textarea */}
-                                    <Field.Root invalid={!!errors.message}>
+                                    <Field.Root required invalid={!!errors.message}>
                                         <Field.Label fontWeight="bold" color="fg.subtle">
                                             Message <Field.RequiredIndicator />
                                         </Field.Label>
