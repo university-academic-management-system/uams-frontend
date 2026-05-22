@@ -27,6 +27,7 @@ import {
   Dialog,
   CloseButton,
   Field,
+  Checkbox,
 } from "@chakra-ui/react";
 import { Switch } from "@components/ui/switch";
 import {
@@ -142,6 +143,7 @@ const CoursesTab = () => {
 
   const filtered = useMemo(() => {
     return courses.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c: any) =>
         !searchTerm ||
         (c.title || c.name || "")
@@ -152,7 +154,7 @@ const CoursesTab = () => {
   }, [courses, searchTerm]);
 
   const programTypeCollection = createListCollection({
-    items: programTypes.map((pt: any) => ({ label: pt.name, value: pt.id })),
+    items: programTypes.map((pt: { id: string, name: string }) => ({ label: pt.name, value: pt.id })),
   });
 
 
@@ -165,6 +167,7 @@ const CoursesTab = () => {
     }
   }, [isEditing, editingCourseId, updateCourse, createCourse]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditClick = useCallback((course: any) => {
     setIsEditing(true);
     setEditingCourseId(course.id);
@@ -195,6 +198,7 @@ const CoursesTab = () => {
 
   const toggleSelectAll = useCallback(() => {
     setSelectedIds(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       selectedIds.length === filtered.length ? [] : filtered.map((c: any) => c.id),
     );
   }, [selectedIds, filtered]);
@@ -213,7 +217,7 @@ const CoursesTab = () => {
         toaster.success({ title: `${selectedIds.length} courses deleted` });
         setSelectedIds([]);
         queryClient.invalidateQueries({ queryKey: ["courses"] });
-      } catch (err) {
+      } catch {
         // Error toast handled by axios interceptor
       }
     }
@@ -221,6 +225,7 @@ const CoursesTab = () => {
 
   const handleExportExcel = useCallback(() => {
     exportToExcel(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       courses.map((c: any) => ({
         Code: c.code,
         "Course Title": c.title || c.name,
@@ -254,6 +259,7 @@ const CoursesTab = () => {
       doc.line(14, y + 2, 200, y + 2);
       y += 10;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       courses.forEach((c: any, i: number) => {
         if (y > 280) {
           doc.addPage();
@@ -279,17 +285,20 @@ const CoursesTab = () => {
       return <ArrowUpDown size={14} style={{ marginLeft: "6px", display: "inline-block", verticalAlign: "middle", opacity: 0.5 }} />;
     }
     if (sortConfig.direction === "asc") {
-      return <ArrowUp size={14} style={{ marginLeft: "6px", display: "inline-block", verticalAlign: "middle" }} color="var(--color-accent)" />;
+      return <ArrowUp size={14} style={{ marginLeft: "6px", display: "inline-block", verticalAlign: "middle" }} color="#1D7AD9" />;
     }
-    return <ArrowDown size={14} style={{ marginLeft: "6px", display: "inline-block", verticalAlign: "middle" }} color="var(--color-accent)" />;
+    return <ArrowDown size={14} style={{ marginLeft: "6px", display: "inline-block", verticalAlign: "middle" }} color="#1D7AD9" />;
   }, [sortConfig]);
 
   const sortedAndFiltered = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return [...filtered].sort((a: any, b: any) => {
       if (!sortConfig) return 0;
 
       const { key, direction } = sortConfig;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let valA: any = "";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let valB: any = "";
 
       if (key === "code") {
@@ -399,7 +408,7 @@ const CoursesTab = () => {
                         No options available
                       </Box>
                     ) : (
-                      levelFilterCollection.items.map((item: any) => (
+                      levelFilterCollection.items.map((item: { label: string, value: string }) => (
                         <Select.Item key={item.value} item={item}>
                           <Select.ItemText>{item.label}</Select.ItemText>
                           <Select.ItemIndicator />
@@ -441,7 +450,7 @@ const CoursesTab = () => {
                         No options available
                       </Box>
                     ) : (
-                      semesterFilterCollection.items.map((item: any) => (
+                      semesterFilterCollection.items.map((item: { label: string, value: string }) => (
                         <Select.Item key={item.value} item={item}>
                           <Select.ItemText>{item.label}</Select.ItemText>
                           <Select.ItemIndicator />
@@ -570,15 +579,18 @@ const CoursesTab = () => {
             <Table.Header bg="slate.50">
               <Table.Row borderY="xs" borderColor="border.muted">
                 <Table.ColumnHeader px="6" py="4" w="12" textAlign="center">
-                  <input
-                    type="checkbox"
+                  <Checkbox.Root
+                    variant="outline"
                     checked={
                       filtered.length > 0 &&
                       selectedIds.length === filtered.length
                     }
-                    onChange={toggleSelectAll}
-                    style={{ cursor: "pointer" }}
-                  />
+                    onCheckedChange={toggleSelectAll}
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                  </Checkbox.Root>
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
                   px="6"
@@ -773,6 +785,7 @@ const CoursesTab = () => {
                   </Table.Cell>
                 </Table.Row>
               ) : (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 sortedAndFiltered.map((course: any, index: number) => (
                   <Table.Row
                     key={course.id}
@@ -783,12 +796,15 @@ const CoursesTab = () => {
                     bg={selectedIds.includes(course.id) ? "blue.50" : undefined}
                   >
                     <Table.Cell px="6" py="4" textAlign="center">
-                      <input
-                        type="checkbox"
+                      <Checkbox.Root
+                        variant="outline"
                         checked={selectedIds.includes(course.id)}
-                        onChange={() => toggleSelection(course.id)}
-                        style={{ cursor: "pointer" }}
-                      />
+                        onCheckedChange={() => toggleSelection(course.id)}
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                      </Checkbox.Root>
                     </Table.Cell>
                     <Table.Cell px="6" py="4">
                       {index + 1}
@@ -1007,7 +1023,7 @@ const CoursesTab = () => {
                                       No options available
                                     </Box>
                                   ) : (
-                                    courseTypeCollection.items.map((item: any) => (
+                                    courseTypeCollection.items.map((item: { label: string, value: string }) => (
                                       <Select.Item key={item.value} item={item}>
                                         <Select.ItemText>{item.label}</Select.ItemText>
                                         <Select.ItemIndicator />
@@ -1058,7 +1074,7 @@ const CoursesTab = () => {
                                       No options available
                                     </Box>
                                   ) : (
-                                    programTypeCollection.items.map((item: any) => (
+                                    (programTypeCollection.items as { label: string, value: string }[]).map((item) => (
                                       <Select.Item key={item.value} item={item}>
                                         <Select.ItemText>{item.label}</Select.ItemText>
                                         <Select.ItemIndicator />
@@ -1111,7 +1127,7 @@ const CoursesTab = () => {
                                       No options available
                                     </Box>
                                   ) : (
-                                    levelCollection.items.map((item: any) => (
+                                    levelCollection.items.map((item: { label: string, value: string }) => (
                                       <Select.Item key={item.value} item={item}>
                                         <Select.ItemText>{item.label}</Select.ItemText>
                                         <Select.ItemIndicator />
@@ -1162,7 +1178,7 @@ const CoursesTab = () => {
                                       No options available
                                     </Box>
                                   ) : (
-                                    semesterCollection.items.map((item: any) => (
+                                    semesterCollection.items.map((item: { label: string, value: string }) => (
                                       <Select.Item key={item.value} item={item}>
                                         <Select.ItemText>{item.label}</Select.ItemText>
                                         <Select.ItemIndicator />
@@ -1215,7 +1231,7 @@ const CoursesTab = () => {
                                       No options available
                                     </Box>
                                   ) : (
-                                    creditUnitCollection.items.map((item: any) => (
+                                    creditUnitCollection.items.map((item: { label: string, value: string }) => (
                                       <Select.Item key={item.value} item={item}>
                                         <Select.ItemText>{item.label}</Select.ItemText>
                                         <Select.ItemIndicator />
