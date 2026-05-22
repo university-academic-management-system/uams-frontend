@@ -69,13 +69,12 @@ const DashboardLayout = () => {
                 onLogout={handleLogout}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
+                currentUser={user?.name || "N/A"}
+                email={user?.email || "N/A"}
             />
             <Box as="main" flex="1" ml={{ base: "0", lg: "64" }} bg="bg.subtle" transition="margin-left 0.2s">
                 <Toaster />
                 <Header
-                    onViewChange={handleViewChange}
-                    currentUser={user?.name || "N/A"}
-                    email={user?.email || "N/A"}
                     onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <Box p={{ base: "4", md: "8" }}>
