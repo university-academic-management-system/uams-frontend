@@ -1,9 +1,10 @@
-import { Box, Flex, Image, Text, Icon, Button } from "@chakra-ui/react";
+import { Box, Flex, Image, Text, Icon, Button, Avatar, Separator } from "@chakra-ui/react";
 import { useLocation, useNavigate } from "react-router";
 import { LogOut } from "lucide-react";
 import sidebarItems from "@configs/sidebar.config";
 import { useMemo } from "react";
 import useAuthStore from "@stores/auth.store";
+import LinkButton from "@components/ui/linkbutton";
 
 const Sidebar = () => {
     const location = useLocation();
@@ -19,7 +20,6 @@ const Sidebar = () => {
 
     const filteredItems = useMemo(() => {
         if (userRoles.includes("ADMIN")) return sidebarItems;
-
         return sidebarItems.filter((item) => {
             if (item.accessLevel === "ALL") return true;
             if (Array.isArray(item.accessLevel)) {
@@ -52,75 +52,71 @@ const Sidebar = () => {
             left="0"
             zIndex="10"
         >
-            {/* University Logo / Branding */}
+            {/* Logo */}
             <Flex justify="center" align="center" px="5" py="2" h="14" borderBottom="1px solid" borderColor="border.muted">
-                <Image
-                    src="/lecturer/assets/sidebar-image.png"
-                    alt="University of Port Harcourt"
-                    w="full"
-                    mb="2"
-                    h="fit"
-                />
+                <Image src="/lecturer/assets/sidebar-image.png" alt="University of Port Harcourt" w="full" mb="2" h="fit" />
             </Flex>
 
             {/* Navigation Items */}
             <Flex direction="column" gap="1" px="4" py="4" flex="1">
                 {filteredItems.map((item) => {
                     const active = isActive(item.path);
-
                     return (
-                        <Button
+                        <LinkButton
                             key={item.path}
+                            to={item.path}
                             width="full"
-                            alignItems="center"
-                            justifyContent="flex-start"
-                            gap="3"
+                            variant="ghost"
+                            size="lg"
+                            pl="2"
+                            justifyContent="start"
+                            gap="2"
                             px="3"
                             py="2.5"
                             rounded="md"
                             cursor="pointer"
-                            bg={active ? "accent.subtle" : "transparent"}
+                            fontWeight="600"
                             color={active ? "accent" : "fg.muted"}
-                            fontWeight="semibold"
-                            transition="all 0.15s ease"
-                            _hover={{
-                                bg: active ? "accent.subtle" : "accent.subtle",
-                                color: active ? "accent" : "fg.muted",
-                            }}
-                            onClick={() => navigate(item.path)}
                         >
-                            <Icon
-                                as={item.icon}
-                                boxSize="5"
-                                strokeWidth={active ? 2.2 : 1.8}
-                            />
+                            <Icon as={item.icon} boxSize="5" strokeWidth={active ? 2.2 : 1.8} />
                             <Text fontSize="sm">{item.label}</Text>
-                        </Button>
-                     
+                        </LinkButton>
                     );
                 })}
             </Flex>
 
-            {/* Logout Button */}
+            {/* Bottom Section: Logout + Separator + User Info */}
             <Box px="4" pb="5">
-                <Flex
-                    align="center"
-                    gap="3"
-                    px="4"
-                    py="2.5"
-                    rounded="md"
-                    cursor="pointer"
-                    color="red.500"
-                    fontWeight="700"
-                    transition="all 0.15s ease"
-                    _hover={{
-                        bg: "red.100",
-                        color: "red.600",
-                    }}
+                {/* Logout Button */}
+                <Button
+                    justifyContent="start"
+                    pl="2"
+                    size="xl"
+                    colorPalette="red"
+                    variant="ghost"
+                    w="full"
                     onClick={handleLogout}
                 >
-                    <Icon as={LogOut} boxSize="5" strokeWidth={1.8} />
-                    <Text fontSize="sm">Logout</Text>
+                    <Icon as={LogOut} size="md" />
+                    Logout
+                </Button>
+
+                {/* User Info: Avatar then Name + Email  */}
+                <Flex align="center" gap="3">
+                    {/* Avatar – now first */}
+                    <Avatar.Root size="sm">
+                        <Avatar.Fallback name={user?.name} />
+                    </Avatar.Root>
+
+                    {/* Name & Email  */}
+                    <Box textAlign="left">
+                        <Text fontSize="lg" color="fg.muted" lineHeight="1.3">
+                            {user?.name || "N/A"}
+                        </Text>
+                        <Text fontSize="sm" color="fg.subtle" lineHeight="1.3">
+                            {user?.email || "N/A"}
+                        </Text>
+                    </Box>
                 </Flex>
             </Box>
         </Flex>
