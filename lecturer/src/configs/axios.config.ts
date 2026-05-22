@@ -144,11 +144,11 @@ axiosClient.interceptors.response.use(
         closable: true
       });
 
-      // Clear auth and redirect to login
-      useAuthStore.getState().clearAuth();
-      setTimeout(() => {
-        window.location.href = "/auth/login";
-      }, 1000);
+   // Clear auth and redirect to login
+     useAuthStore.getState().clearAuth();
+     setTimeout(() => {
+       window.location.href = "/auth/login";
+       }, 1000);
 
     }
 

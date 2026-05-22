@@ -10,6 +10,31 @@ export interface User {
     [key: string]: any;
 }
 
+export interface ProfileResponse {
+    status: string;
+    message: string;
+    data: UserData;
+}
+
+export interface UserData {
+    id: string;
+    staffProfile: {
+        userId: string;
+        title: string;
+        firstName: string;
+        surname: string;
+        otherName?: string;
+        staffNumber: string;
+        phone: string | null;
+        gender: string;
+        staffRoles: string[];
+        faculty: string;
+        department: string;
+        createdAt: string;
+        updatedAt: string;
+    };
+}
+
 export interface AuthState {
     token: string;
     refreshToken?: string;

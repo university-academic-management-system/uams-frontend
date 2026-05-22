@@ -31,7 +31,7 @@ const isPublicEndpoint = (url: string = ''): boolean => {
 };
 
 // Helper functions
-const getErrorMessage = (error: any): string => {
+const getErrorMessage = (error: AxiosError<{ message: string, errors: { field: string, message: string }[] }>): string => {
   if (error.response?.data) {
     const { message, errors } = error.response.data;
 
@@ -45,48 +45,48 @@ const getErrorMessage = (error: any): string => {
   return error.message || "Invalid request sent to the server.";
 };
 
-const getErrorTitle = (error: AxiosError): string => {
-  if (!error.response) return "Network Error";
+// const getErrorTitle = (error: AxiosError): string => {
+//   if (!error.response) return "Network Error";
 
-  const status = error.response.status;
-  const statusText = error.response.statusText;
+//   const status = error.response.status;
+//   const statusText = error.response.statusText;
 
-  switch (status) {
-    case 400: return "Bad Request";
-    case 401: return "Unauthorized";
-    case 402: return "Payment Required";
-    case 403: return "Forbidden";
-    case 404: return "Not Found";
-    case 405: return "Method Not Allowed";
-    case 406: return "Not Acceptable";
-    case 408: return "Request Timeout";
-    case 409: return "Conflict";
-    case 410: return "Gone";
-    case 411: return "Length Required";
-    case 412: return "Precondition Failed";
-    case 413: return "Payload Too Large";
-    case 414: return "URI Too Long";
-    case 415: return "Unsupported Media Type";
-    case 416: return "Range Not Satisfiable";
-    case 417: return "Expectation Failed";
-    case 418: return "I'm a teapot";
-    case 422: return "Validation Error";
-    case 429: return "Too Many Requests";
-    case 500: return "Internal Server Error";
-    case 501: return "Not Implemented";
-    case 502: return "Bad Gateway";
-    case 503: return "Service Unavailable";
-    case 504: return "Gateway Timeout";
-    case 505: return "HTTP Version Not Supported";
-    case 506: return "Variant Also Negotiates";
-    case 507: return "Insufficient Storage";
-    case 508: return "Loop Detected";
-    case 509: return "Bandwidth Limit Exceeded";
-    case 510: return "Not Extended";
-    case 511: return "Network Authentication Required";
-    default: return `${status} - ${statusText}`;
-  }
-};
+//   switch (status) {
+//     case 400: return "Bad Request";
+//     case 401: return "Unauthorized";
+//     case 402: return "Payment Required";
+//     case 403: return "Forbidden";
+//     case 404: return "Not Found";
+//     case 405: return "Method Not Allowed";
+//     case 406: return "Not Acceptable";
+//     case 408: return "Request Timeout";
+//     case 409: return "Conflict";
+//     case 410: return "Gone";
+//     case 411: return "Length Required";
+//     case 412: return "Precondition Failed";
+//     case 413: return "Payload Too Large";
+//     case 414: return "URI Too Long";
+//     case 415: return "Unsupported Media Type";
+//     case 416: return "Range Not Satisfiable";
+//     case 417: return "Expectation Failed";
+//     case 418: return "I'm a teapot";
+//     case 422: return "Validation Error";
+//     case 429: return "Too Many Requests";
+//     case 500: return "Internal Server Error";
+//     case 501: return "Not Implemented";
+//     case 502: return "Bad Gateway";
+//     case 503: return "Service Unavailable";
+//     case 504: return "Gateway Timeout";
+//     case 505: return "HTTP Version Not Supported";
+//     case 506: return "Variant Also Negotiates";
+//     case 507: return "Insufficient Storage";
+//     case 508: return "Loop Detected";
+//     case 509: return "Bandwidth Limit Exceeded";
+//     case 510: return "Not Extended";
+//     case 511: return "Network Authentication Required";
+//     default: return `${status} - ${statusText}`;
+//   }
+// };
 
 // Token refresh queue management
 
@@ -108,9 +108,9 @@ axiosClient.interceptors.request.use(
 
     return config
   },
-  (error: AxiosError) => {
+  (error: AxiosError<{ message: string, errors: { field: string, message: string }[] }>) => {
     toaster.error({
-      title: getErrorTitle(error),
+      // title: getErrorTitle(error),
       description: getErrorMessage(error),
       closable: true
     });
@@ -121,14 +121,14 @@ axiosClient.interceptors.request.use(
 // Response interceptor - FIXED
 axiosClient.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
+  async (error: AxiosError<{ message: string, errors: { field: string, message: string }[] }>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
 
     if (error.response?.status === 401 && originalRequest.url === "/auth/login") {
       toaster.error({
-        title: getErrorTitle(error),
+        // title: getErrorTitle(error),
         description: getErrorMessage(error),
         closable: true
       });
@@ -139,7 +139,7 @@ axiosClient.interceptors.response.use(
       console.warn("🟠 Unauthorized (Token expired):", error.config?.url);
 
       toaster.error({
-        title: getErrorTitle(error),
+        // title: getErrorTitle(error),
         description: getErrorMessage(error),
         closable: true
       });
@@ -150,7 +150,7 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 400) {
       console.warn("⚠️ Bad Request:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
+        // title: getErrorTitle(error),
         description: getErrorMessage(error),
         closable: true
       });
@@ -160,7 +160,7 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 402) {
       console.warn("💰 Payment Required:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
+        // title: getErrorTitle(error),
         description: "Payment required to access this resource.",
         closable: true
       });
@@ -170,8 +170,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 403) {
       console.warn("🚫 Access forbidden:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "You don't have permission to access this resource.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -180,7 +180,7 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 404) {
       console.warn("⚠️ Resource not found:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
+        // title: getErrorTitle(error),
         description: getErrorMessage(error),
         closable: true
       });
@@ -190,8 +190,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 405) {
       console.warn("🚫 Method not allowed:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "This HTTP method is not allowed for the requested resource.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -200,8 +200,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 406) {
       console.warn("❌ Not acceptable:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The server cannot produce a response matching the accept headers.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -210,8 +210,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 408) {
       console.warn("⏰ Request timeout:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The request timed out. Please try again.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -220,7 +220,7 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 409) {
       console.warn("⚡ Conflict:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
+        // title: getErrorTitle(error),
         description: getErrorMessage(error) || "A conflict occurred with the current state of the resource.",
         closable: true
       });
@@ -230,8 +230,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 410) {
       console.warn("🗑️ Resource gone:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The requested resource is no longer available.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -240,8 +240,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 411) {
       console.warn("📏 Length required:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "Content-Length header is required for this request.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -250,8 +250,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 412) {
       console.warn("🔒 Precondition failed:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "Precondition given in the request failed.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -260,8 +260,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 413) {
       console.warn("📦 Payload too large:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The request payload is too large.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -270,8 +270,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 414) {
       console.warn("🔗 URI too long:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The request URI is too long.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -280,8 +280,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 415) {
       console.warn("🎭 Unsupported media type:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The media type is not supported by the server.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -290,8 +290,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 416) {
       console.warn("🎯 Range not satisfiable:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The requested range cannot be satisfied.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -300,8 +300,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 417) {
       console.warn("🎭 Expectation failed:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The server cannot meet the requirements of the Expect request-header field.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -310,8 +310,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 418) {
       console.warn("🫖 I'm a teapot:", error.config?.url);
       toaster.error({
-        title: "I'm a teapot",
-        description: "The server refuses to brew coffee because it is, permanently, a teapot.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -320,7 +320,7 @@ axiosClient.interceptors.response.use(
     // if (error.response?.status === 429) {
     //   console.warn("🚦 Too many requests:", error.config?.url);
     //   toaster.error({
-    //     title: getErrorTitle(error),
+        // title: getErrorTitle(error),
     //     description: "Too many requests. Please slow down and try again later.",
     //     closable: true
     //   });
@@ -330,7 +330,7 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 422) {
       console.warn("📝 Validation error:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
+        // title: getErrorTitle(error),
         description: getErrorMessage(error),
         closable: true
       });
@@ -340,8 +340,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 500) {
       console.error("🚨 Internal server error:", error.config?.url, error.response);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "Something went wrong on our server. Please try again later.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -350,8 +350,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 501) {
       console.error("🔧 Not implemented:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "This feature is not implemented on the server.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -360,8 +360,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 502) {
       console.error("🌐 Bad gateway:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The server received an invalid response from the upstream server.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -370,8 +370,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 503) {
       console.error("🔧 Service unavailable:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The service is temporarily unavailable. Please try again later.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -380,8 +380,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 504) {
       console.error("⏰ Gateway timeout:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The gateway timed out. Please try again.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -390,8 +390,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 505) {
       console.error("🔌 HTTP version not supported:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The HTTP version used in the request is not supported.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -400,8 +400,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 506) {
       console.error("🔄 Variant also negotiates:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The server has an internal configuration error.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -410,8 +410,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 507) {
       console.error("💾 Insufficient storage:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The server is out of storage space.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -420,8 +420,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 508) {
       console.error("🔄 Loop detected:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The server detected an infinite loop while processing the request.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -430,8 +430,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 509) {
       console.error("📊 Bandwidth limit exceeded:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "The server's bandwidth limit has been exceeded.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -440,8 +440,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 510) {
       console.error("🔌 Not extended:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "Further extensions to the request are required.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -450,8 +450,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 511) {
       console.error("🔐 Network authentication required:", error.config?.url);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "Network authentication is required to access this resource.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -460,8 +460,8 @@ axiosClient.interceptors.response.use(
     if (error.response?.status && error.response.status >= 500 && error.response.status < 600) {
       console.error("🚨 Server error:", error.config?.url, error.response);
       toaster.error({
-        title: getErrorTitle(error),
-        description: "Something went wrong on our server. Please try again later.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }
@@ -470,8 +470,8 @@ axiosClient.interceptors.response.use(
     if (!error.response) {
       console.error("🌐 Network error or no response from server:", error.message);
       toaster.error({
-        title: "Network Error",
-        description: "Please check your internet connection and try again.",
+        // title: getErrorTitle(error),
+        description: getErrorMessage(error),
         closable: true
       });
     }

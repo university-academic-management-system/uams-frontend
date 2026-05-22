@@ -1,29 +1,28 @@
 import { 
     loginApi, 
-    signupApi, 
     forgotPasswordApi, 
     verifyStudentApi, 
     activateAccountApi, 
     initializePaymentApi, 
-    getDepartmentAnnualDueApi, 
-    changePasswordApi,
+    getPaymentDetailsApi,
     verifyOtpApi,
     resendOtpApi,
     resetPasswordApi
 } from "@services/auth.api"
-import { useMutation, type UseMutationOptions, useQuery } from "@tanstack/react-query"
+import { useMutation, type UseMutationOptions, useQuery, type UseQueryOptions } from "@tanstack/react-query"
 import { type AxiosError } from "axios"
 import type { 
     LoginData, 
     LoginResponse, 
-    SignupFormData, 
-    SignupResponse,
     ActivateAccountRequest, 
     ActivateAccountResponse, 
+    InitializePaymentRequest,
     InitializePaymentResponse, 
-    DepartmentDuesResponse, 
     ResetPasswordData,
     VerifyStudentResponse,
+    PaymentDetailsResponse,
+    PaymentType,
+    DeliveryMethod,
 } from "@type/auth.type"
 
 
@@ -31,11 +30,6 @@ import type {
 
 export const useLogin = (options?: UseMutationOptions<LoginResponse, Error, LoginData, unknown>) => useMutation<LoginResponse, Error, LoginData, unknown>({
     mutationFn: (payload: LoginData) => loginApi(payload),
-    ...options
-})
-
-export const useSignup = (options?: UseMutationOptions<SignupResponse, Error, SignupFormData, unknown>) => useMutation<SignupResponse, Error, SignupFormData, unknown>({
-    mutationFn: (payload: SignupFormData) => signupApi(payload),
     ...options
 })
 
@@ -54,21 +48,21 @@ export const useActivateAccount = (options?: UseMutationOptions<ActivateAccountR
     ...options
 })
 
-export const useInitializePayment = (options?: UseMutationOptions<InitializePaymentResponse, Error, string | undefined, unknown>) => useMutation<InitializePaymentResponse, Error, string | undefined, unknown>({
-    mutationFn: (callbackUrl?: string) => initializePaymentApi(callbackUrl),
+export const useInitializePayment = (options?: UseMutationOptions<InitializePaymentResponse, Error, InitializePaymentRequest, unknown>) => useMutation<InitializePaymentResponse, Error, InitializePaymentRequest, unknown>({
+    mutationFn: (payload: InitializePaymentRequest) => initializePaymentApi(payload),
     ...options
 })
 
-export const useDepartmentAnnualDue = (options?: any) => useQuery<DepartmentDuesResponse, Error>({
-    queryKey: ["department-annual-due"],
-    queryFn: () => getDepartmentAnnualDueApi(),
+export const usePaymentDetails = (
+    paymentType: PaymentType | string, 
+    deliveryMethod?: DeliveryMethod | string, 
+    options?: Partial<UseQueryOptions<PaymentDetailsResponse, Error>>
+) => useQuery<PaymentDetailsResponse, Error>({
+    queryKey: ["payment-details", paymentType, deliveryMethod],
+    queryFn: () => getPaymentDetailsApi(paymentType, deliveryMethod),
     ...options
 })
 
-export const useChangePassword = (options?: UseMutationOptions<any, Error, any, unknown>) => useMutation<any, Error, any, unknown>({
-    mutationFn: (payload: any) => changePasswordApi(payload),
-    ...options
-})
 
 export const useVerifyOtp = (options?: UseMutationOptions<LoginResponse, AxiosError<{ message?: string }>, { email: string; otp: string }, unknown>) => useMutation<LoginResponse, AxiosError<{ message?: string }>, { email: string; otp: string }, unknown>({
     mutationFn: (payload: { email: string; otp: string }) => verifyOtpApi(payload),

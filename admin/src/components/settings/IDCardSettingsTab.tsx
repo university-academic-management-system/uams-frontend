@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Upload, Edit2, Trash2, CheckCircle } from "lucide-react";
 import { IDCardServices } from "@services/idcard.service";
 import { toaster } from "@components/ui/toaster";
 import { Box, Flex, Text, Image, Spinner, Table, Button, Badge, Dialog, Portal, CloseButton, EmptyState, Field, Input, Textarea, Stack } from "@chakra-ui/react";
+import { useIDCardForm } from "@forms/idcard.form";
+import type { IDCardFormData } from "@schemas/idcard.schema";
 
 const UploadBox = ({ label, type, preview, fileRef, onFileChange }: { label: string; type: string; preview: string; fileRef: React.RefObject<HTMLInputElement | null>; onFileChange: (e: React.ChangeEvent<HTMLInputElement>, type: string) => void }) => {
     return (
@@ -29,63 +32,58 @@ const UploadBox = ({ label, type, preview, fileRef, onFileChange }: { label: str
 };
 
 const IDCardSettingsTab = () => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [templateId, setTemplateId] = useState("");
-    const [templates, setTemplates] = useState<any[]>([]);
+    const queryClient = useQueryClient();
     const [previews, setPreviews] = useState<Record<string, string>>({});
     const [files, setFiles] = useState<Record<string, File>>({});
     const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
 
-    const [formData, setFormData] = useState({
-        schoolName: "",
-        faculty: "",
-        department: "",
-        schoolAddress: "",
-        backDescription: "",
-        backDisclaimer: "",
-    });
+    const idCardForm = useIDCardForm();
+    const { register, watch, reset, setValue, formState: { errors, isValid } } = idCardForm;
+    const formData = watch();
 
-    const [initialFormData, setInitialFormData] = useState<typeof formData>({
-        schoolName: "",
-        faculty: "",
-        department: "",
-        schoolAddress: "",
-        backDescription: "",
-        backDisclaimer: "",
-    });
+    const [initialFormData, setInitialFormData] = useState<IDCardFormData | null>(null);
 
-    const fileInputRefs = {
-        logo: useRef<HTMLInputElement>(null),
-        signature: useRef<HTMLInputElement>(null),
-        frontTemplate: useRef<HTMLInputElement>(null),
-        backTemplate: useRef<HTMLInputElement>(null),
-    };
+    const logoRef = useRef<HTMLInputElement>(null);
+    const signatureRef = useRef<HTMLInputElement>(null);
+    const frontTemplateRef = useRef<HTMLInputElement>(null);
+    const backTemplateRef = useRef<HTMLInputElement>(null);
 
     // Store existing image URLs for preview
     const [existingUrls, setExistingUrls] = useState<Record<string, string>>({});
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
-
-    const fetchSettings = async () => {
-        try {
-            setIsLoading(true);
-            const data = await IDCardServices.getAllIDCard();
-            if (data?.success && data.templates) {
-                setTemplates(data.templates);
-            }
-        } catch (err) {
-            console.error("Failed to fetch ID card templates", err);
-            // Error toast handled by axios interceptor
-        } finally {
-            setIsLoading(false);
-        }
+    type IDCardTemplate = {
+        id: string;
+        name?: string;
+        institutionName?: string;
+        institutionAddress?: string;
+        faculties?: { name: string }[];
+        departments?: { name: string }[];
+        backDescription?: string;
+        backDisclaimer?: string;
+        logo?: string;
+        hodSignature?: string;
+        signature?: string;
+        frontTemplate?: string;
+        frontCardTemplate?: string;
+        backTemplate?: string;
+        backCardTemplate?: string;
+        isDefault?: boolean;
+        status?: string;
     };
 
-    const handleEdit = (t: any) => {
+    const { data: templatesData, isLoading } = useQuery({
+        queryKey: ["idCardTemplates"],
+        queryFn: async (): Promise<IDCardTemplate[]> => {
+            const data = await IDCardServices.getAllIDCard();
+            return data?.success && data.templates ? data.templates : [];
+        }
+    });
+
+    const templates: IDCardTemplate[] = templatesData || [];
+
+    const handleEdit = useCallback((t: IDCardTemplate) => {
         setTemplateId(t.id || "");
         const fd = {
             schoolName: t.institutionName || "",
@@ -95,7 +93,7 @@ const IDCardSettingsTab = () => {
             backDescription: t.backDescription || "",
             backDisclaimer: t.backDisclaimer || "",
         };
-        setFormData(fd);
+        reset(fd);
         setInitialFormData(fd);
         setExistingUrls({
             logo: t.logo || "",
@@ -106,34 +104,11 @@ const IDCardSettingsTab = () => {
         setPreviews({});
         setFiles({});
         setIsFormVisible(true);
-    };
+    }, [reset]);
 
-    const handleDelete = async (id: string) => {
-        try {
-            await IDCardServices.deleteIDCard(id, {});
-            toaster.success({ title: "Template deleted safely" });
-            if (templateId === id) handleCreateNew();
-            await fetchSettings();
-        } catch (err: any) {
-            // Error toast handled by axios interceptor
-        } finally {
-            setTemplateToDelete(null);
-        }
-    };
-
-    const handleActivate = async (id: string) => {
-        try {
-            await IDCardServices.activateIDCard(id, {});
-            toaster.success({ title: "Template set as default" });
-            await fetchSettings();
-        } catch (err: any) {
-            // Error toast handled by axios interceptor
-        }
-    };
-
-    const handleCreateNew = () => {
+    const handleCreateNew = useCallback(() => {
         setTemplateId("");
-        setFormData({
+        reset({
             schoolName: "",
             faculty: "",
             department: "",
@@ -141,13 +116,40 @@ const IDCardSettingsTab = () => {
             backDescription: "",
             backDisclaimer: "",
         });
+        setInitialFormData(null);
         setExistingUrls({});
         setPreviews({});
         setFiles({});
         setIsFormVisible(true);
-    };
+    }, [reset]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => IDCardServices.deleteIDCard(id, {}),
+        onSuccess: (_, id) => {
+            toaster.success({ title: "Template deleted safely" });
+            if (templateId === id) handleCreateNew();
+            queryClient.invalidateQueries({ queryKey: ["idCardTemplates"] });
+        },
+        onSettled: () => setTemplateToDelete(null)
+    });
+
+    const activateMutation = useMutation({
+        mutationFn: (id: string) => IDCardServices.activateIDCard(id, {}),
+        onSuccess: () => {
+            toaster.success({ title: "Template set as default" });
+            queryClient.invalidateQueries({ queryKey: ["idCardTemplates"] });
+        }
+    });
+
+    const handleDelete = useCallback((id: string) => {
+        deleteMutation.mutate(id);
+    }, [deleteMutation]);
+
+    const handleActivate = useCallback((id: string) => {
+        activateMutation.mutate(id);
+    }, [activateMutation]);
+
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, type: string) => {
         const file = e.target.files?.[0];
         if (!file) return;
         if (file.size > 70 * 1024) {
@@ -159,34 +161,50 @@ const IDCardSettingsTab = () => {
         const reader = new FileReader();
         reader.onloadend = () => setPreviews((prev) => ({ ...prev, [type]: reader.result as string }));
         reader.readAsDataURL(file);
-    };
+    }, []);
 
-    const convertFileToBase64 = (file: File): Promise<string> => {
+    const convertFileToBase64 = useCallback((file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result as string);
             reader.onerror = reject;
             reader.readAsDataURL(file);
         });
-    };
+    }, []);
 
-    const handleSave = async () => {
-        setIsSaving(true);
+    const saveMutation = useMutation({
+        mutationFn: async ({ id, payload }: { id?: string, payload: Record<string, unknown> }) => {
+            if (id) {
+                return await IDCardServices.updateIDCard(id, payload);
+            } else {
+                return await IDCardServices.createIDCard(payload);
+            }
+        },
+        onSuccess: () => {
+            toaster.success({ title: "ID Card settings updated" });
+            setFiles({});
+            setPreviews({});
+            setIsFormVisible(false);
+            queryClient.invalidateQueries({ queryKey: ["idCardTemplates"] });
+        }
+    });
+
+    const onSubmit = idCardForm.handleSubmit(async (data: IDCardFormData) => {
         try {
             const currentTemplate = templateId ? templates.find(t => t.id === templateId) : null;
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 name: currentTemplate?.name || `Template ${templates.length + 1}`,
                 isDefault: currentTemplate?.isDefault ?? false,
                 status: currentTemplate?.status || "ACTIVE",
             };
 
             // Only send changed text fields
-            if (formData.schoolName !== initialFormData.schoolName) payload.institutionName = formData.schoolName;
-            if (formData.schoolAddress !== initialFormData.schoolAddress) payload.institutionAddress = formData.schoolAddress;
-            if (formData.department !== initialFormData.department) payload.department = formData.department;
-            if (formData.faculty !== initialFormData.faculty) payload.faculty = formData.faculty;
-            if (formData.backDescription !== initialFormData.backDescription) payload.backDescription = formData.backDescription;
-            if (formData.backDisclaimer !== initialFormData.backDisclaimer) payload.backDisclaimer = formData.backDisclaimer;
+            if (!initialFormData || data.schoolName !== initialFormData.schoolName) payload.institutionName = data.schoolName;
+            if (!initialFormData || data.schoolAddress !== initialFormData.schoolAddress) payload.institutionAddress = data.schoolAddress;
+            if (!initialFormData || data.department !== initialFormData.department) payload.department = data.department;
+            if (!initialFormData || data.faculty !== initialFormData.faculty) payload.faculty = data.faculty;
+            if (!initialFormData || data.backDescription !== initialFormData.backDescription) payload.backDescription = data.backDescription;
+            if (!initialFormData || data.backDisclaimer !== initialFormData.backDisclaimer) payload.backDisclaimer = data.backDisclaimer;
 
             // Convert files to base64
             if (files.logo) payload.logo = await convertFileToBase64(files.logo);
@@ -194,22 +212,11 @@ const IDCardSettingsTab = () => {
             if (files.frontTemplate) payload.frontTemplate = await convertFileToBase64(files.frontTemplate);
             if (files.backTemplate) payload.backTemplate = await convertFileToBase64(files.backTemplate);
 
-            if (templateId) {
-                await IDCardServices.updateIDCard(templateId, payload);
-            } else {
-                await IDCardServices.createIDCard(payload);
-            }
-            toaster.success({ title: "ID Card settings updated" });
-            setFiles({});
-            setPreviews({});
-            setIsFormVisible(false);
-            await fetchSettings();
-        } catch (err: any) {
-            // Error toast handled by axios interceptor
-        } finally {
-            setIsSaving(false);
+            saveMutation.mutate({ id: templateId, payload });
+        } catch (err: unknown) {
+            console.error("Failed to save template:", err);
         }
-    };
+    });
 
     if (isLoading) {
         return <Flex justifyContent="center" py="20"><Spinner size="lg" color="blue.500" /></Flex>;
@@ -227,14 +234,14 @@ const IDCardSettingsTab = () => {
                     <Text fontSize="lg" fontWeight="bold" color="fg.muted">Available Templates</Text>
                     <Button
                         colorPalette="accent"
-                        size="sm"
+                        size="xl"
                         onClick={handleCreateNew}
                     >
                         + Create New Template
                     </Button>
                 </Flex>
                 <Box overflowX="auto">
-                    <Table.Root variant="line">
+                    <Table.Root variant="outline">
                         <Table.Header bg="slate.50">
                             <Table.Row borderY="xs" borderColor="border.muted">
                                 <Table.ColumnHeader px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">School Name</Table.ColumnHeader>
@@ -337,110 +344,111 @@ const IDCardSettingsTab = () => {
                 onOpenChange={(e) => setIsFormVisible(e.open)}
                 size="lg"
                 placement="center" closeOnInteractOutside={false}
+                scrollBehavior="inside"
             >
                 <Portal>
                     <Dialog.Backdrop />
                     <Dialog.Positioner>
-                        <Dialog.Content maxH="90vh" overflowY="auto" colorPalette="accent">
+                        <Dialog.Content>
                             <Dialog.Header>
                                 <Dialog.Title>
                                     {templateId ? "Edit Template Details" : "Create New Template"}
                                 </Dialog.Title>
                             </Dialog.Header>
                             <Dialog.Body>
-                                <Flex direction="column" gap="5">
+                                <Flex direction="column" gap="5" colorPalette="accent">
                                     <Flex gap="6" direction={{ base: "column", md: "row" }}>
-                                        <Field.Root flex="1">
+                                        <Field.Root flex="1" invalid={!!errors.schoolName}>
                                             <Field.Label>School Name</Field.Label>
                                             <Input
-                                                value={formData.schoolName}
-                                                onChange={(e) => setFormData((p) => ({ ...p, schoolName: e.target.value }))}
+                                                {...register("schoolName")}
                                                 placeholder="University name"
                                                 size="xl"
                                             />
+                                            <Field.ErrorText>{errors.schoolName?.message}</Field.ErrorText>
                                         </Field.Root>
-                                        <Field.Root flex="1">
+                                        <Field.Root flex="1" invalid={!!errors.faculty}>
                                             <Field.Label>Faculty</Field.Label>
                                             <Input
-                                                value={formData.faculty}
-                                                onChange={(e) => setFormData((p) => ({ ...p, faculty: e.target.value }))}
+                                                {...register("faculty")}
                                                 placeholder="Faculty name"
                                                 size="xl"
                                             />
+                                            <Field.ErrorText>{errors.faculty?.message}</Field.ErrorText>
                                         </Field.Root>
                                     </Flex>
                                     <Flex gap="6" direction={{ base: "column", md: "row" }}>
-                                        <Field.Root flex="1">
+                                        <Field.Root flex="1" invalid={!!errors.department}>
                                             <Field.Label>Department</Field.Label>
                                             <Input
-                                                value={formData.department}
-                                                onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))}
+                                                {...register("department")}
                                                 placeholder="Department name"
                                                 size="xl"
                                             />
+                                            <Field.ErrorText>{errors.department?.message}</Field.ErrorText>
                                         </Field.Root>
-                                        <Field.Root flex="1">
+                                        <Field.Root flex="1" invalid={!!errors.schoolAddress}>
                                             <Field.Label>School Address</Field.Label>
                                             <Input
-                                                value={formData.schoolAddress}
-                                                onChange={(e) => setFormData((p) => ({ ...p, schoolAddress: e.target.value }))}
+                                                {...register("schoolAddress")}
                                                 placeholder="School address"
                                                 size="xl"
                                             />
+                                            <Field.ErrorText>{errors.schoolAddress?.message}</Field.ErrorText>
                                         </Field.Root>
                                     </Flex>
 
                                     {/* Templates */}
-                                    <Box bg="slate.50" borderRadius="md" border="xs" borderColor="border.muted" p="6">
+                                    <Box borderRadius="md" border="xs" borderColor="border.muted" p="6">
                                         <Text fontSize="md" fontWeight="bold" color="fg.muted" mb="6">Card Templates</Text>
                                         <Flex direction={{ base: "column", md: "row" }} gap="6">
-                                            <Box flex="1"><UploadBox label="Front Template" type="frontTemplate" preview={previews.frontTemplate || existingUrls.frontTemplate} fileRef={fileInputRefs.frontTemplate} onFileChange={handleFileChange} /></Box>
-                                            <Box flex="1"><UploadBox label="Back Template" type="backTemplate" preview={previews.backTemplate || existingUrls.backTemplate} fileRef={fileInputRefs.backTemplate} onFileChange={handleFileChange} /></Box>
+                                            <Box flex="1"><UploadBox label="Front Template" type="frontTemplate" preview={previews.frontTemplate || existingUrls.frontTemplate} fileRef={frontTemplateRef} onFileChange={handleFileChange} /></Box>
+                                            <Box flex="1"><UploadBox label="Back Template" type="backTemplate" preview={previews.backTemplate || existingUrls.backTemplate} fileRef={backTemplateRef} onFileChange={handleFileChange} /></Box>
                                         </Flex>
                                     </Box>
 
                                     {/* Branding */}
-                                    <Box bg="slate.50" borderRadius="md" border="xs" borderColor="border.muted" p="6">
+                                    <Box borderRadius="md" border="xs" borderColor="border.muted" p="6">
                                         <Text fontSize="md" fontWeight="bold" color="fg.muted" mb="6">Branding</Text>
                                         <Flex direction={{ base: "column", md: "row" }} gap="6">
-                                            <Box flex="1"><UploadBox label="University Logo" type="logo" preview={previews.logo || existingUrls.logo} fileRef={fileInputRefs.logo} onFileChange={handleFileChange} /></Box>
-                                            <Box flex="1"><UploadBox label="HOD Signature" type="signature" preview={previews.signature || existingUrls.signature} fileRef={fileInputRefs.signature} onFileChange={handleFileChange} /></Box>
+                                            <Box flex="1"><UploadBox label="University Logo" type="logo" preview={previews.logo || existingUrls.logo} fileRef={logoRef} onFileChange={handleFileChange} /></Box>
+                                            <Box flex="1"><UploadBox label="HOD Signature" type="signature" preview={previews.signature || existingUrls.signature} fileRef={signatureRef} onFileChange={handleFileChange} /></Box>
                                         </Flex>
                                     </Box>
 
                                     {/* Back Card Text */}
-                                    <Box bg="slate.50" borderRadius="md" border="xs" borderColor="border.muted" p="6">
+                                    <Box borderRadius="md" border="xs" borderColor="border.muted" p="6">
                                         <Text fontSize="md" fontWeight="bold" color="fg.muted" mb="6">Back Card Content</Text>
                                         <Stack gap="6">
-                                            <Field.Root>
+                                            <Field.Root invalid={!!errors.backDescription}>
                                                 <Flex justifyContent="space-between" mb="2" width="full">
                                                     <Field.Label mb="0">Description</Field.Label>
-                                                    <Text fontSize="xs" color="fg.subtle">{formData.backDescription.length}/120</Text>
+                                                    <Text fontSize="xs" color="fg.subtle">{formData.backDescription?.length || 0}/120</Text>
                                                 </Flex>
                                                 <Textarea
-                                                    value={formData.backDescription}
-                                                    onChange={(e) => setFormData((p) => ({ ...p, backDescription: e.target.value.slice(0, 120) }))}
+                                                    {...register("backDescription", { onChange: (e) => setValue("backDescription", e.target.value.slice(0, 120)) })}
                                                     placeholder="Description on back of card"
                                                     size="xl"
                                                     rows={3}
                                                     resize="none"
                                                     bg="white"
                                                 />
+                                                <Field.ErrorText>{errors.backDescription?.message}</Field.ErrorText>
                                             </Field.Root>
-                                            <Field.Root>
+                                            <Field.Root invalid={!!errors.backDisclaimer}>
                                                 <Flex justifyContent="space-between" mb="2" width="full">
                                                     <Field.Label mb="0">Disclaimer</Field.Label>
-                                                    <Text fontSize="xs" color="fg.subtle">{formData.backDisclaimer.length}/95</Text>
+                                                    <Text fontSize="xs" color="fg.subtle">{formData.backDisclaimer?.length || 0}/95</Text>
                                                 </Flex>
                                                 <Textarea
-                                                    value={formData.backDisclaimer}
-                                                    onChange={(e) => setFormData((p) => ({ ...p, backDisclaimer: e.target.value.slice(0, 95) }))}
+                                                    {...register("backDisclaimer", { onChange: (e) => setValue("backDisclaimer", e.target.value.slice(0, 95)) })}
                                                     placeholder="Disclaimer text"
                                                     size="xl"
                                                     rows={3}
                                                     resize="none"
                                                     bg="white"
                                                 />
+                                                <Field.ErrorText>{errors.backDisclaimer?.message}</Field.ErrorText>
                                             </Field.Root>
                                         </Stack>
                                     </Box>
@@ -448,29 +456,21 @@ const IDCardSettingsTab = () => {
                             </Dialog.Body>
                             <Dialog.Footer gap="3">
                                 <Dialog.ActionTrigger asChild>
-                                    <Button variant="outline" size="sm">Cancel</Button>
+                                    <Button variant="outline" size="xl">Cancel</Button>
                                 </Dialog.ActionTrigger>
                                 <Button
-                                    onClick={handleSave}
-                                    loading={isSaving}
+                                    onClick={onSubmit}
+                                    loading={saveMutation.isPending}
                                     loadingText="Saving..."
-                                    disabled={
-                                        isSaving ||
-                                        !formData.schoolName.trim() ||
-                                        !formData.faculty.trim() ||
-                                        !formData.department.trim() ||
-                                        !formData.schoolAddress.trim() ||
-                                        !formData.backDescription.trim() ||
-                                        !formData.backDisclaimer.trim()
-                                    }
+                                    disabled={saveMutation.isPending || !isValid}
                                     colorPalette="accent"
-                                    size="sm"
+                                    size="xl"
                                 >
                                     Save Changes
                                 </Button>
                             </Dialog.Footer>
                             <Dialog.CloseTrigger asChild>
-                                <CloseButton size="sm" />
+                                <CloseButton size="xl" />
                             </Dialog.CloseTrigger>
                         </Dialog.Content>
                     </Dialog.Positioner>

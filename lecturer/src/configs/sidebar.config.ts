@@ -9,6 +9,8 @@ import {
     Megaphone,
     type LucideIcon,
     ChartColumn,
+    User2,
+    Settings,
 } from "lucide-react";
 
 export interface SidebarItem {
@@ -29,6 +31,8 @@ const sidebarItems: SidebarItem[] = [
     { label: "Timetable", icon: CalendarDays, path: "/timetable", accessLevel: "ALL" },
     // { label: "Payments", icon: CreditCard, path: "/payments" },
     { label: "Announcement", icon: Megaphone, path: "/announcement", accessLevel: "ALL" },
+    { label: "Profile", icon: User2, path: "/profile", accessLevel: "ALL" },
+    { label: "Settings", icon: Settings, path: "/settings", accessLevel: "ALL" },
 ];
 
 export default sidebarItems;

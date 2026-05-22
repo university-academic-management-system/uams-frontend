@@ -10,12 +10,14 @@ const useAuthStore = create<AuthState>()(
       expireAt: "",
       user: undefined,
       setAuth: (auth) => set((state) => ({ ...state, ...auth })),
-      clearAuth: () =>
+      clearAuth: () => {
         set({
           token: "",
           expireAt: "",
           user: undefined,
-        }),
+        });
+        localStorage.removeItem("user-store");
+      },
     }),
     {
       name: "user-store",

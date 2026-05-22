@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { AnnouncementServices } from "@services/announcement.service";
+import { useEffect, useCallback } from "react";
+import { NotificationServices } from "@services/notification.service";
 import { toaster } from "@components/ui/toaster";
+import useAnnouncementForm from "@forms/announcement.form";
+import type { AnnouncementFormData } from "@schemas/announcement.schema";
 import { 
     Button, 
     Dialog, 
@@ -9,11 +11,12 @@ import {
     Input, 
     Stack, 
     Textarea, 
-    Box, 
+    Flex,
     CloseButton,
     createListCollection,
     Select
 } from "@chakra-ui/react";
+import { Controller } from "react-hook-form";
 
 interface Props {
     isOpen: boolean;
@@ -21,58 +24,84 @@ interface Props {
     onCreated: () => void;
 }
 
-const recipientCollection = createListCollection({
+const recipientTypeCollection = createListCollection({
+    items: [
+        { label: "All Users", value: "ALL" },
+        { label: "By Role", value: "ROLE" },
+    ],
+});
+
+const targetRoleCollection = createListCollection({
     items: [
         { label: "Student", value: "STUDENT" },
-        { label: "Staff", value: "OTHERS" },
+        { label: "Staff", value: "STAFF" },
+        { label: "Admin", value: "ADMIN" },
+        { label: "System Admin", value: "SYSTEM_ADMIN" },
+    ],
+});
+
+const notificationTypeCollection = createListCollection({
+    items: [
+        { label: "Info", value: "INFO" },
+        { label: "Success", value: "SUCCESS" },
+        { label: "Warning", value: "WARNING" },
+        { label: "Error", value: "ERROR" },
     ],
 });
 
 const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
-    const [loading, setLoading] = useState(false);
+    const {
+        register,
+        handleSubmit,
+        control,
+        watch,
+        reset,
+        setValue,
+        formState: { errors, isSubmitting, isValid },
+    } = useAnnouncementForm();
 
-    const handleSubmit = async () => {
-        if (!title.trim()) {
-            toaster.error({ title: "Please enter a title" });
-            return;
-        }
-        if (selectedRecipients.length === 0) {
-            toaster.error({ title: "Please select at least one recipient" });
-            return;
-        }
-        if (!description.trim()) {
-            toaster.error({ title: "Please enter a description" });
-            return;
-        }
+    const selectedRecipientType = watch("recipientType");
+    const isRoleSelected = selectedRecipientType === "ROLE";
 
-        setLoading(true);
+    // Reset form when modal is closed/opened
+    useEffect(() => {
+        if (!isOpen) {
+            reset();
+        }
+    }, [isOpen, reset]);
+
+    const onSubmit = useCallback(async (data: AnnouncementFormData) => {
         try {
-            await Promise.all(
-                selectedRecipients.map((isFor) =>
-                    AnnouncementServices.createAnnouncement({
-                        title: title.toUpperCase(),
-                        body: description,
-                        isFor,
-                    })
-                )
-            );
+            if (data.recipientType === "ROLE") {
+                await Promise.all(
+                    data.targetRole.map((role) =>
+                        NotificationServices.createNotification({
+                            recipientType: "ROLE",
+                            targetRole: role,
+                            title: data.title,
+                            message: data.message,
+                            type: data.type,
+                        })
+                    )
+                );
+            } else {
+                await NotificationServices.createNotification({
+                    recipientType: "ALL",
+                    title: data.title,
+                    message: data.message,
+                    type: data.type,
+                });
+            }
 
             toaster.success({ title: "Announcement created successfully" });
             onCreated();
             onClose();
-            setTitle("");
-            setDescription("");
-            setSelectedRecipients([]);
+            reset();
         } catch (error) {
             console.error("Failed to create announcement:", error);
             // Error toast handled by axios interceptor
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [onCreated, onClose, reset]);
 
     return (
         <Dialog.Root 
@@ -84,103 +113,215 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: Props) => {
             <Portal>
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
-                    <Dialog.Content rounded="md" colorPalette="accent">
-                        <Dialog.Header borderBottom="1px solid" borderColor="border.muted" py="6" px="8">
-                            <Dialog.Title color="accent" fontWeight="bold">
+                    <Dialog.Content rounded="md">
+                        <Dialog.Header>
+                            <Dialog.Title color="fg.muted" fontWeight="bold" fontSize="xl">
                                 Create New Announcement
                             </Dialog.Title>
                         </Dialog.Header>
 
-                        <Dialog.Body p="8">
-                            <Stack gap="6">
-                                {/* Title Input */}
-                                <Field.Root invalid={!title && loading}>
-                                    <Field.Label fontWeight="bold" color="fg.subtle">
-                                        Title <Box as="span" color="red.500">*</Box>
-                                    </Field.Label>
-                                    <Input
-                                        size="xl"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        placeholder="Announcement Title"
-                                        _placeholder={{ color: "fg.subtle" }}
-                                    />
-                                </Field.Root>
+                        <form onSubmit={handleSubmit(onSubmit)}>
+                            <Dialog.Body p="8">
+                                <Stack gap="6" colorPalette="accent">
+                                    {/* Title Input */}
+                                    <Field.Root required invalid={!!errors.title}>
+                                        <Field.Label fontWeight="bold" color="fg.subtle">
+                                            Title <Field.RequiredIndicator />
+                                        </Field.Label>
+                                        <Input
+                                            size="xl"
+                                            placeholder="Announcement Title"
+                                            _placeholder={{ color: "fg.subtle" }}
+                                            {...register("title")}
+                                            bg="white"
+                                            border="xs"
+                                            borderColor="border.muted"
+                                        />
+                                        <Field.ErrorText>{errors.title?.message}</Field.ErrorText>
+                                    </Field.Root>
 
-                                {/* Recipients Select */}
-                                <Field.Root invalid={selectedRecipients.length === 0 && loading}>
-                                    <Field.Label fontWeight="bold" color="fg.subtle">
-                                        Recipient(s) <Box as="span" color="red.500">*</Box>
-                                    </Field.Label>
-                                    <Select.Root
-                                        multiple
-                                        collection={recipientCollection}
-                                        value={selectedRecipients}
-                                        onValueChange={(e) => setSelectedRecipients(e.value)}
-                                        size="lg"
-                                    >
-                                        <Select.Trigger>
-                                            <Select.ValueText placeholder="Select Recipient(s)" />
-                                        </Select.Trigger>
-                                        <Select.Content>
-                                            {recipientCollection.items.length === 0 ? (
-                                                <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
-                                                    No options available
-                                                </Box>
-                                            ) : (
-                                                recipientCollection.items.map((item) => (
-                                                    <Select.Item item={item} key={item.value}>
-                                                        <Select.ItemText>{item.label}</Select.ItemText>
-                                                        <Select.ItemIndicator />
-                                                    </Select.Item>
-                                                ))
+                                    {/* Recipient Type & Target Role */}
+                                    <Flex gap="4" direction={{ base: "column", md: "row" }}>
+                                        <Controller
+                                            name="recipientType"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Field.Root required invalid={!!errors.recipientType} flex="1">
+                                                    <Field.Label fontWeight="bold" color="fg.subtle">
+                                                        Recipient Type <Field.RequiredIndicator />
+                                                    </Field.Label>
+                                                    <Select.Root
+                                                        collection={recipientTypeCollection}
+                                                        value={[field.value]}
+                                                        onValueChange={(e) => {
+                                                            const val = e.value[0] as "ALL" | "ROLE";
+                                                            field.onChange(val);
+                                                            if (val !== "ROLE") {
+                                                                setValue("targetRole", []);
+                                                            }
+                                                        }}
+                                                        size="lg"
+                                                    >
+                                                        <Select.HiddenSelect />
+                                                        <Select.Control>
+                                                            <Select.Trigger bg="white" border="xs" borderColor="border.muted">
+                                                                <Select.ValueText placeholder="Select recipient type" />
+                                                            </Select.Trigger>
+                                                            <Select.IndicatorGroup>
+                                                                <Select.Indicator />
+                                                            </Select.IndicatorGroup>
+                                                        </Select.Control>
+                                                        <Portal>
+                                                            <Select.Positioner>
+                                                                <Select.Content>
+                                                                    {recipientTypeCollection.items.map((item) => (
+                                                                        <Select.Item item={item} key={item.value}>
+                                                                            <Select.ItemText>{item.label}</Select.ItemText>
+                                                                            <Select.ItemIndicator />
+                                                                        </Select.Item>
+                                                                    ))}
+                                                                </Select.Content>
+                                                            </Select.Positioner>
+                                                        </Portal>
+                                                    </Select.Root>
+                                                    <Field.ErrorText>{errors.recipientType?.message}</Field.ErrorText>
+                                                </Field.Root>
                                             )}
-                                        </Select.Content>
-                                    </Select.Root>
-                                </Field.Root>
+                                        />
 
-                                {/* Description Textarea */}
-                                <Field.Root invalid={!description && loading}>
-                                    <Field.Label fontWeight="bold" color="fg.subtle">
-                                        Description <Box as="span" color="red.500">*</Box>
-                                    </Field.Label>
-                                    <Textarea
-                                        size="xl"
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        placeholder="Describe announcement in details"
-                                        _placeholder={{ color: "fg.subtle" }}
-                                        rows={6}
-                                        resize="none"
+                                        {isRoleSelected && (
+                                            <Controller
+                                                name="targetRole"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <Field.Root required invalid={!!errors.targetRole} flex="1">
+                                                        <Field.Label fontWeight="bold" color="fg.subtle">
+                                                            Target Role(s) <Field.RequiredIndicator />
+                                                        </Field.Label>
+                                                        <Select.Root
+                                                            multiple
+                                                            collection={targetRoleCollection}
+                                                            value={field.value || []}
+                                                            onValueChange={(e) => field.onChange(e.value)}
+                                                            size="lg"
+                                                        >
+                                                            <Select.HiddenSelect />
+                                                            <Select.Control>
+                                                                <Select.Trigger bg="white" border="xs" borderColor="border.muted">
+                                                                    <Select.ValueText placeholder="Select target role(s)" />
+                                                                </Select.Trigger>
+                                                                <Select.IndicatorGroup>
+                                                                    <Select.Indicator />
+                                                                </Select.IndicatorGroup>
+                                                            </Select.Control>
+                                                            <Portal>
+                                                                <Select.Positioner>
+                                                                    <Select.Content>
+                                                                        {targetRoleCollection.items.map((item) => (
+                                                                            <Select.Item item={item} key={item.value}>
+                                                                                <Select.ItemText>{item.label}</Select.ItemText>
+                                                                                <Select.ItemIndicator />
+                                                                            </Select.Item>
+                                                                        ))}
+                                                                    </Select.Content>
+                                                                </Select.Positioner>
+                                                            </Portal>
+                                                        </Select.Root>
+                                                        <Field.ErrorText>{errors.targetRole?.message}</Field.ErrorText>
+                                                    </Field.Root>
+                                                )}
+                                            />
+                                        )}
+                                    </Flex>
+
+                                    {/* Notification Type */}
+                                    <Controller
+                                        name="type"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Field.Root required invalid={!!errors.type}>
+                                                <Field.Label fontWeight="bold" color="fg.subtle">
+                                                    Type <Field.RequiredIndicator />
+                                                </Field.Label>
+                                                <Select.Root
+                                                    collection={notificationTypeCollection}
+                                                    value={[field.value]}
+                                                    onValueChange={(e) => field.onChange(e.value[0])}
+                                                    size="lg"
+                                                >
+                                                    <Select.HiddenSelect />
+                                                    <Select.Control>
+                                                        <Select.Trigger bg="white" border="xs" borderColor="border.muted">
+                                                            <Select.ValueText placeholder="Select notification type" />
+                                                        </Select.Trigger>
+                                                        <Select.IndicatorGroup>
+                                                            <Select.Indicator />
+                                                        </Select.IndicatorGroup>
+                                                    </Select.Control>
+                                                    <Portal>
+                                                        <Select.Positioner>
+                                                            <Select.Content>
+                                                                {notificationTypeCollection.items.map((item) => (
+                                                                    <Select.Item item={item} key={item.value}>
+                                                                        <Select.ItemText>{item.label}</Select.ItemText>
+                                                                        <Select.ItemIndicator />
+                                                                    </Select.Item>
+                                                                ))}
+                                                            </Select.Content>
+                                                        </Select.Positioner>
+                                                    </Portal>
+                                                </Select.Root>
+                                                <Field.ErrorText>{errors.type?.message}</Field.ErrorText>
+                                            </Field.Root>
+                                        )}
                                     />
-                                </Field.Root>
-                            </Stack>
-                        </Dialog.Body>
 
-                        <Dialog.Footer borderTop="1px solid" borderColor="border.muted" p="8" gap="3">
-                            <Dialog.ActionTrigger asChild>
-                                <Button 
-                                    variant="subtle" 
-                                    size="xl" 
-                                    px="8"
-                                    onClick={onClose}
+                                    {/* Message Textarea */}
+                                    <Field.Root required invalid={!!errors.message}>
+                                        <Field.Label fontWeight="bold" color="fg.subtle">
+                                            Message <Field.RequiredIndicator />
+                                        </Field.Label>
+                                        <Textarea
+                                            size="xl"
+                                            placeholder="Describe announcement in details"
+                                            _placeholder={{ color: "fg.subtle" }}
+                                            rows={6}
+                                            resize="none"
+                                            {...register("message")}
+                                            bg="white"
+                                            border="xs"
+                                            borderColor="border.muted"
+                                        />
+                                        <Field.ErrorText>{errors.message?.message}</Field.ErrorText>
+                                    </Field.Root>
+                                </Stack>
+                            </Dialog.Body>
+
+                            <Dialog.Footer>
+                                <Dialog.ActionTrigger asChild>
+                                    <Button 
+                                        variant="subtle" 
+                                        size="xl" 
+                                        onClick={onClose}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </Dialog.ActionTrigger>
+                                <Button
+                                    size="xl"
+                                    bg="accent"
+                                    color="white"
+                                    loading={isSubmitting}
+                                    disabled={!isValid || isSubmitting}
+                                    type="submit"
                                 >
-                                    Cancel
+                                    Create Announcement
                                 </Button>
-                            </Dialog.ActionTrigger>
-                            <Button
-                                size="xl"
-                                px="8"
-                                loading={loading}
-                                disabled={loading || !title.trim() || !description.trim() || selectedRecipients.length === 0}
-                                onClick={handleSubmit}
-                            >
-                                Create Announcement
-                            </Button>
-                        </Dialog.Footer>
+                            </Dialog.Footer>
+                        </form>
 
                         <Dialog.CloseTrigger asChild>
-                            <CloseButton size="sm" pos="absolute" right="4" top="4" />
+                            <CloseButton size="xl" pos="absolute" right="4" top="4" />
                         </Dialog.CloseTrigger>
                     </Dialog.Content>
                 </Dialog.Positioner>
