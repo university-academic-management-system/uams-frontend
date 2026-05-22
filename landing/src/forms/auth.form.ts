@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { 
+import {
     LoginSchema, type LoginFormData,
     ActivateAccountSchema, type ActivateAccountFormData,
     ResetPasswordSchema, type ResetPasswordFormData,
@@ -22,12 +22,12 @@ export const useLoginForm = () => {
 
 
 
-export const useActivateAccountForm = () => {
+export const useActivateAccountForm = (defaultValueValues: ActivateAccountFormData) => {
     return useForm<ActivateAccountFormData>({
         resolver: zodResolver(ActivateAccountSchema),
         defaultValues: {
-            email: "",
-            phone: "",
+            email: defaultValueValues.email,
+            phone: defaultValueValues.phone,
             password: "",
             confirmPassword: "",
         },

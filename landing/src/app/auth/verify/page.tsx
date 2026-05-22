@@ -23,11 +23,11 @@ import { Link, useSearchParams } from "react-router";
 import {
     useVerifyStudent,
     useActivateAccount,
-    useDepartmentAnnualDue,
+    usePaymentDetails,
     useInitializePayment
 } from '@hooks/auth.hook';
 import { useActivateAccountForm, useVerifyStudentForm } from '@forms/auth.form';
-import type { VerifyStudentFormData } from '@type/auth.type';
+import { PaymentType, type VerifyStudentFormData } from '@type/auth.type';
 import useAuthStore from '@stores/auth.store';
 import { PasswordInput } from "@components/ui/password-input";
 import { toaster } from "@components/ui/toaster";
@@ -158,24 +158,18 @@ const VerificationStep = ({ onNext }: { onNext: () => void }) => {
             setAuth({
                 token: response.data.verificationToken,
                 user: {
-                    name: `${response.data.profile.firstName} ${response.data.profile.lastName}`,
+                    name: `${response.data.profile.firstName} ${response.data.profile.surname}`,
                     email: "",
                     role: "STUDENT",
                     profile: response.data.profile,
                 },
                 expireAt: "15m",
             });
-            toaster.create({
-                title: "Record Verified",
-                description: `Welcome, ${response.data.profile.firstName}!`,
-                type: "success",
-            });
             onNext();
         }
     });
 
     const onSubmit = (data: VerifyStudentFormData) => {
-        onNext()
         verifyStudent(data.matricNumber);
     };
 
@@ -186,7 +180,7 @@ const VerificationStep = ({ onNext }: { onNext: () => void }) => {
                     Verify Record
                 </Heading>
                 <Text color="fg.subtle">
-                    Enter your matriculation to begin.
+                    Enter your matriculation number to begin.
                 </Text>
             </Stack>
 
@@ -227,11 +221,22 @@ const VerificationStep = ({ onNext }: { onNext: () => void }) => {
  * Step 2: Account Update Logic
  */
 const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () => void }) => {
-    const form = useActivateAccountForm();
-    const { user } = useAuthStore();
+    const { user, token, setAuth } = useAuthStore();
+    const form = useActivateAccountForm({
+        email: user?.email || "",
+        phone: user?.profile?.phone || "",
+        password: "",
+        confirmPassword: "",
+    });
 
     const { mutate: activateAccount, isPending: isLoading } = useActivateAccount({
-        onSuccess: () => {
+        onSuccess: (response) => {
+            setAuth({
+                token: response.data.token,
+                expireAt: response.data.expiresIn,
+                user: response.data.user
+            });
+
             toaster.create({
                 title: "Account Updated",
                 description: "Your login details have been saved successfully.",
@@ -242,8 +247,10 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
     });
 
     const onSubmit = form.handleSubmit((data) => {
-        onNext();
-        activateAccount(data);
+        activateAccount({
+            ...data,
+            token: token || "",
+        });
     });
 
     return (
@@ -253,7 +260,7 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
                     Update Account
                 </Heading>
                 <Text color="fg.subtle">
-                    Hello <Span fontWeight="bold" color="fg">{user?.name}</Span>, please complete your profile setup.
+                    Hello <Span fontWeight="bold" color="fg">{user?.name}</Span>, confirm your account details to complete your profile setup.
                 </Text>
             </Box>
 
@@ -306,7 +313,7 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
                                 <Input
                                     size="xl"
                                     readOnly
-                                    value={(user?.profile as any)?.gender || 'N/A'}
+                                    value={user?.profile?.gender || 'N/A'}
                                 />
                             </Field.Root>
                             <Field.Root>
@@ -314,7 +321,7 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
                                 <Input
                                     size="xl"
                                     readOnly
-                                    value={(user?.profile as any)?.admissionMode || 'UTME'}
+                                    value={user?.profile?.admissionMode || 'N/A'}
                                 />
                             </Field.Root>
                             <Field.Root>
@@ -322,7 +329,7 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
                                 <Input
                                     size="xl"
                                     readOnly
-                                    value={(user?.profile as any)?.entryQualification || 'NIL'}
+                                    value={user?.profile?.entryQualification || 'N/A'}
                                 />
                             </Field.Root>
                             <Field.Root>
@@ -330,7 +337,7 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
                                 <Input
                                     size="xl"
                                     readOnly
-                                    value="COMPUTING"
+                                    value={user?.profile?.faculty || 'N/A'}
                                 />
                             </Field.Root>
                             <Field.Root>
@@ -338,7 +345,7 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
                                 <Input
                                     size="xl"
                                     readOnly
-                                    value="COMPUTER SCIENCE"
+                                    value={user?.profile?.department || 'N/A'}
                                 />
                             </Field.Root>
 
@@ -347,21 +354,21 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
                                 <Input
                                     size="xl"
                                     readOnly
-                                    value="B.SC"
+                                    value={user?.profile?.degreeAwarded || 'N/A'}
                                 />
                             </Field.Root>
                             <Field.Root>
-                                <Field.Label fontSize="sm" fontWeight="medium">Programme Duration</Field.Label>
+                                <Field.Label fontSize="sm" fontWeight="medium">Programme</Field.Label>
                                 <Input
                                     size="xl"
                                     readOnly
-                                    value="4 years"
+                                    value={user?.profile?.programme || 'N/A'}
                                 />
                             </Field.Root>
                         </SimpleGrid>
                     </Fieldset.Root>
 
-                    <Separator />
+                    <Separator borderColor={"border.muted"} />
 
                     <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
                         <Field.Root invalid={!!form.formState.errors.email}>
@@ -408,7 +415,8 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
 
                     <HStack width="full" gap="4">
                         <Button
-                            variant="subtle"
+                            colorPalette={"gray"}
+                            variant="outline"
                             size="xl"
                             onClick={onPrev}
                             disabled={isLoading}
@@ -435,14 +443,14 @@ const AccountUpdateStep = ({ onNext, onPrev }: { onNext: () => void, onPrev: () 
  * Step 3: Payment Logic
  */
 const PaymentStep = ({ activeStep, onPrev }: { activeStep: number, onPrev: () => void }) => {
-    const { data: duesResponse, isLoading: isFetchingDues } = useDepartmentAnnualDue({
+    const { data: duesResponse, isLoading: isFetchingDues } = usePaymentDetails(PaymentType.ANNUAL_ACCESS_FEE_AND_DEPARTMENTAL_DUES, undefined, {
         enabled: activeStep === 2
     });
     const duesData = duesResponse?.data;
 
     const { mutate: initializePayment, isPending: isInitializing } = useInitializePayment({
         onSuccess: (response) => {
-            window.location.href = response.data.authorizationUrl;
+            window.location.href = response.data.authorization_url;
         }
     });
 
@@ -455,9 +463,11 @@ const PaymentStep = ({ activeStep, onPrev }: { activeStep: number, onPrev: () =>
     };
 
     const handlePayNow = () => {
-        const callbackUrl = import.meta.env.VITE_CALLBACK_URL;
-        localStorage.setItem("paymentCallbackUrl", callbackUrl);
-        initializePayment(callbackUrl);
+        const redirectUrl = `${window.location.origin}/auth/login`;
+        initializePayment({
+            type: PaymentType.ANNUAL_ACCESS_FEE_AND_DEPARTMENTAL_DUES,
+            redirectUrl: redirectUrl
+        });
     };
 
     return (
@@ -485,23 +495,23 @@ const PaymentStep = ({ activeStep, onPrev }: { activeStep: number, onPrev: () =>
                     <Stack gap="4">
                         <Flex justify="space-between" align={"center"} fontSize="sm">
                             <Text color="fg.subtle">Portal Access Fee</Text>
-                            <Text fontWeight="semibold">{formatCurrency(duesData.accessFee)}</Text>
+                            <Text fontWeight="semibold">{formatCurrency(duesData.annualAccessFee || 0)}</Text>
                         </Flex>
                         <Flex justify="space-between" align={"center"} fontSize="sm">
                             <Text color="fg.subtle">Department Dues</Text>
-                            <Text fontWeight="semibold">{formatCurrency(duesData.departmentDues)}</Text>
+                            <Text fontWeight="semibold">{formatCurrency(duesData.annualDepartmentalDues || 0)}</Text>
                         </Flex>
                         <Flex justify="space-between" align={"center"} fontSize="sm">
                             <Text color="fg.subtle">Merchant & Transaction Fees</Text>
                             <Text fontWeight="semibold">
-                                {formatCurrency(duesData.breakdown.summary.total_merchant_fees + duesData.breakdown.summary.transaction_charges)}
+                                {formatCurrency(duesData.merchantFee || 0)}
                             </Text>
                         </Flex>
                         <Separator borderStyle="dashed" />
                         <Flex justify="space-between" align="center">
                             <Text fontWeight="bold">Total Amount</Text>
                             <Text fontSize="xl" fontWeight="black" color="accent">
-                                {formatCurrency(duesData.totalFee)}
+                                {formatCurrency(duesData.total || 0)}
                             </Text>
                         </Flex>
                     </Stack>
@@ -514,7 +524,8 @@ const PaymentStep = ({ activeStep, onPrev }: { activeStep: number, onPrev: () =>
 
             <HStack width="full" gap="4">
                 <Button
-                    variant="subtle"
+                    colorPalette={"gray"}
+                    variant="outline"
                     size="xl"
                     onClick={onPrev}
                     disabled={isInitializing}
