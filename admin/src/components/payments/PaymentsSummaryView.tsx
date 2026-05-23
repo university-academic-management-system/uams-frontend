@@ -86,7 +86,7 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                 {/* Table Container */}
                 <Box bg="white" borderRadius="md" border="1px solid" borderColor="border.muted" overflow="hidden" shadow="none">
                     <Table.Root size="sm" variant="line">
-                        <Table.Header bg="slate.50">
+                        <Table.Header bg="bg.subtle">
                             <Table.Row>
                                 <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">S/N</Table.ColumnHeader>
                                 <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">PROGRAMME TYPE</Table.ColumnHeader>

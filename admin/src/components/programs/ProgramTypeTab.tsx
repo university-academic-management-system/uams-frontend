@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ProgramTypeSchema, type ProgramTypeFormData } from "@schemas/program.schema";
-import { ProgramServices } from "@services/program.service";
+import { useState, useCallback, useMemo } from "react";
+import { Controller } from "react-hook-form";
+import { type ProgramTypeFormData } from "@schemas/program.schema";
+import useProgramTypeForm from "@forms/programType.form";
+import { ProgramHooks } from "@hooks/program.hook";
 import { toaster } from "@components/ui/toaster";
 import {
   Box,
@@ -21,6 +21,7 @@ import {
   EmptyState,
   Checkbox,
   VStack,
+  CloseButton,
 } from "@chakra-ui/react";
 import { Edit, Trash2, X, Plus, GraduationCap, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
@@ -34,44 +35,24 @@ const typeCollection = createListCollection({
 });
 
 const ProgramTypeTab = () => {
-  const [programTypes, setProgramTypes] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
-  const createForm = useForm<ProgramTypeFormData>({
-    mode: "onChange",
-    resolver: zodResolver(ProgramTypeSchema),
-    defaultValues: { name: "", code: "", type: "", description: "" }
-  });
+  const createForm = useProgramTypeForm();
+  const editForm = useProgramTypeForm({ type: "UNDERGRADUATE" });
 
-  const editForm = useForm<ProgramTypeFormData>({
-    mode: "onChange",
-    resolver: zodResolver(ProgramTypeSchema),
-    defaultValues: { name: "", code: "", type: "UNDERGRADUATE", description: "" }
-  });
+  const { data: rawProgramTypes = [], isLoading } = ProgramHooks.useProgramTypes();
+  const programTypes = useMemo(() => Array.isArray(rawProgramTypes) ? rawProgramTypes : (rawProgramTypes as { data?: typeof rawProgramTypes })?.data || [], [rawProgramTypes]);
+  
+  const { mutateAsync: createProgramType, isPending: isCreatingMut } = ProgramHooks.useCreateProgramType();
+  const { mutateAsync: updateProgramType, isPending: isUpdatingMut } = ProgramHooks.useUpdateProgramType();
+  const { mutateAsync: deleteProgramType, isPending: isDeletingMut } = ProgramHooks.useDeleteProgramType();
 
-  const fetchProgramTypes = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await ProgramServices.getProgramTypes();
-      const list = Array.isArray(data) ? data : (data as any)?.data || [];
-      setProgramTypes(list);
-    } catch (err) {
-      // Error toast handled by axios interceptor
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const isSaving = isCreatingMut || isUpdatingMut || isDeletingMut;
 
-  useEffect(() => {
-    fetchProgramTypes();
-  }, [fetchProgramTypes]);
-
-  const handleEdit = useCallback((pt: any) => {
+  const handleEdit = useCallback((pt: { id: string; name: string; code?: string; type?: string; description?: string }) => {
     setEditingId(pt.id);
     editForm.reset({
       name: pt.name,
@@ -88,22 +69,18 @@ const ProgramTypeTab = () => {
 
   const handleCreate = useCallback(async (data: ProgramTypeFormData) => {
     try {
-      setIsSaving(true);
-      await ProgramServices.createProgramType({
+      await createProgramType({
         code: data.code,
         name: data.name,
         type: data.type.toUpperCase(),
       });
-      toaster.success({ title: "Program Type created successfully" });
+      toaster.success({ title: "Programme Type created successfully" });
       createForm.reset();
       setIsCreating(false);
-      await fetchProgramTypes();
-    } catch (error: any) {
+    } catch {
       // Error toast handled by axios interceptor
-    } finally {
-      setIsSaving(false);
     }
-  }, [createForm, fetchProgramTypes]);
+  }, [createForm, createProgramType]);
 
   const handleCancelCreate = useCallback(() => {
     createForm.reset();
@@ -113,29 +90,24 @@ const ProgramTypeTab = () => {
   const handleSave = useCallback(async (data: ProgramTypeFormData) => {
     if (!editingId) return;
     try {
-      setIsSaving(true);
-      await ProgramServices.updateProgramType(editingId, data);
-      toaster.success({ title: "Program type updated" });
+      await updateProgramType({ id: editingId, data });
+      toaster.success({ title: "Programme type updated" });
       handleCancel();
-      await fetchProgramTypes();
-    } catch (error: any) {
+    } catch {
       // Error toast handled by axios interceptor
-    } finally {
-      setIsSaving(false);
     }
-  }, [editingId, handleCancel, fetchProgramTypes]);
+  }, [editingId, handleCancel, updateProgramType]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (window.confirm("Delete this program type?")) {
+    if (window.confirm("Delete this programme type?")) {
       try {
-        await ProgramServices.deleteProgramType(id);
-        toaster.success({ title: "Program type deleted" });
-        await fetchProgramTypes();
-      } catch (err) {
+        await deleteProgramType(id);
+        toaster.success({ title: "Programme type deleted" });
+      } catch {
         // Error toast handled by axios interceptor
       }
     }
-  }, [fetchProgramTypes]);
+  }, [deleteProgramType]);
 
   const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) =>
@@ -155,23 +127,22 @@ const ProgramTypeTab = () => {
     if (selectedIds.length === 0) return;
     if (
       window.confirm(
-        `Are you sure you want to delete ${selectedIds.length} selected program types?`,
+        `Are you sure you want to delete ${selectedIds.length} selected programme types?`,
       )
     ) {
       try {
         await Promise.all(
-          selectedIds.map((id) => ProgramServices.deleteProgramType(id)),
+          selectedIds.map((id) => deleteProgramType(id)),
         );
         toaster.success({
-          title: `${selectedIds.length} program types deleted`,
+          title: `${selectedIds.length} programme types deleted`,
         });
         setSelectedIds([]);
-        await fetchProgramTypes();
-      } catch (err) {
+      } catch {
         // Error toast handled by axios interceptor
       }
     }
-  }, [selectedIds, fetchProgramTypes]);
+  }, [selectedIds, deleteProgramType]);
 
   const requestSort = useCallback((key: string) => {
     setSortConfig((prev) => {
@@ -200,8 +171,9 @@ const ProgramTypeTab = () => {
     const sortable = [...programTypes];
     if (sortConfig !== null) {
       sortable.sort((a, b) => {
-        let valA = a[sortConfig.key] || "";
-        let valB = b[sortConfig.key] || "";
+        const key = sortConfig.key as keyof typeof a;
+        let valA: string = String(a[key] ?? "");
+        let valB: string = String(b[key] ?? "");
 
         if (typeof valA === "string") valA = valA.toLowerCase();
         if (typeof valB === "string") valB = valB.toLowerCase();
@@ -223,7 +195,7 @@ const ProgramTypeTab = () => {
       <Flex alignItems="center" justifyContent="center" minH="400px">
         <Flex direction="column" alignItems="center" gap="4">
           <Spinner size="xl" color="blue.500" borderWidth="3px" />
-          <Text color="fg.muted">Loading program types...</Text>
+          <Text color="fg.muted">Loading programme types...</Text>
         </Flex>
       </Flex>
     );
@@ -238,7 +210,7 @@ const ProgramTypeTab = () => {
           setIsCreating(e.open);
           if (!e.open) handleCancelCreate();
         }}
-        size="xl"
+        size="lg"
         placement="center"
         closeOnInteractOutside={false}
       >
@@ -247,18 +219,20 @@ const ProgramTypeTab = () => {
           <Dialog.Positioner>
             <Dialog.Content borderRadius="sm" border="xs" borderColor="border.muted" overflow="hidden" colorPalette="accent">
               <form onSubmit={createForm.handleSubmit(handleCreate)} style={{ width: '100%' }}>
-                <Dialog.CloseTrigger />
-                <Dialog.Header p="6" borderBottom="xs" borderColor="border.muted">
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton colorPalette="gray" />
+                </Dialog.CloseTrigger>
+                <Dialog.Header p="6">
                   <VStack align="start" gap={1}>
                     <Dialog.Title
                       fontSize="lg"
                       fontWeight="bold"
                       color="fg.muted"
                     >
-                      Create Program Type
+                      Create Programme Type
                     </Dialog.Title>
                     <Text fontSize="sm" color="fg.subtle">
-                      Add a new program type to the system (e.g., Bachelor of Science, Master of Arts)
+                      Add a new programme type to the system (e.g., Bachelor of Science, Master of Arts)
                     </Text>
                   </VStack>
                 </Dialog.Header>
@@ -275,62 +249,64 @@ const ProgramTypeTab = () => {
                       <Field.ErrorText>{createForm.formState.errors.name?.message}</Field.ErrorText>
                     </Field.Root>
 
-                    <Field.Root invalid={!!createForm.formState.errors.code}>
-                      <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Code</Field.Label>
-                      <Input
-                        {...createForm.register("code")}
-                        placeholder="e.g. BSC"
-                        size="xl"
-                        _placeholder={{ color: "fg.subtle" }}
-                      />
-                      <Field.ErrorText>{createForm.formState.errors.code?.message}</Field.ErrorText>
-                    </Field.Root>
-
-                    <Field.Root invalid={!!createForm.formState.errors.type}>
-                      <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Type</Field.Label>
-                      <Controller
-                        control={createForm.control}
-                        name="type"
-                        render={({ field }) => (
-                          <Select.Root
-                            collection={typeCollection}
-                            value={field.value ? [field.value] : []}
-                            onValueChange={(e) => field.onChange(e.value[0])}
-                            size="lg"
-                            colorPalette="accent"
-                          >
-                            <Select.HiddenSelect />
-                            <Select.Control>
-                              <Select.Trigger>
-                                <Select.ValueText placeholder="Select type" />
-                              </Select.Trigger>
-                              <Select.IndicatorGroup>
-                                <Select.Indicator />
-                              </Select.IndicatorGroup>
-                            </Select.Control>
-                            <Portal>
-                              <Select.Positioner>
-                                <Select.Content>
-                                  {typeCollection.items.length === 0 ? (
-                                    <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
-                                      No options available
-                                    </Box>
-                                  ) : (
-                                    typeCollection.items.map((item: any) => (
-                                      <Select.Item key={item.value} item={item}>
-                                        <Select.ItemText>{item.label}</Select.ItemText>
-                                        <Select.ItemIndicator />
-                                      </Select.Item>
-                                    ))
-                                  )}
-                                </Select.Content>
-                              </Select.Positioner>
-                            </Portal>
-                          </Select.Root>
-                        )}
-                      />
-                      <Field.ErrorText>{createForm.formState.errors.type?.message}</Field.ErrorText>
-                    </Field.Root>
+                    <Flex gap="6">
+                      <Field.Root invalid={!!createForm.formState.errors.code} flex="1">
+                        <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Code</Field.Label>
+                        <Input
+                          {...createForm.register("code")}
+                          placeholder="e.g. BSC"
+                          size="xl"
+                          _placeholder={{ color: "fg.subtle" }}
+                        />
+                        <Field.ErrorText>{createForm.formState.errors.code?.message}</Field.ErrorText>
+                      </Field.Root>
+  
+                      <Field.Root invalid={!!createForm.formState.errors.type} flex="1">
+                        <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Type</Field.Label>
+                        <Controller
+                          control={createForm.control}
+                          name="type"
+                          render={({ field }) => (
+                            <Select.Root
+                              collection={typeCollection}
+                              value={field.value ? [field.value] : []}
+                              onValueChange={(e) => field.onChange(e.value[0])}
+                              size="lg"
+                              colorPalette="accent"
+                            >
+                              <Select.HiddenSelect />
+                              <Select.Control>
+                                <Select.Trigger>
+                                  <Select.ValueText placeholder="Select type" />
+                                </Select.Trigger>
+                                <Select.IndicatorGroup>
+                                  <Select.Indicator />
+                                </Select.IndicatorGroup>
+                              </Select.Control>
+                              <Portal>
+                                <Select.Positioner>
+                                  <Select.Content>
+                                    {typeCollection.items.length === 0 ? (
+                                      <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                        No options available
+                                      </Box>
+                                    ) : (
+                                      typeCollection.items.map((item: { label: string; value: string }) => (
+                                        <Select.Item key={item.value} item={item}>
+                                          <Select.ItemText>{item.label}</Select.ItemText>
+                                          <Select.ItemIndicator />
+                                        </Select.Item>
+                                      ))
+                                    )}
+                                  </Select.Content>
+                                </Select.Positioner>
+                              </Portal>
+                            </Select.Root>
+                          )}
+                        />
+                        <Field.ErrorText>{createForm.formState.errors.type?.message}</Field.ErrorText>
+                      </Field.Root>
+                    </Flex>
 
                     <Field.Root invalid={!!createForm.formState.errors.description}>
                       <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Description</Field.Label>
@@ -345,14 +321,11 @@ const ProgramTypeTab = () => {
                     </Field.Root>
                   </VStack>
                 </Dialog.Body>
-                <Dialog.Footer p="6" borderTop="xs" borderColor="border.muted" gap="3">
+                <Dialog.Footer p="6" gap="3">
                   <Dialog.ActionTrigger asChild>
                     <Button
                       variant="outline"
-                      borderColor="border.muted"
-                      color="fg.muted"
-                      px="8"
-                      fontWeight="bold"
+                      colorPalette="gray"
                       size="xl"
                     >
                       Cancel
@@ -363,13 +336,9 @@ const ProgramTypeTab = () => {
                     loading={isSaving}
                     loadingText="Creating..."
                     disabled={!createForm.formState.isValid || isSaving}
-                    bg="accent"
-                    color="white"
-                    px="10"
-                    fontWeight="bold"
                     size="xl"
                   >
-                    <Plus size={16} /> Create Program Type
+                    <Plus size={16} /> Create Programme Type
                   </Button>
                 </Dialog.Footer>
               </form>
@@ -384,7 +353,7 @@ const ProgramTypeTab = () => {
         onOpenChange={(e) => {
           if (!e.open) handleCancel();
         }}
-        size="xl"
+        size="lg"
         placement="center"
         closeOnInteractOutside={false}
       >
@@ -393,14 +362,16 @@ const ProgramTypeTab = () => {
           <Dialog.Positioner>
             <Dialog.Content borderRadius="sm" border="xs" borderColor="border.muted" overflow="hidden" colorPalette="accent">
               <form onSubmit={editForm.handleSubmit(handleSave)} style={{ width: '100%' }}>
-                <Dialog.CloseTrigger />
-                <Dialog.Header p="6" borderBottom="xs" borderColor="border.muted">
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton colorPalette="gray" />
+                </Dialog.CloseTrigger>
+                <Dialog.Header p="6">
                   <VStack align="start" gap={1}>
                     <Dialog.Title fontSize="lg" fontWeight="bold" color="fg.muted">
-                      Edit Program Type
+                      Edit Programme Type
                     </Dialog.Title>
                     <Text fontSize="sm" color="fg.muted">
-                      Update the details of the existing program type.
+                      Update the details of the existing programme type.
                     </Text>
                   </VStack>
                 </Dialog.Header>
@@ -417,62 +388,64 @@ const ProgramTypeTab = () => {
                       <Field.ErrorText>{editForm.formState.errors.name?.message}</Field.ErrorText>
                     </Field.Root>
 
-                    <Field.Root invalid={!!editForm.formState.errors.code}>
-                      <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Code</Field.Label>
-                      <Input
-                        {...editForm.register("code")}
-                        placeholder="e.g. BSC"
-                        size="xl"
-                        _placeholder={{ color: "fg.subtle" }}
-                      />
-                      <Field.ErrorText>{editForm.formState.errors.code?.message}</Field.ErrorText>
-                    </Field.Root>
-
-                    <Field.Root invalid={!!editForm.formState.errors.type}>
-                      <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Type</Field.Label>
-                      <Controller
-                        control={editForm.control}
-                        name="type"
-                        render={({ field }) => (
-                          <Select.Root
-                            collection={typeCollection}
-                            value={field.value ? [field.value] : []}
-                            onValueChange={(e) => field.onChange(e.value[0])}
-                            size="lg"
-                            colorPalette="accent"
-                          >
-                            <Select.HiddenSelect />
-                            <Select.Control>
-                              <Select.Trigger>
-                                <Select.ValueText placeholder="Select type" />
-                              </Select.Trigger>
-                              <Select.IndicatorGroup>
-                                <Select.Indicator />
-                              </Select.IndicatorGroup>
-                            </Select.Control>
-                            <Portal>
-                              <Select.Positioner>
-                                <Select.Content>
-                                  {typeCollection.items.length === 0 ? (
-                                    <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
-                                      No options available
-                                    </Box>
-                                  ) : (
-                                    typeCollection.items.map((item: any) => (
-                                      <Select.Item key={item.value} item={item}>
-                                        <Select.ItemText>{item.label}</Select.ItemText>
-                                        <Select.ItemIndicator />
-                                      </Select.Item>
-                                    ))
-                                  )}
-                                </Select.Content>
-                              </Select.Positioner>
-                            </Portal>
-                          </Select.Root>
-                        )}
-                      />
-                      <Field.ErrorText>{editForm.formState.errors.type?.message}</Field.ErrorText>
-                    </Field.Root>
+                    <Flex gap="6">
+                      <Field.Root invalid={!!editForm.formState.errors.code} flex="1">
+                        <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Code</Field.Label>
+                        <Input
+                          {...editForm.register("code")}
+                          placeholder="e.g. BSC"
+                          size="xl"
+                          _placeholder={{ color: "fg.subtle" }}
+                        />
+                        <Field.ErrorText>{editForm.formState.errors.code?.message}</Field.ErrorText>
+                      </Field.Root>
+  
+                      <Field.Root invalid={!!editForm.formState.errors.type} flex="1">
+                        <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Type</Field.Label>
+                        <Controller
+                          control={editForm.control}
+                          name="type"
+                          render={({ field }) => (
+                            <Select.Root
+                              collection={typeCollection}
+                              value={field.value ? [field.value] : []}
+                              onValueChange={(e) => field.onChange(e.value[0])}
+                              size="lg"
+                              colorPalette="accent"
+                            >
+                              <Select.HiddenSelect />
+                              <Select.Control>
+                                <Select.Trigger>
+                                  <Select.ValueText placeholder="Select type" />
+                                </Select.Trigger>
+                                <Select.IndicatorGroup>
+                                  <Select.Indicator />
+                                </Select.IndicatorGroup>
+                              </Select.Control>
+                              <Portal>
+                                <Select.Positioner>
+                                  <Select.Content>
+                                    {typeCollection.items.length === 0 ? (
+                                      <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                        No options available
+                                      </Box>
+                                    ) : (
+                                      typeCollection.items.map((item: { label: string; value: string }) => (
+                                        <Select.Item key={item.value} item={item}>
+                                          <Select.ItemText>{item.label}</Select.ItemText>
+                                          <Select.ItemIndicator />
+                                        </Select.Item>
+                                      ))
+                                    )}
+                                  </Select.Content>
+                                </Select.Positioner>
+                              </Portal>
+                            </Select.Root>
+                          )}
+                        />
+                        <Field.ErrorText>{editForm.formState.errors.type?.message}</Field.ErrorText>
+                      </Field.Root>
+                    </Flex>
 
                     <Field.Root invalid={!!editForm.formState.errors.description}>
                       <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Description</Field.Label>
@@ -487,14 +460,11 @@ const ProgramTypeTab = () => {
                     </Field.Root>
                   </VStack>
                 </Dialog.Body>
-                <Dialog.Footer p="6" borderTop="xs" borderColor="border.muted" gap="3">
+                <Dialog.Footer p="6" gap="3">
                   <Dialog.ActionTrigger asChild>
                     <Button
                       variant="outline"
-                      borderColor="border.muted"
-                      color="fg.muted"
-                      px="8"
-                      fontWeight="bold"
+                      colorPalette="gray"
                       size="xl"
                     >
                       Cancel
@@ -505,10 +475,6 @@ const ProgramTypeTab = () => {
                     loading={isSaving}
                     loadingText="Saving..."
                     disabled={!editForm.formState.isValid || isSaving}
-                    bg="accent"
-                    color="white"
-                    px="10"
-                    fontWeight="bold"
                     size="xl"
                   >
                     Save Changes
@@ -525,30 +491,26 @@ const ProgramTypeTab = () => {
         <Flex p="6" alignItems="center" borderBottom="1px solid" borderColor="border.muted">
           <Box>
             <Text fontSize="lg" fontWeight="bold" color="fg.muted">
-              Program Types ({programTypes.length})
+              Programme Types ({programTypes.length})
             </Text>
             <Text fontSize="xs" color="fg.subtle" mt="0.5">
-              Manage all academic program types and degree formats
+              Manage all academic programme types and degree formats
             </Text>
           </Box>
-          {!isCreating && !editingId && (
             <Button
+              colorPalette="accent"
               onClick={() => setIsCreating(true)}
               size="xl"
               fontSize="sm"
-              fontWeight="bold"
-              bg="#1D7AD9"
-              color="white"
               ml="auto"
             >
-              <Plus size={16} /> Create Program Type
+              <Plus size={16} /> Create Programme Type
             </Button>
-          )}
         </Flex>
 
         <Box overflowX="auto">
           <Table.Root size="sm" variant="outline" border="none" colorPalette="accent">
-            <Table.Header bg="slate.50">
+            <Table.Header bg=" bg.subtle">
               <Table.Row borderColor="border.muted">
                 <Table.ColumnHeader px="6" py="4" w="12" textAlign="center">
                   <Checkbox.Root
@@ -569,6 +531,7 @@ const ProgramTypeTab = () => {
                 <Table.ColumnHeader
                   px="6"
                   py="4"
+                  w="16"
                   fontSize="11px"
                   fontWeight="bold"
                   color="fg.muted"
@@ -648,21 +611,18 @@ const ProgramTypeTab = () => {
                         </EmptyState.Indicator>
                         <VStack textAlign="center">
                           <EmptyState.Title>
-                            No Program Types Found
+                            No Programme Types Found
                           </EmptyState.Title>
                           <EmptyState.Description>
-                            Add a new program type to start organizing your
+                            Add a new programme type to start organizing your
                             academic structure.
                           </EmptyState.Description>
                           <Button
                             onClick={() => setIsCreating(true)}
-                            bg="#1D7AD9"
-                            color="white"
                             size="xl"
                             mt="4"
-                            fontWeight="bold"
                           >
-                            <Plus size={16} /> Create Program Type
+                            <Plus size={16} /> Create Programme Type
                           </Button>
                         </VStack>
                       </EmptyState.Content>
@@ -701,28 +661,22 @@ const ProgramTypeTab = () => {
                         <Dialog.Trigger asChild>
                           <Button
                             aria-label="Edit"
-                            size="sm"
+                            size="xl"
                             variant="ghost"
-                            color="fg.subtle"
-                            _hover={{ bg: "fg.subtle" }}
                             onClick={() => handleEdit(pt)}
                             borderRadius="full"
                             minW="auto"
-                            p="1"
                           >
                             <Edit size={16} />
                           </Button>
                         </Dialog.Trigger>
                         <Button
                           aria-label="Delete"
-                          size="sm"
+                          size="xl"
                           variant="ghost"
-                          color="red.400"
-                          _hover={{ bg: "red.50" }}
                           onClick={() => handleDelete(pt.id)}
                           borderRadius="full"
                           minW="auto"
-                          p="1"
                         >
                           <Trash2 size={16} />
                         </Button>
@@ -760,14 +714,9 @@ const ProgramTypeTab = () => {
           <Box w="px" h="6" bg="fg.subtle" />
           <Button
             onClick={handleBulkDelete}
-            bg="red.500"
-            color="white"
-            px="4"
-            py="2"
+            size="xl"
             borderRadius="lg"
             fontSize="xs"
-            fontWeight="bold"
-            _hover={{ bg: "red.600" }}
           >
             <Trash2 size={16} /> Delete
           </Button>
@@ -775,9 +724,7 @@ const ProgramTypeTab = () => {
           <Button
             aria-label="Unselect all"
             variant="ghost"
-            size="sm"
-            color="fg.subtle"
-            _hover={{ bg: "fg.subtle" }}
+            size="xl"
             onClick={() => setSelectedIds([])}
           >
             <X size={20} />

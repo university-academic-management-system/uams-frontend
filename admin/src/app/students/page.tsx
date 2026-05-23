@@ -359,7 +359,7 @@ const StudentsPage = () => {
 
                 <Box overflowX="auto" maxW={{ base: "100%", lg: "calc(100vw - 340px)" }}>
                     <Table.Root w="full" textAlign="left" variant="outline" interactive>
-                        <Table.Header bg="slate.50">
+                        <Table.Header bg="bg.subtle">
                             <Table.Row borderY="xs" borderColor="border.muted">
                                 <Table.ColumnHeader bg="slate.50" px="6" py="4" w="12" textAlign="center" position="sticky" left="0" zIndex="20" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
                                     <Checkbox.Root
