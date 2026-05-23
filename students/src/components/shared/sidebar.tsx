@@ -79,8 +79,6 @@ const Sidebar = () => {
         return () => observer.disconnect();
     }, [isCollapsed]);
 
-
-
     const isActive = useCallback((href: string) => {
         return path.endsWith(href);
     }, [path]);
@@ -91,10 +89,11 @@ const Sidebar = () => {
             bg="bg"
             align="center"
             gap="4"
+            transition="width 0.3s ease-in-out"
             w={isCollapsed ? "74px" : "240px"}>
-            <Flex align="center" h="16" p="6">
+            <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
                 {/* logo */}
-                {!isCollapsed ? <Image src="/students/uphcsc-logo.png" alt="UPHCSC Logo" className="h-12" /> : <Image src="/students/sidebar-collapsed-logo.png" alt="UPHCSC Logo" className="h-12" />}
+                {!isCollapsed ? <Image src="/students/uphcsc-logo.png" alt="UPHCSC Logo" h="auto" w="auto" /> : <Image src="/students/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={12} h={"auto"} />}
             </Flex>
 
             <ScrollArea.Root h="full" size="xs">
@@ -138,6 +137,7 @@ const Sidebar = () => {
                 </ScrollArea.Scrollbar>
                 <ScrollArea.Corner />
             </ScrollArea.Root>
+
 
 
             <Stack flex="1" justify={"end"} p="4">
@@ -187,7 +187,7 @@ const LogoutButton = () => {
     const { isCollapsed } = sidebarStore();
     const navigate = useNavigate();
 
-    return !isCollapsed ? <Button justifyContent="start"   pl="2" size={"xl"} colorPalette={"red"} variant="ghost" onClick={() => clearAuth()}>
+    return !isCollapsed ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
         <Icon as={LuLogOut} size="md" /> Logout
     </Button> :
         <Tooltip content={"Logout"} positioning={{ placement: "right" }}>
@@ -196,6 +196,7 @@ const LogoutButton = () => {
                 variant="ghost"
                 width="fit"
                 colorPalette={"red"}
+                color="red.500"
                 onClick={() => { clearAuth(); navigate("/auth/login") }}
             >
                 <Icon as={LuLogOut} size="md" />

@@ -23,7 +23,7 @@ const RootLayout = () => {
                 {/* main */}
                 <ScrollArea.Root size="xs" h="full">
                     <ScrollArea.Viewport>
-                        <ScrollArea.Content h="full" border="xs" borderColor="border.muted" p="4" rounded="md" bg="bg.subtle">
+                        <ScrollArea.Content h="full" border="xs" borderColor="border.muted" p="6" rounded="md" bg="bg.subtle">
                             <Outlet />
                         </ScrollArea.Content>
                     </ScrollArea.Viewport>
