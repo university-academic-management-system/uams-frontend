@@ -28,7 +28,7 @@ const DashboardStatCard = ({ label, icon, value, description, color }: Dashboard
     const displayColor = color?.(stats!)
 
     return (
-        <Card.Root w="full" variant="subtle" bg="bg" border="xs" borderColor="border.muted">
+        <Card.Root w="full" h="full" variant="subtle" bg="bg" border="xs" borderColor="border.muted">
             <Card.Body p="5">
                 <Flex align="center" justify="space-between" mb="4">
                     <Icon as={icon} size="md" color={displayColor || "accent"} />

@@ -1,4 +1,4 @@
-import { Avatar, Button, Flex, HStack, Icon, IconButton, Image, ScrollArea, Separator, Stack, Text } from "@chakra-ui/react";
+import { Avatar, Button, Flex, HStack, Icon, IconButton, Image, ScrollArea, Separator, Stack, Text, useMediaQuery } from "@chakra-ui/react";
 import { sidebarStore } from "@stores/ui.store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
@@ -141,7 +141,7 @@ const Sidebar = () => {
 
 
 
-            <Stack flex="1" justify={"end"} p="4">
+            <Stack w="full" justify={"end"} p="4">
                 <LogoutButton />
                 <Separator borderColor="border.muted" />
                 <UserPersona />
@@ -167,12 +167,13 @@ export const SidebarToggleButton = () => {
 export const UserPersona = () => {
     const { user } = useAuthStore();
     const { isCollapsed } = sidebarStore();
+    const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
     return (
         <HStack key={user?.email} gap="2" justify={isCollapsed ? "center" : "start"}>
             <Avatar.Root size="xs">
                 <Avatar.Fallback name={user?.name} />
             </Avatar.Root>
-            {!isCollapsed && <Stack gap="0" w="80%" >
+            {((!isCollapsed && isDesktop) || !isDesktop) && <Stack gap="0" w="80%" maxH="14" overflow="hidden" >
                 <Text fontWeight="md" textStyle="sm">{user?.name || ""}</Text>
                 <Text color="fg.muted" textStyle="xs">
                     {user?.email || ""}
@@ -187,8 +188,9 @@ export const LogoutButton = () => {
     const { clearAuth } = useAuthStore();
     const { isCollapsed } = sidebarStore();
     const navigate = useNavigate();
+    const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
 
-    return !isCollapsed ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
+    return (isDesktop && !isCollapsed) || !isDesktop ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
         <Icon as={LuLogOut} size="md" /> Logout
     </Button> :
         <Tooltip content={"Logout"} positioning={{ placement: "right" }}>

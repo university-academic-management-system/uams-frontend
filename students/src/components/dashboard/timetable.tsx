@@ -11,9 +11,7 @@ import {
     DatePicker,
     For,
     Spinner,
-    EmptyState,
     parseDate,
-    VStack,
     ScrollArea
 } from "@chakra-ui/react"
 import {
@@ -28,6 +26,7 @@ import { LuGlobe, LuClock, LuMapPin, LuBookOpen } from "react-icons/lu"
 import { useTimetable } from "@hooks/dashboard.hook"
 import moment from "moment"
 import type { ValueChangeDetails } from "node_modules/@chakra-ui/react/dist/types/components/date-picker/namespace"
+import { EmptyStateView } from "@components/shared/empty-state"
 
 const tz = getLocalTimeZone()
 
@@ -91,7 +90,6 @@ const TimetableComp = () => {
         const entries = timetableResponse?.data?.entries;
         if (!entries || !nativeDate) return []
         const selectedDayName = formatWeekday(nativeDate).toUpperCase()
-        console.log(selectedDayName);
 
         return entries
             .filter(item => item.dayOfWeek.toUpperCase() === selectedDayName)
@@ -131,8 +129,10 @@ const TimetableComp = () => {
         >
             {/* Calendar Column */}
             <Box
-                borderRight="xs"
-                borderRightColor={"border.muted"}
+                borderRight={{ base: "none", md: "xs" }}
+                borderBottom={{ base: "xs", md: "none" }}
+                borderRightColor={{ base: "none", md: "border.muted" }}
+                borderBottomColor={{ base: "border.muted", md: "none" }}
                 bg="bg.subtle/30"
             >
                 <Stack gap="0" px="5" py="5">
@@ -152,7 +152,7 @@ const TimetableComp = () => {
                     isDateUnavailable={(date) => isWeekend(date as unknown as IntlDateValue, "en-NG")}
                     min={dateRange?.min}
                     max={dateRange?.max}
-                    width="fit-content"
+                    width={{ base: "full", md: "fit-content" }}
                     colorPalette="accent"
                 >
                     <DatePicker.Content unstyled px="3" pb="4">
@@ -212,12 +212,12 @@ const TimetableComp = () => {
                                                             </Timeline.Content>
                                                             <Timeline.Connector>
                                                                 <Timeline.Separator />
-                                                                <Timeline.Indicator 
+                                                                <Timeline.Indicator
                                                                     bg={isOnGoing(item) ? "accent.solid" : "bg.subtle"}
                                                                 >
-                                                                    <Text 
-                                                                        textStyle="xs" 
-                                                                        fontWeight="bold" 
+                                                                    <Text
+                                                                        textStyle="xs"
+                                                                        fontWeight="bold"
                                                                         color={isOnGoing(item) ? "white" : "fg.muted"}
                                                                     >
                                                                         {index + 1}
@@ -264,19 +264,11 @@ const TimetableComp = () => {
                                 </Timeline.Root>
                             ) : (
                                 <Center h="full" py="10">
-                                    <EmptyState.Root>
-                                        <EmptyState.Content>
-                                            <EmptyState.Indicator>
-                                                <LuClock />
-                                            </EmptyState.Indicator>
-                                            <VStack textAlign="center">
-                                                <EmptyState.Title>No classes scheduled</EmptyState.Title>
-                                                <EmptyState.Description>
-                                                    Enjoy your free time!
-                                                </EmptyState.Description>
-                                            </VStack>
-                                        </EmptyState.Content>
-                                    </EmptyState.Root>
+                                    <EmptyStateView
+                                        icon={<LuClock />}
+                                        title="No classes scheduled"
+                                        description="Enjoy your free time!"
+                                    />
                                 </Center>
                             )}
                         </Box>

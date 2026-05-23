@@ -60,9 +60,9 @@ const MobileSideDrawer = () => {
     }, [path]);
 
     return (
-        <Drawer.Root modal={false} closeOnInteractOutside={true}>
+        <Drawer.Root  modal={false} closeOnInteractOutside={true}>
             <Tooltip content="Notifications">
-                <Drawer.Trigger asChild>
+                <Drawer.Trigger asChild hideFrom={"md"}>
                     <IconButton variant="ghost" size="md" color="fg.muted">
                         <LuMenu />
                     </IconButton>
@@ -95,7 +95,7 @@ const MobileSideDrawer = () => {
                             </Stack>
                         </Drawer.Body>
                         <Drawer.Footer>
-                            <Stack flex="1" justify={"end"} p="4">
+                            <Stack flex="1" justify={"end"}>
                                 <LogoutButton />
                                 <Separator borderColor="border.muted" />
                                 <UserPersona />
