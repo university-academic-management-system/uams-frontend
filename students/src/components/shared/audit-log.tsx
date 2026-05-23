@@ -5,7 +5,7 @@ import { LuActivity } from "react-icons/lu";
 
 const AuditLogs = () => {
     return (
-        <Drawer.Root role="alertdialog">
+        <Drawer.Root modal={false}>
             <Tooltip content="Audit Logs">
                 <Drawer.Trigger asChild>
                     <IconButton variant="ghost" size="md" color="fg.muted">
@@ -14,9 +14,8 @@ const AuditLogs = () => {
                 </Drawer.Trigger>
             </Tooltip>
             <Portal>
-                <Drawer.Backdrop />
-                <Drawer.Positioner>
-                    <Drawer.Content>
+                <Drawer.Positioner pt="14" pr="4" pb="4">
+                    <Drawer.Content rounded="md" >
                         <Drawer.Header>
                             <Drawer.Title>Drawer Title</Drawer.Title>
                         </Drawer.Header>
