@@ -2,7 +2,7 @@ import axiosClient from "@configs/axios.config";
 
 export const DashboardServices = {
     getDashboardStats: async () => {
-        const { data } = await axiosClient.get("/stats/totals");
+        const { data } = await axiosClient.get("/stats/dashboard");
         return data;
     },
 
