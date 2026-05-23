@@ -131,8 +131,8 @@ const TimetableComp = () => {
         >
             {/* Calendar Column */}
             <Box
-                borderEndWidth={{ md: "1px" }}
-                borderBottomWidth={{ base: "1px", md: "0" }}
+                borderRight="xs"
+                borderRightColor={"border.muted"}
                 bg="bg.subtle/30"
             >
                 <Stack gap="0" px="5" py="5">

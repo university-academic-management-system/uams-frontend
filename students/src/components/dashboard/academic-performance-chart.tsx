@@ -1,7 +1,7 @@
 "use client"
 
 import { Chart, useChart } from "@chakra-ui/charts"
-import { Card, Heading, Stack, HStack, Flex } from "@chakra-ui/react"
+import { Card, Heading, Stack, HStack, Flex, Skeleton } from "@chakra-ui/react"
 import {
     CartesianGrid,
     Legend,
@@ -15,9 +15,9 @@ import {
     Sector,
     Label,
 } from "recharts"
-import type { AcademicPerformanceChartProps, DashboardMetric } from "@type/dashboard.type"
-
-
+import type { DashboardMetric } from "@type/dashboard.type"
+import { useDashboardStats } from "@hooks/dashboard.hook"
+import moment from "moment"
 
 const DonutProgress = ({ label, value, color }: { label: string; value: number; color: string }) => {
     const chart = useChart({
@@ -66,7 +66,10 @@ const DonutProgress = ({ label, value, color }: { label: string; value: number; 
     )
 }
 
-export const AcademicPerformanceChart = ({ gpa, cgpa, sgpa }: AcademicPerformanceChartProps) => {
+export const AcademicPerformanceChart = () => {
+    const { data: statsResponse, isLoading } = useDashboardStats()
+    const stats = statsResponse?.data
+
     // mock data for testing
     const mockGpa: DashboardMetric[] = [
         { session: "2023/2024", semesters: [{ semester: "1st semester", value: 3.8 }, { semester: "2nd semester", value: 4.2 }] },
@@ -81,12 +84,18 @@ export const AcademicPerformanceChart = ({ gpa, cgpa, sgpa }: AcademicPerformanc
         { session: "2024/2025", semesters: [{ semester: "1st semester", value: 3.3 }, { semester: "2nd semester", value: 4.5 }] }
     ];
 
+    const gpa = stats?.performance?.gpa;
+    const cgpa = stats?.performance?.cgpa;
+    const sgpa = stats?.performance?.sgpa;
+
     const displayGpa = gpa && gpa.length > 0 ? gpa : mockGpa;
     const displayCgpa = cgpa && cgpa.length > 0 ? cgpa : mockCgpa;
     const displaySgpa = sgpa && sgpa.length > 0 ? sgpa : mockSgpa;
 
     const getLatest = (metrics: DashboardMetric[]) => {
+        if (!metrics || metrics.length === 0) return 0;
         const lastSession = metrics[metrics.length - 1];
+        if (!lastSession.semesters || lastSession.semesters.length === 0) return 0;
         const lastSemester = lastSession.semesters[lastSession.semesters.length - 1];
         return typeof lastSemester.value === "string" ? parseFloat(lastSemester.value) : lastSemester.value;
     };
@@ -121,6 +130,19 @@ export const AcademicPerformanceChart = ({ gpa, cgpa, sgpa }: AcademicPerformanc
             { name: "sgpa", label: "SGPA", color: "orange" },
         ],
     })
+
+    if (isLoading) {
+        return (
+            <Card.Root width="full" border="xs" borderColor="border.muted">
+                <Card.Body p="6">
+                    <Stack gap="6">
+                        <Skeleton h="6" w="48" />
+                        <Skeleton h="300px" w="full" />
+                    </Stack>
+                </Card.Body>
+            </Card.Root>
+        )
+    }
 
     return (
         <Card.Root width="full" border="xs" borderColor="border.muted">
@@ -180,3 +202,4 @@ export const AcademicPerformanceChart = ({ gpa, cgpa, sgpa }: AcademicPerformanc
 }
 
 export default AcademicPerformanceChart;
+
