@@ -89,6 +89,7 @@ const Sidebar = () => {
             bg="bg"
             align="center"
             gap="4"
+            hideBelow={"md"}
             transition="width 0.3s ease-in-out"
             w={isCollapsed ? "74px" : "240px"}>
             <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
@@ -156,14 +157,14 @@ export const SidebarToggleButton = () => {
     const { isCollapsed, setIsCollapsed } = sidebarStore();
     return (
         <Tooltip content={isCollapsed ? "Expand" : "Collapse"}>
-            <IconButton size={"md"} variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)}>
+            <IconButton hideBelow={"md"} size={"md"} variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)}>
                 <Icon as={isCollapsed ? GoSidebarCollapse : GoSidebarExpand} size="md" color="fg.muted" />
             </IconButton>
         </Tooltip>
     )
 }
 
-const UserPersona = () => {
+export const UserPersona = () => {
     const { user } = useAuthStore();
     const { isCollapsed } = sidebarStore();
     return (
@@ -182,7 +183,7 @@ const UserPersona = () => {
 }
 
 
-const LogoutButton = () => {
+export const LogoutButton = () => {
     const { clearAuth } = useAuthStore();
     const { isCollapsed } = sidebarStore();
     const navigate = useNavigate();

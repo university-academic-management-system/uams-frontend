@@ -7,11 +7,13 @@ import { Outlet } from "react-router";
 
 const RootLayout = () => {
     return <>
+
         <Flex
             h="vh"
             bg="bg.subtle"
             w="full"
             overflow="hidden"
+
         >
             {/* siderbar */}
             <Sidebar />
