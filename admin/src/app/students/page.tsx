@@ -223,7 +223,7 @@ const StudentsPage = () => {
             <Flex direction={{ base: "column", md: "row" }} justifyContent="space-between" alignItems={{ base: "flex-start", md: "center" }} mb="10" gap="4">
                 <Box maxW="xl">
                     <Text fontSize="3xl" fontWeight="bold" color="fg.muted">Students</Text>
-                    <Text color="fg.subtle" mt="2">
+                    <Text color="fg.muted" mt="2">
                         {students.length} total students • {filteredStudents.length} filtered
                     </Text>
                 </Box>
