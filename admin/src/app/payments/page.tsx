@@ -22,7 +22,7 @@ const PaymentsPage = () => {
     };
 
     return (
-        <Box minH="100vh" bg="bg.canvas">
+        <Box>
             {currentView === "summary" ? (
                 <PaymentsSummaryView onViewAllRevenue={handleViewAllRevenue} />
             ) : (

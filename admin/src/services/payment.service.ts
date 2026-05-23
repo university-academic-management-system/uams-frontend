@@ -2,10 +2,6 @@ import axiosClient from "@configs/axios.config"
 import type { PaymentsResponse } from "@type/payment.type"
 
 export const PaymentServices = {
-    getPaymentsSummary: async () => {
-        const { data } = await axiosClient.get("/university-admin/payments");
-        return data;
-    },
 
     getPaymentConfig: async (programTypeId: string) => {
         const { data } = await axiosClient.get(`/university-admin/payment-config?program_type_id=${programTypeId}`);
