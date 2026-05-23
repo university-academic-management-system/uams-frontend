@@ -17,6 +17,8 @@ import {
 } from "recharts"
 import type { DashboardMetric } from "@type/dashboard.type"
 import { useDashboardStats } from "@hooks/dashboard.hook"
+import { LuChartSpline } from "react-icons/lu"
+import { EmptyStateView } from "@components/shared/empty-state"
 
 const DonutProgress = ({ label, value, color }: { label: string; value: number; color: string }) => {
     const chart = useChart({
@@ -69,6 +71,12 @@ export const AcademicPerformanceChart = () => {
     const { data: statsResponse, isLoading } = useDashboardStats()
     const stats = statsResponse?.data
 
+    const gpa = stats?.gpa;
+    const cgpa = stats?.cgpa;
+    const sgpa = stats?.sgpa;
+
+    const hasData = (gpa && gpa.length > 0) || (cgpa && cgpa.length > 0) || (sgpa && sgpa.length > 0);
+
     // mock data for testing
     const mockGpa: DashboardMetric[] = [
         { session: "2023/2024", semesters: [{ semester: "1st semester", value: 3.8 }, { semester: "2nd semester", value: 4.2 }] },
@@ -82,10 +90,6 @@ export const AcademicPerformanceChart = () => {
         { session: "2023/2024", semesters: [{ semester: "1st semester", value: 4.8 }, { semester: "2nd semester", value: 4.2 }] },
         { session: "2024/2025", semesters: [{ semester: "1st semester", value: 3.3 }, { semester: "2nd semester", value: 4.5 }] }
     ];
-
-    const gpa = stats?.gpa;
-    const cgpa = stats?.cgpa;
-    const sgpa = stats?.sgpa;
 
     const displayGpa = gpa && gpa.length > 0 ? gpa : mockGpa;
     const displayCgpa = cgpa && cgpa.length > 0 ? cgpa : mockCgpa;
@@ -121,6 +125,24 @@ export const AcademicPerformanceChart = () => {
         });
     }).flat();
 
+    // for mobile view
+    const chartDataMobile = displayGpa.map((sessionData, sIndex) => {
+        return sessionData.semesters.map((semesterData, semIndex) => {
+            const session = sessionData.session;
+
+            // Find corresponding CGPA and SGPA values
+            const cgpaVal = displayCgpa[sIndex]?.semesters[semIndex]?.value;
+            const sgpaVal = displaySgpa[sIndex]?.semesters[semIndex]?.value;
+
+            return {
+                label: session,
+                gpa: semesterData.value,
+                cgpa: cgpaVal,
+                sgpa: sgpaVal,
+            };
+        });
+    }).flat();
+
     const chart = useChart({
         data: chartData,
         series: [
@@ -129,6 +151,16 @@ export const AcademicPerformanceChart = () => {
             { name: "sgpa", label: "SGPA", color: "orange" },
         ],
     })
+
+    const chartMobile = useChart({
+        data: chartDataMobile,
+        series: [
+            { name: "gpa", label: "GPA", color: "accent" },
+            { name: "cgpa", label: "CGPA", color: "green.500" },
+            { name: "sgpa", label: "SGPA", color: "orange" },
+        ],
+    })
+
 
     if (isLoading) {
         return (
@@ -143,12 +175,69 @@ export const AcademicPerformanceChart = () => {
         )
     }
 
+    if (!hasData) {
+        return (
+            <Card.Root width="full" border="xs" borderColor="border.muted">
+                <Card.Body p="6">
+                    <Heading size="lg" mb="6">Academic Performance</Heading>
+                    <EmptyStateView
+                        icon={<LuChartSpline />}
+                        title="No Academic Data Available"
+                        description="Your academic performance records will appear here once available."
+                    />
+                </Card.Body>
+            </Card.Root>
+        )
+    }
+
     return (
         <Card.Root width="full" border="xs" borderColor="border.muted">
             <Card.Body p="6">
                 <Heading size="lg">Academic Performance</Heading>
-                <Flex gap="12">
-                    <Chart.Root maxH="sm" chart={chart}>
+                <Flex gap="12" flexDir={{ base: "column", md: "row" }}>
+
+                    {/* mobile view chart */}
+                    <Chart.Root hideFrom={"md"} maxH="sm" chart={chartMobile}>
+                        <LineChart margin={{ left: -30, right: 10 }} data={chart.data} responsive>
+                            <CartesianGrid stroke={chart.color("border.subtle")} vertical={false} />
+                            <XAxis
+                                axisLine={false}
+                                dataKey={chart.key("label")}
+                                tickFormatter={() => ""}
+                                stroke={chart.color("border")}
+                                // padding={{ left: 80, right: 20 }}
+                                tick={{ fontSize: 11 }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tickMargin={10}
+                                domain={[0, 5]}
+                                stroke={chart.color("border")}
+                                tick={{ fontSize: 11 }}
+                            />
+                            <Tooltip
+                                animationDuration={100}
+                                cursor={{ stroke: chart.color("border") }}
+                                content={<Chart.Tooltip />}
+                            />
+                            <Legend verticalAlign="top" align="right" content={<Chart.Legend />} />
+                            {chart.series.map((item) => (
+                                <Line
+                                    type="bump"
+                                    key={item.name}
+                                    isAnimationActive={false}
+                                    dataKey={chart.key(item.name)}
+                                    strokeWidth={2}
+                                    stroke={chart.color(item.color)}
+                                    dot={false}
+                                    activeDot={true}
+                                />
+                            ))}
+                        </LineChart>
+                    </Chart.Root>
+
+                    <Chart.Root hideBelow={"md"} maxH="sm" chart={chart}>
                         <LineChart margin={{ left: -30, right: 10 }} data={chart.data} responsive>
                             <CartesianGrid stroke={chart.color("border.subtle")} vertical={false} />
                             <XAxis

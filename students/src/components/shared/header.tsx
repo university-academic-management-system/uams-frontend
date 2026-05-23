@@ -82,7 +82,7 @@ const Header = () => {
                 {isCollapsed && <Heading size={{base: "sm", md: "md"}}>{activeLink?.label}</Heading>}
             </Group>
 
-            <AbsoluteCenter>
+            <AbsoluteCenter hideFrom={"md"}>
                 <Image src="/students/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={7} h={"auto"} />
             </AbsoluteCenter>
 
