@@ -1,13 +1,7 @@
 import { Stat, Card, Text, Flex, Icon, Skeleton, Stack } from "@chakra-ui/react"
 import { useDashboardStats } from "@hooks/dashboard.hook"
+import type { DashboardStatCardProps } from "@type/dashboard.type"
 
-interface DashboardStatCardProps {
-    label: string
-    icon: any
-    value: (stats: any) => string | number
-    description?: (stats: any) => string | undefined
-    color?: (stats: any) => string | undefined
-}
 
 const DashboardStatCard = ({ label, icon, value, description, color }: DashboardStatCardProps) => {
     const { data: statsResponse, isLoading } = useDashboardStats()
@@ -29,9 +23,9 @@ const DashboardStatCard = ({ label, icon, value, description, color }: Dashboard
         )
     }
 
-    const displayValue = value(stats)
-    const displayDescription = description?.(stats)
-    const displayColor = color?.(stats)
+    const displayValue = value(stats!)
+    const displayDescription = description?.(stats!)
+    const displayColor = color?.(stats!)
 
     return (
         <Card.Root w="full" variant="subtle" bg="bg" border="xs" borderColor="border.muted">
@@ -41,7 +35,7 @@ const DashboardStatCard = ({ label, icon, value, description, color }: Dashboard
                 </Flex>
                 <Stat.Root>
                     <Stat.Label fontSize="sm" fontWeight="medium" color="fg.muted">{label}</Stat.Label>
-                    <Stat.ValueText fontSize="xl" fontWeight="bold" mt="1" color="fg">{displayValue}</Stat.ValueText>
+                    <Stat.ValueText fontSize="lg" fontWeight="semibold" mt="1" color="fg">{displayValue}</Stat.ValueText>
                     {displayDescription && (
                         <Text fontSize="xs" color="fg.subtle" mt="2">
                             {displayDescription}

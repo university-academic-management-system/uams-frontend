@@ -17,7 +17,6 @@ import {
 } from "recharts"
 import type { DashboardMetric } from "@type/dashboard.type"
 import { useDashboardStats } from "@hooks/dashboard.hook"
-import moment from "moment"
 
 const DonutProgress = ({ label, value, color }: { label: string; value: number; color: string }) => {
     const chart = useChart({
@@ -84,9 +83,9 @@ export const AcademicPerformanceChart = () => {
         { session: "2024/2025", semesters: [{ semester: "1st semester", value: 3.3 }, { semester: "2nd semester", value: 4.5 }] }
     ];
 
-    const gpa = stats?.performance?.gpa;
-    const cgpa = stats?.performance?.cgpa;
-    const sgpa = stats?.performance?.sgpa;
+    const gpa = stats?.gpa;
+    const cgpa = stats?.cgpa;
+    const sgpa = stats?.sgpa;
 
     const displayGpa = gpa && gpa.length > 0 ? gpa : mockGpa;
     const displayCgpa = cgpa && cgpa.length > 0 ? cgpa : mockCgpa;
@@ -147,7 +146,7 @@ export const AcademicPerformanceChart = () => {
     return (
         <Card.Root width="full" border="xs" borderColor="border.muted">
             <Card.Body p="6">
-                <Heading size="md" fontWeight="bold">Academic Performance</Heading>
+                <Heading size="lg">Academic Performance</Heading>
                 <Flex gap="12">
                     <Chart.Root maxH="sm" chart={chart}>
                         <LineChart margin={{ left: -30, right: 10 }} data={chart.data} responsive>
