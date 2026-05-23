@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CourseSchema, type CourseFormData } from "@schemas/program.schema";
+import { Controller } from "react-hook-form";
+import { type CourseFormData } from "@schemas/program.schema";
+import useCourseForm, { defaultCourseFormData } from "@forms/course.form";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Download, Edit, Trash2, X, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { CourseHook } from "@hooks/course.hook";
@@ -38,17 +38,6 @@ import {
 } from "react-icons/lu";
 import BulkUploadCoursesModal from "@components/programs/BulkUploadCoursesModal";
 
-const defaultFormData = {
-  title: "",
-  code: "",
-  units: "3",
-  description: "",
-  semester: "FIRST",
-  level: "L100",
-  programTypeId: "",
-  courseType: "CORE",
-  allowCarryover: true,
-};
 
 const creditUnitCollection = createListCollection({
   items: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"].map((value) => ({
@@ -59,46 +48,48 @@ const creditUnitCollection = createListCollection({
 
 const semesterCollection = createListCollection({
   items: [
-    { label: "FIRST", value: "FIRST" },
-    { label: "SECOND", value: "SECOND" },
-    { label: "THIRD", value: "THIRD" },
+    { label: "1st Semester", value: "FIRST" },
+    { label: "2nd Semester", value: "SECOND" },
+    { label: "3rd Semester", value: "THIRD" },
   ],
 });
 
 const levelCollection = createListCollection({
   items: [
-    { label: "L100", value: "L100" },
-    { label: "L200", value: "L200" },
-    { label: "L300", value: "L300" },
-    { label: "L400", value: "L400" },
+    { label: "100", value: "L100" },
+    { label: "200", value: "L200" },
+    { label: "300", value: "L300" },
+    { label: "400", value: "L400" },
+    { label: "500", value: "L500" },
   ],
 });
 
 const courseTypeCollection = createListCollection({
   items: [
-    { label: "CORE", value: "CORE" },
-    { label: "ELECTIVE", value: "ELECTIVE" },
+    { label: "Core", value: "CORE" },
+    { label: "Elective", value: "ELECTIVE" },
     { label: "GST", value: "GST" },
     { label: "SIWES", value: "SIWES" },
-    { label: "PROJECT", value: "PROJECT" },
+    { label: "Project", value: "PROJECT" },
   ],
 });
 
 const semesterFilterCollection = createListCollection({
   items: [
     { label: "All Semesters", value: "" },
-    { label: "First Semester", value: "FIRST" },
-    { label: "Second Semester", value: "SECOND" },
+    { label: "1st Semester", value: "FIRST" },
+    { label: "2nd Semester", value: "SECOND" },
   ],
 });
 
 const levelFilterCollection = createListCollection({
   items: [
     { label: "All Levels", value: "" },
-    { label: "100 Level", value: "L100" },
-    { label: "200 Level", value: "L200" },
-    { label: "300 Level", value: "L300" },
-    { label: "400 Level", value: "L400" },
+    { label: "100", value: "L100" },
+    { label: "200", value: "L200" },
+    { label: "300", value: "L300" },
+    { label: "400", value: "L400" },
+    { label: "500", value: "L500" },
   ],
 });
 
@@ -119,11 +110,7 @@ const CoursesTab = () => {
     setSortConfig({ key, direction });
   }, [sortConfig]);
 
-  const form = useForm<CourseFormData>({
-    mode: "onChange",
-    resolver: zodResolver(CourseSchema),
-    defaultValues: defaultFormData
-  });
+  const form = useCourseForm();
 
   const { data: courses = [], isLoading } = CourseHook.useCourses(filters);
   const { data: programTypes = [] } = CourseHook.useProgramTypes();
@@ -135,9 +122,9 @@ const CoursesTab = () => {
 
   const formatSemesterName = useCallback((name: string) => {
     if (!name) return name;
-    if (name.toLowerCase() === "semester 1" || name.toUpperCase() === "FIRST") return "First Semester";
-    if (name.toLowerCase() === "semester 2" || name.toUpperCase() === "SECOND") return "Second Semester";
-    if (name.toLowerCase() === "semester 3" || name.toUpperCase() === "THIRD") return "Third Semester";
+    if (name.toLowerCase() === "semester 1" || name.toUpperCase() === "FIRST") return "1st Semester";
+    if (name.toLowerCase() === "semester 2" || name.toUpperCase() === "SECOND") return "2nd Semester";
+    if (name.toLowerCase() === "semester 3" || name.toUpperCase() === "THIRD") return "3rd Semester";
     return name;
   },[]);
 
@@ -351,8 +338,70 @@ const CoursesTab = () => {
   }
 
   return (
-    <Dialog.Root size="lg" role="alertdialog" onExitComplete={() => { form.reset(defaultFormData); setIsEditing(false); setEditingCourseId(null); }} placement="center" closeOnInteractOutside={false}>
+    <Dialog.Root size="lg" role="alertdialog" onExitComplete={() => { form.reset(defaultCourseFormData); setIsEditing(false); setEditingCourseId(null); }} placement="center" closeOnInteractOutside={false}>
     <Flex direction="column" gap="8">
+      <Flex justifyContent="flex-end" mt="-14">
+        <Menu.Root positioning={{ placement: "top-end" }}>
+          <Menu.Trigger asChild>
+            <Button
+              colorPalette="accent"
+              size="xl"
+              display="flex"
+              alignItems="center"
+              gap="2"
+              fontSize="md"
+              cursor="pointer"
+              boxShadow="none"
+            >
+              <Plus size={20} /> Add Course
+            </Button>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content
+                bg="white"
+                boxShadow="xl"
+                borderRadius="md"
+                border="xs"
+                borderColor="border.muted"
+                minW="180px"
+              >
+                <Dialog.Trigger asChild>
+                  <Menu.Item
+                    value="single"
+                    closeOnSelect={false}
+                    onClick={() => { setIsEditing(false); form.reset(defaultCourseFormData); }}
+                    cursor="pointer"
+                    py="3"
+                    px="4"
+                    _hover={{ bg: "slate.50" }}
+                  >
+                    <LuPlus size={18} />
+                    <Box flex="1" ml="2">
+                      Single Course
+                    </Box>
+                  </Menu.Item>
+                </Dialog.Trigger>
+                <BulkUploadCoursesModal>
+                  <Menu.Item
+                    value="bulk"
+                    closeOnSelect={false}
+                    cursor="pointer"
+                    py="3"
+                    px="4"
+                    _hover={{ bg: "slate.50" }}
+                  >
+                    <LuFileUp size={18} />
+                    <Box flex="1" ml="2">
+                      Bulk Upload (Excel)
+                    </Box>
+                  </Menu.Item>
+                </BulkUploadCoursesModal>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
+      </Flex>
       <Box
         bg="white"
         borderRadius="md"
@@ -464,7 +513,7 @@ const CoursesTab = () => {
 
             <Menu.Root>
               <Menu.Trigger asChild>
-                <Button size="xl" variant="subtle" border="xs" borderColor="border.muted" bg="slate.50" color="fg.muted">
+                <Button size="xl" variant="outline" border="xs" borderColor="border.muted" disabled={courses.length === 0}>
                   <Download size={20} /> Export table
                 </Button>
               </Menu.Trigger>
@@ -508,75 +557,12 @@ const CoursesTab = () => {
                 </Menu.Positioner>
               </Portal>
             </Menu.Root>
-
-            <Menu.Root>
-              <Menu.Trigger asChild>
-                <Button
-                  bg="accent"
-                  color="white"
-                  size="xl"
-                  display="flex"
-                  alignItems="center"
-                  gap="2"
-                  fontSize="md"
-                  fontWeight="bold"
-                  cursor="pointer"
-                  boxShadow="none"
-                >
-                  <Plus size={20} /> Add Course
-                </Button>
-              </Menu.Trigger>
-              <Portal>
-                <Menu.Positioner>
-                  <Menu.Content
-                    bg="white"
-                    boxShadow="xl"
-                    borderRadius="md"
-                    border="xs"
-                    borderColor="border.muted"
-                    minW="180px"
-                  >
-                    <Dialog.Trigger asChild>
-                      <Menu.Item
-                        value="single"
-                        closeOnSelect={false}
-                        onClick={() => { setIsEditing(false); form.reset(defaultFormData); }}
-                        cursor="pointer"
-                        py="3"
-                        px="4"
-                        _hover={{ bg: "slate.50" }}
-                      >
-                        <LuPlus size={18} />
-                        <Box flex="1" ml="2">
-                          Single Course
-                        </Box>
-                      </Menu.Item>
-                    </Dialog.Trigger>
-                    <BulkUploadCoursesModal>
-                      <Menu.Item
-                        value="bulk"
-                        closeOnSelect={false}
-                        cursor="pointer"
-                        py="3"
-                        px="4"
-                        _hover={{ bg: "slate.50" }}
-                      >
-                        <LuFileUp size={18} />
-                        <Box flex="1" ml="2">
-                          Bulk Upload (Excel)
-                        </Box>
-                      </Menu.Item>
-                    </BulkUploadCoursesModal>
-                  </Menu.Content>
-                </Menu.Positioner>
-              </Portal>
-            </Menu.Root>
           </Flex>
         </Flex>
 
-        <Box overflowX="auto">
+        <Box overflowX="auto" maxW={{ base: "100%", lg: "calc(100vw - 340px)" }}>
           <Table.Root w="full" variant="outline" interactive>
-            <Table.Header bg="slate.50">
+            <Table.Header bg="bg.subtle">
               <Table.Row borderY="xs" borderColor="border.muted">
                 <Table.ColumnHeader px="6" py="4" w="12" textAlign="center">
                   <Checkbox.Root
@@ -761,7 +747,7 @@ const CoursesTab = () => {
             </Table.Header>
             <Table.Body>
               {filtered.length === 0 ? (
-                <Table.Row>
+                <Table.Row _hover={{ bg: "transparent" }}>
                   <Table.Cell colSpan={11} py="12">
                     <EmptyState.Root>
                       <EmptyState.Content>
@@ -771,7 +757,7 @@ const CoursesTab = () => {
                         <VStack textAlign="center">
                           <EmptyState.Title>
                             {searchTerm
-                              ? "No Matches Found"
+                              ? `No results found for "${searchTerm}"`
                               : "No Courses Found"}
                           </EmptyState.Title>
                           <EmptyState.Description>
@@ -838,11 +824,8 @@ const CoursesTab = () => {
                         <Dialog.Trigger asChild>
                           <Button
                             onClick={() => handleEditClick(course)}
-                            p="1"
                             variant="ghost"
-                            size="sm"
-                            color="fg.subtle"
-                            _hover={{ bg: "fg.subtle" }}
+                            size="xl"
                             borderRadius="full"
                             minW="auto"
                           >
@@ -851,11 +834,8 @@ const CoursesTab = () => {
                         </Dialog.Trigger>
                         <Button
                           onClick={() => handleDelete(course.id)}
-                          p="1"
                           variant="ghost"
-                          size="sm"
-                          color="red.400"
-                          _hover={{ bg: "red.50" }}
+                          size="xl"
                           borderRadius="full"
                           minW="auto"
                         >
@@ -895,14 +875,9 @@ const CoursesTab = () => {
           <Box w="px" h="6" bg="fg.subtle" />
           <Button
             onClick={handleBulkDelete}
-            bg="red.500"
-            color="white"
-            px="4"
-            py="2"
+            size="xl"
             borderRadius="md"
             fontSize="xs"
-            fontWeight="bold"
-            _hover={{ bg: "red.600" }}
           >
             <Trash2 size={16} /> Delete
           </Button>
@@ -910,10 +885,8 @@ const CoursesTab = () => {
           <Button
             onClick={() => setSelectedIds([])}
             variant="ghost"
-            p="1"
+            size="xl"
             borderRadius="md"
-            color="fg.subtle"
-            _hover={{ bg: "fg.subtle" }}
             title="Unselect all"
           >
             <X size={20} />
@@ -925,7 +898,7 @@ const CoursesTab = () => {
           <Dialog.Backdrop />
           <Dialog.Positioner>
             <Dialog.Content borderRadius="md" overflow="hidden" colorPalette="accent">
-              <Dialog.Header p="6" borderBottom="xs" borderColor="border.muted">
+              <Dialog.Header p="6">
                 <VStack align="start" gap={1}>
                   <Dialog.Title
                     fontSize="lg"
@@ -944,7 +917,7 @@ const CoursesTab = () => {
                   </Dialog.Description>
                 </VStack>
                 <Dialog.CloseTrigger asChild>
-                  <CloseButton />
+                  <CloseButton colorPalette="gray" />
                 </Dialog.CloseTrigger>
               </Dialog.Header>
 
@@ -1294,17 +1267,12 @@ const CoursesTab = () => {
 
               <Dialog.Footer
                 p="6"
-                borderTop="xs"
-                borderColor="border.muted"
                 gap="3"
               >
                 <Dialog.ActionTrigger asChild>
                   <Button
                     variant="outline"
-                    borderColor="border.muted"
-                    color="fg.muted"
-                    px="8"
-                    fontWeight="bold"
+                    colorPalette="gray"
                     size="xl"
                   >
                     Cancel
@@ -1312,14 +1280,10 @@ const CoursesTab = () => {
                 </Dialog.ActionTrigger>
                 <Button
                   type="submit"
+                  size="xl"
                   loading={isSaving}
                   loadingText="Saving..."
                   disabled={!form.formState.isValid || isSaving}
-                  bg="#1D7AD9"
-                  color="white"
-                  px="10"
-                  fontWeight="bold"
-                  size="xl"
                 >
                   {isEditing ? "Update Course" : "Create Course"}
                 </Button>
