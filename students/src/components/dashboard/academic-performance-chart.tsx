@@ -1,7 +1,7 @@
 "use client"
 
 import { Chart, useChart } from "@chakra-ui/charts"
-import { Card, Heading, Stack } from "@chakra-ui/react"
+import { Card, Heading, Stack, HStack, Flex } from "@chakra-ui/react"
 import {
     CartesianGrid,
     Legend,
@@ -10,13 +10,60 @@ import {
     Tooltip,
     XAxis,
     YAxis,
+    Pie,
+    PieChart,
+    Sector,
+    Label,
 } from "recharts"
-import type { DashboardMetric } from "@type/dashboard.type"
+import type { AcademicPerformanceChartProps, DashboardMetric } from "@type/dashboard.type"
 
-interface AcademicPerformanceChartProps {
-    gpa: DashboardMetric[];
-    cgpa: DashboardMetric[];
-    sgpa: DashboardMetric[];
+
+
+const DonutProgress = ({ label, value, color }: { label: string; value: number; color: string }) => {
+    const chart = useChart({
+        data: [
+            { name: label, value: value, color: color },
+            { name: "Remaining", value: Math.max(0, 5 - value), color: "bg.muted" },
+        ],
+    })
+
+    return (
+        <Stack align="center" gap="0">
+            <Chart.Root boxSize="180px" chart={chart} mx="auto">
+                <PieChart responsive>
+                    <Tooltip
+                        cursor={false}
+                        animationDuration={100}
+                        content={<Chart.Tooltip hideLabel />}
+                    />
+                    <Pie
+                        innerRadius={65}
+                        outerRadius={90}
+                        isAnimationActive={false}
+                        data={chart.data}
+                        dataKey={chart.key("value")}
+                        nameKey="name"
+                        startAngle={180}
+                        endAngle={0}
+                        paddingAngle={2}
+                        shape={(props) => (
+                            <Sector {...props} fill={chart.color(props.payload!.color)} />
+                        )}
+                    >
+                        <Label
+                            content={({ viewBox }) => (
+                                <Chart.RadialText
+                                    viewBox={viewBox}
+                                    title={`${chart.getMax("value").toLocaleString()}/${chart.getTotal("value").toLocaleString()}`}
+                                    description={label}
+                                />
+                            )}
+                        />
+                    </Pie>
+                </PieChart>
+            </Chart.Root>
+        </Stack>
+    )
 }
 
 export const AcademicPerformanceChart = ({ gpa, cgpa, sgpa }: AcademicPerformanceChartProps) => {
@@ -37,6 +84,15 @@ export const AcademicPerformanceChart = ({ gpa, cgpa, sgpa }: AcademicPerformanc
     const displayGpa = gpa && gpa.length > 0 ? gpa : mockGpa;
     const displayCgpa = cgpa && cgpa.length > 0 ? cgpa : mockCgpa;
     const displaySgpa = sgpa && sgpa.length > 0 ? sgpa : mockSgpa;
+
+    const getLatest = (metrics: DashboardMetric[]) => {
+        const lastSession = metrics[metrics.length - 1];
+        const lastSemester = lastSession.semesters[lastSession.semesters.length - 1];
+        return typeof lastSemester.value === "string" ? parseFloat(lastSemester.value) : lastSemester.value;
+    };
+
+    const latestGpa = getLatest(displayGpa);
+    const latestCgpa = getLatest(displayCgpa);
 
     // Transform data for the chart
     const chartData = displayGpa.map((sessionData, sIndex) => {
@@ -69,8 +125,8 @@ export const AcademicPerformanceChart = ({ gpa, cgpa, sgpa }: AcademicPerformanc
     return (
         <Card.Root width="full" border="xs" borderColor="border.muted">
             <Card.Body p="6">
-                <Stack gap="6">
-                    <Heading size="md" fontWeight="bold">Academic Performance</Heading>
+                <Heading size="md" fontWeight="bold">Academic Performance</Heading>
+                <Flex gap="12">
                     <Chart.Root maxH="sm" chart={chart}>
                         <LineChart margin={{ left: -30, right: 10 }} data={chart.data} responsive>
                             <CartesianGrid stroke={chart.color("border.subtle")} vertical={false} />
@@ -110,7 +166,14 @@ export const AcademicPerformanceChart = ({ gpa, cgpa, sgpa }: AcademicPerformanc
                             ))}
                         </LineChart>
                     </Chart.Root>
-                </Stack>
+
+                    <HStack justify="space-between" align="center">
+                        <Stack gap="8">
+                            <DonutProgress label="CGPA" value={latestCgpa} color="green.solid" />
+                            <DonutProgress label="GPA" value={latestGpa} color="blue.solid" />
+                        </Stack>
+                    </HStack>
+                </Flex>
             </Card.Body>
         </Card.Root>
     )

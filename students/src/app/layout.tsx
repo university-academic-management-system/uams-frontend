@@ -16,14 +16,14 @@ const RootLayout = () => {
             {/* siderbar */}
             <Sidebar />
 
-            <Stack flex="1" h="full" gap="0" bg="bg" overflow="hidden">
+            <Stack flex="1" h="vh" gap="0" bg="bg" overflow="hidden">
                 {/* header */}
                 <Header />
 
                 {/* main */}
-                <ScrollArea.Root size="xs" h="full">
+                <ScrollArea.Root size="xs" h="calc(100vh - 64px)" bg="bg.subtle" border="xs" borderColor="border.muted" rounded="md" >
                     <ScrollArea.Viewport>
-                        <ScrollArea.Content h="full" border="xs" borderColor="border.muted" p="6" rounded="md" bg="bg.subtle">
+                        <ScrollArea.Content p="4">
                             <Outlet />
                         </ScrollArea.Content>
                     </ScrollArea.Viewport>

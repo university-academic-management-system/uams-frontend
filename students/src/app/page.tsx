@@ -1,9 +1,9 @@
 "use client"
 
 import { lazy, Suspense } from "react"
-import { Box, Heading, Highlight, SimpleGrid, Stack, Skeleton, GridItem } from "@chakra-ui/react"
+import { Box, Heading, Highlight, SimpleGrid, Skeleton } from "@chakra-ui/react"
 import useAuthStore from "@stores/auth.store"
-import { useDashboardStats } from "@hooks/stats.hook"
+import { useDashboardStats } from "@hooks/dashboard.hook"
 import {
     LuCalendar,
     LuBookOpen,
@@ -14,8 +14,9 @@ import {
 } from "react-icons/lu"
 
 // Lazy load components
-const DashboardStatCard = lazy(() => import("@components/dashboard/DashboardStatCard"))
-const AcademicPerformanceChart = lazy(() => import("@components/dashboard/AcademicPerformanceChart"))
+const DashboardStatCard = lazy(() => import("@components/dashboard/dashboard-stat-card"))
+const AcademicPerformanceChart = lazy(() => import("@components/dashboard/academic-performance-chart"))
+const TimetableComp = lazy(() => import("@components/dashboard/timetable"))
 
 const DashboardPage = () => {
     const { user } = useAuthStore();
@@ -30,7 +31,7 @@ const DashboardPage = () => {
                 </Highlight>
             </Heading>
 
-            <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap="4">
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 6 }} gap="4">
                 <Suspense fallback={<Skeleton h="140px" rounded="md" />}>
                     <DashboardStatCard
                         label="Current Session"
@@ -65,37 +66,37 @@ const DashboardPage = () => {
                         color={stats?.academicStanding === "GOOD_STANDING" ? "green.500" : "red.500"}
                     />
                 </Suspense>
+                <Suspense fallback={<Skeleton h="140px" rounded="md" />}>
+                    <DashboardStatCard
+                        label="Faculty"
+                        value={stats?.faculty || "N/A"}
+                        icon={LuBuilding}
+                    />
+                </Suspense>
+                <Suspense fallback={<Skeleton h="140px" rounded="md" />}>
+                    <DashboardStatCard
+                        label="Department"
+                        value={stats?.department || "N/A"}
+                        icon={LuBuilding}
+                    />
+                </Suspense>
             </SimpleGrid>
 
-            <SimpleGrid columns={{ base: 1, lg: 6 }} gap="4">
-                <GridItem colSpan={{ base: 1, md: 5 }}>
-                    <Suspense fallback={<Skeleton h="400px" rounded="md" />}>
-                        {stats && (
-                                <AcademicPerformanceChart
-                                    gpa={stats.gpa}
-                                    cgpa={stats.cgpa}
-                                    sgpa={stats.sgpa}
-                                />
-                            )}
-                    </Suspense>
-                </GridItem>
-                <Stack gap="4">
-                    <Suspense fallback={<Skeleton h="140px" rounded="md" />}>
-                        <DashboardStatCard
-                            label="Faculty"
-                            value={stats?.faculty || "N/A"}
-                            icon={LuBuilding}
-                        />
-                    </Suspense>
-                    <Suspense fallback={<Skeleton h="140px" rounded="md" />}>
-                        <DashboardStatCard
-                            label="Department"
-                            value={stats?.department || "N/A"}
-                            icon={LuBuilding}
-                        />
-                    </Suspense>
-                </Stack>
-            </SimpleGrid>
+
+            <Suspense fallback={<Skeleton h="400px" rounded="md" />}>
+                {stats && (
+                    <AcademicPerformanceChart
+                        gpa={stats.gpa}
+                        cgpa={stats.cgpa}
+                        sgpa={stats.sgpa}
+                    />
+                )}
+            </Suspense>
+
+            {/* time table */}
+            <Suspense fallback={<Skeleton h="400px" rounded="md" />}>
+                <TimetableComp />
+            </Suspense>
         </Box>
     )
 }
