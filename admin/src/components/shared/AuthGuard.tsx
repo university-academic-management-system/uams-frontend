@@ -1,17 +1,22 @@
-import { Navigate, Outlet, useLocation } from "react-router";
+import { useEffect } from "react";
+import { Outlet } from "react-router";
 import useAuthStore from "@stores/auth.store";
-
 
 const SessionGuard = () => {
     const { isAuthenticated, token } = useAuthStore();
-    const location = useLocation();
 
     // Check if we have a valid token
     const hasValidToken = isAuthenticated && !!token;
 
-  //  if (!hasValidToken) {
-   //     return <Navigate to="/login" state={{ from: location }} replace />;
-   // }
+    useEffect(() => {
+        if (!hasValidToken) {
+            window.location.href = "/auth/login";
+        }
+    }, [hasValidToken]);
+
+    if (!hasValidToken) {
+        return null;
+    }
 
     return <Outlet />;
 };

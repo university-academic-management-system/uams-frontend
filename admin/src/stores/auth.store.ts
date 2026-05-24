@@ -6,13 +6,17 @@ const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
             token: "",
-            expiresIn: "",
+            expireAt: "",
             user: null,
             isAuthenticated: false,
-            setAuth: (auth) => set((state) => ({ ...state, ...auth })),
+            setAuth: (auth) => set((state) => ({ 
+                ...state, 
+                ...auth,
+                isAuthenticated: auth.token !== undefined ? !!auth.token : state.isAuthenticated
+            })),
             clearAuth: () => set({ 
                 token: "", 
-                expiresIn: "",
+                expireAt: "",
                 user: null,
                 isAuthenticated: false
             }),
@@ -22,10 +26,18 @@ const useAuthStore = create<AuthState>()(
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 token: state.token,
-                expiresIn: state.expiresIn,
+                expireAt: state.expireAt,
                 user: state.user,
                 isAuthenticated: state.isAuthenticated,
             }),
+            merge: (persistedState: unknown, currentState) => {
+                const state = persistedState as Partial<AuthState>;
+                return {
+                    ...currentState,
+                    ...state,
+                    isAuthenticated: !!state?.token,
+                };
+            },
         }
     )
 );
