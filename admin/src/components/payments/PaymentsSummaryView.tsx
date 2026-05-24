@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { Download, FileX } from "lucide-react";
 import { PaymentServices } from "@services/payment.service";
 import { 
@@ -18,47 +18,67 @@ interface PaymentsSummaryViewProps {
     onViewAllRevenue: (programTypeId: string, programTypeName: string) => void;
 }
 
-interface ProgramTypeSummary {
-    id: string;
-    name: string;
-    code: string;
-    totalAmount: string;
-    totalPayments: number;
-    accessFee: { total: string; count: number; amount: number; average: string | number };
-    idCardFee: { total: string; count: number; amount: number; average: string | number };
-    transcriptFee?: { total: string; count: number; amount: number; average: string | number };
-    otherPayments: { total: string; count: number; amount: number };
-}
+// interface ProgramTypeSummary {
+//     id: string;
+//     name: string;
+//     code: string;
+//     totalAmount: string;
+//     totalPayments: number;
+//     accessFee: { total: string; count: number; amount: number; average: string | number };
+//     idCardFee: { total: string; count: number; amount: number; average: string | number };
+//     transcriptFee?: { total: string; count: number; amount: number; average: string | number };
+//     otherPayments: { total: string; count: number; amount: number };
+// }
 
 const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => {
-    const { data: summaryResponse, isLoading: summaryLoading, isError } = useQuery({
-        queryKey: ["payments-summary"],
-        queryFn: () => PaymentServices.getPaymentsSummary(),
+    const { data: response, isLoading: summaryLoading, isError } = useQuery({
+        queryKey: ["payments-summary-aggregation"],
+        queryFn: () => PaymentServices.getPayments(1, 10000), // Fetch a large batch to aggregate summary
     });
 
     const programTypeList = useMemo(() => {
-        if (!summaryResponse?.success) return [];
-        const programTypes: Record<string, ProgramTypeSummary> = summaryResponse.data.summary.programTypes;
-        return Object.values(programTypes);
-    }, [summaryResponse]);
+        if (!response?.data) return [];
+        
+        let totalAccess = 0;
+        let totalIdCard = 0;
+        let totalTranscript = 0;
+        
+        response.data.forEach((payment) => {
+            if (payment.status !== "PAID") return;
+            const type = payment.type || "";
+            if (type.includes("ACCESS_FEE")) totalAccess += Number(payment.amount);
+            if (type.includes("ID_CARD")) totalIdCard += Number(payment.amount);
+            if (type.includes("TRANSCRIPT")) totalTranscript += Number(payment.amount);
+        });
 
-    const formatCurrency = (amount: number) => {
+        // We return a single aggregated "All Programmes" row
+        return [{
+            id: "",
+            name: "All Programmes",
+            code: "ALL",
+            accessFee: { amount: totalAccess },
+            idCardFee: { amount: totalIdCard },
+            transcriptFee: { amount: totalTranscript },
+        }];
+    }, [response]);
+
+    const formatCurrency = useCallback((amount: number) => {
         return new Intl.NumberFormat("en-NG", {
             style: "currency",
             currency: "NGN",
         }).format(amount);
-    };
+    }, []);
 
     return (
-        <Box p="6">
+        <Box>
             <Flex direction="column" gap="6">
                 {/* Header */}
                 <Flex justifyContent="space-between" alignItems="center">
                     <Box>
-                        <Heading size="lg" fontWeight="bold" color="fg.muted">Payments Overview</Heading>
-                        <Text fontSize="sm" color="fg.muted">Revenue summary across different programme types</Text>
+                        <Heading size="3xl" fontWeight="bold" color="fg.muted">Payments Overview</Heading>
+                        <Text fontSize="sm" color="fg.subtle">Revenue summary across different programme types</Text>
                     </Box>
-                    <Button bg="#1D7AD9" color="white" borderRadius="md" fontWeight="bold" fontSize="sm" px="5" py="2.5" _hover={{ bg: "blue.700" }}>
+                    <Button bg="accent" color="white" borderRadius="md" fontWeight="bold" size="xl" variant="solid">
                         <Download size={16} /> Export Summary
                     </Button>
                 </Flex>
@@ -66,14 +86,14 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                 {/* Table Container */}
                 <Box bg="white" borderRadius="md" border="1px solid" borderColor="border.muted" overflow="hidden" shadow="none">
                     <Table.Root size="sm" variant="line">
-                        <Table.Header bg="gray.50">
+                        <Table.Header bg="bg.subtle">
                             <Table.Row>
-                                <Table.ColumnHeader color="fg.muted">S/N</Table.ColumnHeader>
-                                <Table.ColumnHeader color="fg.muted">PROGRAMME TYPE</Table.ColumnHeader>
-                                <Table.ColumnHeader color="fg.muted">ACCESS FEE</Table.ColumnHeader>
-                                <Table.ColumnHeader color="fg.muted">ID CARD FEE</Table.ColumnHeader>
-                                <Table.ColumnHeader color="fg.muted">TRANSCRIPT FEE</Table.ColumnHeader>
-                                <Table.ColumnHeader textAlign="right"></Table.ColumnHeader>
+                                <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">S/N</Table.ColumnHeader>
+                                <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">PROGRAMME TYPE</Table.ColumnHeader>
+                                <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">ACCESS FEE</Table.ColumnHeader>
+                                <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">ID CARD FEE</Table.ColumnHeader>
+                                <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">TRANSCRIPT FEE</Table.ColumnHeader>
+                                <Table.ColumnHeader bg="slate.50" px="6" py="4" textAlign="right"></Table.ColumnHeader>
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>
@@ -86,7 +106,7 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                                         </Flex>
                                     </Table.Cell>
                                 </Table.Row>
-                            ) : isError || !summaryResponse?.success ? (
+                            ) : isError ? (
                                 <Table.Row>
                                     <Table.Cell colSpan={6} py="20">
                                         <Flex justify="center">
@@ -114,19 +134,19 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                                 </Table.Row>
                             ) : (
                                 programTypeList.map((pt, index) => (
-                                    <Table.Row key={pt.id} _hover={{ bg: "gray.50" }}>
-                                        <Table.Cell fontSize="xs" fontWeight="medium">{index + 1}</Table.Cell>
-                                        <Table.Cell fontSize="sm" fontWeight="bold">{pt.name}</Table.Cell>
-                                        <Table.Cell fontSize="sm" fontWeight="medium" color="fg.muted">
+                                    <Table.Row key={pt.id} _hover={{ bg: "slate.50" }} borderColor="border.muted">
+                                        <Table.Cell px="6" py="4" fontSize="xs" fontWeight="medium">{index + 1}</Table.Cell>
+                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="bold">{pt.name}</Table.Cell>
+                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="medium" color="fg.muted">
                                             {formatCurrency(pt.accessFee?.amount ?? 0)}
                                         </Table.Cell>
-                                        <Table.Cell fontSize="sm" fontWeight="medium" color="fg.muted">
+                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="medium" color="fg.muted">
                                             {formatCurrency(pt.idCardFee?.amount ?? 0)}
                                         </Table.Cell>
-                                        <Table.Cell fontSize="sm" fontWeight="medium" color="fg.muted">
-                                            {formatCurrency(0)} {/* Transcript needs separate fetch or API update */}
+                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="medium" color="fg.muted">
+                                            {formatCurrency(pt.transcriptFee?.amount ?? 0)}
                                         </Table.Cell>
-                                        <Table.Cell textAlign="right">
+                                        <Table.Cell px="6" py="4" textAlign="right">
                                             <Button
                                                 variant="ghost"
                                                 size="xs"

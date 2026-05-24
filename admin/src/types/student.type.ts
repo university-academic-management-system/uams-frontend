@@ -1,5 +1,14 @@
 export type StudentRole = 'Class Rep' | 'Dept Rep' | 'None' | 'Bachelors' | 'PGD' | 'Masters';
 
+export type StudentStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+export type StudentLevel = 'L100' | 'L200' | 'L300' | 'L400' | 'L500' | 'L600' | 'L700' | 'L800';
+
+export interface StudentFilters {
+    status?: StudentStatus;
+    level?: StudentLevel;
+    session?: string;
+}
+
 export interface Student {
     id: string;
     email: string;
