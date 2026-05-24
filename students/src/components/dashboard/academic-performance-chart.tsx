@@ -77,23 +77,9 @@ export const AcademicPerformanceChart = () => {
 
     const hasData = (gpa && gpa.length > 0) || (cgpa && cgpa.length > 0) || (sgpa && sgpa.length > 0);
 
-    // mock data for testing
-    const mockGpa: DashboardMetric[] = [
-        { session: "2023/2024", semesters: [{ semester: "1st semester", value: 3.8 }, { semester: "2nd semester", value: 4.2 }] },
-        { session: "2024/2025", semesters: [{ semester: "1st semester", value: 4.0 }, { semester: "2nd semester", value: 4.5 }] }
-    ];
-    const mockCgpa: DashboardMetric[] = [
-        { session: "2023/2024", semesters: [{ semester: "1st semester", value: 1.8 }, { semester: "2nd semester", value: 4.0 }] },
-        { session: "2024/2025", semesters: [{ semester: "1st semester", value: 2.5 }, { semester: "2nd semester", value: 4.2 }] }
-    ];
-    const mockSgpa: DashboardMetric[] = [
-        { session: "2023/2024", semesters: [{ semester: "1st semester", value: 4.8 }, { semester: "2nd semester", value: 4.2 }] },
-        { session: "2024/2025", semesters: [{ semester: "1st semester", value: 3.3 }, { semester: "2nd semester", value: 4.5 }] }
-    ];
-
-    const displayGpa = gpa && gpa.length > 0 ? gpa : mockGpa;
-    const displayCgpa = cgpa && cgpa.length > 0 ? cgpa : mockCgpa;
-    const displaySgpa = sgpa && sgpa.length > 0 ? sgpa : mockSgpa;
+    const displayGpa = gpa && gpa.length > 0 ? gpa : [];
+    const displayCgpa = cgpa && cgpa.length > 0 ? cgpa : [];
+    const displaySgpa = sgpa && sgpa.length > 0 ? sgpa : [];
 
     const getLatest = (metrics: DashboardMetric[]) => {
         if (!metrics || metrics.length === 0) return 0;
