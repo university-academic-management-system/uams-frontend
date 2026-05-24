@@ -1,25 +1,5 @@
-import { useState, useRef } from "react";
-import {
-  Box,
-  Table,
-  Center,
-  Spinner,
-  EmptyState,
-  VStack,
-  Badge,
-  Menu,
-  Portal,
-  IconButton,
-  Drawer,
-  CloseButton,
-  Flex,
-  Text,
-  Heading,
-  Button,
-  Grid,
-  GridItem,
-} from "@chakra-ui/react";
-import { LuUsers, LuCircleAlert, LuFileText, LuChartNoAxesCombined, LuEllipsis } from "react-icons/lu";
+import { Box, Table, Center, Spinner, EmptyState, VStack, Badge } from "@chakra-ui/react";
+import { LuUsers, LuCircleAlert } from "react-icons/lu";
 import type { Student } from "@type/student.type";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend as RechartsLegend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import jsPDF from "jspdf";
@@ -50,207 +30,168 @@ const COLUMNS = [
   { key: "action", label: "", width: "50px" },
 ] as const;
 
-const capitaliseName = (name: string | undefined): string => {
-  if (!name) return "—";
-  return name
-    .toLowerCase()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+// Helper functions for badge styling
+const getRegistrationStatusBadge = (status: string | undefined) => {
+    switch (status) {
+        case "PENDING":
+            return { label: "Pending", color: "yellow" };
+        case "REGISTERED":
+            return { label: "Registered", color: "green" };
+        case "INCOMPLETE":
+            return { label: "Incomplete", color: "orange" };
+        case "CLEARED":
+            return { label: "Cleared", color: "blue" };
+        default:
+            return { label: status || "—", color: "gray" };
+    }
 };
 
-const formatLevel = (level: string | undefined): string => {
-  if (!level) return "—";
-  return level.replace(/^L/, "");
+const getAcademicStandingBadge = (standing: string | undefined) => {
+    switch (standing) {
+        case "GOOD_STANDING":
+            return { label: "Good Standing", color: "green" };
+        case "PROBATION":
+            return { label: "Probation", color: "orange" };
+        case "SUSPENDED":
+            return { label: "Suspended", color: "red" };
+        case "WARNING":
+            return { label: "Warning", color: "yellow" };
+        case "WITHDRAWN":
+            return { label: "Withdrawn", color: "red" };
+        default:
+            return { label: standing || "—", color: "gray" };
+    }
 };
 
-const StudentsTable = ({
-  students,
-  isLoading,
-  error,
-  currentSession = "",
-}: StudentsTableProps) => {
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const chartsRef = useRef<HTMLDivElement>(null);
+const StudentsTable = ({ students, isLoading, error }: StudentsTableProps) => {
+    return (
+        <Box>
+            <Table.ScrollArea>
+            <Table.Root size="lg" variant="line" css={{ tableLayout: "auto", minWidth: "1200px" }} stickyHeader>
+                <Table.Header>
+                    <Table.Row>
+                        {COLUMNS.map((col, i) => (
+                            <Table.ColumnHeader
+                                key={col.key}
+                                fontSize="lg"
+                                bg="#f8fafc"
+                                fontWeight="600"
+                                color="fg.muted"
+                                textTransform="none"
+                                minW={col.width}
+                                px="3"
+                                py="3"
+                                whiteSpace="nowrap"
+                            >
+                                {col.label}
+                            </Table.ColumnHeader>
+                        ))}
+                    </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                    {isLoading ? (
+                        <Table.Row>
+                            <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                                <Center>
+                                    <Spinner size="lg" color="accent.500" />
+                                </Center>
+                            </Table.Cell>
+                        </Table.Row>
+                    ) : error ? (
+                        <Table.Row>
+                            <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                                <EmptyState.Root>
+                                    <EmptyState.Content>
+                                        <EmptyState.Indicator>
+                                            <LuCircleAlert />
+                                        </EmptyState.Indicator>
+                                        <VStack textAlign="center">
+                                            <EmptyState.Title>Failed to load students</EmptyState.Title>
+                                            <EmptyState.Description>
+                                                {error.message}
+                                            </EmptyState.Description>
+                                        </VStack>
+                                    </EmptyState.Content>
+                                </EmptyState.Root>
+                            </Table.Cell>
+                        </Table.Row>
+                    ) : students.length === 0 ? (
+                        <Table.Row>
+                            <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                                <EmptyState.Root>
+                                    <EmptyState.Content>
+                                        <EmptyState.Indicator>
+                                            <LuUsers />
+                                        </EmptyState.Indicator>
+                                        <VStack textAlign="center">
+                                            <EmptyState.Title>No students found</EmptyState.Title>
+                                            <EmptyState.Description>
+                                                Try adjusting your search or filters.
+                                            </EmptyState.Description>
+                                        </VStack>
+                                    </EmptyState.Content>
+                                </EmptyState.Root>
+                            </Table.Cell>
+                        </Table.Row>
+                    ) : (
+                        students.map((student, index) => {
+                            const regStatus = student.studentProfile?.registrationStatus;
+                            const academicStanding = student.studentProfile?.academicStanding;
+                            const regBadge = getRegistrationStatusBadge(regStatus);
+                            const standingBadge = getAcademicStandingBadge(academicStanding);
 
-  // Computed Chart Data
-  const uniqueLevels = Array.from(new Set(students.map(s => formatLevel(s.studentProfile?.level)).filter(Boolean))).sort();
-
-  const levelStats = uniqueLevels.map(level => {
-    const studentsInLevel = students.filter(s => formatLevel(s.studentProfile?.level) === level);
-    const avgCgpa = studentsInLevel.reduce((sum, s) => sum + (s.studentProfile?.cgpa || 0), 0) / (studentsInLevel.length || 1);
-    const avgGpa = studentsInLevel.reduce((sum, s) => sum + (s.studentProfile?.gpa || 0), 0) / (studentsInLevel.length || 1);
-    const carryovers = studentsInLevel.filter(s => (s.studentProfile?.carryoverCourses || 0) > 0).length;
-    
-    return {
-      level,
-      avgCgpa: Number(avgCgpa.toFixed(2)),
-      avgGpa: Number(avgGpa.toFixed(2)),
-      carryovers,
-    };
-  });
-
-  const totalStudents = students.length;
-  const registeredStudents = students.filter(s => s.studentProfile?.registrationStatus === "REGISTERED").length;
-  const unregisteredStudents = totalStudents - registeredStudents;
-  
-  const registrationData = [
-    { name: "Registered", value: registeredStudents },
-    { name: "Unregistered", value: unregisteredStudents }
-  ];
-  
-  const PIE_COLORS = ["green", "red"];
-
-  const handleOpenDrawer = (student: Student) => {
-    setSelectedStudent(student);
-    setDrawerOpen(true);
-  };
-
-  const handleCloseDrawer = () => setDrawerOpen(false);
-
-  // Export individual student record as PDF
-  const exportStudentRecord = async (student: Student) => {
-    try {
-      setIsExporting(true);
-      const doc = new jsPDF({ orientation: "portrait" });
-      const profile = student.studentProfile;
-      if (!profile) return;
-
-      doc.setFontSize(16);
-      doc.text("Academic Record", 14, 15);
-      doc.setFontSize(12);
-      doc.text(`Name: ${capitaliseName(profile.firstName)} ${capitaliseName(profile.lastName)}`, 14, 30);
-      doc.text(`Matric No: ${profile.matricNumber || "—"}`, 14, 40);
-      doc.text(`Level: ${formatLevel(profile.level)}`, 14, 50);
-      doc.text(`Programme: ${profile.degreeAwarded || "—"}`, 14, 60);
-      doc.text(`Current Session: ${profile.currentSession || "—"}`, 14, 70);
-      doc.text(`CGPA: ${profile.cgpa ?? "—"}`, 14, 80);
-      doc.text(`GPA: ${profile.gpa ?? "—"}`, 14, 90);
-      doc.text(`SGPA: ${profile.sgpa ?? "—"}`, 14, 100);
-      doc.text(`Total Credits Earned: ${profile.totalCreditsEarned}`, 14, 110);
-      doc.text(`Total Credits Attempted: ${profile.totalCreditsAttempted}`, 14, 120);
-      doc.text(`Carryover Courses: ${profile.carryoverCourses ?? 0}`, 14, 130);
-
-      const levelNum = parseInt(formatLevel(profile.level), 10);
-      if (!isNaN(levelNum) && levelNum >= 400) {
-        doc.text("Project Topic: (not stored in profile)", 14, 150);
-      }
-
-      doc.save(`Student_Record_${profile.matricNumber || student.id}.pdf`);
-    } catch (err) {
-      console.error("PDF export failed:", err);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const exportSummaryCharts = async () => {
-    if (!chartsRef.current) return;
-    try {
-      const canvas = await html2canvas(chartsRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4"
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.text("Academic Overview Summary", 14, 15);
-      pdf.addImage(imgData, "PNG", 10, 20, pdfWidth - 20, pdfHeight - 20);
-      pdf.save(`Charts_Summary_${currentSession || "All"}.pdf`);
-    } catch (error) {
-      console.error("Failed to export charts:", error);
-    }
-  };
-
-  return (
-    <Box>
-      {/* Summary Charts Section */}
-      {students.length > 0 && (
-        <Box mb={6} p={4} rounded="md" borderColor="border.muted" ref={chartsRef} bg="bg.panel">
-          <Flex justify="space-between" align="center" mb={4} colorPalette={"accent"}>
-            <Heading size="md">Academic Overview</Heading>
-            <Button size="md" onClick={exportSummaryCharts}>
-           <LuFileText />   Export Charts as PDF
-            </Button>
-          </Flex>
-          {currentSession && <Text fontSize="sm" color="fg.muted" mb={4}>Current Session: {currentSession}</Text>}
-          <Grid templateColumns={{ base: "1fr", lg: "repeat(2, 1fr)" }} gap={6}>
-            {/* CGPA Line Chart */}
-            <Box h="300px" p={4} rounded="md" borderColor="border.muted">
-              <Text  mb={2} textAlign="center">Average CGPA by Level</Text>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={levelStats}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="level" />
-                  <YAxis domain={[0, 5]} />
-                  <RechartsTooltip />
-                  <RechartsLegend />
-                  <Line type="monotone" dataKey="avgCgpa" name="Avg CGPA" stroke="blue" strokeWidth={2} dot={{ r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </Box>
-            
-            {/* GPA Line Chart */}
-            <Box h="300px" p={4} rounded="md" borderColor="border.muted">
-              <Text mb={2} textAlign="center">Average GPA by Level</Text>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={levelStats}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="level" />
-                  <YAxis domain={[0, 5]} />
-                  <RechartsTooltip />
-                  <RechartsLegend />
-                  <Line type="monotone" dataKey="avgGpa" name="Avg GPA" stroke="blue" strokeWidth={2} dot={{ r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </Box>
-
-            {/* Carryovers Line Chart */}
-            <Box h="300px" p={4} rounded="md" borderColor="border.muted">
-              <Text mb={2} textAlign="center">Students with Carryovers</Text>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={levelStats}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="level" />
-                  <YAxis allowDecimals={false} />
-                  <RechartsTooltip />
-                  <RechartsLegend />
-                  <Line type="monotone" dataKey="carryovers" name="Carryovers Count" stroke="blue" strokeWidth={2} dot={{ r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </Box>
-
-            {/* Registration Pie Chart */}
-            <Box h="300px" p={4} rounded="md" borderColor="border.muted">
-              <Text mb={2} textAlign="center">Registration Status</Text>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={registrationData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {registrationData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip />
-                  <RechartsLegend />
-                </PieChart>
-              </ResponsiveContainer>
-            </Box>
-          </Grid>
+                            return (
+                                <Table.Row key={student.id}>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {index + 1}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.studentProfile?.registrationNo || "—"}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.studentProfile?.matricNumber || "—"}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="700">
+                                        {`${student.studentProfile?.firstName || ""} ${student.studentProfile?.lastName || ""} ${student.studentProfile?.otherName || ""}`.trim() || "—"}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.email}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.studentProfile?.phone || "—"}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.studentProfile?.level || "—"}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.studentProfile?.admissionYear || "—"}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.studentProfile?.admissionSession || "—"}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.studentProfile?.currentSession || "—"}
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        <Badge colorPalette={regBadge.color} fontSize="xs" px="2" py="1" borderRadius="full">
+                                            {regBadge.label}
+                                        </Badge>
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        <Badge colorPalette={standingBadge.color} fontSize="xs" px="2" py="1" borderRadius="full">
+                                            {standingBadge.label}
+                                        </Badge>
+                                    </Table.Cell>
+                                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                                        {student.studentProfile?.cgpa ?? "—"}
+                                    </Table.Cell>
+                                </Table.Row>
+                            );
+                        })
+                    )}
+                </Table.Body>
+            </Table.Root>
+            </Table.ScrollArea>
         </Box>
       )}
 
