@@ -2,53 +2,21 @@ import { ButtonGroup, Flex, Group, Heading } from "@chakra-ui/react";
 import { SidebarToggleButton } from "./Sidebar";
 import NotificationDrawer from "./notification-drawer";
 import AuditLogs from "./audit-log";
-import { sidebarStore } from "@stores/ui.store";
+import { useSidebarStore } from "@stores/ui.store";
 import { useLocation } from "react-router";
 import { useCallback, useMemo } from "react";
+import { navigationLinks, type NavigationLink } from "@constants/navigation";
 
 const Header = () => {
-    const { isCollapsed } = sidebarStore();
+    const { isCollapsed } = useSidebarStore();
     const path = useLocation().pathname;
-    const links = useMemo(() => [
-        {
-            label: "Dashboard",
-            href: "/",
-        },
-        {
-            label: "Courses",
-            href: "/courses",
-        },
-        {
-            label: "Registrations",
-            href: "/registrations",
-        },
-        {
-            label: "Project",
-            href: "/projects",
-        },
-        {
-            label: "Timetable",
-            href: "/timetable",
-        },
-        {
-            label: "Payments",
-            href: "/payments",
-        },
-        {
-            label: "Announcements",
-            href: "/announcements",
-        },
-        {
-            label: "Profile",
-            href: "/profile",
-        }
-    ], []);
+    const links = useMemo(() => navigationLinks, []);
 
     const isActive = useCallback((href: string) => {
         return path.endsWith(href);
     }, [path]);
 
-    const activeLink = links.find((link) => isActive(link.href));
+    const activeLink = links.find((link: NavigationLink) => isActive(link.href));
 
     return <>
         <Flex

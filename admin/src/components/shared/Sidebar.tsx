@@ -1,64 +1,18 @@
 import { Avatar, Button, Flex, HStack, Icon, IconButton, Image, ScrollArea, Separator, Stack, Text } from "@chakra-ui/react";
-import { sidebarStore } from "@stores/ui.store";
+import { useSidebarStore } from "@stores/ui.store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
-import { LuBanknote, LuCalendarDays, LuFolderKanban, LuHouse, LuLibrary, LuLogOut, LuUser } from "react-icons/lu";
+import { LuLogOut } from "react-icons/lu";
 import LinkButton from "./buttons/LinkButton";
 import { Link, useLocation, useNavigate } from "react-router";
-import { PiAddressBook } from "react-icons/pi";
+import { navigationLinks, type NavigationLink } from "../../constants/navigation";
 import { Tooltip } from "@components/ui/tooltip";
 import useAuthStore from "@stores/auth.store";
 
 const Sidebar = () => {
-    const { isCollapsed } = sidebarStore();
+    const { isCollapsed } = useSidebarStore();
     const path = useLocation().pathname;
-    const links = useMemo(() => [
-        {
-            label: "Dashboard",
-            href: "/",
-            icon: LuHouse
-        },
-        {
-            label: "Programs & Courses",
-            href: "/program-courses",
-            icon: LuLibrary
-        },
-        {
-            label: "Lecturers",
-            href: "/staff",
-            icon: PiAddressBook
-        },
-        {
-            label: "Students",
-            href: "/students",
-            icon: LuUser
-        },
-        {
-            label: "Payments",
-            href: "/payments",
-            icon: LuBanknote
-        },
-        {
-            label: "ID Cards",
-            href: "/id-card",
-            icon: PiAddressBook
-        },
-        {
-            label: "Timetable",
-            href: "/timetable",
-            icon: LuCalendarDays
-        },
-        {
-            label: "Announcements",
-            href: "/announcements",
-            icon: LuFolderKanban
-        },
-        {
-            label: "Profile",
-            href: "/profile",
-            icon: LuUser
-        }
-    ], []);
+    const links = useMemo(() => navigationLinks, []);
 
     const [isScrollable, setIsScrollable] = useState(false);
     const viewportRef = useRef<HTMLDivElement>(null);
@@ -105,7 +59,7 @@ const Sidebar = () => {
                 <ScrollArea.Viewport ref={viewportRef}>
                     <ScrollArea.Content>
                         <Stack align={isCollapsed ? "center" : "stretch"} gap="2" w="full" p="4" pt="0">
-                            {links.map((link) => !isCollapsed ? (
+                            {links.map((link: NavigationLink) => !isCollapsed ? (
                                 <LinkButton
                                     key={link.href}
                                     to={link.href}
@@ -158,7 +112,7 @@ const Sidebar = () => {
 
 
 export const SidebarToggleButton = () => {
-    const { isCollapsed, setIsCollapsed } = sidebarStore();
+    const { isCollapsed, setIsCollapsed } = useSidebarStore();
     return (
         <Tooltip content={isCollapsed ? "Expand" : "Collapse"}>
             <IconButton size={"md"} variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -170,7 +124,7 @@ export const SidebarToggleButton = () => {
 
 const UserPersona = () => {
     const { user } = useAuthStore();
-    const { isCollapsed } = sidebarStore();
+    const { isCollapsed } = useSidebarStore();
     return (
         <HStack key={user?.email} gap="2" justify={isCollapsed ? "center" : "start"}>
             <Avatar.Root size="xs">
@@ -189,7 +143,7 @@ const UserPersona = () => {
 
 const LogoutButton = () => {
     const { clearAuth } = useAuthStore();
-    const { isCollapsed } = sidebarStore();
+    const { isCollapsed } = useSidebarStore();
     const navigate = useNavigate();
 
     return !isCollapsed ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => { clearAuth(); navigate("/auth/login"); }}>

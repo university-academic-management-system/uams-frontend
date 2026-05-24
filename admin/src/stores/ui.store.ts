@@ -5,7 +5,7 @@ interface SidebarStore {
     setIsCollapsed: (value: boolean) => void;
 }
 
-export const sidebarStore = create<SidebarStore>((set) => ({
+export const useSidebarStore = create<SidebarStore>((set) => ({
     isCollapsed: false,
     setIsCollapsed: (value) => set({ isCollapsed: value }),
 }));
