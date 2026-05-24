@@ -36,3 +36,64 @@ export interface SignupResponse {
     refreshToken: string;
     expireAt: string;
 }
+
+// me
+export interface StudentProfile {
+    id: string;
+    userId: string;
+    surname: string;
+    firstName: string;
+    otherName: string;
+    matricNumber: string;
+    registrationNo: string;
+    phone: string;
+    gender: string;
+    level: string;
+    admissionYear: number;
+    admissionSession: string;
+    currentSession: string;
+    admissionMode: string;
+    entryQualification: string;
+    degreeAwarded: string;
+    degreeAwardedCode: string;
+    degreeCourse: string;
+    degreeDuration: string;
+    faculty: string;
+    department: string;
+    registrationStatus: string;
+    googleAccessToken: string | null;
+    googleRefreshToken: string | null;
+    googleTokenExpiry: string | null;
+    googleEmail: string | null;
+    academicStanding: string;
+    totalCreditsEarned: number;
+    totalCreditsAttempted: number;
+    cgpa: number | null;
+    gpa: number | null;
+    sgpa: number | null;
+    carryoverCourses: number;
+    probationCount: number;
+    isOnProbation: boolean;
+    isSuspended: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface UserProfile {
+    id: string;
+    email: string;
+    role: string;
+    status: string;
+    passwordResetToken: string | null;
+    passwordResetExpires: string | null;
+    createdAt: string;
+    updatedAt: string;
+    studentProfile: StudentProfile | null;
+    staffProfile: any | null;
+}
+
+export interface MeResponse {
+    status: string;
+    message: string;
+    data: UserProfile;
+}
