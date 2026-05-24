@@ -15,7 +15,7 @@ export const DashboardHook = {
                 const response = await DashboardServices.getAnnualRevenueStats();
                 const data = response?.data || [];
                 return data.map((item: any) => ({
-                    year: item.year.toString(),
+                    year: `${Number(item.year) - 1}/${item.year}`,
                     value: item.revenue,
                 }));
             },

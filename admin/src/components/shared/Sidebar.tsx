@@ -1,184 +1,211 @@
-import {
-    LayoutDashboard,
-    BookOpen,
-    Users,
-    UserSquare2,
-    CreditCard,
-    ShieldCheck,
-    CalendarDays,
-    Megaphone,
-    Settings,
-    User,
-    LogOut,
-    X,
-} from "lucide-react";
-import type { ViewType } from "@type/common.type";
-import { Box, Button, Flex, Text, Image, Portal, Avatar } from "@chakra-ui/react";
+import { Avatar, Button, Flex, HStack, Icon, IconButton, Image, ScrollArea, Separator, Stack, Text } from "@chakra-ui/react";
+import { sidebarStore } from "@stores/ui.store";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
+import { LuBanknote, LuCalendarDays, LuFolderKanban, LuHouse, LuLibrary, LuLogOut, LuUser } from "react-icons/lu";
+import LinkButton from "./buttons/LinkButton";
+import { Link, useLocation, useNavigate } from "react-router";
+import { PiAddressBook } from "react-icons/pi";
+import { Tooltip } from "@components/ui/tooltip";
+import useAuthStore from "@stores/auth.store";
 
-interface SidebarProps {
-    activeView: ViewType;
-    onViewChange: (view: ViewType) => void;
-    onLogout?: () => void;
-    isOpen?: boolean;
-    onClose?: () => void;
-    currentUser?: string;
-    email?: string;
-}
+const Sidebar = () => {
+    const { isCollapsed } = sidebarStore();
+    const path = useLocation().pathname;
+    const links = useMemo(() => [
+        {
+            label: "Dashboard",
+            href: "/",
+            icon: LuHouse
+        },
+        {
+            label: "Programs & Courses",
+            href: "/program-courses",
+            icon: LuLibrary
+        },
+        {
+            label: "Lecturers",
+            href: "/staff",
+            icon: PiAddressBook
+        },
+        {
+            label: "Students",
+            href: "/students",
+            icon: LuUser
+        },
+        {
+            label: "Payments",
+            href: "/payments",
+            icon: LuBanknote
+        },
+        {
+            label: "ID Cards",
+            href: "/id-card",
+            icon: PiAddressBook
+        },
+        {
+            label: "Timetable",
+            href: "/timetable",
+            icon: LuCalendarDays
+        },
+        {
+            label: "Announcements",
+            href: "/announcements",
+            icon: LuFolderKanban
+        },
+        {
+            label: "Profile",
+            href: "/profile",
+            icon: LuUser
+        }
+    ], []);
 
-const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard' as ViewType },
-    { icon: BookOpen, label: 'Programs & Courses' as ViewType },
-    { icon: Users, label: 'Lecturers' as ViewType },
-    { icon: UserSquare2, label: 'Students' as ViewType },
-    { icon: CreditCard, label: 'Payments' as ViewType },
-    { icon: ShieldCheck, label: 'ID Card Management' as ViewType },
-    { icon: CalendarDays, label: 'Timetable' as ViewType },
-    { icon: Megaphone, label: 'Announcements' as ViewType },
-    { icon: Settings, label: 'Settings' as ViewType },
-    { icon: User, label: 'Profile' as ViewType },
-];
+    const [isScrollable, setIsScrollable] = useState(false);
+    const viewportRef = useRef<HTMLDivElement>(null);
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLogout, isOpen = false, onClose, currentUser = 'Dept. Admin', email }) => {
-    const handleNavigation = (view: ViewType) => {
-        onViewChange(view);
-        if (onClose) onClose();
-    };
+    useEffect(() => {
+        const checkOverflow = () => {
+            if (viewportRef.current) {
+                const { scrollHeight, clientHeight } = viewportRef.current;
+                setIsScrollable(scrollHeight > clientHeight);
+            }
+        };
+
+        checkOverflow();
+
+        const observer = new ResizeObserver(checkOverflow);
+        if (viewportRef.current) {
+            observer.observe(viewportRef.current);
+            // Observe the content inside the viewport
+            const content = viewportRef.current.querySelector('[data-part="content"]');
+            if (content) observer.observe(content);
+        }
+
+        return () => observer.disconnect();
+    }, [isCollapsed]);
+
+    const isActive = useCallback((href: string) => {
+        return path.endsWith(href);
+    }, [path]);
 
     return (
-        <>
-            {/* Mobile Backdrop overlay */}
-            {isOpen && (
-                <Portal>
-                    <Box
-                        position="fixed"
-                        inset="0"
-                        bg="blackAlpha.600"
-                        zIndex="40"
-                        display={{ base: "block", lg: "none" }}
-                        onClick={onClose}
-                    />
-                </Portal>
-            )}
-
-            <Box
-                as="aside"
-                w="64"
-            bg="white"
-            h="100vh"
-            borderRight="xs"
-            borderColor="border.muted"
-            display="flex"
-            flexDirection="column"
-            position="fixed"
-            left="0"
-            top="0"
-            zIndex="50"
-            transform={{ base: isOpen ? "translateX(0)" : "translateX(-100%)", lg: "translateX(0)" }}
-            transition="transform 0.3s ease-in-out"
-        >
-            <Flex p="3" alignItems="center" justifyContent="space-between" gap="3" borderBottom={{ base: "xs", lg: "none" }} borderColor="border.muted">
-                <Image
-                    src="/admin/assets/uphcscLG.png"
-                    alt="UNIPORT Computer Science"
-                    h="12"
-                    w="auto"
-                    objectFit="contain"
-                />
-                <Button
-                    display={{ base: "block", lg: "none" }}
-                    onClick={onClose}
-                    p="2"
-                    color="fg.muted"
-                    _hover={{ bg: "fg.subtle", borderRadius: "md" }}
-                >
-                    <X size={20} />
-                </Button>
+        <Stack
+            h="full"
+            bg="bg"
+            align="center"
+            gap="4"
+            transition="width 0.3s ease-in-out"
+            w={isCollapsed ? "74px" : "240px"}>
+            <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
+                {/* logo */}
+                {!isCollapsed ? <Image src="/admin/assets/uphcscLG.png" alt="UPHCSC Logo" h="12" w="auto" objectFit="contain" /> : <Image src="/admin/assets/uphcscLG.png" alt="UPHCSC Logo" w={12} h={"auto"} objectFit="contain" />}
             </Flex>
 
-            <Box as="nav" flex="1" px="4" py="4">
-                <Flex direction="column" gap="2">
-                    {menuItems.map((item) => (
-                        <Box
-                            as="button"
-                            key={item.label}
-                            onClick={() => handleNavigation(item.label)}
-                            w="full"
-                            display="flex"
-                            alignItems="center"
-                            gap="3"
-                            px="3"
-                            py="2.5"
-                            borderRadius="lg"
-                            transition="all 0.2s"
-                            bg={activeView === item.label ? "accent.subtle" : "transparent"}
-                            color={activeView === item.label ? "accent" : "fg.muted"}
-                            fontWeight="semibold"
-                            _hover={{
-                                bg: activeView === item.label ? "accent.subtle" : "gray.50",
-                                color: activeView === item.label ? "accent" : "fg.muted",
-                            }}
-                        >
-                            <item.icon
-                                size={22}
-                            />
-                            <Text fontSize="md">{item.label}</Text>
-                        </Box>
-                    ))}
-                </Flex>
-            </Box>
+            <ScrollArea.Root h="full" size="xs">
+                <ScrollArea.Viewport ref={viewportRef}>
+                    <ScrollArea.Content>
+                        <Stack align={isCollapsed ? "center" : "stretch"} gap="2" w="full" p="4" pt="0">
+                            {links.map((link) => !isCollapsed ? (
+                                <LinkButton
+                                    key={link.href}
+                                    to={link.href}
+                                    w="full"
+                                    variant="ghost"
+                                    size="xl"
+                                    pl="2"
+                                    justifyContent={"start"}
+                                    color={isActive(link.href) ? "accent" : "fg.muted"}
+                                    fontWeight={"600"}
+                                >
+                                    <Icon as={link.icon} size="md" color={isActive(link.href) ? "accent" : "fg.muted"} />
+                                    {link.label}
+                                </LinkButton>
+                            ) :
+                                (
+                                    <Link key={link.href} to={link.href}>
+                                        <Tooltip content={link.label} positioning={{ placement: "right" }}>
+                                            <IconButton
+                                                size={"xl"}
+                                                variant="ghost"
+                                                width="fit"
+                                            >
+                                                <Icon as={link.icon} size="md" color={isActive(link.href) ? "accent" : "fg.muted"} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Link>
+                                ))}
+                        </Stack>
+                    </ScrollArea.Content>
+                </ScrollArea.Viewport>
+                <ScrollArea.Scrollbar hidden={!isScrollable}>
+                    <ScrollArea.Thumb />
+                </ScrollArea.Scrollbar>
+                <ScrollArea.Corner />
+            </ScrollArea.Root>
 
-            {onLogout && (
-                <Box p="4" borderTop="xs" borderColor="border.muted" mt="auto">
-                    <Box
-                        as="button"
-                        onClick={onLogout}
-                        w="full"
-                        display="flex"
-                        alignItems="center"
-                        gap="3"
-                        px="3"
-                        py="2.5"
-                        borderRadius="lg"
-                        transition="all 0.2s"
-                        color="red.600"
-                        _hover={{ bg: "red.50" }}
-                        mb="4"
-                    >
-                        <LogOut size={22} color="#ef4444" />
-                        <Text fontSize="md" fontWeight="medium">Logout</Text>
-                    </Box>
 
-                    <Box borderTop="xs" borderColor="border.muted" pt="4">
-                        <Box
-                            as="button"
-                            onClick={() => handleNavigation('Profile')}
-                            display="flex"
-                            alignItems="center"
-                            w="full"
-                            gap="3"
-                            _hover={{ bg: "slate.50" }}
-                            borderRadius="lg"
-                            transition="all 0.2s"
-                            textAlign="left"
-                        >
-                            <Avatar.Root size="md" bg="gray.200" color="gray.800">
-                                <Avatar.Fallback name={currentUser} />
-                            </Avatar.Root>
-                            <Box overflow="hidden" flex="1" mt={-2}>
-                                <Text fontSize="sm" fontWeight="semibold" color="fg.muted">
-                                    {currentUser}
-                                </Text>
-                                <Text fontSize="xs" color="fg.muted">
-                                    {email}
-                                </Text>
-                            </Box>
-                        </Box>
-                    </Box>
-                </Box>
-            )}
-        </Box>
-        </>
-    );
-};
 
+            <Stack flex="1" justify={"end"} p="4">
+                <LogoutButton />
+                <Separator borderColor="border.muted" />
+                <UserPersona />
+            </Stack>
+        </Stack>
+    )
+
+}
+
+
+
+export const SidebarToggleButton = () => {
+    const { isCollapsed, setIsCollapsed } = sidebarStore();
+    return (
+        <Tooltip content={isCollapsed ? "Expand" : "Collapse"}>
+            <IconButton size={"md"} variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)}>
+                <Icon as={isCollapsed ? GoSidebarCollapse : GoSidebarExpand} size="md" color="fg.muted" />
+            </IconButton>
+        </Tooltip>
+    )
+}
+
+const UserPersona = () => {
+    const { user } = useAuthStore();
+    const { isCollapsed } = sidebarStore();
+    return (
+        <HStack key={user?.email} gap="2" justify={isCollapsed ? "center" : "start"}>
+            <Avatar.Root size="xs">
+                <Avatar.Fallback name={user?.name} />
+            </Avatar.Root>
+            {!isCollapsed && <Stack gap="0" w="80%" >
+                <Text fontWeight="md" textStyle="sm">{user?.name || ""}</Text>
+                <Text color="fg.muted" textStyle="xs">
+                    {user?.email || ""}
+                </Text>
+            </Stack>}
+        </HStack >
+    )
+}
+
+
+const LogoutButton = () => {
+    const { clearAuth } = useAuthStore();
+    const { isCollapsed } = sidebarStore();
+    const navigate = useNavigate();
+
+    return !isCollapsed ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => { clearAuth(); navigate("/auth/login"); }}>
+        <Icon as={LuLogOut} size="md" /> Logout
+    </Button> :
+        <Tooltip content={"Logout"} positioning={{ placement: "right" }}>
+            <IconButton
+                size={"xl"}
+                variant="ghost"
+                width="fit"
+                colorPalette={"red"}
+                color="red.500"
+                onClick={() => { clearAuth(); navigate("/auth/login") }}
+            >
+                <Icon as={LuLogOut} size="md" />
+            </IconButton>
+        </Tooltip>
+}
 export default Sidebar;
