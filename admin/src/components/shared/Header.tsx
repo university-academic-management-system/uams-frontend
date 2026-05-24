@@ -1,16 +1,12 @@
 import { Bell, History, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import type { ViewType } from '@type/common.type';
-import { Box, Flex, Text, Button, Avatar } from '@chakra-ui/react';
+import { Box, Flex, Button } from '@chakra-ui/react';
 
 interface HeaderProps {
-    onViewChange: (view: ViewType) => void;
-    currentUser?: string;
-    email?: string;
     onMenuClick?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onViewChange, currentUser = 'Dept. Admin', email, onMenuClick }) => {
+export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     const navigate = useNavigate();
 
     return (
@@ -47,9 +43,6 @@ export const Header: React.FC<HeaderProps> = ({ onViewChange, currentUser = 'Dep
                     alignItems="center"
                     gap="4"
                     color="fg.muted"
-                    borderRight="xs"
-                    borderColor="border.muted"
-                    pr="6"
                 >
                     <Button
                         onClick={() => navigate('/audit-logs')}
@@ -75,43 +68,8 @@ export const Header: React.FC<HeaderProps> = ({ onViewChange, currentUser = 'Dep
                         color="gray.600"
                     >
                         <Bell size={20} />
-                        <Box
-                            position="absolute"
-                            top="2"
-                            right="2"
-                            w="2"
-                            h="2"
-                            bg="rose.500"
-                            borderRadius="full"
-                            border="2px solid white"
-                        />
                     </Button>
                 </Flex>
-
-                <Box
-                    as="button"
-                    onClick={() => onViewChange('Profile')}
-                    display="flex"
-                    alignItems="center"
-                    gap="3"
-                    _hover={{ bg: "slate.50" }}
-                    p="1"
-                    pr="3"
-                    borderRadius="xl"
-                    transition="all 0.2s"
-                >
-                    <Box textAlign="right" display={{ base: "none", sm: "block" }}>
-                        <Text fontSize="sm" fontWeight="semibold" color="fg.muted" lineHeight="none">
-                            {currentUser}
-                        </Text>
-                        <Text fontSize="xs" color="fg.muted" mt="1">
-                            {email}
-                        </Text>
-                    </Box>
-                    <Avatar.Root size="sm">
-                        <Avatar.Fallback name={currentUser} />
-                    </Avatar.Root>
-                </Box>
             </Flex>
         </Flex>
     );

@@ -1,15 +1,16 @@
 import { StudentServices } from "@services/student.service";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toaster } from "@components/ui/toaster";
-import type { CreateStudentPayload, Student } from "@type/student.type";
+import type { CreateStudentPayload, Student, StudentFilters } from "@type/student.type";
 
 export const StudentHook = {
-    useStudents: () =>
+    useStudents: (filters?: StudentFilters) =>
         useQuery({
-            queryKey: ["students"],
+            queryKey: ["students", filters],
             queryFn: async () => {
-                const response = await StudentServices.getDepartmentStudents();
+                const response = await StudentServices.getDepartmentStudents(filters);
                 const data = response?.data || [];
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 return data.map((item: any) => ({
                     ...item,
                     id: item.id,
@@ -104,6 +105,18 @@ export const StudentHook = {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ["students"] });
                 toaster.success({ title: "Selected students deleted successfully" });
+            },
+            onError: () => {
+                // Error toast handled by axios interceptor
+            },
+        });
+    },
+
+    useBulkDownloadStudents: () => {
+        return useMutation({
+            mutationFn: (ids: string[]) => StudentServices.bulkDownloadStudents(ids),
+            onSuccess: () => {
+                // Success is handled in the component for the blob download, but we can keep this empty or add a toast.
             },
             onError: () => {
                 // Error toast handled by axios interceptor

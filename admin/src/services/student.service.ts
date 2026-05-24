@@ -1,4 +1,5 @@
 import axiosClient from "@configs/axios.config"
+import type { CreateStudentPayload, StudentFilters } from "@type/student.type"
 
 export const StudentServices = {
     getStudents: async (page?: number, limit?: number) => {
@@ -8,8 +9,10 @@ export const StudentServices = {
         return data;
     },
 
-    getDepartmentStudents: async () => {
-        const { data } = await axiosClient.get("/users?role=STUDENT");
+    getDepartmentStudents: async (filters?: StudentFilters) => {
+        const { data } = await axiosClient.get("/users", {
+            params: { role: "STUDENT", ...filters },
+        });
         return data;
     },
 
@@ -53,7 +56,7 @@ export const StudentServices = {
         return data;
     },
 
-    updateStudent: async (id: string, data: any) => {
+    updateStudent: async (id: string, data: Partial<CreateStudentPayload>) => {
         const { data: response } = await axiosClient.patch(`/users/${id}`, data);
         return response;
     },
@@ -63,7 +66,7 @@ export const StudentServices = {
         return data;
     },
 
-    addStudent: async (payload: any) => {
+    addStudent: async (payload: CreateStudentPayload) => {
         const { data } = await axiosClient.post("/users", { ...payload, type: "STUDENT" });
         return data;
     },

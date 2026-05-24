@@ -13,7 +13,7 @@ import {
     X,
 } from "lucide-react";
 import type { ViewType } from "@type/common.type";
-import { Box, Flex, Text, Image, Portal } from "@chakra-ui/react";
+import { Box, Button, Flex, Text, Image, Portal, Avatar } from "@chakra-ui/react";
 
 interface SidebarProps {
     activeView: ViewType;
@@ -21,6 +21,8 @@ interface SidebarProps {
     onLogout?: () => void;
     isOpen?: boolean;
     onClose?: () => void;
+    currentUser?: string;
+    email?: string;
 }
 
 const menuItems = [
@@ -36,7 +38,7 @@ const menuItems = [
     { icon: User, label: 'Profile' as ViewType },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLogout, isOpen = false, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLogout, isOpen = false, onClose, currentUser = 'Dept. Admin', email }) => {
     const handleNavigation = (view: ViewType) => {
         onViewChange(view);
         if (onClose) onClose();
@@ -82,8 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                     w="auto"
                     objectFit="contain"
                 />
-                <Box
-                    as="button"
+                <Button
                     display={{ base: "block", lg: "none" }}
                     onClick={onClose}
                     p="2"
@@ -91,11 +92,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                     _hover={{ bg: "fg.subtle", borderRadius: "md" }}
                 >
                     <X size={20} />
-                </Box>
+                </Button>
             </Flex>
 
             <Box as="nav" flex="1" px="4" py="4">
-                <Flex direction="column" gap="1">
+                <Flex direction="column" gap="2">
                     {menuItems.map((item) => (
                         <Box
                             as="button"
@@ -110,24 +111,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                             borderRadius="lg"
                             transition="all 0.2s"
                             bg={activeView === item.label ? "accent.subtle" : "transparent"}
-                            color={activeView === item.label ? "accent" : "fg.subtle"}
+                            color={activeView === item.label ? "accent" : "fg.muted"}
                             fontWeight="semibold"
                             _hover={{
-                                bg: activeView === item.label ? "accent.muted" : "gray.50",
+                                bg: activeView === item.label ? "accent.subtle" : "gray.50",
                                 color: activeView === item.label ? "accent" : "fg.muted",
                             }}
                         >
                             <item.icon
-                                size={20}
+                                size={22}
                             />
-                            <Text fontSize="sm">{item.label}</Text>
+                            <Text fontSize="md">{item.label}</Text>
                         </Box>
                     ))}
                 </Flex>
             </Box>
 
             {onLogout && (
-                <Box p="4" borderTop="xs" borderColor="border.muted">
+                <Box p="4" borderTop="xs" borderColor="border.muted" mt="auto">
                     <Box
                         as="button"
                         onClick={onLogout}
@@ -141,9 +142,37 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                         transition="all 0.2s"
                         color="red.600"
                         _hover={{ bg: "red.50" }}
+                        mb="4"
                     >
-                        <LogOut size={20} color="#ef4444" />
-                        <Text fontSize="sm" fontWeight="medium">Logout</Text>
+                        <LogOut size={22} color="#ef4444" />
+                        <Text fontSize="md" fontWeight="medium">Logout</Text>
+                    </Box>
+
+                    <Box borderTop="xs" borderColor="border.muted" pt="4">
+                        <Box
+                            as="button"
+                            onClick={() => handleNavigation('Profile')}
+                            display="flex"
+                            alignItems="center"
+                            w="full"
+                            gap="3"
+                            _hover={{ bg: "slate.50" }}
+                            borderRadius="lg"
+                            transition="all 0.2s"
+                            textAlign="left"
+                        >
+                            <Avatar.Root size="md" bg="gray.200" color="gray.800">
+                                <Avatar.Fallback name={currentUser} />
+                            </Avatar.Root>
+                            <Box overflow="hidden" flex="1" mt={-2}>
+                                <Text fontSize="sm" fontWeight="semibold" color="fg.muted">
+                                    {currentUser}
+                                </Text>
+                                <Text fontSize="xs" color="fg.muted">
+                                    {email}
+                                </Text>
+                            </Box>
+                        </Box>
                     </Box>
                 </Box>
             )}

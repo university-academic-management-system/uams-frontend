@@ -123,7 +123,7 @@ const Lecturers = () => {
         <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette={"accent"}>
           <InputGroup startElement={<LuSearch />} width="300px">
             <Input
-              placeholder="Search by Name, Email or Code"
+              placeholder="Search by Name, Email or ID."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               size="lg"
@@ -163,15 +163,10 @@ const Lecturers = () => {
             {/* Export Button */}
             <Button
               onClick={handleExport}
-              display="flex"
-              alignItems="center"
-              bg="accent"
+              colorPalette={"accent"}
               gap="2"
-              px="4"
-              py="2"
               size="lg"
               rounded="md"
-              color="white"
               cursor="pointer"
             >
               <LuDownload size={16} /> Export Table
