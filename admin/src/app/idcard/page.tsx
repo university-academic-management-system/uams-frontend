@@ -427,7 +427,7 @@ const IDCardPage = () => {
 
                 <Box overflowX="auto">
                     <Table.Root w="full" textAlign="left" colorPalette="accent">
-                        <Table.Header bg="slate.50">
+                        <Table.Header bg="bg.subtle">
                             <Table.Row borderBottom="xs" borderColor="border.muted">
                                 <Table.ColumnHeader px="6" py="4" w="12" textAlign="center" fontSize="11px" textTransform="uppercase" fontWeight="bold" color="fg.muted" letterSpacing="wider">
                                     <input type="checkbox" checked={paginatedStudents.length > 0 && selectedIds.length === paginatedStudents.length} onChange={toggleSelectAll} />

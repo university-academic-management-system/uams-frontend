@@ -355,15 +355,11 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
             <Button
               type="button"
               onClick={() => navigate("/program-courses")}
-              px="8"
-              py="2.5"
+              size="xl"
               borderRadius="md"
               fontSize="sm"
-              fontWeight="medium"
               variant="outline"
               borderColor="border.muted"
-              color="fg.muted"
-              _hover={{ bg: "slate.50" }}
             >
               Cancel
             </Button>
@@ -372,14 +368,9 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
               loading={isSaving}
               loadingText="Saving..."
               disabled={!form.formState.isValid || isSaving}
-              px="8"
-              py="2.5"
+              size="xl"
               borderRadius="md"
               fontSize="sm"
-              fontWeight="bold"
-              bg="#00B01D"
-              color="white"
-              _hover={{ bg: "green.700" }}
             >
               {isEditingRoute ? "Update Session" : "Create Session"}
             </Button>
@@ -407,23 +398,17 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
         <Button
           onClick={handleExport}
           variant="outline"
-          colorScheme="blue"
-          px="5"
-          py="2.5"
+          size="xl"
           borderRadius="md"
           fontSize="sm"
-          fontWeight="bold"
         >
         <Download size={18} />  Export table
         </Button>
         <Button
           onClick={() => navigate("/program-courses/sessions/new")}
-          colorScheme="blue"
-          px="5"
-          py="2.5"
+          size="xl"
           borderRadius="md"
           fontSize="sm"
-          fontWeight="bold"
         >
         <Plus />  Create Session
         </Button>
@@ -529,19 +514,15 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
                       <Flex justifyContent="center" gap="2">
                         <Button
                           aria-label="Edit session"
-                          size="sm"
+                          size="xl"
                           variant="ghost"
-                          color="fg.subtle"
-                          _hover={{ bg: "fg.subtle" }}
                           onClick={() => navigate(`/program-courses/sessions/edit/${session.id}`)}
                         >
                         <Edit size={16} />    </Button>
                         <Button
                           aria-label="Delete session"
-                          size="sm"
+                          size="xl"
                           variant="ghost"
-                          color="red.400"
-                          _hover={{ bg: "red.50" }}
                           onClick={() => handleDelete(session.id)}
                         >
                        <Trash2 size={16} />     </Button>
@@ -577,12 +558,9 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
           <Box w="px" h="6" bg="fg.subtle" />
           <Button
             onClick={handleBulkDelete}
-            colorScheme="red"
-            px="4"
-            py="2"
+            size="xl"
             borderRadius="md"
             fontSize="xs"
-            fontWeight="bold"
           >
           <Trash2 size={16} />  Delete
           </Button>
@@ -590,9 +568,7 @@ const StructureTab = ({ isCreatingRoute, isEditingRoute }: StructureTabProps) =>
           <Button
             aria-label="Unselect all"
             variant="ghost"
-            size="sm"
-            color="fg.subtle"
-            _hover={{ bg: "fg.subtle" }}
+            size="xl"
             onClick={() => setSelectedIds([])}
           >
          <X size={20} />   </Button>

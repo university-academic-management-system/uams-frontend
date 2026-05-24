@@ -1,78 +1,45 @@
-import { Bell, History, Menu } from 'lucide-react';
-import { useNavigate } from 'react-router';
-import { Box, Flex, Button } from '@chakra-ui/react';
+import { ButtonGroup, Flex, Group, Heading } from "@chakra-ui/react";
+import { SidebarToggleButton } from "./Sidebar";
+import NotificationDrawer from "./notification-drawer";
+import AuditLogs from "./audit-log";
+import { useSidebarStore } from "@stores/ui.store";
+import { useLocation } from "react-router";
+import { useCallback, useMemo } from "react";
+import { navigationLinks, type NavigationLink } from "@constants/navigation";
 
-interface HeaderProps {
-    onMenuClick?: () => void;
-}
+const Header = () => {
+    const { isCollapsed } = useSidebarStore();
+    const path = useLocation().pathname;
+    const links = useMemo(() => navigationLinks, []);
 
-export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-    const navigate = useNavigate();
+    const isActive = useCallback((href: string) => {
+        return path.endsWith(href);
+    }, [path]);
 
-    return (
+    const activeLink = links.find((link: NavigationLink) => isActive(link.href));
+
+    return <>
         <Flex
-            as="header"
+            bg="bg"
+            p="6"
+            pl="0"
+            align={"center"}
+            justify={"space-between"}
             h="16"
-            bg="white"
-            borderBottom="xs"
-            borderColor="border.muted"
-            alignItems="center"
-            justifyContent="space-between"
-            px={{ base: "4", md: "8" }}
-            position="sticky"
-            top="0"
-            zIndex="40"
-            gap="4"
+            w="full"
         >
-            <Flex alignItems="center" gap="4" flex="1">
-                <Box
-                    as="button"
-                    onClick={onMenuClick}
-                    display={{ base: "block", lg: "none" }}
-                    p="2"
-                    borderRadius="md"
-                    _hover={{ bg: "fg.subtle" }}
-                >
-                    <Menu size={24} color="#64748b" />
-                </Box>
-                <Box maxW="lg" w="full" />
-            </Flex>
+            <Group>
+                <SidebarToggleButton />
+                {isCollapsed && <Heading>{activeLink?.label}</Heading>}
+            </Group>
 
-            <Flex alignItems="center" gap="6">
-                <Flex
-                    alignItems="center"
-                    gap="4"
-                    color="fg.muted"
-                >
-                    <Button
-                        onClick={() => navigate('/audit-logs')}
-                        position="relative"
-                        _hover={{ color: "blue.600" }}
-                        transition="all 0.2s"
-                        p="2"
-                        borderRadius="lg"
-                        background="transparent"
-                        color="gray.600"
-                        title="Audit Log"
-                    >
-                        <History size={20} />
-                    </Button>
-                    <Button
-                        onClick={() => navigate('/notifications')}
-                        position="relative"
-                        _hover={{ color: "blue.600" }}
-                        transition="all 0.2s"
-                        p="2"
-                        borderRadius="lg"
-                        background="transparent"
-                        color="gray.600"
-                    >
-                        <Bell size={20} />
-                    </Button>
-                </Flex>
-            </Flex>
+
+            <ButtonGroup gap="2">
+                <NotificationDrawer />
+                <AuditLogs />
+            </ButtonGroup>
         </Flex>
-    );
-};
+    </>
+}
 
 export default Header;
