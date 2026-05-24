@@ -51,6 +51,9 @@
       ],
       "@routes/*": [
         "./src/routes/*"
+      ],
+      "@constants/*": [
+        "./src/constants/*"
       ]
     },
     /* Bundler mode */
