@@ -8,6 +8,8 @@ export const STUDENT_LEVELS: StudentLevel[] = ["L100", "L200", "L300", "L400", "
 
 export type RegistrationStatus = "PENDING" | "REGISTERED" | "INCOMPLETE" | "CLEARED";
 export type AcademicStanding = "GOOD_STANDING" | "PROBATION" | "SUSPENDED" | "WARNING" | "WITHDRAWN";
+export type ProgrammeType = "DIPLOMA" | "UNDERGRADUATE" | "POSTGRADUATE" | "SANDWICH";
+export type degreeAwarded = "BS.c" | "MS.c" | "Ph.D" | "POSTGRADUATE";
 
 export interface StudentProfile {
   id: string;
@@ -16,16 +18,19 @@ export interface StudentProfile {
   lastName: string;
   otherName: string;
   matricNumber: string;
+  gender: string;
   registrationNo: string;
   phone: string;
   level: StudentLevel;
   admissionYear: number;
   admissionSession: string;
   currentSession: string;
+  degreeAwarded: degreeAwarded;
   registrationStatus: RegistrationStatus;
   academicStanding: AcademicStanding;
   totalCreditsEarned: number;
   totalCreditsAttempted: number;
+  carryoverCourses: number;
   cgpa: number;
   gpa: number;
   sgpa: number;
@@ -39,6 +44,7 @@ export interface Student {
   role: string;              
   status: string;           
   studentProfile: StudentProfile;
+  programmeType: ProgrammeType;
   createdAt: string;
   updatedAt: string;
 }
