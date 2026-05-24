@@ -22,14 +22,14 @@ const Header = () => {
             icon: LuHouse
         },
         {
-            label: "Courses",
-            href: "/courses",
-            icon: LuLibrary
-        },
-        {
             label: "Registrations",
             href: "/registrations",
             icon: PiAddressBook
+        },
+        {
+            label: "Courses",
+            href: "/courses",
+            icon: LuLibrary
         },
         {
             label: "Project",
