@@ -151,7 +151,7 @@ const CreateTranscriptDialog = () => {
     }
 
     if (isLoading) {
-        return <Skeleton w="full" h="full" />
+        return <Skeleton w="fit" h="full" />
     }
 
 

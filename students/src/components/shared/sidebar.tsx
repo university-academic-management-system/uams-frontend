@@ -91,7 +91,7 @@ const Sidebar = () => {
             gap="4"
             hideBelow={"md"}
             transition="width 0.3s ease-in-out"
-            w={isCollapsed ? "74px" : "240px"}>
+            w={isCollapsed ? "78px" : "240px"}>
             <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
                 {/* logo */}
                 {!isCollapsed ? <Image src="/students/uphcsc-logo.png" alt="UPHCSC Logo" h="auto" w="auto" /> : <Image src="/students/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={12} h={"auto"} />}
