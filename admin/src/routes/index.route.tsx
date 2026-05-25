@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router";
-import { lazy } from "react";
-import SessionGuard from "@components/shared/AuthGuard";
-import RootLayout from "@app/layout";
+import { lazy, Suspense } from "react";
+import { AuthMiddleware } from "@middlewares/auth.middleware";
+
 
 const DashboardPage = lazy(() => import("@app/dashboard/page"));
 const ProgramCoursesPage = lazy(() => import("@app/programs/page"));
@@ -18,56 +18,73 @@ const router = createBrowserRouter([
     // Protected Routes
     {
         path: "/",
-        element: <SessionGuard />,
+        element: <AuthMiddleware />,
         children: [
             {
-                element: <RootLayout />,
-                children: [
-                    {
-                        index: true,
-                        element: <DashboardPage />,
-                    },
-                    {
-                        path: "dashboard",
-                        element: <DashboardPage />,
-                    },
-                    {
-                        path: "programmes/*",
-                        element: <ProgramCoursesPage />,
-                    },
-                    {
-                        path: "students",
-                        element: <StudentsPage />,
-                    },
-                    {
-                        path: "staff",
-                        element: <StaffPage />,
-                    },
-                    {
-                        path: "payments",
-                        element: <PaymentsPage />,
-                    },
-                    {
-                        path: "id-card",
-                        element: <IDCardPage />,
-                    },
-                    {
-                        path: "timetable",
-                        element: <TimetablePage />,
-                    },
-                    {
-                        path: "announcements",
-                        element: <AnnouncementsPage />,
-                    },
-                    {
-                        path: "settings",
-                        element: <SettingsPage />,
-                    },
-                    {
-                        path: "profile",
-                        element: <ProfilePage />,
-                    },
-                ],
+                index: true,
+                element: <Suspense>
+                            <DashboardPage />
+                        </Suspense>,
+            },
+            {
+                path: "dashboard",
+                element: <Suspense>
+                            <DashboardPage />
+                        </Suspense>,
+            },
+            {
+                path: "programmes/*",
+                element: <Suspense>
+                            <ProgramCoursesPage />
+                        </Suspense>,
+            },
+            {
+                path: "students",
+                element: <Suspense>
+                            <StudentsPage />
+                        </Suspense>,
+            },
+            {
+                path: "staff",
+                element: <Suspense>
+                            <StaffPage />
+                        </Suspense>,
+            },
+            {
+                path: "payments",
+                element: <Suspense>
+                            <PaymentsPage />
+                        </Suspense>,
+            },
+            {
+                path: "id-card",
+                element: <Suspense>
+                            <IDCardPage />
+                        </Suspense>,
+            },
+            {
+                path: "timetable",
+                element: <Suspense>
+                            <TimetablePage />
+                        </Suspense>,
+            },
+            {
+                path: "announcements",
+                element: <Suspense>
+                            <AnnouncementsPage />
+                        </Suspense>,
+            },
+            {
+                path: "settings",
+                element: <Suspense>
+                            <SettingsPage />
+                        </Suspense>,
+            },
+            {
+                path: "profile",
+                element: <Suspense>
+                            <ProfilePage />
+                        </Suspense>,
             },
         ],
     },
