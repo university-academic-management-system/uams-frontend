@@ -27,23 +27,9 @@ import { useTimetable } from "@hooks/dashboard.hook"
 import moment from "moment"
 import type { ValueChangeDetails } from "node_modules/@chakra-ui/react/dist/types/components/date-picker/namespace"
 import { EmptyStateView } from "@components/shared/empty-state"
+import { formatMonthDay, formatTime, formatWeekday } from "@utils/function.util"
 
 const tz = getLocalTimeZone()
-
-const formatTime = (isoString: string, referenceStart?: string) => {
-    const m = moment.utc(isoString)
-    if (referenceStart) {
-        const start = moment.utc(referenceStart)
-        if (m.isBefore(start)) {
-            m.add(12, "hours")
-        }
-    }
-    return m.format("hh:mm A")
-}
-
-const formatWeekday = (date: Date) => moment(date).format("dddd")
-
-const formatMonthDay = (date: Date) => moment(date).format("MMMM D")
 
 type DateValue = DatePicker.DateValue
 
@@ -52,13 +38,13 @@ const TimetableComp = () => {
 
     // Determine the default date based on semester range
     const defaultDate = useMemo(() => {
-        if (!timetableResponse?.data?.semesterStartDate || !timetableResponse?.data?.semesterEndDate) {
+        if (!timetableResponse?.semesterStartDate || !timetableResponse?.semesterEndDate) {
             return parseDate(moment(today(tz).toString()).format("YYYY-MM-DD"))
         }
 
         const now = moment()
-        const start = moment(timetableResponse.data.semesterStartDate)
-        const end = moment(timetableResponse.data.semesterEndDate)
+        const start = moment(timetableResponse.semesterStartDate)
+        const end = moment(timetableResponse.semesterEndDate)
 
         if (now.isBefore(start, 'day') || now.isAfter(end, 'day')) {
             return parseDate(end.format("YYYY-MM-DD"))
@@ -87,7 +73,7 @@ const TimetableComp = () => {
 
     // Filter timetable for selected day
     const slots = useMemo(() => {
-        const entries = timetableResponse?.data?.entries;
+        const entries = timetableResponse?.entries;
         if (!entries || !nativeDate) return []
         const selectedDayName = formatWeekday(nativeDate).toUpperCase()
 
@@ -98,10 +84,10 @@ const TimetableComp = () => {
 
     // Parse semester dates for calendar restriction
     const dateRange = useMemo(() => {
-        if (!timetableResponse?.data?.semesterStartDate || !timetableResponse?.data?.semesterEndDate) return null;
+        if (!timetableResponse?.semesterStartDate || !timetableResponse?.semesterEndDate) return null;
 
-        const start = moment.utc(timetableResponse.data.semesterStartDate);
-        const end = moment.utc(timetableResponse.data.semesterEndDate);
+        const start = moment.utc(timetableResponse.semesterStartDate);
+        const end = moment.utc(timetableResponse.semesterEndDate);
 
         return {
             min: parseDate(start.format("YYYY-MM-DD")) as unknown as DateValue,
@@ -145,7 +131,7 @@ const TimetableComp = () => {
                 </Stack>
 
                 <DatePicker.Root
-                    key={timetableResponse?.data?.semesterEndDate || "initial"}
+                    key={timetableResponse?.semesterEndDate || "initial"}
                     inline
                     value={selectedDate as never}
                     onValueChange={handleDateChange}

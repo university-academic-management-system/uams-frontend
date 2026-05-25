@@ -167,10 +167,10 @@ const DashboardPage = () => {
             <Suspense>
                 <TimetableComp />
             </Suspense>
+
+
         </Box>
     )
 }
 
 export default DashboardPage;
-
-

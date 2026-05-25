@@ -1,13 +1,8 @@
 import { EmptyState, VStack } from "@chakra-ui/react"
-import type { ReactElement } from "react"
+import type { EmptyStateViewProps } from "@type/index.type"
 
-interface EmptyStateViewProps {
-    icon?: ReactElement
-    title: string
-    description?: string
-}
 
-export const EmptyStateView = ({ icon, title, description }: EmptyStateViewProps) => {
+export const EmptyStateView = ({ icon, title, description, action }: EmptyStateViewProps) => {
     return (
         <EmptyState.Root>
             <EmptyState.Content>
@@ -24,6 +19,7 @@ export const EmptyStateView = ({ icon, title, description }: EmptyStateViewProps
                         </EmptyState.Description>
                     )}
                 </VStack>
+                {action && action}
             </EmptyState.Content>
         </EmptyState.Root>
     )

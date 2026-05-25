@@ -4,8 +4,7 @@ import type { DashboardStatCardProps } from "@type/dashboard.type"
 
 
 const DashboardStatCard = ({ label, icon, value, description, color }: DashboardStatCardProps) => {
-    const { data: statsResponse, isLoading } = useDashboardStats()
-    const stats = statsResponse?.data
+    const { data: stats, isLoading } = useDashboardStats()
 
     if (isLoading) {
         return (

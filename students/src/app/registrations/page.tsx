@@ -4,6 +4,8 @@ import { lazy, Suspense } from "react"
 
 // lazy loads
 const CoursesTabContent = lazy(() => import("@components/registrations/courses-tab-content"));
+const TranscriptsTabsContent = lazy(() => import("@components/registrations/transcripts-tabs-content"));
+
 
 
 const Registrations = () => {
@@ -34,7 +36,9 @@ const Registrations = () => {
             </Tabs.Content>
 
             <Tabs.Content value="transcripts" w="full" ml={{ base: 0, md: 28 }}>
-                Manage your transcripts here.
+                <Suspense>
+                    <TranscriptsTabsContent />
+                </Suspense>
             </Tabs.Content>
 
             <Tabs.Content value="id-cards" w="full" ml={{ base: 0, md: 28 }}>

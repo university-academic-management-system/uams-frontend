@@ -68,8 +68,7 @@ const DonutProgress = ({ label, value, color }: { label: string; value: number; 
 }
 
 export const AcademicPerformanceChart = () => {
-    const { data: statsResponse, isLoading } = useDashboardStats()
-    const stats = statsResponse?.data
+    const { data: stats, isLoading } = useDashboardStats()
 
     const gpa = stats?.gpa;
     const cgpa = stats?.cgpa;
