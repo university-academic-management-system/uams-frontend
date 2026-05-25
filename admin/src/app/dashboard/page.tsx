@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BarChart3, Users } from "lucide-react";
 import { Chart, useChart } from "@chakra-ui/charts";
 import {
@@ -9,11 +10,12 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
-import { AnnouncementList } from "@components/dashboard/AnnouncementList";
-import StatsContainer from "@components/dashboard/StatsContainer";
 import useAuthStore from "@stores/auth.store";
 import { DashboardHook } from "@hooks/dashboard.hook";
-import { Box, EmptyState, Flex, Grid, Heading, Text } from "@chakra-ui/react";
+import { Box, EmptyState, Flex, Grid, Heading, Text, Highlight } from "@chakra-ui/react";
+
+const StatsContainer = lazy(() => import("@components/dashboard/StatsContainer"));
+const AnnouncementList = lazy(() => import("@components/dashboard/AnnouncementList").then(module => ({ default: module.AnnouncementList })));
 
 const DashboardPage = () => {
     const { user } = useAuthStore();
@@ -33,12 +35,15 @@ const DashboardPage = () => {
 
     return (
         <Flex direction="column" gap="4">
-            <Heading size="xl" color="fg.muted">
-                <Text as="span" color="fg.subtle" fontWeight="medium">Welcome Back, </Text>
-                {user?.name || "N/A"}
+            <Heading color="fg.subtle" size={{ base: "xl", md: "2xl" }}>
+                <Highlight query={user?.name || ""} styles={{ color: "fg", fontWeight: "bold" }}>
+                    {`Welcome Back, ${user?.name || ""}`}
+                </Highlight>
             </Heading>
 
-            <StatsContainer />
+            <Suspense>
+                <StatsContainer />
+            </Suspense>
 
             {/* Charts + Announcements Row */}
             <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
@@ -113,7 +118,9 @@ const DashboardPage = () => {
                 </Box>
 
                 {/* Announcements */}
-                <AnnouncementList announcements={announcements} />
+                <Suspense>
+                    <AnnouncementList announcements={announcements} />
+                </Suspense>
             </Grid>
 
             {/* Enrollment Growth */}

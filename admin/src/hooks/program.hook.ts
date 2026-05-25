@@ -1,11 +1,8 @@
 import { ProgramServices } from "@services/program.service"
-import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query"
+import { useQueryClient, useMutation, useSuspenseQuery, type UseMutationOptions } from "@tanstack/react-query"
 import type { ProgramTypeResponse } from "@type/program.type"
-
-import { useQueryClient } from "@tanstack/react-query"
-
 export const ProgramHooks = {
-    useProgramTypes: (options?: Partial<UseQueryOptions<ProgramTypeResponse[]>>) => useQuery<ProgramTypeResponse[]>({
+    useProgramTypes: (options?: any) => useSuspenseQuery<ProgramTypeResponse[]>({
         queryKey: ["program-types"],
         queryFn: ProgramServices.getProgramTypes,
         ...options,
