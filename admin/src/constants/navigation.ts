@@ -10,7 +10,7 @@ export interface NavigationLink {
 
 export const navigationLinks: NavigationLink[] = [
     { label: "Dashboard", href: "/", icon: LuHouse },
-    { label: "Programs & Courses", href: "/program-courses", icon: LuLibrary },
+    { label: "Programmes", href: "/programmes", icon: LuLibrary },
     { label: "Lecturers", href: "/staff", icon: PiAddressBook },
     { label: "Students", href: "/students", icon: LuUser },
     { label: "Payments", href: "/payments", icon: LuBanknote },

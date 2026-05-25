@@ -33,7 +33,7 @@ const Header = () => {
         >
             <Group>
                 <SidebarToggleButton />
-                <Icon hideFrom={"md"} as={activeLink?.icon} size="md" color="fg.muted" />
+                {activeLink?.icon && <Icon hideFrom={"md"} as={activeLink.icon} size="md" color="fg.muted" />}
                 <Heading hideFrom={!isCollapsed ? "md" : undefined} size={{base: "sm", md: "md"}}>{activeLink?.label}</Heading>
             </Group>
 
