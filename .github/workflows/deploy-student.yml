@@ -47,6 +47,3 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./students/dist/
           server-dir: /students/   # adjust if needed
-          timeout: 600000
-          retries: 3
-          passive: true
