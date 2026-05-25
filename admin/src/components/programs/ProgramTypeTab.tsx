@@ -9,7 +9,6 @@ import {
   Flex,
   Text,
   Input,
-  Spinner,
   Textarea,
   Button,
   Select,
@@ -19,11 +18,10 @@ import {
   Table,
   Dialog,
   EmptyState,
-  Checkbox,
   VStack,
   CloseButton,
 } from "@chakra-ui/react";
-import { Edit, Trash2, X, Plus, GraduationCap, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Edit, Trash2, Plus, GraduationCap, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 const typeCollection = createListCollection({
   items: [
@@ -36,14 +34,13 @@ const typeCollection = createListCollection({
 
 const ProgramTypeTab = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
   const createForm = useProgramTypeForm();
   const editForm = useProgramTypeForm({ type: "UNDERGRADUATE" });
 
-  const { data: rawProgramTypes = [], isLoading } = ProgramHooks.useProgramTypes();
+  const { data: rawProgramTypes = [] } = ProgramHooks.useProgramTypes();
   const programTypes = useMemo(() => Array.isArray(rawProgramTypes) ? rawProgramTypes : (rawProgramTypes as { data?: typeof rawProgramTypes })?.data || [], [rawProgramTypes]);
   
   const { mutateAsync: createProgramType, isPending: isCreatingMut } = ProgramHooks.useCreateProgramType();
@@ -109,40 +106,6 @@ const ProgramTypeTab = () => {
     }
   }, [deleteProgramType]);
 
-  const toggleSelection = useCallback((id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  }, []);
-
-  const toggleSelectAll = useCallback(() => {
-    setSelectedIds(
-      selectedIds.length === programTypes.length
-        ? []
-        : programTypes.map((pt) => pt.id),
-    );
-  }, [selectedIds, programTypes]);
-
-  const handleBulkDelete = useCallback(async () => {
-    if (selectedIds.length === 0) return;
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedIds.length} selected programme types?`,
-      )
-    ) {
-      try {
-        await Promise.all(
-          selectedIds.map((id) => deleteProgramType(id)),
-        );
-        toaster.success({
-          title: `${selectedIds.length} programme types deleted`,
-        });
-        setSelectedIds([]);
-      } catch {
-        // Error toast handled by axios interceptor
-      }
-    }
-  }, [selectedIds, deleteProgramType]);
 
   const requestSort = useCallback((key: string) => {
     setSortConfig((prev) => {
@@ -190,19 +153,20 @@ const ProgramTypeTab = () => {
     return sortable;
   }, [programTypes, sortConfig]);
 
-  if (isLoading) {
-    return (
-      <Flex alignItems="center" justifyContent="center" minH="400px">
-        <Flex direction="column" alignItems="center" gap="4">
-          <Spinner size="xl" color="blue.500" borderWidth="3px" />
-          <Text color="fg.muted">Loading programme types...</Text>
-        </Flex>
-      </Flex>
-    );
-  }
+
 
   return (
     <Flex direction="column" gap="8">
+      <Flex position="absolute" top="0" right="0" zIndex="10">
+        <Button
+          colorPalette="accent"
+          onClick={() => setIsCreating(true)}
+          size="xl"
+          fontSize="sm"
+        >
+          <Plus size={16} /> Create Programme Type
+        </Button>
+      </Flex>
       {/* Create Form Dialog */}
       <Dialog.Root
         open={isCreating}
@@ -488,46 +452,11 @@ const ProgramTypeTab = () => {
 
       {/* Table */}
       <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" overflow="hidden">
-        <Flex p="6" alignItems="center" borderBottom="1px solid" borderColor="border.muted">
-          <Box>
-            <Text fontSize="lg" fontWeight="bold" color="fg.muted">
-              Programme Types ({programTypes.length})
-            </Text>
-            <Text fontSize="xs" color="fg.subtle" mt="0.5">
-              Manage all academic programme types and degree formats
-            </Text>
-          </Box>
-            <Button
-              colorPalette="accent"
-              onClick={() => setIsCreating(true)}
-              size="xl"
-              fontSize="sm"
-              ml="auto"
-            >
-              <Plus size={16} /> Create Programme Type
-            </Button>
-        </Flex>
 
-        <Box overflowX="auto">
+        <Table.ScrollArea w="full">
           <Table.Root size="sm" variant="outline" border="none" colorPalette="accent">
             <Table.Header bg=" bg.subtle">
               <Table.Row borderColor="border.muted">
-                <Table.ColumnHeader px="6" py="4" w="12" textAlign="center">
-                  <Checkbox.Root
-                    checked={
-                      programTypes.length > 0 &&
-                      selectedIds.length === programTypes.length
-                    }
-                    onCheckedChange={toggleSelectAll}
-                    cursor="pointer"
-                    colorPalette="accent"
-                  >
-                    <Checkbox.HiddenInput />
-                    <Checkbox.Control>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                  </Checkbox.Root>
-                </Table.ColumnHeader>
                 <Table.ColumnHeader
                   px="6"
                   py="4"
@@ -603,7 +532,7 @@ const ProgramTypeTab = () => {
             <Table.Body>
               {programTypes.length === 0 ? (
                 <Table.Row>
-                  <Table.Cell colSpan={6} py="12">
+                  <Table.Cell colSpan={5} py="12">
                     <EmptyState.Root>
                       <EmptyState.Content>
                         <EmptyState.Indicator>
@@ -617,13 +546,6 @@ const ProgramTypeTab = () => {
                             Add a new programme type to start organizing your
                             academic structure.
                           </EmptyState.Description>
-                          <Button
-                            onClick={() => setIsCreating(true)}
-                            size="xl"
-                            mt="4"
-                          >
-                            <Plus size={16} /> Create Programme Type
-                          </Button>
                         </VStack>
                       </EmptyState.Content>
                     </EmptyState.Root>
@@ -633,25 +555,11 @@ const ProgramTypeTab = () => {
                 sortedProgramTypes.map((pt, index) => (
                   <Table.Row
                     key={pt.id}
-                    bg={selectedIds.includes(pt.id) ? "blue.50" : undefined}
                     _hover={{ bg: "slate.50" }}
                     borderColor="border.muted"
                     fontSize="sm"
                     color="fg.muted"
                   >
-                    <Table.Cell px="6" py="4" textAlign="center">
-                      <Checkbox.Root
-                        checked={selectedIds.includes(pt.id)}
-                        onCheckedChange={() => toggleSelection(pt.id)}
-                        cursor="pointer"
-                        colorPalette="accent"
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                      </Checkbox.Root>
-                    </Table.Cell>
                     <Table.Cell px="6" py="4">{index + 1}</Table.Cell>
                     <Table.Cell px="6" py="4" fontWeight="medium">{pt.name}</Table.Cell>
                     <Table.Cell px="6" py="4">{pt.code || "—"}</Table.Cell>
@@ -687,50 +595,10 @@ const ProgramTypeTab = () => {
               )}
             </Table.Body>
           </Table.Root>
-        </Box>
+        </Table.ScrollArea>
       </Box>
 
-      {/* Floating Action Bar */}
-      {selectedIds.length > 0 && (
-        <Flex
-          position="fixed"
-          bottom="8"
-          left="50%"
-          transform="translateX(-50%)"
-          bg="white"
-          px="6"
-          py="3"
-          borderRadius="md"
-          boxShadow="none"
-          border="xs"
-          borderColor="border.muted"
-          alignItems="center"
-          gap="6"
-          zIndex="50"
-        >
-          <Text fontSize="sm" fontWeight="bold" color="fg.muted">
-            {selectedIds.length} items selected
-          </Text>
-          <Box w="px" h="6" bg="fg.subtle" />
-          <Button
-            onClick={handleBulkDelete}
-            size="xl"
-            borderRadius="lg"
-            fontSize="xs"
-          >
-            <Trash2 size={16} /> Delete
-          </Button>
-          <Box w="px" h="6" bg="fg.subtle" />
-          <Button
-            aria-label="Unselect all"
-            variant="ghost"
-            size="xl"
-            onClick={() => setSelectedIds([])}
-          >
-            <X size={20} />
-          </Button>
-        </Flex>
-      )}
+
     </Flex>
   );
 };

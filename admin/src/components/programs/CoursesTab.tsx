@@ -14,7 +14,6 @@ import {
   Flex,
   Text,
   Input,
-  Spinner,
   Textarea,
   Button,
   InputGroup,
@@ -112,7 +111,7 @@ const CoursesTab = () => {
 
   const form = useCourseForm();
 
-  const { data: courses = [], isLoading } = CourseHook.useCourses(filters);
+  const { data: courses = [] } = CourseHook.useCourses(filters);
   const { data: programTypes = [] } = CourseHook.useProgramTypes();
   const { mutate: createCourse, isPending: isCreating } = CourseHook.useCreateCourse();
   const { mutate: updateCourse, isPending: isUpdating } = CourseHook.useUpdateCourse();
@@ -326,21 +325,12 @@ const CoursesTab = () => {
     });
   }, [filtered, sortConfig]);
 
-  if (isLoading) {
-    return (
-      <Flex alignItems="center" justifyContent="center" minH="400px">
-        <Flex direction="column" alignItems="center" gap="4">
-          <Spinner size="xl" color="blue.500" borderWidth="3px" />
-          <Text color="fg.muted">Loading courses...</Text>
-        </Flex>
-      </Flex>
-    );
-  }
+
 
   return (
     <Dialog.Root size="lg" role="alertdialog" onExitComplete={() => { form.reset(defaultCourseFormData); setIsEditing(false); setEditingCourseId(null); }} placement="center" closeOnInteractOutside={false}>
     <Flex direction="column" gap="8">
-      <Flex justifyContent="flex-end" mt="-14">
+      <Flex position="absolute" top="0" right="0" zIndex="10">
         <Menu.Root positioning={{ placement: "bottom-end" }}>
           <Menu.Trigger asChild>
             <Button
@@ -409,17 +399,19 @@ const CoursesTab = () => {
         borderColor="border.muted"
         boxShadow="none"
       >
-        <Flex p="6" alignItems="center">
+        {/* Desktop Toolbar */}
+        <Flex p="6" alignItems="center" hideBelow="md">
           <InputGroup
             startElement={<Search size={20} color="gray" />}
             width="380px"
           >
             <Input
+              colorPalette="accent"
               placeholder="Search by title, code, or level..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               bg="white"
-              border="xs"
+              border="1px"
               borderColor="border.muted"
               size="lg"
               ps="11"
@@ -560,7 +552,124 @@ const CoursesTab = () => {
           </Flex>
         </Flex>
 
-        <Box overflowX="auto" w="full">
+        {/* Mobile Toolbar */}
+        <Flex p="4" direction="column" gap="4" hideFrom="md">
+          <InputGroup
+            startElement={<Search size={20} color="gray" />}
+            width="full"
+          >
+            <Input
+              colorPalette="accent"
+              placeholder="Search by title, code..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              bg="white"
+              border="1px"
+              borderColor="border.muted"
+              size="lg"
+              ps="11"
+            />
+          </InputGroup>
+
+          <Flex gap="3" direction="column" width="full">
+            <Flex gap="3" width="full">
+              <Select.Root
+                collection={levelFilterCollection}
+                value={[filters.level]}
+                onValueChange={(e) =>
+                  setFilters((p) => ({ ...p, level: e.value[0] }))
+                }
+                size="lg"
+                flex="1"
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger bg="white" border="xs" borderColor="border.muted">
+                    <Select.ValueText placeholder="Level" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {levelFilterCollection.items.map((item: { label: string, value: string }) => (
+                        <Select.Item key={item.value} item={item}>
+                          <Select.ItemText>{item.label}</Select.ItemText>
+                          <Select.ItemIndicator />
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+
+              <Select.Root
+                collection={semesterFilterCollection}
+                value={[filters.semester]}
+                onValueChange={(e) =>
+                  setFilters((p) => ({ ...p, semester: e.value[0] }))
+                }
+                size="lg"
+                flex="1"
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger bg="white" border="xs" borderColor="border.muted">
+                    <Select.ValueText placeholder="Semester" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {semesterFilterCollection.items.map((item: { label: string, value: string }) => (
+                        <Select.Item key={item.value} item={item}>
+                          <Select.ItemText>{item.label}</Select.ItemText>
+                          <Select.ItemIndicator />
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </Flex>
+
+            <Menu.Root>
+              <Menu.Trigger asChild>
+                <Button size="lg" variant="outline" border="xs" borderColor="border.muted" disabled={courses.length === 0} width="full">
+                  <Download size={20} /> Export table
+                </Button>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content
+                    bg="white"
+                    boxShadow="xl"
+                    borderRadius="md"
+                    border="xs"
+                    borderColor="border.muted"
+                    minW="180px"
+                  >
+                    <Menu.Item value="excel" onClick={handleExportExcel} cursor="pointer" py="3" px="4" _hover={{ bg: "slate.50" }}>
+                      <LuFileSpreadsheet size={18} />
+                      <Box flex="1" ml="2">Export as Excel</Box>
+                    </Menu.Item>
+                    <Menu.Item value="pdf" onClick={handleExportPDF} cursor="pointer" py="3" px="4" _hover={{ bg: "slate.50" }}>
+                      <LuFileText size={18} />
+                      <Box flex="1" ml="2">Export as PDF</Box>
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
+          </Flex>
+        </Flex>
+
+        <Table.ScrollArea w="full">
           <Table.Root w="full" variant="outline" interactive>
             <Table.Header bg="bg.subtle">
               <Table.Row borderY="xs" borderColor="border.muted">
@@ -848,7 +957,7 @@ const CoursesTab = () => {
               )}
             </Table.Body>
           </Table.Root>
-        </Box>
+        </Table.ScrollArea>
       </Box>
 
       {/* Floating Action Bar */}
@@ -862,12 +971,14 @@ const CoursesTab = () => {
           px="6"
           py="3"
           borderRadius="md"
-          boxShadow="none"
+          boxShadow="lg"
           border="xs"
           borderColor="border.muted"
           alignItems="center"
           gap="6"
           zIndex="50"
+          width={{ base: "calc(100% - 2rem)", md: "auto" }}
+          justifyContent={{ base: "space-between", md: "center" }}
         >
           <Text fontSize="sm" fontWeight="bold" color="fg.muted">
             {selectedIds.length} items selected
