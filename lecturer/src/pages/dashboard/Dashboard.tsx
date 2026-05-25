@@ -14,6 +14,7 @@ import {
   Icon,
   useBreakpointValue,
   Separator,
+  Card,
 } from "@chakra-ui/react";
 import {
   BookOpen,
@@ -31,6 +32,7 @@ import StatCard from "@components/shared/StatCard";
 import TimetablePanel from "@components/shared/TimetablePanel";
 import { useNavigate } from "react-router";
 import useAuthStore from "@stores/auth.store";
+import AcademicPerformanceChart from "@components/shared/AcademicChart";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -131,6 +133,11 @@ const Dashboard = () => {
           </Box>
         </GridItem>
       </Grid>
+
+      {/* Academic Performance Chart */}
+        <Box p="6">
+          <AcademicPerformanceChart />
+        </Box>
 
       {/* Timetable Panel */}
         <Box px={5} pb={5} bg="white">
