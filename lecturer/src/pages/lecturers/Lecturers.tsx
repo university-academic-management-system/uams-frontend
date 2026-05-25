@@ -54,7 +54,12 @@ const Lecturers = () => {
       items: [
         { label: "All Roles", value: "" },
         ...uniqueRoles.map((role) => ({
-          label: ["HOD", "ERO"].includes(role) ? role : role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
+          label: ["HOD", "ERO"].includes(role) 
+            ? role 
+            : role.replace(/_/g, " ")
+                  .split(" ")
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(" "),
           value: role,
         })),
       ] as { label: string; value: string; }[],
@@ -114,7 +119,7 @@ const Lecturers = () => {
           Lecturers
         </Heading>
         <Text as="span" color="fg.subtle" fontSize="lg">
-          ({filteredLecturers.length} / {totalCount})
+          ({totalCount} total)
         </Text>
       </Flex>
 
