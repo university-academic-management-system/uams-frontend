@@ -67,7 +67,7 @@ const Sidebar = () => {
             align="center"
             gap="4"
             transition="width 0.3s ease-in-out"
-            w={isCollapsed ? "74px" : "240px"}>
+            w={isCollapsed ? "78px" : "240px"}>
             <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
                 {/* logo */}
                 {!isCollapsed ? <Image src="public/assets/sidebar-image.png" alt="UPHCSC Logo" h="auto" w="auto" /> : <Image src="public/assets/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={12} h={"auto"} />}
@@ -173,7 +173,7 @@ const LogoutButton = () => {
                 width="fit"
                 colorPalette={"red"}
                 color="red.500"
-                onClick={() => { clearAuth(); location.replace("/auth/login") }}
+                onClick={() => { location.replace("/auth/login"), clearAuth(); }}
             >
                 <Icon as={LuLogOut} size="md" />
             </IconButton>
