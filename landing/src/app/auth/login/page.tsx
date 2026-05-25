@@ -28,7 +28,7 @@ const LoginPage = () => {
             const userRoles = response.data.user.roles || [response.data.user.role].filter(Boolean) as string[];
 
             if (userRoles.includes("STUDENT")) {
-                window.location.href = "/student";
+                window.location.href = "/students";
             } else if (userRoles.includes("STAFF")) {
                 if (userRoles.includes("DEPARTMENT_ADMIN")) {
                     window.location.href = "/admin";
