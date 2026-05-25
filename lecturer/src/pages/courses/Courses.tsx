@@ -119,16 +119,8 @@ const Courses = () => {
 
   return (
     <Box>
-      <Flex mb="6" gap="1" align="baseline">
-        <Heading color="fg.muted" mb="1">
-          Courses{" "}
-        </Heading>
-        <Text as="span" color="fg.subtle" lineHeight="1.5">
-          ({totalCount} total)
-        </Text>
-      </Flex>
 
-      <Box bg="bg" rounded="md" p="4">
+      <Box bg="bg" rounded="md">
         {/* Filters row */}
         <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
           <InputGroup startElement={<LuSearch />} width="300px">
@@ -229,11 +221,11 @@ const Courses = () => {
 
         {/* Table */}
         <Table.ScrollArea>
-          <Table.Root size="lg" variant="line" stickyHeader>
+          <Table.Root size="lg" variant="outline" stickyHeader>
             <Table.Header>
               <Table.Row>
                 {columns.map((col) => (
-                  <Table.ColumnHeader bg="#f8fafc" key={col}>{col}</Table.ColumnHeader>
+                  <Table.ColumnHeader bg="bg.muted" key={col}>{col}</Table.ColumnHeader>
                 ))}
               </Table.Row>
             </Table.Header>

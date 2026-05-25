@@ -45,11 +45,8 @@ const Announcement = () => {
   const hasNoAnnouncements = !isLoading && announcements.length === 0;
 
   return (
-    <Box p="8" maxW="full" mx="auto">
-      <Flex align="center" justify="space-between" mb="8" flexWrap="wrap" gap="4">
-        <Heading color="fg.muted">
-          Announcement
-        </Heading>
+    <Box maxW="full" mx="auto">
+      <Flex align="center" justify="flex-end" mb="8" flexWrap="wrap" gap="4">
 
         <Flex align="center" gap="3" flexWrap="wrap" colorPalette={"accent"}>
           <DatePicker.Root

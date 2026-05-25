@@ -88,14 +88,7 @@ const Navbar = () => {
                   </ButtonGroup>
 
       {/* Role Badge */}
-      <Badge
-        colorPalette="blue"
-        fontSize="lg"
-        px="3"
-        py="1"
-        borderRadius="full"
-        textTransform="capitalize"
-      >
+      <Badge>
         {userRole}
       </Badge>
     </Flex>

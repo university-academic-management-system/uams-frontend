@@ -93,13 +93,13 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
   return (
     <Box>
       <Table.ScrollArea>
-        <Table.Root size="lg" variant="line" style={{ tableLayout: 'auto', minWidth: '1200px' }} stickyHeader>
+        <Table.Root size="lg" variant="outline" stickyHeader>
           <Table.Header>
             <Table.Row>
               {COLUMNS.map((col) => (
                 <Table.ColumnHeader
                   key={col.key}
-                  bg="#f8fafc"
+                  bg="bg.muted"
                   fontSize="lg"
                   fontWeight="600"
                   color="fg.muted"
