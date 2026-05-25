@@ -152,7 +152,7 @@ const StaffPage = () => {
   // };
 
   return (
-    <Box maxW={{ base: "100%", lg: "calc(100vw - 340px)" }}>
+    <Box w="full">
       <Box mb="6">
         <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Lecturers</Text>
         <Text fontSize="sm" color="fg.subtle">Manage department lecturers and their roles</Text>

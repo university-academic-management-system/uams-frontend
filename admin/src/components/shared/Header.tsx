@@ -1,11 +1,12 @@
-import { ButtonGroup, Flex, Group, Heading } from "@chakra-ui/react";
+import { AbsoluteCenter, ButtonGroup, Flex, Group, Heading, Icon, Image } from "@chakra-ui/react";
 import { SidebarToggleButton } from "./Sidebar";
 import NotificationDrawer from "./notification-drawer";
 import AuditLogs from "./audit-log";
 import { useSidebarStore } from "@stores/ui.store";
 import { useLocation } from "react-router";
 import { useCallback, useMemo } from "react";
-import { navigationLinks, type NavigationLink } from "@constants/navigation";
+import { navigationLinks, type NavigationLink } from "../../constants/navigation";
+import MobileSideDrawer from "./mobile-side-drawer";
 
 const Header = () => {
     const { isCollapsed } = useSidebarStore();
@@ -22,21 +23,28 @@ const Header = () => {
         <Flex
             bg="bg"
             p="6"
-            pl="0"
+            pl={{ base: 6, md: 0 }}
             align={"center"}
             justify={"space-between"}
             h="16"
             w="full"
+            shadow={{ base: "xs", md: "none" }}
+            pos="relative"
         >
             <Group>
                 <SidebarToggleButton />
-                {isCollapsed && <Heading>{activeLink?.label}</Heading>}
+                <Icon hideFrom={"md"} as={activeLink?.icon} size="md" color="fg.muted" />
+                <Heading hideFrom={!isCollapsed ? "md" : undefined} size={{base: "sm", md: "md"}}>{activeLink?.label}</Heading>
             </Group>
 
+            <AbsoluteCenter hideFrom={"md"}>
+                <Image src="/admin/assets/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={7} h={"auto"} />
+            </AbsoluteCenter>
 
             <ButtonGroup gap="2">
                 <NotificationDrawer />
                 <AuditLogs />
+                <MobileSideDrawer />
             </ButtonGroup>
         </Flex>
     </>
