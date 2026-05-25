@@ -112,17 +112,7 @@ const Lecturers = () => {
   };
 
   return (
-    <Box>
-      {/* Heading – inline count */}
-      <Flex align="baseline" gap="2" mb="6">
-        <Heading color="fg.muted" mb="0">
-          Lecturers
-        </Heading>
-        <Text as="span" color="fg.subtle" fontSize="lg">
-          ({totalCount} total)
-        </Text>
-      </Flex>
-
+    <Box w="full">
       <Box bg="bg" rounded="md" p="4">
         {/* Filters – always visible */}
         <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette={"accent"}>

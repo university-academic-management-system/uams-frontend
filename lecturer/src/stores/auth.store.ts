@@ -11,18 +11,15 @@ const useAuthStore = create<AuthState>()(
       user: undefined,
       setAuth: (auth) => set((state) => ({ ...state, ...auth })),
       clearAuth: () => {
-        // Clear in-memory state
         set({
           token: "",
           expireAt: "",
           user: undefined,
         });
-        // Remove persisted data from localStorage
-        localStorage.removeItem("user-store");
       },
     }),
     {
-      name: "user-store",
+      name: "auth-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         token: state.token,
