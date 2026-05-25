@@ -1,120 +1,53 @@
-import { Bell, History, Menu } from 'lucide-react';
-import { useNavigate } from 'react-router';
-import type { ViewType } from '@type/common.type';
-import { Box, Flex, Text, Button, Avatar } from '@chakra-ui/react';
+import { AbsoluteCenter, ButtonGroup, Flex, Group, Heading, Icon, Image } from "@chakra-ui/react";
+import { SidebarToggleButton } from "./Sidebar";
+import NotificationDrawer from "./notification-drawer";
+import AuditLogs from "./audit-log";
+import { useSidebarStore } from "@stores/ui.store";
+import { useLocation } from "react-router";
+import { useCallback, useMemo } from "react";
+import { navigationLinks, type NavigationLink } from "../../constants/navigation";
+import MobileSideDrawer from "./mobile-side-drawer";
 
-interface HeaderProps {
-    onViewChange: (view: ViewType) => void;
-    currentUser?: string;
-    email?: string;
-    onMenuClick?: () => void;
-}
+const Header = () => {
+    const { isCollapsed } = useSidebarStore();
+    const path = useLocation().pathname;
+    const links = useMemo(() => navigationLinks, []);
 
-export const Header: React.FC<HeaderProps> = ({ onViewChange, currentUser = 'Dept. Admin', email, onMenuClick }) => {
-    const navigate = useNavigate();
+    const isActive = useCallback((href: string) => {
+        return path.endsWith(href);
+    }, [path]);
 
-    return (
+    const activeLink = links.find((link: NavigationLink) => isActive(link.href));
+
+    return <>
         <Flex
-            as="header"
+            bg="bg"
+            p="6"
+            pl={{ base: 6, md: 0 }}
+            align={"center"}
+            justify={"space-between"}
             h="16"
-            bg="white"
-            borderBottom="xs"
-            borderColor="border.muted"
-            alignItems="center"
-            justifyContent="space-between"
-            px={{ base: "4", md: "8" }}
-            position="sticky"
-            top="0"
-            zIndex="40"
-            gap="4"
+            w="full"
+            shadow={{ base: "xs", md: "none" }}
+            pos="relative"
         >
-            <Flex alignItems="center" gap="4" flex="1">
-                <Box
-                    as="button"
-                    onClick={onMenuClick}
-                    display={{ base: "block", lg: "none" }}
-                    p="2"
-                    borderRadius="md"
-                    _hover={{ bg: "fg.subtle" }}
-                >
-                    <Menu size={24} color="#64748b" />
-                </Box>
-                <Box maxW="lg" w="full" />
-            </Flex>
+            <Group>
+                <SidebarToggleButton />
+                <Icon hideFrom={"md"} as={activeLink?.icon} size="md" color="fg.muted" />
+                <Heading hideFrom={!isCollapsed ? "md" : undefined} size={{base: "sm", md: "md"}}>{activeLink?.label}</Heading>
+            </Group>
 
-            <Flex alignItems="center" gap="6">
-                <Flex
-                    alignItems="center"
-                    gap="4"
-                    color="fg.muted"
-                    borderRight="xs"
-                    borderColor="border.muted"
-                    pr="6"
-                >
-                    <Button
-                        onClick={() => navigate('/audit-logs')}
-                        position="relative"
-                        _hover={{ color: "blue.600" }}
-                        transition="all 0.2s"
-                        p="2"
-                        borderRadius="lg"
-                        background="transparent"
-                        color="gray.600"
-                        title="Audit Log"
-                    >
-                        <History size={20} />
-                    </Button>
-                    <Button
-                        onClick={() => navigate('/notifications')}
-                        position="relative"
-                        _hover={{ color: "blue.600" }}
-                        transition="all 0.2s"
-                        p="2"
-                        borderRadius="lg"
-                        background="transparent"
-                        color="gray.600"
-                    >
-                        <Bell size={20} />
-                        <Box
-                            position="absolute"
-                            top="2"
-                            right="2"
-                            w="2"
-                            h="2"
-                            bg="rose.500"
-                            borderRadius="full"
-                            border="2px solid white"
-                        />
-                    </Button>
-                </Flex>
+            <AbsoluteCenter hideFrom={"md"}>
+                <Image src="/admin/assets/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={7} h={"auto"} />
+            </AbsoluteCenter>
 
-                <Box
-                    as="button"
-                    onClick={() => onViewChange('Profile')}
-                    display="flex"
-                    alignItems="center"
-                    gap="3"
-                    _hover={{ bg: "slate.50" }}
-                    p="1"
-                    pr="3"
-                    borderRadius="xl"
-                    transition="all 0.2s"
-                >
-                    <Box textAlign="right" display={{ base: "none", sm: "block" }}>
-                        <Text fontSize="sm" fontWeight="semibold" color="fg.muted" lineHeight="none">
-                            {currentUser}
-                        </Text>
-                        <Text fontSize="xs" color="fg.muted" mt="1">
-                            {email}
-                        </Text>
-                    </Box>
-                    <Avatar.Root size="sm">
-                        <Avatar.Fallback name={currentUser} />
-                    </Avatar.Root>
-                </Box>
-            </Flex>
+            <ButtonGroup gap="2">
+                <NotificationDrawer />
+                <AuditLogs />
+                <MobileSideDrawer />
+            </ButtonGroup>
         </Flex>
-    );
-};
+    </>
+}
 
 export default Header;

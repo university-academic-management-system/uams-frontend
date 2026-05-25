@@ -1,47 +1,105 @@
-import { Flex, Text, Box, Icon, Avatar, Separator } from "@chakra-ui/react";
-import { Bell } from "lucide-react";
+
+import { Badge, ButtonGroup, Flex, Group, Heading } from "@chakra-ui/react";
+import { SidebarToggleButton } from "./Sidebar";
+import NotificationDrawer from "./Notification-drawer";
+import { sidebarStore } from "@stores/ui.store";
+import { useLocation } from "react-router";
+import { useCallback, useMemo } from "react";
+
 import useAuthStore from "@stores/auth.store";
+import AuditLogs from "./audit-log";
 
 const Navbar = () => {
+  const { isCollapsed } = sidebarStore();
+    const path = useLocation().pathname;
+    const links = useMemo(() => [
+        {
+            label: "Dashboard",
+            href: "/dashboard",
+        },
+        {
+            label: "Students",
+            href: "/students",
+        },
+        {
+            label: "Lecturers",
+            href: "/lecturers",
+        },
+        {
+            label: "Courses",
+            href: "/courses",
+        },
+        {
+            label: "Results",
+            href: "/results",
+        },
+        {
+            label: "Projects",
+            href: "/projects",
+        },
+        {
+            label: "Timetable",
+            href: "/timetable",
+        },
+        {
+            label: "Announcement",
+            href: "/announcement",
+        },
+        {
+            label: "Profile",
+            href: "/profile",
+        },
+        {
+            label: "Settings",
+            href: "/settings",
+        }
+    ], []);
+
+    const isActive = useCallback((href: string) => {
+        return path.endsWith(href);
+    }, [path]);
+
+    const activeLink = links.find((link) => isActive(link.href));
+
   const { user } = useAuthStore();
 
-  return (
-    <Flex
-      as="header"
-      align="center"
-      justify="flex-end"
-      gap="4"
-      px="6"
-      py="3"
-      bg="white"
-      borderBottom="1px solid"
-      borderColor="border.muted"
-    >
-      {/* Notification Bell */}
-      <Icon as={Bell} boxSize="5" color="fg.muted" cursor="pointer" />
+  // Get the primary role (prefer user?.role, else first role from roles array)
+  const userRole = user?.role || (user?.roles && user.roles[0]) || "Staff";
 
-      {/* Divider */}
-       <Separator orientation="vertical" height="6" />
+  return (  <>
+                 <Flex
+                  bg="bg"
+                  p="6"
+                  pl="0"
+                  align={"center"}
+                  justify={"space-between"}
+                  h="16"
+                  w="full"
+              >
+                  <Group>
+                      <SidebarToggleButton />
+                      {isCollapsed && <Heading>{activeLink?.label}</Heading>}
+                  </Group>
+      
+      
+                  <ButtonGroup gap="2">
+                    <AuditLogs />
+                      <NotificationDrawer />
+                  </ButtonGroup>
 
-      {/* User Info + Avatar */}
-      <Flex align="center" gap="3">
-        {/* Name & Email */}
-        <Box textAlign="right">
-          <Text fontSize="sm" fontWeight="600" color="fg.muted" lineHeight="1.3">
-            {user?.name || "N/A"}
-          </Text>
-          <Text fontSize="xs" color="fg.subtle" lineHeight="1.3">
-            {user?.email || "N/A"}
-          </Text>
-        </Box>
-
-        {/* Avatar */}
-    
-          <Avatar.Root size="md">
-            <Avatar.Fallback name={user?.name} />
-          </Avatar.Root>
-      </Flex>
+      {/* Role Badge */}
+      <Badge
+        colorPalette="blue"
+        fontSize="lg"
+        px="3"
+        py="1"
+        borderRadius="full"
+        textTransform="capitalize"
+      >
+        {userRole}
+      </Badge>
     </Flex>
+    </>
   );
 };
 

@@ -1,20 +1,17 @@
 import { useState } from "react";
-import { Upload, FileUp, Download } from "lucide-react";
+import { Upload, FileUp } from "lucide-react";
 import { toaster } from "@components/ui/toaster";
 import { 
-  Box, 
   Flex, 
   Text,
   Button, 
   Dialog,
   Portal,
   VStack,
-  DownloadTrigger,
   CloseButton,
   FileUpload
 } from "@chakra-ui/react";
 import { CourseHook } from "@hooks/course.hook";
-import axios from "axios";
 
 interface Props {
     children: React.ReactNode;
@@ -24,17 +21,7 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
     const [file, setFile] = useState<File | null>(null);
     const { mutate: uploadCourses, isPending: isUploading } = CourseHook.useBulkUploadCourses();
 
-    const handleDownloadSample = async () => {
-        try {
-            const response = await axios.get("/sample-courses-upload.xlsx", {
-                responseType: "blob",
-            });
-            return response.data;
-        } catch (err) {
-            // Error toast handled by axios interceptor
-            throw err;
-        }
-    };
+
 
     const handleUpload = async () => {
         if (!file) {
@@ -56,48 +43,26 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
                     <Dialog.Content rounded="md" overflow="hidden" colorPalette="accent">
-                        <Dialog.Header p="6" borderBottom="xs" borderColor="border.muted">
+                        <Dialog.Header p="6">
                             <Flex justifyContent="space-between" alignItems="start" w="full">
                                 <VStack align="start" gap={1}>
                                     <Dialog.Title fontSize="lg" fontWeight="bold" color="fg.muted">Bulk Upload Courses</Dialog.Title>
                                     <Dialog.Description fontSize="sm" color="fg.muted">
-                                        Upload an Excel file containing courses data.
+                                        Upload an Excel file containing courses data. Download the sample file below to see the required format.
+                                        <br />
+                                        <a href="/admin/documents/course-sample.xlsx" download="Course_Sample_File.xlsx" style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", fontWeight: 600, color: "#2563eb", textDecoration: "none", transition: "color 0.2s", marginTop: "16px" }}>
+                                            <FileUp size={16} /> Download Sample Excel Template
+                                        </a>
                                     </Dialog.Description>
                                 </VStack>
                                 <Dialog.CloseTrigger asChild>
-                                    <CloseButton />
+                                    <CloseButton colorPalette="gray" />
                                 </Dialog.CloseTrigger>
                             </Flex>
                         </Dialog.Header>
 
                         <Dialog.Body p="8">
                             <VStack gap="6" align="stretch">
-                                <Box bg="blue.50/50" p="4" borderRadius="lg" border="1px dashed" borderColor="blue.200">
-                                    <Flex alignItems="center" gap="3">
-                                        <FileUp size={18} color="#2563eb" />
-                                        <Box>
-                                            <Text fontSize="sm" fontWeight="bold" color="fg.muted">Reference Template</Text>
-                                            <Text fontSize="xs" color="fg.muted">Download the sample file to ensure your data is formatted correctly.</Text>
-                                        </Box>
-                                        <DownloadTrigger
-                                            data={() => handleDownloadSample()}
-                                            fileName="Course_Sample_File.xlsx"
-                                            mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                            asChild
-                                        >
-                                            <Button 
-                                                variant="ghost" 
-                                                color="blue.600" 
-                                                size="sm" 
-                                                ml="auto"
-                                                fontWeight="bold"
-                                            >
-                                                <Download size={14} style={{ marginRight: '6px' }} />
-                                                Download
-                                            </Button>
-                                        </DownloadTrigger>
-                                    </Flex>
-                                </Box>
 
                                 <FileUpload.Root
                                     onFileChange={(details) => setFile(details.acceptedFiles[0] || null)}
@@ -127,9 +92,8 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
                                                 <Text fontSize="sm" fontWeight="bold" color="fg.muted">{file.name}</Text>
                                                 <Text fontSize="xs" color="fg.muted">{(file.size / 1024).toFixed(1)} KB</Text>
                                                 <Button
-                                                    size="xs"
+                                                    size="xl"
                                                     variant="ghost"
-                                                    color="red.500"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setFile(null);
@@ -152,14 +116,12 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
                             </VStack>
                         </Dialog.Body>
 
-                        <Dialog.Footer p="6" borderTop="xs" borderColor="border.muted" gap="3">
+                        <Dialog.Footer p="6" gap="3">
                             <Dialog.ActionTrigger asChild>
                                 <Button 
                                     variant="outline" 
-                                    borderColor="border.muted" 
-                                    color="fg.muted"
-                                    px="6"
-                                    fontWeight="bold"
+                                    colorPalette="gray"
+                                    size="xl"
                                 >
                                     Cancel
                                 </Button>
@@ -168,11 +130,8 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
                                 onClick={handleUpload}
                                 loading={isUploading}
                                 loadingText="Uploading..."
-                                bg="#1D7AD9" 
-                                color="white"
-                                px="8"
-                                fontWeight="bold"
                                 disabled={!file}
+                                size="xl"
                             >
                                 Start Upload
                             </Button>

@@ -54,7 +54,12 @@ const Lecturers = () => {
       items: [
         { label: "All Roles", value: "" },
         ...uniqueRoles.map((role) => ({
-          label: ["HOD", "ERO"].includes(role) ? role : role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
+          label: ["HOD", "ERO"].includes(role) 
+            ? role 
+            : role.replace(/_/g, " ")
+                  .split(" ")
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(" "),
           value: role,
         })),
       ] as { label: string; value: string; }[],
@@ -114,7 +119,7 @@ const Lecturers = () => {
           Lecturers
         </Heading>
         <Text as="span" color="fg.subtle" fontSize="lg">
-          ({filteredLecturers.length} / {totalCount})
+          ({totalCount} total)
         </Text>
       </Flex>
 
@@ -123,7 +128,7 @@ const Lecturers = () => {
         <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette={"accent"}>
           <InputGroup startElement={<LuSearch />} width="300px">
             <Input
-              placeholder="Search by Name, Email or Code"
+              placeholder="Search by Name, Email or ID."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               size="lg"
@@ -163,15 +168,10 @@ const Lecturers = () => {
             {/* Export Button */}
             <Button
               onClick={handleExport}
-              display="flex"
-              alignItems="center"
-              bg="accent"
+              colorPalette={"accent"}
               gap="2"
-              px="4"
-              py="2"
               size="lg"
               rounded="md"
-              color="white"
               cursor="pointer"
             >
               <LuDownload size={16} /> Export Table

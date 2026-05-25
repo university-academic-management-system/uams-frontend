@@ -75,7 +75,7 @@ export interface ProfileResponse {
 
 export interface AuthState {
     token: string;
-    expiresAt: string;
+    expireAt: string;
     user: UserData | null;
     isAuthenticated: boolean;
     setAuth: (auth: Partial<AuthState>) => void;
@@ -94,7 +94,7 @@ export interface LoginResponse {
     message: string;
     data: {
         token: string;
-        expiresIn: string;
+        expireAt: string;
         user: UserData;
     };
 }

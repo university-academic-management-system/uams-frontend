@@ -12,34 +12,27 @@ export const StatCard = ({ label, value, icon, bgColor, description }: StatCardP
     return (
         <Flex
             bg={bgColor}
-            p="6"
-            borderRadius="md"
-            alignItems="center"
-            gap="5"
+            p="5"
+            borderRadius="lg"
+            direction="column"
+            alignItems="flex-start"
             transition="transform 0.2s"
             cursor="default"
             border="xs"
             borderColor="border.muted"
         > 
-            <Flex
-                bg="whiteAlpha.400"
-                p="3"
-                borderRadius="xl"
-                color="fg.muted"
-            >
+            <Box color="blue.600" mb="4">
                 {icon}
-            </Flex>
-            <Box>
-                <Text fontSize="xs" fontWeight="medium" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb="1">
-                    {label}
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="fg.muted">
-                    {value}
-                </Text>
-                {description && (
-                    <Text fontSize="xs" color="fg.subtle" mt="1">{description}</Text>
-                )}
             </Box>
+            <Text fontSize="sm" color="fg.muted" mb="1">
+                {label}
+            </Text>
+            <Text fontSize="2xl" fontWeight="bold" color="fg.default" mb="2">
+                {value}
+            </Text>
+            {description && (
+                <Text fontSize="xs" color="fg.subtle">{description}</Text>
+            )}
         </Flex>
     );
 };

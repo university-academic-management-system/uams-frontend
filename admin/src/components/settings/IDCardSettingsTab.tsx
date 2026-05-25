@@ -242,7 +242,7 @@ const IDCardSettingsTab = () => {
                 </Flex>
                 <Box overflowX="auto">
                     <Table.Root variant="outline">
-                        <Table.Header bg="slate.50">
+                        <Table.Header bg="bg.subtle">
                             <Table.Row borderY="xs" borderColor="border.muted">
                                 <Table.ColumnHeader px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">School Name</Table.ColumnHeader>
                                 <Table.ColumnHeader px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">Faculty</Table.ColumnHeader>

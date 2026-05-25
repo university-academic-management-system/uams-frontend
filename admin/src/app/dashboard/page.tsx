@@ -1,4 +1,5 @@
-import { TrendingUp, BarChart3, Users } from "lucide-react";
+import { BarChart3, Users } from "lucide-react";
+import { Chart, useChart } from "@chakra-ui/charts";
 import {
     LineChart,
     Line,
@@ -20,22 +21,32 @@ const DashboardPage = () => {
     const { data: growthData = [] } = DashboardHook.useEnrollmentGrowth();
     const { data: announcements = [] } = DashboardHook.useAnnouncements();
 
+    const revenueChart = useChart({
+        data: revenueData,
+        series: [{ name: "value", color: "green.solid" }],
+    });
+
+    const enrollmentChart = useChart({
+        data: growthData,
+        series: [{ name: "value", color: "blue.solid" }],
+    });
+
     return (
-        <Flex direction="column" gap="8">
+        <Flex direction="column" gap="4">
             <Heading size="xl" color="fg.muted">
-                Welcome Back, {user?.name || "N/A"}
+                <Text as="span" color="fg.subtle" fontWeight="medium">Welcome Back, </Text>
+                {user?.name || "N/A"}
             </Heading>
 
             <StatsContainer />
 
             {/* Charts + Announcements Row */}
-            <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="8">
+            <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
                 {/* Revenue Chart */}
-                <Box bg="bg" p="6" borderRadius="md" border="xs" borderColor="border.muted">
-                    <Flex alignItems="center" justifyContent="space-between" mb="8">
+                <Box bg="bg" p="4" borderRadius="md" border="xs" borderColor="border.muted">
+                    <Flex alignItems="center" justifyContent="space-between" mb="4">
                         <Box>
                             <Flex alignItems="center" gap="2" fontWeight="bold" color="fg.muted">
-                                <TrendingUp size={20} color="#22c55e" />
                                 <Text>Revenue</Text>
                             </Flex>
                             <Text fontSize="xs" color="fg.subtle" mt="1">
@@ -45,18 +56,44 @@ const DashboardPage = () => {
                     </Flex>
                     <Box h="300px" w="full">
                         {revenueData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={revenueData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={(val) => `₦${val / 1000}k`} />
-                                    <Tooltip
-                                        formatter={(value: number | undefined) => [`₦${(value ?? 0).toLocaleString()}`, "Revenue"]}
-                                        contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-                                    />
-                                    <Line type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2.5} dot={{ r: 4, fill: "#22c55e", strokeWidth: 2, stroke: "#fff" }} />
-                                </LineChart>
-                            </ResponsiveContainer>
+                            <Chart.Root h="100%" w="100%" chart={revenueChart}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={revenueChart.data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                                        <CartesianGrid vertical={false} stroke={revenueChart.color("border.subtle")} />
+                                        <XAxis 
+                                            dataKey={revenueChart.key("year")} 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{ fontSize: 11, fill: "#94a3b8" }} 
+                                            dy={10} 
+                                            stroke={revenueChart.color("border")}
+                                        />
+                                        <YAxis 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{ fontSize: 11, fill: "#94a3b8" }} 
+                                            tickFormatter={(val) => `₦${val / 1000}k`} 
+                                            stroke={revenueChart.color("border")}
+                                        />
+                                        <Tooltip
+                                            animationDuration={100}
+                                            cursor={false}
+                                            content={<Chart.Tooltip />}
+                                        />
+                                        {revenueChart.series.map((item) => (
+                                            <Line 
+                                                key={item.name}
+                                                type="monotone" 
+                                                dataKey={revenueChart.key(item.name)} 
+                                                stroke={revenueChart.color(item.color)} 
+                                                strokeWidth={1.5} 
+                                                isAnimationActive={true}
+                                                dot={false} 
+                                            />
+                                        ))}
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </Chart.Root>
                         ) : (
                             <Flex h="full" alignItems="center" justifyContent="center">
                                 <EmptyState.Root>
@@ -80,8 +117,8 @@ const DashboardPage = () => {
             </Grid>
 
             {/* Enrollment Growth */}
-            <Box bg="bg" p="6" borderRadius="md" border="xs" borderColor="border.muted">
-                <Flex alignItems="center" justifyContent="space-between" mb="8">
+            <Box bg="bg" p="4" borderRadius="md" border="xs" borderColor="border.muted">
+                <Flex alignItems="center" justifyContent="space-between" mb="4">
                     <Box>
                         <Text fontWeight="bold" color="fg.muted">Enrollment</Text>
                         <Text fontSize="xs" color="fg.subtle" mt="1">Student registration trends</Text>
@@ -89,15 +126,45 @@ const DashboardPage = () => {
                 </Flex>
                 <Box h="250px" w="full">
                     {growthData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={growthData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} dy={10} padding={{ left: 20, right: 20 }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} />
-                                <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
-                                <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        <Chart.Root h="100%" w="100%" chart={enrollmentChart}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={enrollmentChart.data} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+                                    <CartesianGrid vertical={false} stroke={enrollmentChart.color("border.subtle")} />
+                                    <XAxis 
+                                        dataKey={enrollmentChart.key("year")} 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fontSize: 11, fill: "#94a3b8" }} 
+                                        dy={10} 
+                                        padding={{ left: 20, right: 20 }} 
+                                        stroke={enrollmentChart.color("border")}
+                                    />
+                                    <YAxis 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fontSize: 11, fill: "#94a3b8" }} 
+                                        allowDecimals={false} 
+                                        stroke={enrollmentChart.color("border")}
+                                    />
+                                    <Tooltip
+                                        animationDuration={100}
+                                        cursor={false}
+                                        content={<Chart.Tooltip />}
+                                    />
+                                    {enrollmentChart.series.map((item) => (
+                                        <Line 
+                                            key={item.name}
+                                            type="monotone" 
+                                            dataKey={enrollmentChart.key(item.name)} 
+                                            stroke={enrollmentChart.color(item.color)} 
+                                            strokeWidth={2.5} 
+                                            isAnimationActive={true}
+                                            dot={{ r: 4, fill: enrollmentChart.color(item.color), strokeWidth: 2, stroke: "#fff" }} 
+                                        />
+                                    ))}
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </Chart.Root>
                     ) : (
                         <Flex h="full" alignItems="center" justifyContent="center">
                             <EmptyState.Root>
