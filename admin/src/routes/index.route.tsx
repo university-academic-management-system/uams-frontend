@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { lazy } from "react";
 import SessionGuard from "@components/shared/AuthGuard";
-import DashboardLayout from "@components/shared/DashboardLayout";
+import RootLayout from "@app/layout";
 
 const DashboardPage = lazy(() => import("@app/dashboard/page"));
 const ProgramCoursesPage = lazy(() => import("@app/programs/page"));
@@ -12,9 +12,7 @@ const IDCardPage = lazy(() => import("@app/idcard/page"));
 const TimetablePage = lazy(() => import("@app/timetable/page"));
 const AnnouncementsPage = lazy(() => import("@app/announcements/page"));
 const SettingsPage = lazy(() => import("@app/settings/page"));
-const NotificationsPage = lazy(() => import("@app/notifications/page"));
 const ProfilePage = lazy(() => import("@app/profile/page"));
-const AuditLogsPage = lazy(() => import("@app/audit-logs/page"));
 
 const router = createBrowserRouter([
     // Protected Routes
@@ -23,7 +21,7 @@ const router = createBrowserRouter([
         element: <SessionGuard />,
         children: [
             {
-                element: <DashboardLayout />,
+                element: <RootLayout />,
                 children: [
                     {
                         index: true,
@@ -66,16 +64,8 @@ const router = createBrowserRouter([
                         element: <SettingsPage />,
                     },
                     {
-                        path: "notifications",
-                        element: <NotificationsPage />,
-                    },
-                    {
                         path: "profile",
                         element: <ProfilePage />,
-                    },
-                    {
-                        path: "audit-logs",
-                        element: <AuditLogsPage />,
                     },
                 ],
             },

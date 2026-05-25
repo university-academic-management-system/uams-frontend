@@ -1,26 +1,33 @@
-import { Box, Text } from "@chakra-ui/react";
+// @components/shared/StatCard.tsx
+import { Box, Text, Flex } from "@chakra-ui/react";
+import type { ReactNode } from "react";  
 
 interface StatCardProps {
     label: string;
     value: number | string;
-    colorScheme?: "green" | "pink"; 
+    icon?: ReactNode;
 }
 
-const StatCard = ({ label, value }: StatCardProps) => {
+const StatCard = ({ label, value, icon }: StatCardProps) => {
     return (
         <Box
             bg="white"
             rounded="md"
             border="1px solid"
-            borderColor="bg.muted"
-            px="8"
-            py="7"
+            borderColor="border.muted"
+            px="6"
+            py="5"
             flex="1"
+            minW="160px"
+            h="100%"
         >
-            <Text fontSize="15px" color="fg.muted" mb="2.5">
-                {label}
-            </Text>
-            <Text fontSize="25px" fontWeight="bold" color="fg.muted">
+            <Flex align="center" justify="space-between" mb="2">
+                <Text fontSize="sm" color="fg.subtle" textTransform="uppercase">
+                    {label}
+                </Text>
+                {icon && <Box color="blue">{icon}</Box>}
+            </Flex>
+            <Text fontSize="xl"  color="fg.muted" lineHeight="1.2">
                 {value}
             </Text>
         </Box>

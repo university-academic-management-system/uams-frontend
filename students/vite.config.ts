@@ -4,5 +4,5 @@ import tsconfigPaths from "vite-tsconfig-paths"
 
 export default defineConfig({
   base: "/students",
-  plugins: [react(), tsconfigPaths()],
+  plugins: [react(), tsconfigPaths()]
 })

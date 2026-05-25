@@ -82,7 +82,7 @@ const TimeTable = () => {
 
                     <Table.ScrollArea>
                         <Table.Root size="sm" variant="outline">
-                            <Table.Header>
+                            <Table.Header bg="bg.subtle">
                                 <Table.Row>
                                     <Table.ColumnHeader minW="100px">Session</Table.ColumnHeader>
                                     <Table.ColumnHeader minW="100px">Level</Table.ColumnHeader>

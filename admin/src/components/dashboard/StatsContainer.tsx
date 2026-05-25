@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Users, CreditCard, UserCog, GraduationCap } from "lucide-react";
+import { Users, CreditCard, UserCog, GraduationCap, UserCheck } from "lucide-react";
 import { StatCard } from "@components/dashboard/StatCard";
 import { DashboardServices } from "@services/dashboard.service";
 import { Box, Flex, Text, Spinner, Grid, Button } from "@chakra-ui/react";
 
 const StatsContainer = () => {
     const [stats, setStats] = useState({
+        totalStudents: 0,
         totalActiveStudents: 0,
         totalAlumni: 0,
         totalStaffs: 0,
@@ -14,17 +15,13 @@ const StatsContainer = () => {
         error: null as string | null,
     });
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
+    const loadData = async () => {
         try {
-            setIsLoading(true);
             const response = await DashboardServices.getDashboardStats();
             const data = response?.data || {};
             
             setStats({
+                totalStudents: data.totalStudents || 0,
                 totalActiveStudents: data.totalActiveStudents || 0,
                 totalAlumni: data.totalAlumni || 0,
                 totalStaffs: data.totalStaffs || 0,
@@ -32,17 +29,24 @@ const StatsContainer = () => {
                 isLoading: false,
                 error: null
             });
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
             setStats((prev) => ({
                 ...prev,
                 isLoading: false,
-                error: err.response?.data?.message || "Failed to load statistics",
+                error: error.response?.data?.message || "Failed to load statistics",
             }));
         }
     };
 
-    const setIsLoading = (loading: boolean) => {
-        setStats(prev => ({ ...prev, isLoading: loading }));
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadData();
+    }, []);
+
+    const handleRetry = () => {
+        setStats(prev => ({ ...prev, isLoading: true, error: null }));
+        loadData();
     };
 
     const formatCurrency = (amount: number) => {
@@ -56,9 +60,9 @@ const StatsContainer = () => {
 
     if (stats.isLoading) {
         return (
-            <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="6">
-                {[1, 2, 3, 4].map((i) => (
-                    <Box key={i} bg="bg" p="6" borderRadius="md" border="xs" borderColor="border.muted">
+            <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(5, 1fr)" }} gap="4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                    <Box key={i} bg="bg" p="4" borderRadius="md" border="xs" borderColor="border.muted">
                         <Flex alignItems="center" justifyContent="center" h="20">
                             <Spinner size="md" color="blue.500" />
                         </Flex>
@@ -70,10 +74,10 @@ const StatsContainer = () => {
 
     if (stats.error) {
         return (
-            <Box bg="red.50" border="xs" borderColor="red.200" borderRadius="md" p="6" textAlign="center">
+            <Box bg="red.50" border="xs" borderColor="red.200" borderRadius="md" p="4" textAlign="center">
                 <Text color="red.600" fontWeight="medium">{stats.error}</Text>
                 <Button
-                    onClick={fetchData}
+                    onClick={handleRetry}
                     mt="3"
                     px="4"
                     py="2"
@@ -94,7 +98,7 @@ const StatsContainer = () => {
     }
 
     return (
-        <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="6">
+        <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(5, 1fr)" }} gap="4">
             <StatCard
                 label="Total Revenue"
                 value={formatCurrency(stats.totalRevenue)}
@@ -103,9 +107,16 @@ const StatsContainer = () => {
                 description="Aggregated collection"
             />
             <StatCard
+                label="Total Students"
+                value={stats.totalStudents.toLocaleString()}
+                icon={<Users size={24} />}
+                bgColor="bg"
+                description="All registered students"
+            />
+            <StatCard
                 label="Active Students"
                 value={stats.totalActiveStudents.toLocaleString()}
-                icon={<Users size={24} />}
+                icon={<UserCheck size={24} />}
                 bgColor="bg"
                 description={`${stats.totalActiveStudents} students in session`}
             />

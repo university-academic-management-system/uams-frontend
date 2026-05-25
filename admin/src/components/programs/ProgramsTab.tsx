@@ -155,10 +155,10 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
     return (
         <Flex direction="column" gap="8">
             <Flex justifyContent="flex-end" gap="4">
-                <Button onClick={handleExport} bg="white" color="blue.600" px="5" py="2.5" borderRadius="md" display="flex" alignItems="center" gap="2" fontSize="sm" fontWeight="bold" _hover={{ bg: "blue.50" }} cursor="pointer">
+                <Button onClick={handleExport} size="xl" borderRadius="md" display="flex" alignItems="center" gap="2" fontSize="sm" cursor="pointer">
                     <Download size={18} /> Export
                 </Button>
-                <Button onClick={() => navigate("/program-courses/programs/new")} bg="blue.600" color="white" px="5" py="2.5" borderRadius="md" display="flex" alignItems="center" gap="2" fontSize="sm" fontWeight="bold" cursor="pointer">
+                <Button onClick={() => navigate("/program-courses/programs/new")} size="xl" borderRadius="md" display="flex" alignItems="center" gap="2" fontSize="sm" cursor="pointer">
                     <Plus size={18} /> Create Program
                 </Button>
             </Flex>
@@ -219,11 +219,11 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
                 <Flex position="fixed" bottom="8" left="50%" transform="translateX(-50%)" bg="white" px="6" py="3" borderRadius="md" boxShadow="none" border="xs" borderColor="border.muted" alignItems="center" gap="6" zIndex="50">
                     <Text fontSize="sm" fontWeight="bold" color="fg.muted">{selectedIds.length} items selected</Text>
                     <Box w="px" h="6" bg="fg.subtle" />
-                    <Button onClick={handleBulkDelete} display="flex" alignItems="center" gap="2" bg="red.500" color="white" px="4" py="2" borderRadius="md" fontSize="xs" fontWeight="bold" _hover={{ bg: "red.600" }} cursor="pointer" border="none">
+                    <Button onClick={handleBulkDelete} size="xl" display="flex" alignItems="center" gap="2" borderRadius="md" fontSize="xs" cursor="pointer" border="none">
                         <Trash2 size={16} /> Delete
                     </Button>
                     <Box w="px" h="6" bg="fg.subtle" />
-                    <Button onClick={() => setSelectedIds([])} p="1" _hover={{ bg: "fg.subtle" }} borderRadius="full" color="fg.subtle" cursor="pointer" border="none" bg="transparent" title="Unselect all">
+                    <Button onClick={() => setSelectedIds([])} size="xl" borderRadius="full" cursor="pointer" border="none" title="Unselect all">
                         <X size={20} />
                     </Button>
                 </Flex>
