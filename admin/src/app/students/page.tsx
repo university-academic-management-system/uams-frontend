@@ -357,7 +357,7 @@ const StudentsPage = () => {
                     </Flex>
                 </Flex>
 
-                <Box overflowX="auto" maxW={{ base: "100%", lg: "calc(100vw - 340px)" }}>
+                <Box overflowX="auto" w="full">
                     <Table.Root w="full" textAlign="left" variant="outline" interactive>
                         <Table.Header bg="bg.subtle">
                             <Table.Row borderY="xs" borderColor="border.muted">

@@ -341,7 +341,7 @@ const CoursesTab = () => {
     <Dialog.Root size="lg" role="alertdialog" onExitComplete={() => { form.reset(defaultCourseFormData); setIsEditing(false); setEditingCourseId(null); }} placement="center" closeOnInteractOutside={false}>
     <Flex direction="column" gap="8">
       <Flex justifyContent="flex-end" mt="-14">
-        <Menu.Root positioning={{ placement: "top-end" }}>
+        <Menu.Root positioning={{ placement: "bottom-end" }}>
           <Menu.Trigger asChild>
             <Button
               colorPalette="accent"
@@ -560,7 +560,7 @@ const CoursesTab = () => {
           </Flex>
         </Flex>
 
-        <Box overflowX="auto" maxW={{ base: "100%", lg: "calc(100vw - 340px)" }}>
+        <Box overflowX="auto" w="full">
           <Table.Root w="full" variant="outline" interactive>
             <Table.Header bg="bg.subtle">
               <Table.Row borderY="xs" borderColor="border.muted">

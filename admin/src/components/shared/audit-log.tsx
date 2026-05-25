@@ -4,7 +4,7 @@ import { LuSearch, LuActivity, LuCalendar } from "react-icons/lu";
 import { useQuery } from "@tanstack/react-query";
 import {
     Button, CloseButton, Drawer, IconButton, Portal, Box, Flex, Text, Input, Spinner,
-    EmptyState, InputGroup, Select, createListCollection, DatePicker,
+    EmptyState, InputGroup, Select, createListCollection, DatePicker, Grid, GridItem
 } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
 import {
@@ -86,7 +86,7 @@ const AuditLogs = () => {
     }, []);
 
     return (
-        <Drawer.Root modal={false} size="xl">
+        <Drawer.Root modal={false} size={{ base: "full", md: "xl" }}>
             <Tooltip content="Audit Logs">
                 <Drawer.Trigger asChild>
                     <IconButton variant="ghost" size="md" color="fg.muted">
@@ -95,168 +95,59 @@ const AuditLogs = () => {
                 </Drawer.Trigger>
             </Tooltip>
             <Portal>
-                <Drawer.Positioner pt="14" pr="4" pb="4">
-                    <Drawer.Content rounded="md">
+                <Drawer.Positioner pt="14" pr={{ base: "0", md: "4" }} pb="0">
+                    <Drawer.Content rounded={{ base: "none", md: "md" }} w="full" maxW="100vw">
                         <Drawer.Header borderBottomWidth="1px" borderColor="border.subtle" pb="4">
                             <Flex direction="column" gap="4">
                                 <Flex direction="row" justifyContent="space-between" alignItems="center" gap="4">
-                                    <Box>
+                                    <Box w="full">
                                         <Drawer.Title fontSize="2xl" fontWeight="bold" color="fg.muted">Audit Logs</Drawer.Title>
                                         <Text fontSize="xs" color="fg.subtle">Monitor system activity and user actions</Text>
                                     </Box>
                                 </Flex>
 
                                 {/* Filters & Search Row */}
-                                <Flex direction="column" gap="4" colorPalette="accent">
-                                    {/* Search Input & Refresh */}
-                                    <Flex gap="3" w="full" alignItems="center">
-                                        <Box flex="1">
-                                            <InputGroup w="full" startElement={<LuSearch color="#94a3b8" size={20} />}>
-                                                <Input
-                                                    placeholder="Search by ID, User..."
-                                                    value={searchQuery}
-                                                    onChange={handleSearchChange}
-                                                    bg="white"
-                                                    // h="10"
-                                                    size="xl"
-                                                    w="full"
-                                                />
-                                            </InputGroup>
-                                        </Box>
+                                <Grid 
+                                    templateColumns={{ base: "1fr 1fr", md: "repeat(12, 1fr)" }}
+                                    gap="3"
+                                    w="full"
+                                    colorPalette="accent"
+                                >
+                                    {/* Search Input */}
+                                    <GridItem colSpan={{ base: 2, md: 10 }} order={{ base: 1, md: 1 }}>
+                                        <InputGroup w="full" startElement={<LuSearch color="#94a3b8" size={20} />}>
+                                            <Input
+                                                placeholder="Search by ID, User..."
+                                                value={searchQuery}
+                                                onChange={handleSearchChange}
+                                                bg="white"
+                                                size={{ base: "md", md: "xl" }}
+                                                w="full"
+                                            />
+                                        </InputGroup>
+                                    </GridItem>
+
+                                    {/* Refresh Button */}
+                                    <GridItem colSpan={{ base: 1, md: 2 }} order={{ base: 2, md: 2 }}>
                                         <Button 
                                             variant="solid" 
-                                            size="xl" 
+                                            size={{ base: "md", md: "xl" }} 
                                             onClick={() => refetch()}
                                             disabled={isLoading}
+                                            w="full"
                                         >
                                             <RotateCcw size={14} />
                                             Refresh
                                         </Button>
-                                    </Flex>
+                                    </GridItem>
 
-                                    {/* Filters */}
-                                    <Flex gap="3" flexWrap="wrap">
-                                        <Box flex="1" minW="140px">
-                                            <Select.Root 
-                                                collection={actionsCollection} 
-                                                size="lg" 
-                                                value={[action]}
-                                                onValueChange={(e) => setAction(e.value[0])}
-                                            >
-                                                <Select.HiddenSelect />
-                                                <Select.Control>
-                                                    <Select.Trigger bg="white">
-                                                        <Select.ValueText placeholder="Action" />
-                                                    </Select.Trigger>
-                                                    <Select.IndicatorGroup>
-                                                        <Select.Indicator />
-                                                    </Select.IndicatorGroup>
-                                                </Select.Control>
-                                                <Portal>
-                                                    <Select.Positioner>
-                                                        <Select.Content>
-                                                            {actionsCollection.items.length === 0 ? (
-                                                                <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
-                                                                    No options available
-                                                                </Box>
-                                                            ) : (
-                                                                actionsCollection.items.map((item) => (
-                                                                    <Select.Item item={item} key={item.value}>
-                                                                        {item.label}
-                                                                        <Select.ItemIndicator />
-                                                                    </Select.Item>
-                                                                ))
-                                                            )}
-                                                        </Select.Content>
-                                                    </Select.Positioner>
-                                                </Portal>
-                                            </Select.Root>
-                                        </Box>
-
-                                        <Box flex="1" minW="140px">
-                                            <Select.Root 
-                                                collection={entitiesCollection} 
-                                                size="lg" 
-                                                value={[entity]}
-                                                onValueChange={(e) => setEntity(e.value[0])}
-                                            >
-                                                <Select.HiddenSelect />
-                                                <Select.Control>
-                                                    <Select.Trigger bg="white">
-                                                        <Select.ValueText placeholder="Entity" />
-                                                    </Select.Trigger>
-                                                    <Select.IndicatorGroup>
-                                                        <Select.Indicator />
-                                                    </Select.IndicatorGroup>
-                                                </Select.Control>
-                                                <Portal>
-                                                    <Select.Positioner>
-                                                        <Select.Content>
-                                                            {entitiesCollection.items.length === 0 ? (
-                                                                <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
-                                                                    No options available
-                                                                </Box>
-                                                            ) : (
-                                                                entitiesCollection.items.map((item) => (
-                                                                    <Select.Item item={item} key={item.value}>
-                                                                        {item.label}
-                                                                        <Select.ItemIndicator />
-                                                                    </Select.Item>
-                                                                ))
-                                                            )}
-                                                        </Select.Content>
-                                                    </Select.Positioner>
-                                                </Portal>
-                                            </Select.Root>
-                                        </Box>
-
-                                        <Box flex="2" minW="260px">
-                                            <DatePicker.Root openOnClick
-                                                key={resetKey}
-                                                size="xl"
-                                                selectionMode="range" 
-                                                onValueChange={(e) => {
-                                                    const range = e.value.map(d => {
-                                                        const date = new Date(d.year, d.month - 1, d.day);
-                                                        return date.toISOString();
-                                                    });
-                                                    setDateRange(range);
-                                                }}
-                                            >
-                                                <DatePicker.Control>
-                                                    <DatePicker.Input index={0} bg="white" placeholder="Start Date" />
-                                                    <DatePicker.Input index={1} bg="white" placeholder="End Date" />
-                                                    <DatePicker.IndicatorGroup>
-                                                        <DatePicker.Trigger>
-                                                            <LuCalendar />
-                                                        </DatePicker.Trigger>
-                                                    </DatePicker.IndicatorGroup>
-                                                </DatePicker.Control>
-                                                <Portal>
-                                                    <DatePicker.Positioner>
-                                                        <DatePicker.Content>
-                                                            <DatePicker.View view="day">
-                                                                <DatePicker.Header />
-                                                                <DatePicker.DayTable />
-                                                            </DatePicker.View>
-                                                            <DatePicker.View view="month">
-                                                                <DatePicker.Header />
-                                                                <DatePicker.MonthTable />
-                                                            </DatePicker.View>
-                                                            <DatePicker.View view="year">
-                                                                <DatePicker.Header />
-                                                                <DatePicker.YearTable />
-                                                            </DatePicker.View>
-                                                        </DatePicker.Content>
-                                                    </DatePicker.Positioner>
-                                                </Portal>
-                                            </DatePicker.Root>
-                                        </Box>
-
+                                    {/* Clear Filters Button */}
+                                    <GridItem colSpan={{ base: 1, md: 2 }} order={{ base: 3, md: 6 }}>
                                         <Button 
                                             variant="ghost"
-                                            size="xl"
+                                            size={{ base: "md", md: "xl" }}
                                             colorPalette="red"
+                                            w="full"
                                             onClick={() => {
                                                 setAction("");
                                                 setEntity("");
@@ -267,8 +158,128 @@ const AuditLogs = () => {
                                         >
                                             Clear Filters
                                         </Button>
-                                    </Flex>
-                                </Flex>
+                                    </GridItem>
+
+                                    {/* All Actions */}
+                                    <GridItem colSpan={{ base: 1, md: 2 }} order={{ base: 4, md: 3 }}>
+                                        <Select.Root 
+                                            collection={actionsCollection} 
+                                            size={{ base: "md", md: "lg" }} 
+                                            value={[action]}
+                                            onValueChange={(e) => setAction(e.value[0])}
+                                        >
+                                            <Select.HiddenSelect />
+                                            <Select.Control>
+                                                <Select.Trigger bg="white">
+                                                    <Select.ValueText placeholder="Action" />
+                                                </Select.Trigger>
+                                                <Select.IndicatorGroup>
+                                                    <Select.Indicator />
+                                                </Select.IndicatorGroup>
+                                            </Select.Control>
+                                            <Portal>
+                                                <Select.Positioner>
+                                                    <Select.Content>
+                                                        {actionsCollection.items.length === 0 ? (
+                                                            <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                                No options available
+                                                            </Box>
+                                                        ) : (
+                                                            actionsCollection.items.map((item) => (
+                                                                <Select.Item item={item} key={item.value}>
+                                                                    {item.label}
+                                                                    <Select.ItemIndicator />
+                                                                </Select.Item>
+                                                            ))
+                                                        )}
+                                                    </Select.Content>
+                                                </Select.Positioner>
+                                            </Portal>
+                                        </Select.Root>
+                                    </GridItem>
+
+                                    {/* All Entities */}
+                                    <GridItem colSpan={{ base: 1, md: 2 }} order={{ base: 5, md: 4 }}>
+                                        <Select.Root 
+                                            collection={entitiesCollection} 
+                                            size={{ base: "md", md: "lg" }} 
+                                            value={[entity]}
+                                            onValueChange={(e) => setEntity(e.value[0])}
+                                        >
+                                            <Select.HiddenSelect />
+                                            <Select.Control>
+                                                <Select.Trigger bg="white">
+                                                    <Select.ValueText placeholder="Entity" />
+                                                </Select.Trigger>
+                                                <Select.IndicatorGroup>
+                                                    <Select.Indicator />
+                                                </Select.IndicatorGroup>
+                                            </Select.Control>
+                                            <Portal>
+                                                <Select.Positioner>
+                                                    <Select.Content>
+                                                        {entitiesCollection.items.length === 0 ? (
+                                                            <Box px="4" py="3" textAlign="center" color="fg.muted" fontSize="sm">
+                                                                No options available
+                                                            </Box>
+                                                        ) : (
+                                                            entitiesCollection.items.map((item) => (
+                                                                <Select.Item item={item} key={item.value}>
+                                                                    {item.label}
+                                                                    <Select.ItemIndicator />
+                                                                </Select.Item>
+                                                            ))
+                                                        )}
+                                                    </Select.Content>
+                                                </Select.Positioner>
+                                            </Portal>
+                                        </Select.Root>
+                                    </GridItem>
+
+                                    {/* Date Picker */}
+                                    <GridItem colSpan={{ base: 2, md: 6 }} order={{ base: 6, md: 5 }}>
+                                        <DatePicker.Root openOnClick
+                                            key={resetKey}
+                                            size={{ base: "md", md: "xl" }}
+                                            selectionMode="range" 
+                                            onValueChange={(e) => {
+                                                const range = e.value.map(d => {
+                                                    const date = new Date(d.year, d.month - 1, d.day);
+                                                    return date.toISOString();
+                                                });
+                                                setDateRange(range);
+                                            }}
+                                        >
+                                            <DatePicker.Control flexWrap="nowrap">
+                                                <DatePicker.Input index={0} bg="white" placeholder="Start Date" w="full" />
+                                                <DatePicker.Input index={1} bg="white" placeholder="End Date" w="full" />
+                                                <DatePicker.IndicatorGroup>
+                                                    <DatePicker.Trigger>
+                                                        <LuCalendar />
+                                                    </DatePicker.Trigger>
+                                                </DatePicker.IndicatorGroup>
+                                            </DatePicker.Control>
+                                            <Portal>
+                                                <DatePicker.Positioner>
+                                                    <DatePicker.Content>
+                                                        <DatePicker.View view="day">
+                                                            <DatePicker.Header />
+                                                            <DatePicker.DayTable />
+                                                        </DatePicker.View>
+                                                        <DatePicker.View view="month">
+                                                            <DatePicker.Header />
+                                                            <DatePicker.MonthTable />
+                                                        </DatePicker.View>
+                                                        <DatePicker.View view="year">
+                                                            <DatePicker.Header />
+                                                            <DatePicker.YearTable />
+                                                        </DatePicker.View>
+                                                    </DatePicker.Content>
+                                                </DatePicker.Positioner>
+                                            </Portal>
+                                        </DatePicker.Root>
+                                    </GridItem>
+                                </Grid>
                             </Flex>
                         </Drawer.Header>
 
@@ -301,24 +312,24 @@ const AuditLogs = () => {
                                     <TimelineRoot maxW="3xl" mx="auto">
                                         {logs.map((log: AuditLog) => (
                                             <TimelineItem key={log.id}>
-                                                <TimelineContent width="auto" minW="140px" textAlign="right" pr="6">
-                                                    <Text fontSize="sm" fontWeight="bold" color="fg.muted">
+                                                <TimelineContent width="auto" minW={{ base: "80px", md: "140px" }} textAlign="right" pr={{ base: "3", md: "6" }}>
+                                                    <Text fontSize={{ base: "xs", md: "sm" }} fontWeight="bold" color="fg.muted">
                                                         {formatDate(log.createdAt).split(",")[0]}
                                                     </Text>
-                                                    <Text fontSize="xs" color="fg.subtle">
+                                                    <Text fontSize={{ base: "2xs", md: "xs" }} color="fg.subtle">
                                                         {formatDate(log.createdAt).split(",")[1]?.trim()}
                                                     </Text>
                                                 </TimelineContent>
                                                 <TimelineConnector bg="white" color="accent">
                                                     <History size={14} />
                                                 </TimelineConnector>
-                                                <TimelineContent pl="6" pb="10">
+                                                <TimelineContent pl={{ base: "3", md: "6" }} pb="10">
                                                     <TimelineTitle>
-                                                        <Flex gap="3" align="center" flexWrap="wrap">
-                                                            <Text as="span" px="2.5" py="1" bg="blue.50" color="blue.700" borderRadius="full" fontSize="xs" fontWeight="extrabold" textTransform="uppercase" letterSpacing="wider">
+                                                        <Flex gap="2" align="center" flexWrap="wrap">
+                                                            <Text as="span" px="2" py="0.5" bg="blue.50" color="blue.700" borderRadius="full" fontSize={{ base: "2xs", md: "xs" }} fontWeight="extrabold" textTransform="uppercase" letterSpacing="wider">
                                                                 {log.action}
                                                             </Text>
-                                                            <Text as="span" fontWeight="bold" color="fg.muted" fontSize="sm">
+                                                            <Text as="span" fontWeight="bold" color="fg.muted" fontSize={{ base: "xs", md: "sm" }}>
                                                                 {log.entity}
                                                             </Text>
                                                             {log.entityId && (
@@ -329,14 +340,14 @@ const AuditLogs = () => {
                                                         </Flex>
                                                     </TimelineTitle>
                                                     <TimelineDescription mt="3" color="fg.muted" fontSize="xs">
-                                                        <Flex gap="6" mt="1" flexWrap="wrap">
+                                                        <Flex gap={{ base: "3", md: "6" }} mt="1" flexWrap="wrap">
                                                             <Box>
                                                                 <Text fontSize="10px" color="fg.subtle" fontWeight="bold" mb="0.5">PERFORMED BY</Text>
-                                                                <Text fontWeight="medium">{log.userId}</Text>
+                                                                <Text fontWeight="medium" fontSize={{ base: "xs", md: "sm" }}>{log.userId}</Text>
                                                             </Box>
                                                             <Box>
                                                                 <Text fontSize="10px" color="fg.subtle" fontWeight="bold" mb="0.5">IP ADDRESS</Text>
-                                                                <Text fontWeight="medium">{log.ipAddress || "N/A"}</Text>
+                                                                <Text fontWeight="medium" fontSize={{ base: "xs", md: "sm" }}>{log.ipAddress || "N/A"}</Text>
                                                             </Box>
                                                         </Flex>
                                                     </TimelineDescription>
@@ -347,7 +358,7 @@ const AuditLogs = () => {
 
                                     {/* Standardized Pagination */}
                                     {pagination && pagination.totalPages > 1 && (
-                                        <Flex alignItems="center" justifyContent="space-between" bg="bg.subtle" p="4" mt="8" borderRadius="md" border="1px solid" borderColor="border.muted">
+                                        <Flex direction={{ base: "column", sm: "row" }} alignItems="center" justifyContent="space-between" gap="4" bg="bg.subtle" p="4" mt="8" borderRadius="md" border="1px solid" borderColor="border.muted">
                                             <Text fontSize="xs" color="fg.muted">
                                                 Page <Text as="span" fontWeight="bold">{pagination.page}</Text> of <Text as="span" fontWeight="bold">{pagination.totalPages}</Text>
                                             </Text>
@@ -357,6 +368,7 @@ const AuditLogs = () => {
                                                 pageSize={ITEMS_PER_PAGE}
                                                 page={currentPage}
                                                 onPageChange={(e) => setCurrentPage(e.page)}
+                                                size={{ base: "sm", md: "md" }}
                                             >
                                                 <Flex gap="2">
                                                     <PaginationPrevTrigger />
