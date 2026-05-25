@@ -50,7 +50,7 @@ const NotificationDrawer = () => {
     }, []);
 
     return (
-        <Drawer.Root modal={false} size="xl">
+        <Drawer.Root modal={false} size={{ base: "full", md: "xl" }}>
             <Tooltip content="Notifications">
                 <Drawer.Trigger asChild>
                     <IconButton variant="ghost" size="md" color="fg.muted" position="relative">
@@ -62,8 +62,8 @@ const NotificationDrawer = () => {
                 </Drawer.Trigger>
             </Tooltip>
             <Portal>
-                <Drawer.Positioner pt="14" pr="16" pb="4">
-                    <Drawer.Content rounded="md">
+                <Drawer.Positioner pt="14" pr={{ base: "0", md: "16" }} pb={{ base: "0", md: "4" }}>
+                    <Drawer.Content rounded={{ base: "none", md: "md" }} w="full" maxW="100vw">
                         <Drawer.Header>
                             <Flex direction="column" gap="2" width="full">
                                 <Box>
@@ -74,7 +74,7 @@ const NotificationDrawer = () => {
                                     alignSelf="flex-end"
                                     onClick={handleMarkAllAsRead}
                                     bg="accent"
-                                    size="xl"
+                                    size={{ base: "md", md: "xl" }}
                                     borderRadius="md"
                                     alignItems="center"
                                     disabled={unreadCount === 0}

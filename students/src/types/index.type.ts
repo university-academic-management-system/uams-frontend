@@ -1,3 +1,5 @@
+import type { ReactElement } from "react";
+
 // components/header.tsx
 export interface HeadProps {
   title?: string;
@@ -32,4 +34,12 @@ export interface HeadProps {
     type?: string;
     sizes?: string;
   }>;
+}
+
+
+export interface EmptyStateViewProps {
+    icon?: ReactElement
+    title: string
+    description?: string
+    action?: ReactElement
 }

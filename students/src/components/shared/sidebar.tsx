@@ -1,4 +1,4 @@
-import { Avatar, Button, Flex, HStack, Icon, IconButton, Image, ScrollArea, Separator, Stack, Text } from "@chakra-ui/react";
+import { Avatar, Button, Flex, HStack, Icon, IconButton, Image, ScrollArea, Separator, Stack, Text, useMediaQuery } from "@chakra-ui/react";
 import { sidebarStore } from "@stores/ui.store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
@@ -19,14 +19,14 @@ const Sidebar = () => {
             icon: LuHouse
         },
         {
-            label: "Courses",
-            href: "/courses",
-            icon: LuLibrary
-        },
-        {
             label: "Registrations",
             href: "/registrations",
             icon: PiAddressBook
+        },
+        {
+            label: "Courses",
+            href: "/courses",
+            icon: LuLibrary
         },
         {
             label: "Project",
@@ -79,8 +79,6 @@ const Sidebar = () => {
         return () => observer.disconnect();
     }, [isCollapsed]);
 
-
-
     const isActive = useCallback((href: string) => {
         return path.endsWith(href);
     }, [path]);
@@ -91,10 +89,12 @@ const Sidebar = () => {
             bg="bg"
             align="center"
             gap="4"
+            hideBelow={"md"}
+            transition="width 0.3s ease-in-out"
             w={isCollapsed ? "74px" : "240px"}>
-            <Flex align="center" h="16" p="6">
+            <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
                 {/* logo */}
-                {!isCollapsed ? <Image src="/students/uphcsc-logo.png" alt="UPHCSC Logo" className="h-12" /> : <Image src="/students/sidebar-collapsed-logo.png" alt="UPHCSC Logo" className="h-12" />}
+                {!isCollapsed ? <Image src="/students/uphcsc-logo.png" alt="UPHCSC Logo" h="auto" w="auto" /> : <Image src="/students/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={12} h={"auto"} />}
             </Flex>
 
             <ScrollArea.Root h="full" size="xs">
@@ -140,7 +140,8 @@ const Sidebar = () => {
             </ScrollArea.Root>
 
 
-            <Stack flex="1" justify={"end"} p="4">
+
+            <Stack w="full" justify={"end"} p="4">
                 <LogoutButton />
                 <Separator borderColor="border.muted" />
                 <UserPersona />
@@ -156,22 +157,23 @@ export const SidebarToggleButton = () => {
     const { isCollapsed, setIsCollapsed } = sidebarStore();
     return (
         <Tooltip content={isCollapsed ? "Expand" : "Collapse"}>
-            <IconButton size={"md"} variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)}>
+            <IconButton hideBelow={"md"} size={"md"} variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)}>
                 <Icon as={isCollapsed ? GoSidebarCollapse : GoSidebarExpand} size="md" color="fg.muted" />
             </IconButton>
         </Tooltip>
     )
 }
 
-const UserPersona = () => {
+export const UserPersona = () => {
     const { user } = useAuthStore();
     const { isCollapsed } = sidebarStore();
+    const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
     return (
         <HStack key={user?.email} gap="2" justify={isCollapsed ? "center" : "start"}>
             <Avatar.Root size="xs">
                 <Avatar.Fallback name={user?.name} />
             </Avatar.Root>
-            {!isCollapsed && <Stack gap="0" w="80%" >
+            {((!isCollapsed && isDesktop) || !isDesktop) && <Stack gap="0" w="80%" maxH="14" overflow="hidden" >
                 <Text fontWeight="md" textStyle="sm">{user?.name || ""}</Text>
                 <Text color="fg.muted" textStyle="xs">
                     {user?.email || ""}
@@ -182,12 +184,13 @@ const UserPersona = () => {
 }
 
 
-const LogoutButton = () => {
+export const LogoutButton = () => {
     const { clearAuth } = useAuthStore();
     const { isCollapsed } = sidebarStore();
     const navigate = useNavigate();
+    const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
 
-    return !isCollapsed ? <Button justifyContent="start"   pl="2" size={"xl"} colorPalette={"red"} variant="ghost" onClick={() => clearAuth()}>
+    return (isDesktop && !isCollapsed) || !isDesktop ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
         <Icon as={LuLogOut} size="md" /> Logout
     </Button> :
         <Tooltip content={"Logout"} positioning={{ placement: "right" }}>
@@ -196,6 +199,7 @@ const LogoutButton = () => {
                 variant="ghost"
                 width="fit"
                 colorPalette={"red"}
+                color="red.500"
                 onClick={() => { clearAuth(); navigate("/auth/login") }}
             >
                 <Icon as={LuLogOut} size="md" />
