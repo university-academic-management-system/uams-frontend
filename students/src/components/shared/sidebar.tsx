@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
 import { LuBanknote, LuCalendarDays, LuFolderKanban, LuHouse, LuLibrary, LuLogOut, LuUser } from "react-icons/lu";
 import LinkButton from "./buttons/LinkButton";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 import { PiAddressBook } from "react-icons/pi";
 import { Tooltip } from "@components/ui/tooltip";
 import useAuthStore from "@stores/auth.store";
@@ -187,7 +187,6 @@ export const UserPersona = () => {
 export const LogoutButton = () => {
     const { clearAuth } = useAuthStore();
     const { isCollapsed } = sidebarStore();
-    const navigate = useNavigate();
     const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
 
     return (isDesktop && !isCollapsed) || !isDesktop ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
@@ -200,7 +199,7 @@ export const LogoutButton = () => {
                 width="fit"
                 colorPalette={"red"}
                 color="red.500"
-                onClick={() => { clearAuth(); navigate("/auth/login") }}
+                onClick={() => { clearAuth(); location.replace("/auth/login") }}
             >
                 <Icon as={LuLogOut} size="md" />
             </IconButton>
