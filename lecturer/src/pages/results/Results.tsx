@@ -83,11 +83,8 @@ const Results = () => {
   }
 
   return (
-    <Box>
-      <Heading color="fg.muted" mb="5">
-        Results
-      </Heading>
-      <Box bg="white" rounded="md" border="1px solid" borderColor="border.muted" p="5">
+    <>
+      <Box bg="white" rounded="md" border="1px solid" borderColor="border.muted">
         <Flex align="center" justify="space-between" mb="5" gap="4" colorPalette="accent">
           <InputGroup startElement={<Search />} width="300px">
             <Input
@@ -206,7 +203,7 @@ const Results = () => {
           )}
         </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 

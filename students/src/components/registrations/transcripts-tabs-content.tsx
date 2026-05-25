@@ -46,7 +46,7 @@ const TranscriptsTabsContent = () => {
 
     return (
         <Stack gap="4">
-            {(data?.transcripts?.length || 0) > 0 && <Flex justify={"space-between"}>
+            {(data?.transcripts?.length || 0) > 0 && <Flex justify={"space-between"} h="12">
                 <Heading>Transcripts&nbsp;Applications</Heading>
                 <CreateTranscriptDialog />
             </Flex>}
@@ -151,7 +151,7 @@ const CreateTranscriptDialog = () => {
     }
 
     if (isLoading) {
-        return <Skeleton w="full" h="full" />
+        return <Skeleton w="fit" h="full" />
     }
 
 

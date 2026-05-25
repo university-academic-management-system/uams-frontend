@@ -41,7 +41,7 @@ const DashboardLayout = () => {
     return (
         <>
             <Flex
-                h="100vh"
+                h="vh"
                 bg="bg.subtle"
                 w="full"
                 overflow="hidden"
@@ -49,7 +49,7 @@ const DashboardLayout = () => {
                 {/* sidebar */}
                 <Sidebar />
 
-                <Stack flex="1" h="100vh" gap="0" bg="bg" overflow="hidden">
+                <Stack flex="1" h="vh" gap="0" bg="bg" overflow="hidden">
                     {/* header */}
                     <Navbar />
 

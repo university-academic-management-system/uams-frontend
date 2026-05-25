@@ -1,11 +1,11 @@
 import { CourseServices } from "@services/course.service";
 import { ProgramServices } from "@services/program.service";
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery, keepPreviousData } from "@tanstack/react-query";
 import { toaster } from "@components/ui/toaster";
 
 export const CourseHook = {
     useCourses: (filters: { level?: string; semester?: string }) =>
-        useQuery({
+        useSuspenseQuery({
             queryKey: ["courses", filters],
             queryFn: async () => {
                 const response = await CourseServices.getCourses(filters);
@@ -14,11 +14,10 @@ export const CourseHook = {
                     : (response as any)?.data || (response as any)?.courses || [];
                 return data;
             },
-            placeholderData: keepPreviousData,
         }),
 
     useProgramTypes: () =>
-        useQuery({
+        useSuspenseQuery({
             queryKey: ["program-types"],
             queryFn: async () => {
                 const response = await ProgramServices.getProgramTypes();

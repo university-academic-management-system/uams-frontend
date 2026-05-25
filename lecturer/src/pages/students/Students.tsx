@@ -200,14 +200,6 @@ const Students = () => {
 
   return (
     <Box>
-      <Flex mb="6" gap="1" align="baseline">
-        <Heading fontSize="2xl" color="fg.muted" mb="1">
-          Students{" "}
-        </Heading>
-        <Text as="span" color="fg.subtle" lineHeight="1.5">
-          ({filteredStudents.length} total)
-        </Text>
-      </Flex>
 
       <Tabs.Root
         value={selectedDegree}

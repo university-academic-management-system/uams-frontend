@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
 import { LuBanknote, LuCalendarDays, LuFolderKanban, LuHouse, LuLibrary, LuLogOut, LuUser } from "react-icons/lu";
 import LinkButton from "./buttons/LinkButton";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 import { PiAddressBook } from "react-icons/pi";
 import { Tooltip } from "@components/ui/tooltip";
 import useAuthStore from "@stores/auth.store";
@@ -91,7 +91,7 @@ const Sidebar = () => {
             gap="4"
             hideBelow={"md"}
             transition="width 0.3s ease-in-out"
-            w={isCollapsed ? "74px" : "240px"}>
+            w={isCollapsed ? "78px" : "240px"}>
             <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
                 {/* logo */}
                 {!isCollapsed ? <Image src="/students/uphcsc-logo.png" alt="UPHCSC Logo" h="auto" w="auto" /> : <Image src="/students/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={12} h={"auto"} />}
@@ -187,7 +187,6 @@ export const UserPersona = () => {
 export const LogoutButton = () => {
     const { clearAuth } = useAuthStore();
     const { isCollapsed } = sidebarStore();
-    const navigate = useNavigate();
     const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
 
     return (isDesktop && !isCollapsed) || !isDesktop ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
@@ -200,7 +199,7 @@ export const LogoutButton = () => {
                 width="fit"
                 colorPalette={"red"}
                 color="red.500"
-                onClick={() => { clearAuth(); navigate("/auth/login") }}
+                onClick={() => { location.replace("/auth/login"); clearAuth(); }}
             >
                 <Icon as={LuLogOut} size="md" />
             </IconButton>

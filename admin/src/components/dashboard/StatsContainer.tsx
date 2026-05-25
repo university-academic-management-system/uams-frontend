@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Users, CreditCard, UserCog, GraduationCap, UserCheck } from "lucide-react";
 import { StatCard } from "@components/dashboard/StatCard";
 import { DashboardServices } from "@services/dashboard.service";
-import { Box, Flex, Text, Spinner, Grid, Button } from "@chakra-ui/react";
+import { Box, Flex, Text, Spinner, Grid, Button, Carousel } from "@chakra-ui/react";
 
 const StatsContainer = () => {
     const [stats, setStats] = useState({
@@ -98,43 +98,109 @@ const StatsContainer = () => {
     }
 
     return (
-        <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(5, 1fr)" }} gap="4">
-            <StatCard
-                label="Total Revenue"
-                value={formatCurrency(stats.totalRevenue)}
-                icon={<CreditCard size={24} />}
-                bgColor="bg"
-                description="Aggregated collection"
-            />
-            <StatCard
-                label="Total Students"
-                value={stats.totalStudents.toLocaleString()}
-                icon={<Users size={24} />}
-                bgColor="bg"
-                description="All registered students"
-            />
-            <StatCard
-                label="Active Students"
-                value={stats.totalActiveStudents.toLocaleString()}
-                icon={<UserCheck size={24} />}
-                bgColor="bg"
-                description={`${stats.totalActiveStudents} students in session`}
-            />
-            <StatCard
-                label="Alumni"
-                value={stats.totalAlumni.toLocaleString()}
-                icon={<GraduationCap size={24} />}
-                bgColor="bg"
-                description={`${stats.totalAlumni} total graduates`}
-            />
-            <StatCard
-                label="Total Staff"
-                value={stats.totalStaffs.toLocaleString()}
-                icon={<UserCog size={24} />}
-                bgColor="bg"
-                description={`${stats.totalStaffs} total staff`}
-            />
-        </Grid>
+        <Box>
+            {/* Mobile Carousel */}
+            <Carousel.Root
+                spacing="14px"
+                slidesPerPage={1.5}
+                slideCount={5}
+                maxW="calc(100vw - 34px)"
+                colorPalette="accent"
+                allowMouseDrag
+                hideFrom="md"
+                autoplay
+            >
+                <Carousel.ItemGroup>
+                    <Carousel.Item index={0}>
+                        <StatCard
+                            label="Total Revenue"
+                            value={formatCurrency(stats.totalRevenue)}
+                            icon={<CreditCard size={24} />}
+                            bgColor="bg"
+                            description="Aggregated collection"
+                        />
+                    </Carousel.Item>
+                    <Carousel.Item index={1}>
+                        <StatCard
+                            label="Total Students"
+                            value={stats.totalStudents.toLocaleString()}
+                            icon={<Users size={24} />}
+                            bgColor="bg"
+                            description="All registered students"
+                        />
+                    </Carousel.Item>
+                    <Carousel.Item index={2}>
+                        <StatCard
+                            label="Active Students"
+                            value={stats.totalActiveStudents.toLocaleString()}
+                            icon={<UserCheck size={24} />}
+                            bgColor="bg"
+                            description={`${stats.totalActiveStudents} students in session`}
+                        />
+                    </Carousel.Item>
+                    <Carousel.Item index={3}>
+                        <StatCard
+                            label="Alumni"
+                            value={stats.totalAlumni.toLocaleString()}
+                            icon={<GraduationCap size={24} />}
+                            bgColor="bg"
+                            description={`${stats.totalAlumni} total graduates`}
+                        />
+                    </Carousel.Item>
+                    <Carousel.Item index={4}>
+                        <StatCard
+                            label="Total Staff"
+                            value={stats.totalStaffs.toLocaleString()}
+                            icon={<UserCog size={24} />}
+                            bgColor="bg"
+                            description={`${stats.totalStaffs} total staff`}
+                        />
+                    </Carousel.Item>
+                </Carousel.ItemGroup>
+                <Carousel.Control justifyContent="center" gap="4" mt="4">
+                    <Carousel.Indicators />
+                </Carousel.Control>
+            </Carousel.Root>
+
+            {/* Desktop Grid */}
+            <Grid hideBelow="md" templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(5, 1fr)" }} gap="4">
+                <StatCard
+                    label="Total Revenue"
+                    value={formatCurrency(stats.totalRevenue)}
+                    icon={<CreditCard size={24} />}
+                    bgColor="bg"
+                    description="Aggregated collection"
+                />
+                <StatCard
+                    label="Total Students"
+                    value={stats.totalStudents.toLocaleString()}
+                    icon={<Users size={24} />}
+                    bgColor="bg"
+                    description="All registered students"
+                />
+                <StatCard
+                    label="Active Students"
+                    value={stats.totalActiveStudents.toLocaleString()}
+                    icon={<UserCheck size={24} />}
+                    bgColor="bg"
+                    description={`${stats.totalActiveStudents} students in session`}
+                />
+                <StatCard
+                    label="Alumni"
+                    value={stats.totalAlumni.toLocaleString()}
+                    icon={<GraduationCap size={24} />}
+                    bgColor="bg"
+                    description={`${stats.totalAlumni} total graduates`}
+                />
+                <StatCard
+                    label="Total Staff"
+                    value={stats.totalStaffs.toLocaleString()}
+                    icon={<UserCog size={24} />}
+                    bgColor="bg"
+                    description={`${stats.totalStaffs} total staff`}
+                />
+            </Grid>
+        </Box>
     );
 };
 

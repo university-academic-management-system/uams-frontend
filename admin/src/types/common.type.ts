@@ -1,6 +1,6 @@
 export type ViewType =
     | 'Dashboard'
-    | 'Programs & Courses'
+    | 'Programmes'
     | 'Students'
     | 'Lecturers'
     | 'Payments'

@@ -2,7 +2,6 @@ import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
 import TimeTable from "@pages/timetable/page";
 
-const DashboardLayout = lazy(() => import("@pages/layouts/DashboardLayout"));
 const Dashboard = lazy(() => import("@pages/dashboard/Dashboard"));
 const Students = lazy(() => import("@pages/students/Students"));
 const Lecturers = lazy(() => import("@pages/lecturers/Lecturers"));
@@ -15,11 +14,12 @@ const Projects = lazy(() => import("@pages/projects/Projects"));
 const Announcement = lazy(() => import("@pages/announcement/Announcement"));
 const Profile = lazy(() => import("@pages/profile/Profile"));
 import Settings from "@pages/settings/Settings";
+import { AuthMiddleware } from "middleware/auth.middleware";
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <DashboardLayout />,
+        element: <AuthMiddleware />,
         children: [
             { index: true, element: <Navigate to="dashboard" replace /> },
             { path: "dashboard", element: <Dashboard /> },

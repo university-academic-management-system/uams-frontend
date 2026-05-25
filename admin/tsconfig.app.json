@@ -54,6 +54,9 @@
       ],
       "@constants/*": [
         "./src/constants/*"
+      ],
+      "@middlewares/*": [
+        "./src/middlewares/*"
       ]
     },
     /* Bundler mode */

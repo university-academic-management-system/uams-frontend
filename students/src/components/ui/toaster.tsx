@@ -12,7 +12,8 @@ import {
 export const toaster = createToaster({
   placement: "bottom-end",
   pauseOnPageIdle: true,
-  overlap: true
+  overlap: true,
+  max: 4,
 })
 
 export const Toaster = () => {
@@ -20,13 +21,13 @@ export const Toaster = () => {
     <Portal>
       <ChakraToaster toaster={toaster} insetInline={{ mdDown: "4" }}>
         {(toast) => (
-          <Toast.Root width={{ md: "sm" }} rounded={"md"}>
+          <Toast.Root width={{ md: "sm" }} rounded={"md"} bg="bg">
             {toast.type === "loading" ? (
               <Spinner size="sm" color="blue.solid" />
             ) : (
-              <Toast.Indicator />
+              <Toast.Indicator color={toast.type === "error" ? "red" : toast.type === "success" ? "green" : "fg.muted"} />
             )}
-            <Stack gap="1" flex="1" maxWidth="100%" >
+            <Stack gap="1" flex="1" maxWidth="100%" color="fg" >
               {toast.title && <Toast.Title>{toast.title}</Toast.Title>}
               {toast.description && (
                 <Toast.Description>{toast.description}</Toast.Description>
@@ -35,7 +36,7 @@ export const Toaster = () => {
             {toast.action && (
               <Toast.ActionTrigger>{toast.action.label}</Toast.ActionTrigger>
             )}
-            {toast.closable && <Toast.CloseTrigger />}
+            <Toast.CloseTrigger color="fg.muted" cursor="pointer" />
           </Toast.Root>
         )}
       </ChakraToaster>

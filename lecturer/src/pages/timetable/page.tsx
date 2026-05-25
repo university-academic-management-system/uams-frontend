@@ -140,8 +140,7 @@ const Timetable = () => {
   }
 
   return (
-    <Stack gap="6">
-      <Heading>Timetable</Heading>
+    <Stack>
 
       <Box bg="bg" rounded="md" p="4">
         <HStack gap="4" mb="4" justify="flex-end">
