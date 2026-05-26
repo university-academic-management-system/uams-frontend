@@ -6,9 +6,6 @@ import { useSearchParams } from "react-router";
 // lazy loads
 const CoursesTabContent = lazy(() => import("@components/registrations/courses-tab-content"));
 const TranscriptsTabsContent = lazy(() => import("@components/registrations/transcripts-tab-content"));
-const IDCardTabContent = lazy(() => import("@components/registrations/idcard-tab-content"));
-
-
 
 const Registrations = () => {
     const [sp, setSp] = useSearchParams();
@@ -40,9 +37,6 @@ const Registrations = () => {
                 <Tabs.Trigger value="transcripts" >
                     Transcripts
                 </Tabs.Trigger>
-                <Tabs.Trigger value="id-cards" >
-                    ID Card
-                </Tabs.Trigger>
             </Tabs.List>
 
             <Tabs.Content value="courses" w="full" ml={{ base: 0, md: 28 }}>
@@ -54,12 +48,6 @@ const Registrations = () => {
             <Tabs.Content value="transcripts" w="full" ml={{ base: 0, md: 28 }}>
                 <Suspense>
                     <TranscriptsTabsContent />
-                </Suspense>
-            </Tabs.Content>
-
-            <Tabs.Content value="id-cards" w="full" ml={{ base: 0, md: 28 }}>
-                <Suspense>
-                    <IDCardTabContent />
                 </Suspense>
             </Tabs.Content>
         </Tabs.Root>
