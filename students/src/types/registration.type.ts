@@ -4,12 +4,15 @@ export type TranscriptDeliveryMethod = "DIGITAL_DELIVERY" | "COURIER_SERVICE" | 
 export interface Transcript {
     id: string;
     reference: string;
+    studentId: string;
+    address: string;
     purpose: string;
     deliveryMethod: TranscriptDeliveryMethod;
     status: TranscriptStatus;
-    address?: string;
+    paymentReference: string;
     createdAt: string;
-    updatedAt?: string;
+    updatedAt: string;
+    paymentStatus: string;
 }
 
 export interface TranscriptQueryParams {

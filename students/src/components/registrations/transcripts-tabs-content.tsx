@@ -1,8 +1,8 @@
-import { Badge, Button, Flex, Heading, Input, Skeleton, Stack, Table, Text, Field, Select, Portal, Alert, List, useSelectContext, DownloadTrigger } from "@chakra-ui/react"
+import { Badge, Button, Flex, Heading, Input, Skeleton, Stack, Table, Text, Field, Select, Portal, Alert, List, useSelectContext } from "@chakra-ui/react"
 import { useTranscripts, useInitializePayment, usePaymentDetails } from "@hooks/registration.hook"
 import { EmptyStateView } from "@components/shared/empty-state"
 import { LuFileDown, LuFileText, LuPlus } from "react-icons/lu"
-import { useState } from "react"
+import { lazy, useCallback, useState, Suspense } from "react"
 import { createListCollection } from "@chakra-ui/react"
 import { CloseButton, Dialog } from "@chakra-ui/react"
 import { useCreateTranscriptForm } from "@forms/transcript.form"
@@ -11,6 +11,14 @@ import { Controller } from "react-hook-form"
 import { PaymentType, type PaymentDetails } from "@type/registration.type"
 import { formatCurrency, toTitleCase } from "@utils/function.util"
 import { useLocation } from "react-router"
+import { usePaymentByReference } from "@hooks/payment.hook"
+import { useReceiptStore } from "@stores/data.store"
+import { useMe } from "@hooks/auth.hook"
+import type { UserProfile } from "@type/auth.type"
+import type { Payment } from "@type/payment.type"
+
+
+const Receipt = lazy(() => import("@components/shared/reciept"));
 
 const deliveryMethods = createListCollection({
     items: [
@@ -22,7 +30,7 @@ const deliveryMethods = createListCollection({
 
 const TranscriptsTabsContent = () => {
     const [page] = useState(1)
-    const { data, isLoading } = useTranscripts({ page, limit: 10 })
+    const { data, isLoading } = useTranscripts({ page, limit: 10 });
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -86,12 +94,15 @@ const TranscriptsTabsContent = () => {
                                         </Badge>
                                     </Table.Cell>
                                     <Table.Cell>
+                                        <Badge colorPalette={item.paymentStatus === "PAID" ? "green" : "red"}>
+                                            {toTitleCase(item.paymentStatus)}
+                                        </Badge>
                                     </Table.Cell>
                                     <Table.Cell>
                                         {new Date(item.createdAt).toLocaleDateString()}
                                     </Table.Cell>
                                     <Table.Cell>
-                                        <DownloadReceiptcriptButton />
+                                        <DownloadReceiptButton reference={item.paymentReference} />
                                     </Table.Cell>
                                 </Table.Row>
                             ))}
@@ -99,31 +110,47 @@ const TranscriptsTabsContent = () => {
                     </Table.Root>
                 </Table.ScrollArea>
             )}
-        </Stack >
+
+
+            <Suspense fallback={null}>
+                <Receipt />
+            </Suspense>
+        </Stack>
     )
 }
 
 
-const data = async () => {
-    const res = await fetch("https://picsum.photos/200/300")
-    return res.blob()
-}
+const DownloadReceiptButton = ({ reference }: { reference: string }) => {
+    const { init } = useReceiptStore((state) => state);
+    const { isLoading, refetch } = usePaymentByReference(reference);
+    const { data: me, isLoading: isLoadingMe } = useMe();
 
+    const handleDownload = useCallback(async () => {
+        const { data: newReceipt } = await refetch();
 
-const DownloadReceiptcriptButton = () => {
+        const receiptData = {
+            ...newReceipt,
+            firstName: me?.studentProfile?.firstName || "",
+            lastName: me?.studentProfile?.surname || "",
+            otherName: me?.studentProfile?.otherName || "",
+            registrationNo: me?.studentProfile?.registrationNo || "",
+            matricNumber: me?.studentProfile?.matricNumber || "",
+        } as unknown as Payment & Pick<NonNullable<UserProfile["studentProfile"]>, "firstName" | "surname" | "otherName" | "matricNumber" | "registrationNo">;
+
+        init(receiptData);
+
+    }, [refetch, me, init]);
 
     return (
-        <DownloadTrigger
-            data={data}
-            fileName="sample.jpg"
-            mimeType="image/jpeg"
-            asChild
-        >
-            <Button variant="ghost" size="sm" colorPalette="accent">
-                <LuFileDown /> Download
-            </Button>
-        </DownloadTrigger>
-    )
+        <Button
+            disabled={isLoading || isLoadingMe || !reference}
+            onClick={handleDownload}
+            loading={isLoading || isLoadingMe}
+            variant="ghost"
+            size="sm"
+            colorPalette="accent">
+            <LuFileDown /> Download
+        </Button>)
 }
 
 
