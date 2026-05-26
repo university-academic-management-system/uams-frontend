@@ -1,6 +1,6 @@
 import { Alert, Badge, Box, Card, CheckboxCard, CheckboxGroup, CloseButton, DataList, Flex, GridItem, Heading, Separator, SimpleGrid, Skeleton, Stack, Tabs, Text } from "@chakra-ui/react"
 import { useMe } from "@hooks/auth.hook";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { ActionBar, Button, Checkbox, Portal, Table } from "@chakra-ui/react"
 import { useCourses, useRegisterCourses } from "@hooks/course.hook";
 import { EmptyStateView } from "@components/shared/empty-state";
@@ -16,8 +16,14 @@ import { toaster } from "@components/ui/toaster";
 
 const CoursesTabContent = () => {
     const { data: me, isLoading } = useMe();
+    const [sp, setSp] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(sp.get("level") || "L100");
     // const is4yearsDegree = useMemo(() => me?.studentProfile?.degreeAwardedCode?.toLocaleLowerCase()?.replaceAll(".", "")?.trim() === "bsc", [me]);
     const currentLevel = useMemo(() => parseInt(me?.studentProfile?.level?.replaceAll("L", "") || "0"), [me]);
+
+    useEffect(() => {
+        setSp({ tab: sp.get("tab") || "courses", level: activeTab || "L100", semester: sp.get("semester") || "FIRST" });
+    }, [activeTab, setSp, sp]);
 
     if (isLoading) {
         return (
@@ -31,7 +37,7 @@ const CoursesTabContent = () => {
 
 
     return (
-        <Tabs.Root defaultValue="L100" lazyMount variant={"enclosed"}>
+        <Tabs.Root defaultValue="L100" value={activeTab} onValueChange={(e) => setActiveTab(e.value)} lazyMount variant={"enclosed"}>
             <Tabs.List >
                 <Tabs.Trigger value="L100">
                     100 Level
@@ -74,9 +80,15 @@ const CoursesTabContent = () => {
 
 
 const LevelTabContent = ({ level }: { level: "L100" | "L200" | "L300" | "L400" | "L500" }) => {
+    const [sp, setSp] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(sp.get("semester") || "FIRST");
+
+    useEffect(() => {
+        setSp({ tab: sp.get("tab") || "courses", semester: activeTab || "FIRST", level: sp.get("level") || "L100" });
+    }, [activeTab, setSp, sp]);
 
     return (
-        <Tabs.Root defaultValue="FIRST" lazyMount>
+        <Tabs.Root defaultValue="FIRST" lazyMount value={activeTab} onValueChange={(e) => setActiveTab(e.value)}>
             <Tabs.List pos="sticky" top="0" zIndex={"sticky"} bg="bg.subtle">
                 <Tabs.Trigger value="FIRST">
                     1st Semester
@@ -314,6 +326,7 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
 
 
 import type { CoursesResponse } from "@type/course.type";
+import { useSearchParams } from "react-router";
 
 // ... (skipping imports already there)
 

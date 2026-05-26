@@ -187,7 +187,7 @@ const VerificationStep = ({ onNext }: { onNext: () => void }) => {
             <form onSubmit={handleSubmit(onSubmit)}>
                 <Stack gap="5" width="full">
                     <Field.Root invalid={!!errors.matricNumber}>
-                        <Field.Label>Registration Number</Field.Label>
+                        <Field.Label>Matriculation Number</Field.Label>
                         <Input
                             placeholder="e.g. U2026/5459888"
                             {...register("matricNumber")}

@@ -3,7 +3,11 @@ import Header from "@components/shared/header";
 import Sidebar from "@components/shared/sidebar";
 import ToasterReseter from "@components/shared/ToasterReseter";
 import { Toaster } from "@components/ui/toaster";
+import { lazy, Suspense } from "react";
 import { Outlet } from "react-router";
+
+const ReceiptTemplate = lazy(() => import("@components/shared/reciept"));
+
 
 const RootLayout = () => {
     return <>
@@ -27,6 +31,9 @@ const RootLayout = () => {
                     <ScrollArea.Viewport>
                         <ScrollArea.Content p="4">
                             <Outlet />
+                            <Suspense>
+                                <ReceiptTemplate />
+                            </Suspense>
                         </ScrollArea.Content>
                     </ScrollArea.Viewport>
                     <ScrollArea.Scrollbar>
