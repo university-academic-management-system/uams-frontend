@@ -14,6 +14,7 @@ export type Level = "L100" | "L200" | "L300" | "L400" | "L500" | "GRADUATED" | "
 export const SEMESTERS: Semester[] = ["FIRST", "SECOND", "THIRD"];
 export const LEVELS: Level[] = ["L100", "L200", "L300", "L400", "L500", "GRADUATED", "WITHDRAWN"];
 
+
 export interface TimetableEntry {
   id: string;
   courseId: string;
@@ -24,6 +25,11 @@ export interface TimetableEntry {
   session: string;     
   semester: Semester;
   level: Level;
+  course : {
+  id: string;
+  code: string;
+  title: string;
+}
 }
 
 export interface ApiResponse<T> {
