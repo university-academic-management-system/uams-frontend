@@ -2,7 +2,7 @@ import { Badge, Button, Flex, Heading, Input, Skeleton, Stack, Table, Text, Fiel
 import { useTranscripts, useInitializePayment, usePaymentDetails } from "@hooks/registration.hook"
 import { EmptyStateView } from "@components/shared/empty-state"
 import { LuFileDown, LuFileText, LuPlus } from "react-icons/lu"
-import { lazy, useCallback, useState, Suspense } from "react"
+import { useCallback, useState } from "react"
 import { createListCollection } from "@chakra-ui/react"
 import { CloseButton, Dialog } from "@chakra-ui/react"
 import { useCreateTranscriptForm } from "@forms/transcript.form"
@@ -17,8 +17,6 @@ import { useMe } from "@hooks/auth.hook"
 import type { UserProfile } from "@type/auth.type"
 import type { Payment } from "@type/payment.type"
 
-
-const Receipt = lazy(() => import("@components/shared/reciept"));
 
 const deliveryMethods = createListCollection({
     items: [
@@ -111,10 +109,6 @@ const TranscriptsTabsContent = () => {
                 </Table.ScrollArea>
             )}
 
-
-            <Suspense fallback={null}>
-                <Receipt />
-            </Suspense>
         </Stack>
     )
 }
