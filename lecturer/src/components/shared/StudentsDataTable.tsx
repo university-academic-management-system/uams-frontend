@@ -15,11 +15,12 @@ import {
   CloseButton,
   Flex,
   Text,
-  Heading,
   Button,
   Grid,
+  ButtonGroup,
+  Pagination,
 } from "@chakra-ui/react";
-import { LuUsers, LuCircleAlert, LuFileText, LuChartNoAxesCombined, LuEllipsis } from "react-icons/lu";
+import { LuUsers, LuCircleAlert, LuFileText, LuChartNoAxesCombined, LuEllipsis, LuChevronRight, LuChevronLeft, LuChevronDown } from "react-icons/lu";
 import type { Student } from "@type/student.type";
 import jsPDF from "jspdf";
 import { capitaliseName, formatLevel } from "@utils/function.util";
@@ -48,10 +49,66 @@ const COLUMNS = [
   { key: "action", label: "", width: "50px" },
 ] as const;
 
+// Helper to format and color registration status
+const getRegistrationStatusBadge = (status: string | undefined) => {
+  if (!status) return <Badge>Unknown</Badge>;
+  const normalized = status.toUpperCase();
+  let colorScheme = "gray";
+  let label = status.replace("_", " ");
+  switch (normalized) {
+    case "REGISTERED":
+      colorScheme = "green";
+      break;
+    case "PENDING":
+      colorScheme = "yellow";
+      break;
+    case "INCOMPLETE":
+      colorScheme = "orange";
+      break;
+    case "CLEARED":
+      colorScheme = "blue";
+      break;
+  }
+  return <Badge colorPalette={colorScheme}>{label}</Badge>;
+};
+
+// Helper to format and color academic standing
+const getAcademicStandingBadge = (standing: string | undefined) => {
+  if (!standing) return <Badge>Unknown</Badge>;
+  const normalized = standing.toUpperCase();
+  let colorScheme = "gray";
+  let label = standing.replace("_", " ");
+  switch (normalized) {
+    case "GOOD_STANDING":
+      colorScheme = "green";
+      label = "Good Standing";
+      break;
+    case "PROBATION":
+      colorScheme = "red";
+      break;
+    case "SUSPENDED":
+      colorScheme = "red";
+      break;
+    case "WARNING":
+      colorScheme = "yellow";
+      break;
+    case "WITHDRAWN":
+      colorScheme = "gray";
+      break;
+  }
+  return <Badge colorPalette={colorScheme}>{label}</Badge>;
+};
+
 export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTableProps) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+
+  const totalPages = Math.ceil(students.length / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const paginatedStudents = students.slice(startIndex, startIndex + perPage);
 
   const handleOpenDrawer = (student: Student) => {
     setSelectedStudent(student);
@@ -94,147 +151,226 @@ export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTa
   };
 
   return (
-    <Box borderWidth="1px" borderColor="border.muted" rounded="md" overflowX="auto">
-      <Table.Root size="lg" variant="outline" css={{ tableLayout: "auto", minWidth: "1300px" }} stickyHeader>
-        <Table.Header>
-          <Table.Row>
-            {COLUMNS.map((col) => (
-              <Table.ColumnHeader
-                key={col.key}
-                fontSize="md"
-                bg="bg.muted"
-                color="fg.subtle"
-                textTransform="none"
-                minW={col.width}
-                px="3"
-                py="3"
-                whiteSpace="nowrap"
-                borderBottomWidth="1px"
-                borderBottomColor="border.muted"
+    <Box>
+      {/* Page size selector – left aligned */}
+      <Flex justify="flex-start" mb="4">
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <Flex
+              align="center"
+              gap="2"
+              border="xs"
+              borderColor="border.muted"
+              px="4"
+              h="36px"
+              rounded="md"
+              bg="white"
+              cursor="pointer"
+            >
+              <Text fontSize="sm" color="fg.muted" fontWeight="500">Show</Text>
+              <Flex
+                bg="accent.50"
+                color="accent.500"
+                px="2"
+                py="0.5"
+                rounded="sm"
+                align="center"
+                justify="center"
               >
-                {col.label}
-              </Table.ColumnHeader>
-            ))}
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {isLoading ? (
-            <Table.Row>
-              <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
-                <Center>
-                  <Spinner size="lg" color="accent.500" />
-                </Center>
-              </Table.Cell>
-            </Table.Row>
-          ) : error ? (
-            <Table.Row>
-              <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
-                <EmptyState.Root>
-                  <EmptyState.Content>
-                    <EmptyState.Indicator>
-                      <LuCircleAlert />
-                    </EmptyState.Indicator>
-                    <VStack textAlign="center">
-                      <EmptyState.Title>Failed to load students</EmptyState.Title>
-                      <EmptyState.Description>{error.message}</EmptyState.Description>
-                    </VStack>
-                  </EmptyState.Content>
-                </EmptyState.Root>
-              </Table.Cell>
-            </Table.Row>
-          ) : students.length === 0 ? (
-            <Table.Row>
-              <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
-                <EmptyState.Root>
-                  <EmptyState.Content>
-                    <EmptyState.Indicator>
-                      <LuUsers />
-                    </EmptyState.Indicator>
-                    <VStack textAlign="center">
-                      <EmptyState.Title>No students found</EmptyState.Title>
-                      <EmptyState.Description>Try adjusting your search or filters.</EmptyState.Description>
-                    </VStack>
-                  </EmptyState.Content>
-                </EmptyState.Root>
-              </Table.Cell>
-            </Table.Row>
-          ) : (
-            students.map((student, index) => {
-              const profile = student.studentProfile;
-              const firstName = capitaliseName(profile?.firstName);
-              const lastName = capitaliseName(profile?.lastName);
-              const otherName = capitaliseName(profile?.otherName);
-              const fullName = [firstName, lastName, otherName].filter((p) => p !== "—").join(" ");
-              return (
-                <Table.Row key={student.id} borderBottomWidth="1px" borderBottomColor="border.muted">
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {index + 1}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
-                    {fullName || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
-                    {profile?.registrationNo || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
-                    {profile?.matricNumber || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {student.email}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {profile?.phone || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {profile?.gender || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {formatLevel(profile?.level)}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {profile?.admissionYear || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {profile?.admissionSession || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {profile?.registrationStatus?.replace("_", " ") || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {profile?.academicStanding?.replace("_", " ") || "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    {profile?.cgpa ?? "—"}
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                    <Badge colorPalette={student.status === "ACTIVE" ? "green" : "red"}>{student.status || "ACTIVE"}</Badge>
-                  </Table.Cell>
-                  <Table.Cell px="3" py="3" whiteSpace="nowrap">
-                    <Menu.Root>
-                      <Menu.Trigger asChild>
-                        <IconButton size="sm" variant="ghost">
-                          <LuEllipsis />
-                        </IconButton>
-                      </Menu.Trigger>
-                      <Portal>
-                        <Menu.Positioner>
-                          <Menu.Content>
-                            <Menu.Item value="stats" onClick={() => handleOpenDrawer(student)}>
-                              <LuChartNoAxesCombined /> Stats & Records
-                            </Menu.Item>
-                          </Menu.Content>
-                        </Menu.Positioner>
-                      </Portal>
-                    </Menu.Root>
-                  </Table.Cell>
-                </Table.Row>
-              );
-            })
-          )}
-        </Table.Body>
-      </Table.Root>
+                <Text fontSize="sm" fontWeight="600">{perPage}</Text>
+              </Flex>
+              <Box color="fg.muted">
+                <LuChevronDown size={14} />
+              </Box>
+            </Flex>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content>
+                <Menu.Item value="10" onClick={() => { setPerPage(10); setCurrentPage(1); }}>10 rows</Menu.Item>
+                <Menu.Item value="20" onClick={() => { setPerPage(20); setCurrentPage(1); }}>20 rows</Menu.Item>
+                <Menu.Item value="50" onClick={() => { setPerPage(50); setCurrentPage(1); }}>50 rows</Menu.Item>
+                <Menu.Item value="100" onClick={() => { setPerPage(100); setCurrentPage(1); }}>100 rows</Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
+      </Flex>
 
-      {/* Right Drawer */}
+      <Box borderWidth="1px" borderColor="border.muted" rounded="md" overflowX="auto">
+        <Table.Root size="lg" variant="outline" stickyHeader>
+          <Table.Header>
+            <Table.Row>
+              {COLUMNS.map((col) => (
+                <Table.ColumnHeader
+                  key={col.key}
+                  fontSize="md"
+                  bg="bg.muted"
+                  color="fg.subtle"
+                  textTransform="none"
+                  minW={col.width}
+                  px="3"
+                  py="3"
+                  whiteSpace="nowrap"
+                  borderBottomWidth="1px"
+                  borderBottomColor="border.muted"
+                >
+                  {col.label}
+                </Table.ColumnHeader>
+              ))}
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {isLoading ? (
+              <Table.Row>
+                <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                  <Center>
+                    <Spinner size="lg" color="accent.500" />
+                  </Center>
+                </Table.Cell>
+              </Table.Row>
+            ) : error ? (
+              <Table.Row>
+                <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                  <EmptyState.Root>
+                    <EmptyState.Content>
+                      <EmptyState.Indicator>
+                        <LuCircleAlert />
+                      </EmptyState.Indicator>
+                      <VStack textAlign="center">
+                        <EmptyState.Title>Failed to load students</EmptyState.Title>
+                        <EmptyState.Description>{error.message}</EmptyState.Description>
+                      </VStack>
+                    </EmptyState.Content>
+                  </EmptyState.Root>
+                </Table.Cell>
+              </Table.Row>
+            ) : students.length === 0 ? (
+              <Table.Row>
+                <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                  <EmptyState.Root>
+                    <EmptyState.Content>
+                      <EmptyState.Indicator>
+                        <LuUsers />
+                      </EmptyState.Indicator>
+                      <VStack textAlign="center">
+                        <EmptyState.Title>No students found</EmptyState.Title>
+                        <EmptyState.Description>Try adjusting your search or filters.</EmptyState.Description>
+                      </VStack>
+                    </EmptyState.Content>
+                  </EmptyState.Root>
+                </Table.Cell>
+              </Table.Row>
+            ) : (
+              paginatedStudents.map((student, index) => {
+                const profile = student.studentProfile;
+                const firstName = capitaliseName(profile?.firstName);
+                const lastName = capitaliseName(profile?.lastName);
+                const otherName = capitaliseName(profile?.otherName);
+                const fullName = [firstName, lastName, otherName].filter((p) => p !== "—").join(" ");
+                return (
+                  <Table.Row key={student.id} borderBottomWidth="1px" borderBottomColor="border.muted">
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {startIndex + index + 1}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                      {fullName || "—"}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                      {profile?.registrationNo || "—"}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                      {profile?.matricNumber || "—"}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {student.email}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {profile?.phone || "—"}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {profile?.gender || "—"}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {formatLevel(profile?.level)}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {profile?.admissionYear || "—"}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {profile?.admissionSession || "—"}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {getRegistrationStatusBadge(profile?.registrationStatus)}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {getAcademicStandingBadge(profile?.academicStanding)}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      {profile?.cgpa ?? "—"}
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                      <Badge colorPalette={student.status === "ACTIVE" ? "green" : "red"}>{student.status || "ACTIVE"}</Badge>
+                    </Table.Cell>
+                    <Table.Cell px="3" py="3" whiteSpace="nowrap">
+                      <Menu.Root>
+                        <Menu.Trigger asChild>
+                          <IconButton size="sm" variant="ghost">
+                            <LuEllipsis />
+                          </IconButton>
+                        </Menu.Trigger>
+                        <Portal>
+                          <Menu.Positioner>
+                            <Menu.Content>
+                              <Menu.Item value="stats" onClick={() => handleOpenDrawer(student)}>
+                                <LuChartNoAxesCombined /> Stats & Records
+                              </Menu.Item>
+                            </Menu.Content>
+                          </Menu.Positioner>
+                        </Portal>
+                      </Menu.Root>
+                    </Table.Cell>
+                  </Table.Row>
+                );
+              })
+            )}
+          </Table.Body>
+        </Table.Root>
+      </Box>
+
+      {/* Pagination – centered */}
+      {!isLoading && students.length > 0 && totalPages > 1 && (
+        <Flex justify="center" mt="4">
+          <Pagination.Root
+            count={students.length}
+            pageSize={perPage}
+            page={currentPage}
+            onPageChange={(e) => setCurrentPage(e.page)}
+          >
+            <ButtonGroup variant="ghost" size="sm">
+              <Pagination.PrevTrigger asChild>
+                <IconButton>
+                  <LuChevronLeft />
+                </IconButton>
+              </Pagination.PrevTrigger>
+              <Pagination.Items
+                render={(page) => (
+                  <IconButton variant={{ base: "ghost", _selected: "outline" }}>
+                    {page.value}
+                  </IconButton>
+                )}
+              />
+              <Pagination.NextTrigger asChild>
+                <IconButton>
+                  <LuChevronRight />
+                </IconButton>
+              </Pagination.NextTrigger>
+            </ButtonGroup>
+          </Pagination.Root>
+        </Flex>
+      )}
+
+      {/* Right Drawer – unchanged */}
       <Drawer.Root open={drawerOpen} onOpenChange={(details) => setDrawerOpen(details.open)} placement="end" size="md">
         <Portal>
           <Drawer.Backdrop />

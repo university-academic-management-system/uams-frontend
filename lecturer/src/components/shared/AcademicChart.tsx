@@ -27,7 +27,7 @@ const formatLevelLabel = (level: string): string => {
 };
 
 export const AcademicPerformanceChart = () => {
-  // ✅ All hooks must be called unconditionally at the top
+  
   const { user } = useAuthStore();
   const { data: students = [], isLoading } = StudentHook.useStudents();
   const role = user?.role;

@@ -1,60 +1,46 @@
 import {
   Box,
-  Flex,
-  Text,
-  Icon,
-  Spinner,
   Center,
-  EmptyState,
-  VStack,
-  Select,
-  Portal,
-  createListCollection,
+  Flex,
+  HStack,
+  Stack,
+  Text,
+  Timeline,
+  DatePicker,
+  For,
+  Spinner,
+  parseDate,
+  ScrollArea,
   Button,
-  Heading,
+  type MenuValueChangeDetails,
 } from "@chakra-ui/react";
+import {
+  getLocalTimeZone,
+  isToday,
+  isWeekend,
+  today,
+  type DateValue as IntlDateValue,
+} from "@internationalized/date";
+import { useState, useMemo, useEffect } from "react";
+import { LuGlobe, LuClock, LuMapPin, LuBookOpen } from "react-icons/lu";
 import { TimetableHook } from "@hooks/timetable.hooks";
 import useAuthStore from "@stores/auth.store";
-import { useMemo } from "react";
-import { LuCircleAlert, LuClock } from "react-icons/lu";
+import moment from "moment";
+import { formatMonthDay, formatTime, formatWeekday } from "@utils/function.util";
+import { EmptyStateView } from "@components/shared/empty-state";
+
+const tz = getLocalTimeZone();
+type DateValue = DatePicker.DateValue;
 
 interface TimetablePanelProps {
-  selectedFilter: "today" | "tomorrow" | "week";
-  onFilterChange: (value: "today" | "tomorrow" | "week") => void;
   onViewFullTimetable: () => void;
+  // selectedFilter and onFilterChange are removed; parent should stop passing them.
 }
 
-const filterCollection = createListCollection({
-  items: [
-    { label: "Today", value: "today" },
-    { label: "Tomorrow", value: "tomorrow" },
-    { label: "This Week", value: "week" },
-  ],
-});
-
-const getCurrentDay = (): string => {
-  const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-  return days[new Date().getDay()];
-};
-
-const getNextDay = (): string => {
-  const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-  const tomorrowIndex = (new Date().getDay() + 1) % 7;
-  return days[tomorrowIndex];
-};
-
-const getRemainingWeekDays = (): string[] => {
-  const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
-  const todayIndex = new Date().getDay() - 1;
-  if (todayIndex < 0) return [...days];
-  return [...days.slice(todayIndex), ...days.slice(0, todayIndex)];
-};
-
-const TimetablePanel = ({ selectedFilter, onFilterChange, onViewFullTimetable }: TimetablePanelProps) => {
+const TimetablePanel = ({ onViewFullTimetable }: TimetablePanelProps) => {
   const { user } = useAuthStore();
   const currentYear = new Date().getFullYear();
   const fallbackSession = `${currentYear}/${currentYear + 1}`;
-
   const session = user?.currentSession || fallbackSession;
   const semester = user?.currentSemester || "FIRST";
 
@@ -63,146 +49,210 @@ const TimetablePanel = ({ selectedFilter, onFilterChange, onViewFullTimetable }:
     !!session && !!semester
   );
 
+  // Determine the default date (first valid day in semester range or today)
+  const defaultDate = useMemo(() => {
+    return parseDate(moment(today(tz).toString()).format("YYYY-MM-DD"));
+  }, []);
+
+  const [selectedDate, setSelectedDate] = useState<DateValue[]>([defaultDate]);
+  const date = selectedDate[0] || defaultDate;
+
+  const nativeDate = useMemo(() => {
+    const d = date as unknown as { toDate(tz: string): Date };
+    return d?.toDate?.(tz);
+  }, [date]);
+
+  const handleDateChange = (details: MenuValueChangeDetails) => {
+    setSelectedDate(details.value);
+  };
+
+  // Filter timetable for the selected day
+  const slots = useMemo(() => {
+    if (!timetableData.length || !nativeDate) return [];
+    const selectedDayName = formatWeekday(nativeDate).toUpperCase();
+    return timetableData
+      .filter((item) => item.dayOfWeek.toUpperCase() === selectedDayName)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }, [timetableData, nativeDate]);
+
   const isLoading = isQueryLoading || !session || !semester;
 
-  const filteredEntries = useMemo(() => {
-    if (!timetableData.length) return [];
-
-    const currentDay = getCurrentDay();
-    const nextDay = getNextDay();
-    const weekDays = getRemainingWeekDays();
-
-    switch (selectedFilter) {
-      case "today":
-        return timetableData.filter(entry => entry.dayOfWeek === currentDay);
-      case "tomorrow":
-        return timetableData.filter(entry => entry.dayOfWeek === nextDay);
-      case "week":
-        return timetableData.filter(entry => weekDays.includes(entry.dayOfWeek));
-      default:
-        return timetableData;
-    }
-  }, [timetableData, selectedFilter]);
-
-  const sortedEntries = [...filteredEntries].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const isOngoing = (item: typeof slots[0]) => {
+    if (!nativeDate || !isToday(date as unknown as IntlDateValue, tz)) return false;
+    const now = moment();
+    const start = moment(item.startTime);
+    const end = moment(item.endTime);
+    if (end.isBefore(start)) end.add(12, "hours");
+    return now.isBetween(start, end);
+  };
 
   return (
-    <Box>
-      {/* Header – always visible */}
-      <Flex align="center" justify="space-between" px="5" py="4.5" borderBottom="1px solid" borderColor="border.muted">
-        <Heading color="fg.muted">Timetable</Heading>
-        <Flex gap="2">
-          <Select.Root
-            collection={filterCollection}
-            value={[selectedFilter]}
-            onValueChange={(e) => onFilterChange(e.value[0] as "today" | "tomorrow" | "week")}
-            size="sm"
-            width="120px"
-          >
-            <Select.HiddenSelect />
-            <Select.Control>
-              <Select.Trigger>
-                <Select.ValueText placeholder="Select filter" />
-              </Select.Trigger>
-              <Select.IndicatorGroup>
-                <Select.Indicator />
-              </Select.IndicatorGroup>
-            </Select.Control>
-            <Portal>
-              <Select.Positioner>
-                <Select.Content>
-                  {filterCollection.items.map((item) => (
-                    <Select.Item item={item} key={item.value}>
-                      {item.label}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Portal>
-          </Select.Root>
-          <Button bg="accent.500" variant="solid" size="sm" onClick={onViewFullTimetable}>
-            View Full Timetable
-          </Button>
-        </Flex>
-      </Flex>
+    <Flex
+      direction={{ base: "column", md: "row" }}
+      borderWidth="1px"
+      rounded="xl"
+      overflow="hidden"
+      bg="bg"
+      borderColor="border.muted"
+      width="full"
+    >
+      {/* Calendar Column – exactly as in TimetableComp */}
+      <Box
+        borderRight={{ base: "none", md: "xs" }}
+        borderBottom={{ base: "xs", md: "none" }}
+        borderRightColor={{ base: "none", md: "border.muted" }}
+        borderBottomColor={{ base: "border.muted", md: "none" }}
+        bg="bg.subtle/30"
+      >
+        <Stack gap="0" px="5" py="5">
+          <Text fontWeight="semibold" textStyle="lg">Select a Date</Text>
+          <Text textStyle="sm" color="fg.muted">Pick a day to view your schedule</Text>
+        </Stack>
 
-      {/* Scrollable content area – contains loading, error, or timetable list/empty state */}
-      <Box flex="1" overflowY="auto" px="5" py="5">
-        {isLoading ? (
-          <Center py={10}>
-            <Spinner size="lg" color="accent.500" />
-          </Center>
-        ) : error ? (
-          <EmptyState.Root>
-            <EmptyState.Content>
-              <EmptyState.Indicator>
-                <LuCircleAlert />
-              </EmptyState.Indicator>
-              <VStack textAlign="center">
-                <EmptyState.Title>Error loading timetable</EmptyState.Title>
-                <EmptyState.Description>
-                  There seems to be a temporary issue. Please try again later.
-                </EmptyState.Description>
-              </VStack>
-            </EmptyState.Content>
-          </EmptyState.Root>
-        ) : sortedEntries.length > 0 ? (
-          <Flex direction="column" gap="3">
-            {sortedEntries.map((entry) => {
-              const now = new Date();
-              const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-              const isActive =
-                selectedFilter === "today" &&
-                entry.startTime.slice(11, 16) <= currentTime &&
-                entry.endTime.slice(11, 16) >= currentTime;
-              return (
-                <Box
-                  key={entry.id}
-                  bg={isActive ? "accent.500" : "white"}
-                  color={isActive ? "white" : "fg.muted"}
-                  borderRadius="lg"
-                  px="4.5"
-                  py="4"
-                  borderLeft="4px solid"
-                  borderLeftColor={isActive ? "accent.600" : "accent.300"}
-                >
-                  <Text fontSize="14px" mb="1.5">
-                    {entry.course.code}
-                  </Text>
-                  <Flex align="center" gap="3.5">
-                    <Text fontSize="11px" opacity={isActive ? 0.9 : 0.6}>
-                      {entry.venue}
-                    </Text>
-                    <Flex align="center" gap="1.5">
-                      <Icon size="xs">
-                        <LuClock />
-                      </Icon>
-                      <Text fontSize="11px">
-                        {entry.startTime.slice(11, 16)} - {entry.endTime.slice(11, 16)}
-                      </Text>
-                    </Flex>
-                  </Flex>
-                </Box>
-              );
-            })}
-          </Flex>
-        ) : (
-          <Flex h="full" direction="column" align="center" justify="center" textAlign="center" py="10">
-            <Icon size="lg" color="fg.subtle" mb="3">
-              <LuClock />
-            </Icon>
-            <Text fontSize="13px" color="fg.muted">
-              No classes scheduled for{" "}
-              {selectedFilter === "today"
-                ? "today"
-                : selectedFilter === "tomorrow"
-                ? "tomorrow"
-                : "the week"}
-            </Text>
-          </Flex>
-        )}
+        <DatePicker.Root
+          key="timetable-datepicker" // force re-render if needed
+          inline
+          value={selectedDate as never}
+          onValueChange={handleDateChange}
+          isDateUnavailable={(date) => isWeekend(date as unknown as IntlDateValue, "en-NG")}
+          width={{ base: "full", md: "fit-content" }}
+          colorPalette="accent"
+        >
+          <DatePicker.Content unstyled px="3" pb="4">
+            <DatePicker.View view="day">
+              <HStack justify="space-between" gap="0" mb="2">
+                <DatePicker.PrevTrigger />
+                <DatePicker.RangeText fontWeight="medium" textStyle="sm" />
+                <DatePicker.NextTrigger />
+              </HStack>
+              <DatePicker.DayTable />
+            </DatePicker.View>
+          </DatePicker.Content>
+        </DatePicker.Root>
+
+        <HStack px="5" pb="4" color="fg.muted" textStyle="xs">
+          <LuGlobe />
+          <span>{tz}</span>
+        </HStack>
       </Box>
-    </Box>
+
+      {/* Schedule Column – with header and timeline */}
+      <Stack minW="240px" flex="1" bg="bg">
+        {date && nativeDate ? (
+          <Stack gap="0" flex="1">
+            <Stack gap="0" px="5" pt="5" pb="3">
+              <Text fontWeight="semibold">
+                {isToday(date as unknown as IntlDateValue, tz) ? "Today" : formatWeekday(nativeDate)}
+              </Text>
+              <Text textStyle="sm" color="fg.muted">{formatMonthDay(nativeDate)}</Text>
+            </Stack>
+
+            <Box px="5" py="4" pb="0" flex="1" overflowY="hidden" maxH="400px">
+              {isLoading ? (
+                <Center h="full">
+                  <Stack gap="3" align="center">
+                    <Spinner color="accent" />
+                    <Text textStyle="sm" color="fg.muted">Loading schedule...</Text>
+                  </Stack>
+                </Center>
+              ) : slots.length > 0 ? (
+                <Timeline.Root h="full" size="lg" variant="subtle" overflow="hidden">
+                  <ScrollArea.Root h="full" size="xs">
+                    <ScrollArea.Viewport>
+                      <ScrollArea.Content>
+                        <For each={slots}>
+                          {(item, index) => (
+                            <Timeline.Item key={item.id}>
+                              <Timeline.Content width="100px" pt="1">
+                                <Text
+                                  fontWeight={isOngoing(item) ? "bold" : "regular"}
+                                  textStyle="sm"
+                                  color="fg.muted"
+                                  whiteSpace="nowrap"
+                                >
+                                  {formatTime(item.startTime)}
+                                </Text>
+                                <Text textStyle="xs" color="fg.subtle">
+                                  to {formatTime(item.endTime, item.startTime)}
+                                </Text>
+                              </Timeline.Content>
+                              <Timeline.Connector>
+                                <Timeline.Separator />
+                                <Timeline.Indicator
+                                  bg={isOngoing(item) ? "accent.solid" : "bg.subtle"}
+                                >
+                                  <Text
+                                    textStyle="xs"
+                                    fontWeight="bold"
+                                    color={isOngoing(item) ? "white" : "fg.muted"}
+                                  >
+                                    {index + 1}
+                                  </Text>
+                                </Timeline.Indicator>
+                              </Timeline.Connector>
+                              <Timeline.Content pt="0.5" pb="8">
+                                <Stack gap="2">
+                                  <Box>
+                                    <Timeline.Title
+                                      fontWeight={isOngoing(item) ? "bold" : "regular"}
+                                      textStyle="md"
+                                      color="fg"
+                                    >
+                                      {item.course.title}
+                                    </Timeline.Title>
+                                    <HStack gap="2" mt="1">
+                                      <LuBookOpen size={14} />
+                                      <Text textStyle="xs" fontWeight="bold" color="accent">
+                                        {item.course.code}
+                                      </Text>
+                                    </HStack>
+                                  </Box>
+                                  <HStack gap="4">
+                                    <HStack gap="1" color="fg.subtle">
+                                      <LuClock size={14} />
+                                      <Text textStyle="xs">
+                                        {moment.duration(moment(item.endTime).diff(moment(item.startTime))).asHours()} Hours
+                                      </Text>
+                                    </HStack>
+                                    <HStack gap="1" color="fg.subtle">
+                                      <LuMapPin size={14} />
+                                      <Text textStyle="xs">{item.venue || "TBA"}</Text>
+                                    </HStack>
+                                  </HStack>
+                                </Stack>
+                              </Timeline.Content>
+                            </Timeline.Item>
+                          )}
+                        </For>
+                      </ScrollArea.Content>
+                    </ScrollArea.Viewport>
+                    <ScrollArea.Scrollbar>
+                      <ScrollArea.Thumb />
+                    </ScrollArea.Scrollbar>
+                    <ScrollArea.Corner />
+                  </ScrollArea.Root>
+                </Timeline.Root>
+              ) : (
+                <Center h="full" py="10">
+                  <EmptyStateView
+                    icon={<LuClock />}
+                    title="No classes scheduled"
+                    description="Enjoy your free time!"
+                  />
+                </Center>
+              )}
+            </Box>
+          </Stack>
+        ) : (
+          <Center height="full" px="8" py="10" color="fg.muted">
+            <Stack align="center" gap="1" textAlign="center">
+              <Text textStyle="sm" fontWeight="medium">Select a date</Text>
+              <Text textStyle="xs">Available time slots will appear here</Text>
+            </Stack>
+          </Center>
+        )}
+      </Stack>
+    </Flex>
   );
 };
 

@@ -23,17 +23,13 @@ const Lecturers = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
 
-  // Debounce search input
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500);
+    const handler = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(handler);
   }, [search]);
 
   const { data: lecturers = [], isLoading } = StaffHook.useStaff();
 
-  // Get unique roles from data
   const uniqueRoles = useMemo<string[]>(() => {
     if (!lecturers.length) return [];
     const roles = new Set<string>(
@@ -47,7 +43,7 @@ const Lecturers = () => {
   const roleCollection = useMemo(() => {
     if (uniqueRoles.length === 0) {
       return createListCollection({
-        items: [{ label: "No roles", value: "" }] as { label: string; value: string; }[],
+        items: [{ label: "No roles", value: "" }],
       });
     }
     return createListCollection({
@@ -62,11 +58,10 @@ const Lecturers = () => {
                   .join(" "),
           value: role,
         })),
-      ] as { label: string; value: string; }[],
+      ],
     });
   }, [uniqueRoles]);
 
-  // Filter lecturers (client-side)
   const filteredLecturers = useMemo(() => {
     if (!lecturers.length) return [];
     let result = lecturers;
@@ -91,9 +86,6 @@ const Lecturers = () => {
     return result;
   }, [lecturers, debouncedSearch, roleFilter]);
 
-  const totalCount = lecturers.length;
-
-  // Export handler
   const handleExport = () => {
     const exportData = filteredLecturers.map((l) => ({
       "Staff Number": l.staffProfile?.staffNumber || "—",
@@ -112,11 +104,19 @@ const Lecturers = () => {
   };
 
   return (
-    <Box w="full">
+    <Box maxW="100vw" overflowX="hidden">
       <Box bg="bg" rounded="md" p="4">
-        {/* Filters – always visible */}
-        <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette={"accent"}>
-          <InputGroup startElement={<LuSearch />} width="300px">
+        {/* Filters */}
+        <Flex 
+          align="center" 
+          justify="space-between" 
+          gap="3" 
+          mb="5" 
+          wrap="wrap"
+          direction={{ base: "column", sm: "row" }}
+          colorPalette="accent"
+        >
+          <InputGroup startElement={<LuSearch />} width={{ base: "100%", sm: "300px" }}>
             <Input
               placeholder="Search by Name, Email or ID."
               value={search}
@@ -125,13 +125,13 @@ const Lecturers = () => {
             />
           </InputGroup>
 
-          <Flex gap="3" align="center">
+          <Flex gap="3" align="center" wrap="wrap">
             <Select.Root
               collection={roleCollection}
               value={roleFilter ? [roleFilter] : []}
               onValueChange={(e) => setRoleFilter(e.value[0] || "")}
               size="lg"
-              width="200px"
+              width={{ base: "100%", sm: "200px" }}
             >
               <Select.HiddenSelect />
               <Select.Control>
@@ -155,24 +155,23 @@ const Lecturers = () => {
               </Portal>
             </Select.Root>
 
-            {/* Export Button */}
             <Button
               onClick={handleExport}
-              colorPalette={"accent"}
+              colorPalette="accent"
               gap="2"
               size="lg"
               rounded="md"
-              cursor="pointer"
+              width={{ base: "100%", sm: "auto" }}
             >
               <LuDownload size={16} /> Export Table
             </Button>
           </Flex>
         </Flex>
 
-        <LecturersTable
-          lecturers={filteredLecturers}
-          isLoading={isLoading}
-        />
+      
+        <Box overflowX="auto">
+          <LecturersTable lecturers={filteredLecturers} isLoading={isLoading} />
+        </Box>
       </Box>
     </Box>
   );

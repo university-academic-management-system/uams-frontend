@@ -3,7 +3,6 @@ import {
   Table,
   Text,
   Flex,
-  Menu,
   Button,
   Portal,
   Drawer,
@@ -11,29 +10,19 @@ import {
   For,
   Heading,
   Spinner,
-  InputGroup,
-  Input,
-  Dialog,
   EmptyState,
   VStack,
   ButtonGroup,
   IconButton,
   Pagination,
-  Badge, // added Badge
-  Select,
-  createListCollection,
+  Badge,
+  Menu,
 } from "@chakra-ui/react";
-import { MoreHorizontal, Search, User, UserRoundPen, Users } from "lucide-react";
+import { MoreHorizontal, Users, ChevronDown } from "lucide-react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
-import { useNavigate } from "react-router";
 import type { Staff } from "@type/lecturer.type";
-import { StudentHook } from "@hooks/student.hook";
 import { CourseHook } from "@hooks/course.hook";
 import React, { useState, useEffect } from "react";
-import { AcademicHook } from "@hooks/academic.hook";
-import { Checkbox } from "../ui/checkbox";
-import { toaster } from "@components/ui/toaster";
-import type { Student } from "@type/student.type";
 
 interface LecturersTableProps {
   lecturers: Staff[];
@@ -51,23 +40,11 @@ const COLUMNS = [
   { key: "action", label: "Action", width: "70px" },
 ] as const;
 
-const pageSizeCollection = createListCollection({
-  items: [
-    { label: "10 per page", value: "10" },
-    { label: "20 per page", value: "20" },
-    { label: "50 per page", value: "50" },
-    { label: "100 per page", value: "100" },
-  ],
-});
-
-// Helper function to format role: replace underscores, capitalize words, keep HOD/ERO uppercase
 const formatRole = (role: string | undefined | null): string => {
   if (!role) return "—";
   const upperKeep = ["HOD", "ERO"];
   if (upperKeep.includes(role)) return role;
-  // Replace underscores with spaces
   const withSpaces = role.replace(/_/g, " ");
-  // Capitalize each word
   return withSpaces
     .split(" ")
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -75,23 +52,67 @@ const formatRole = (role: string | undefined | null): string => {
 };
 
 const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
-  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [perPage, setPerPage] = useState(10);
   const [selectedLecturer, setSelectedLecturer] = useState<Staff | null>(null);
   const [isCourseDrawerOpen, setIsCourseDrawerOpen] = useState(false);
   const { data: assignedCourses = [] } = CourseHook.useAllCourses();
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [lecturers]);
+  }, [lecturers, perPage]);
 
-  const totalPages = Math.ceil(lecturers.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedLecturers = lecturers.slice(startIndex, startIndex + pageSize);
+  const totalPages = Math.ceil(lecturers.length / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const paginatedLecturers = lecturers.slice(startIndex, startIndex + perPage);
 
   return (
     <Box>
+      {/* Toolbar – page size selector on the left */}
+      <Flex justify="flex-start" mb="4">
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <Flex
+              align="center"
+              gap="2"
+              border="xs"
+              borderColor="border.muted"
+              px="4"
+              h="36px"
+              rounded="md"
+              bg="white"
+              cursor="pointer"
+            >
+              <Text fontSize="sm" color="fg.muted" fontWeight="500">Show</Text>
+              <Flex
+                bg="accent.50"
+                color="accent.500"
+                px="2"
+                py="0.5"
+                rounded="sm"
+                align="center"
+                justify="center"
+              >
+                <Text fontSize="sm" fontWeight="600">{perPage}</Text>
+              </Flex>
+              <Box>
+                <ChevronDown size={14} />
+              </Box>
+            </Flex>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content>
+                <Menu.Item value="10" onClick={() => setPerPage(10)}>10 rows</Menu.Item>
+                <Menu.Item value="20" onClick={() => setPerPage(20)}>20 rows</Menu.Item>
+                <Menu.Item value="50" onClick={() => setPerPage(50)}>50 rows</Menu.Item>
+                <Menu.Item value="100" onClick={() => setPerPage(100)}>100 rows</Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
+      </Flex>
+
       <Table.ScrollArea>
         <Table.Root size="lg" variant="outline" stickyHeader>
           <Table.Header>
@@ -148,6 +169,7 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
               paginatedLecturers.map((lecturer, index) => {
                 const staffRole = lecturer.staffProfile?.staffRoles?.[0];
                 const formattedRole = formatRole(staffRole);
+                const courseCount = lecturer.courses?.length ?? 0;
                 return (
                   <Table.Row key={lecturer.id}>
                     <Table.Cell px="4" py="3.5" fontSize="md" color="gray.600" whiteSpace="nowrap">
@@ -171,7 +193,7 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
                       </Badge>
                     </Table.Cell>
                     <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" whiteSpace="nowrap">
-                      {lecturer.courses?.length ?? 0}
+                      {courseCount}
                     </Table.Cell>
                     <Table.Cell px="4" py="3.5" whiteSpace="nowrap">
                       <Menu.Root>
@@ -183,8 +205,8 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
                         <Portal>
                           <Menu.Positioner>
                             <Menu.Content>
-                              <Menu.Item 
-                                value="courses" 
+                              <Menu.Item
+                                value="courses"
                                 onClick={() => {
                                   setSelectedLecturer(lecturer);
                                   setIsCourseDrawerOpen(true);
@@ -205,58 +227,21 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
         </Table.Root>
       </Table.ScrollArea>
 
-      {/* Pagination – only shown when data is loaded, not loading, and there are lecturers */}
-      {!isLoading && lecturers.length > 0 && (
-        <Flex justify="space-between" align="center" mt="4" px="2" wrap="wrap" gap="4">
-          <Flex align="center" gap="4">
-            <Text fontSize="sm" color="gray.600">
-              Showing {startIndex + 1}–{Math.min(startIndex + pageSize, lecturers.length)} of {lecturers.length} lecturers
-            </Text>
-            <Select.Root
-              collection={pageSizeCollection}
-              value={[pageSize.toString()]}
-              onValueChange={(e) => {
-                setPageSize(Number(e.value[0]));
-                setCurrentPage(1); // Reset to first page when page size changes
-              }}
-              size="sm"
-              width="130px"
-            >
-              <Select.HiddenSelect />
-              <Select.Control>
-                <Select.Trigger>
-                  <Select.ValueText placeholder="10 per page" />
-                </Select.Trigger>
-                <Select.IndicatorGroup>
-                  <Select.Indicator />
-                </Select.IndicatorGroup>
-              </Select.Control>
-              <Select.Positioner>
-                <Select.Content>
-                  {pageSizeCollection.items.map((item) => (
-                    <Select.Item key={item.value} item={item}>
-                      {item.label}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Select.Root>
-          </Flex>
-
-          {totalPages > 1 && (
-            <Pagination.Root
-              count={lecturers.length}
-              pageSize={pageSize}
-              page={currentPage}
-              onPageChange={(e) => setCurrentPage(e.page)}
-            >
+      {/* Pagination (centered) */}
+      {!isLoading && lecturers.length > 0 && totalPages > 1 && (
+        <Flex justify="center" mt="4">
+          <Pagination.Root
+            count={lecturers.length}
+            pageSize={perPage}
+            page={currentPage}
+            onPageChange={(e) => setCurrentPage(e.page)}
+          >
             <ButtonGroup variant="ghost" size="sm">
               <Pagination.PrevTrigger asChild>
                 <IconButton>
                   <LuChevronLeft />
                 </IconButton>
               </Pagination.PrevTrigger>
-
               <Pagination.Items
                 render={(page) => (
                   <IconButton
@@ -266,7 +251,6 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
                   </IconButton>
                 )}
               />
-
               <Pagination.NextTrigger asChild>
                 <IconButton>
                   <LuChevronRight />
@@ -274,9 +258,10 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
               </Pagination.NextTrigger>
             </ButtonGroup>
           </Pagination.Root>
-          )}
         </Flex>
       )}
+
+      {/* Course Drawer */}
       {selectedLecturer && (
         <CourseDrawer
           open={isCourseDrawerOpen}
@@ -289,7 +274,7 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
   );
 };
 
-// COURSE DRAWER
+// COURSE DRAWER (unchanged)
 const CourseDrawer = ({ 
   open, 
   onOpenChange, 
@@ -308,7 +293,7 @@ const CourseDrawer = ({
         <Drawer.Positioner>
           <Drawer.Content>
             <Drawer.Header>
-              <Drawer.Title fontSize="lg" >{lecturer}</Drawer.Title>
+              <Drawer.Title fontSize="lg">{lecturer}</Drawer.Title>
             </Drawer.Header>
             <Drawer.Body spaceY="4" py="6">
               <Heading size="sm" color="fg.muted">Assigned Courses</Heading>
