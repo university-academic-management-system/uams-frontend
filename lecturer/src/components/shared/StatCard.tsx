@@ -25,7 +25,7 @@ const StatCard = ({ label, value, icon }: StatCardProps) => {
                 <Text fontSize="sm" color="fg.subtle" textTransform="uppercase">
                     {label}
                 </Text>
-                {icon && <Box color="blue">{icon}</Box>}
+                {icon && <Box color="accent">{icon}</Box>}
             </Flex>
             <Text fontSize="xl"  color="fg.muted" lineHeight="1.2">
                 {value}

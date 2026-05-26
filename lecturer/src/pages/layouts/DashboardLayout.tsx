@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Flex, ScrollArea, Stack } from "@chakra-ui/react";
+import { Box, Flex, Stack } from "@chakra-ui/react";
 import { Outlet } from "react-router";
 import Sidebar from "@components/shared/Sidebar";
 import Navbar from "@components/shared/Navbar";
@@ -41,34 +41,51 @@ const DashboardLayout = () => {
     return (
         <>
             <Flex
-                h="vh"
-                bg="bg.subtle"
-                w="full"
+                h="100vh"
+                w="100vw"
                 overflow="hidden"
+                bg="bg.subtle"
+                position="fixed"
+                top="0"
+                left="0"
+                right="0"
+                bottom="0"
             >
-                {/* sidebar */}
+                {/* sidebar – assumes fixed width internally */}
                 <Sidebar />
 
-                <Stack flex="1" h="vh" gap="0" bg="bg" overflow="hidden">
+                <Stack
+                    flex="1"
+                    h="100%"
+                    gap="0"
+                    bg="bg"
+                    overflow="hidden"
+                    minW="0"       // prevents flex item from overflowing
+                    maxW="100%"
+                >
                     {/* header */}
                     <Navbar />
 
-                    {/* main */}
-                    <ScrollArea.Root size="xs" h="calc(100vh - 64px)" bg="bg.subtle" border="xs" borderColor="border.muted" rounded="md" >
-                        <ScrollArea.Viewport>
-                            <ScrollArea.Content p="4">
-                                <Outlet />
-                            </ScrollArea.Content>
-                        </ScrollArea.Viewport>
-                        <ScrollArea.Scrollbar>
-                            <ScrollArea.Thumb />
-                        </ScrollArea.Scrollbar>
-                        <ScrollArea.Corner />
-                    </ScrollArea.Root>
+                    {/* main content – scrolls vertically, no horizontal overflow */}
+                    <Box
+                        flex="1"
+                        overflowY="auto"
+                        overflowX="auto"   // allow horizontal scroll inside if needed, but page won't overflow
+                        bg="bg.subtle"
+                        p="4"
+                        minW="0"
+                        maxW="100%"
+                        position="relative"
+                    >
+                        {/* Outlet content must also be constrained */}
+                        <Box minW="0" maxW="100%" overflowX="auto">
+                            <Outlet />
+                        </Box>
+                    </Box>
                 </Stack>
             </Flex>
-            <Toaster /> {/* global */}
-            <ToasterReseter /> {/* reset toast notifications */}
+            <Toaster />
+            <ToasterReseter />
         </>
     );
 };

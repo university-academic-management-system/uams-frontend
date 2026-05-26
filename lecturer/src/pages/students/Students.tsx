@@ -199,13 +199,15 @@ const Students = () => {
   const paginatedStudents = filteredStudents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
-    <Box>
+    <Box maxW="100vw" overflowX="hidden">
 
       <Tabs.Root
         value={selectedDegree}
         onValueChange={(e) => setSelectedDegree(e.value as degreeAwarded)}
         mb={6}
-        variant="enclosed"
+        variant="line"
+        gap="12"
+        colorPalette="accent"
       >
         <Tabs.List mb="6">
           {INTERNAL_DEGREES.map((deg) => (
@@ -217,8 +219,17 @@ const Students = () => {
       </Tabs.Root>
 
       <Box bg="bg" rounded="md" p="4">
-        <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
-          <InputGroup startElement={<LuSearch />} width="300px">
+        {/* Filters – responsive, never overflow */}
+        <Flex
+          align="center"
+          justify="space-between"
+          gap="3"
+          mb="5"
+          wrap="wrap"
+          direction={{ base: "column", sm: "row" }}
+          colorPalette="accent"
+        >
+          <InputGroup startElement={<LuSearch />} width={{ base: "100%", sm: "300px" }}>
             <Input
               placeholder="Search by Name, Email or Mat. Num"
               value={search}
@@ -227,13 +238,13 @@ const Students = () => {
             />
           </InputGroup>
 
-          <Flex gap="3" align="center">
+          <Flex gap="3" align="center" wrap="wrap">
             <Select.Root
               collection={levelCollection}
               value={[level]}
               onValueChange={(e) => setLevel(e.value[0])}
               size="lg"
-              width="140px"
+              width={{ base: "100%", sm: "140px" }}
             >
               <Select.HiddenSelect />
               <Select.Control>
@@ -261,7 +272,7 @@ const Students = () => {
               value={[sessionFilter]}
               onValueChange={(e) => setSessionFilter(e.value[0])}
               size="lg"
-              width="180px"
+              width={{ base: "100%", sm: "180px" }}
             >
               <Select.HiddenSelect />
               <Select.Control>
@@ -294,7 +305,7 @@ const Students = () => {
                   gap="2"
                   bg="accent"
                   color="white"
-                  cursor="pointer"
+                  width={{ base: "100%", sm: "auto" }}
                 >
                   <LuDownload size={16} /> Export Table
                 </Button>
@@ -315,11 +326,14 @@ const Students = () => {
           </Flex>
         </Flex>
 
-        <StudentsTable
-          students={paginatedStudents}
-          isLoading={isLoading}
-          error={error}
-        />
+        {/* Scrollable table container – horizontal scroll only for the table */}
+        <Box overflowX="auto">
+          <StudentsTable
+            students={paginatedStudents}
+            isLoading={isLoading}
+            error={error}
+          />
+        </Box>
 
         {filteredStudents.length >= 20 && (
           <Flex alignItems="center" justifyContent="flex-end" mt="4">
