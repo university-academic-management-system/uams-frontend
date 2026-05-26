@@ -89,7 +89,7 @@ export interface UserProfile {
     createdAt: string;
     updatedAt: string;
     studentProfile: StudentProfile | null;
-    staffProfile: any | null;
+    staffProfile: null;
 }
 
 export interface MeResponse {
