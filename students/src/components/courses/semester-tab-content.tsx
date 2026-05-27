@@ -1,31 +1,45 @@
-import { Badge, Box, Skeleton, Table } from "@chakra-ui/react";
+import { Badge, Box, IconButton, Menu, Portal, Skeleton, Stack, Table } from "@chakra-ui/react";
 import EmptyStateView from "@components/shared/empty-state";
-import { useCourses } from "@hooks/course.hook";
-import { normalizeLevel, normalizeSemester } from "@utils/function.util";
-import { useMemo } from "react";
+import { useResults } from "@hooks/course.hook";
+import { useCourseStatStore } from "@stores/data.store";
+import type { Result } from "@type/course.type";
+import { gradeColor, normalizeLevel, normalizeSemester } from "@utils/function.util";
+import { lazy, Suspense, useMemo } from "react";
+import { LuActivity, LuEllipsisVertical } from "react-icons/lu";
 
 
+// lazy import
+const StatsDrawer = lazy(() => import("@components/courses/stats-drawer"));
+const StatsChart = lazy(() => import("@components/courses/stats-chart"));
 
 const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L300" | "L400" | "L500"; semester: "FIRST" | "SECOND" }) => {
-    const { data: response, isLoading } = useCourses({ level, semester });
-    const items = useMemo(() => response?.courses || [], [response])
+    const { data: response, isLoading } = useResults({ level, semester });
+    const items = useMemo(() => response?.results || [], [response])
 
 
     const rows = useMemo(() => items.map((item, index) => (
         <Table.Row key={item.id} borderBottomColor="border.muted">
-            <Table.Cell>{index + 1}</Table.Cell>
-            <Table.Cell>{item.code}</Table.Cell>
-            <Table.Cell>{item.title}</Table.Cell>
-            <Table.Cell>{item.units} Units</Table.Cell>
-            <Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">{index + 1}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">{item.course.code}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">{item.course.title}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">{item.course.units}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">
                 <Badge colorPalette="gray">
-                    {item.courseType}
+                    {item.course.courseType}
                 </Badge>
             </Table.Cell>
-            <Table.Cell>
-                <Badge colorPalette={item.isRegistered ? "green" : "yellow"}>
-                    {item.isRegistered ? "Registered" : "Not Registered"}
+            <Table.Cell borderBottomColor="border.muted">{item.ca || "N/A"}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">{item.examScore || "N/A"}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">{item.totalScore || "N/A"}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">
+                <Badge colorPalette={gradeColor(item.grade || "")}>
+                    {item.grade || "N/A"}
                 </Badge>
+            </Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">{item.gradePoint}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">{item.gradePointCredit}</Table.Cell>
+            <Table.Cell borderBottomColor="border.muted">
+                <ActionMenu item={item as Result} />
             </Table.Cell>
         </Table.Row>
     )), [items]);
@@ -38,6 +52,12 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
                     {[1, 2, 3, 4, 5].map((i) => (
                         <Table.Row key={i}>
                             <Table.Cell><Skeleton h="4" w="4" /></Table.Cell>
+                            <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                            <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                            <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                            <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                            <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                            <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
                             <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
                             <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
                             <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
@@ -58,23 +78,71 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
         )
     }
 
-    return <Box rounded={"md"} overflow={"hidden"} border="xs" borderColor="border.muted">
-        <Table.ScrollArea maxW={{ base: "xl", md: "full" }}>
-            <Table.Root variant="outline" stickyHeader size="lg" w="full">
-                <Table.Header>
-                    <Table.Row bg="bg.muted" borderBottomColor="border.muted">
-                        <Table.ColumnHeader w="6" borderBottomColor="border.muted">S/N</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Code</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Title</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Units</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Type</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Status</Table.ColumnHeader>
-                    </Table.Row>
-                </Table.Header>
-                <Table.Body bg="bg">{rows}</Table.Body>
-            </Table.Root>
-        </Table.ScrollArea>
-    </Box>
+    return <Stack gap="4">
+
+        <Suspense>
+            <StatsChart level={level} semester={semester} />
+        </Suspense>
+
+        <Box rounded={"md"} overflow={"hidden"} border="xs" borderColor="border.muted">
+            <Table.ScrollArea maxW={{ base: "xl", md: "full" }}>
+                <Table.Root variant="outline" stickyHeader size="lg" w="full">
+                    <Table.Header>
+                        <Table.Row bg="bg.muted" borderBottomColor="border.muted">
+                            <Table.ColumnHeader w="6" borderBottomColor="border.muted">S/N</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Code</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Title</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Units</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Type</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">CA</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Exam Score</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Total Score</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Grade</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Grade Point</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Grade Point Credits</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Actions</Table.ColumnHeader>
+                        </Table.Row>
+                    </Table.Header>
+                    <Table.Body bg="bg">{rows}</Table.Body>
+                </Table.Root>
+            </Table.ScrollArea>
+
+            {/* Course Stats drawer */}
+            <StatsDrawer />
+        </Box>
+
+    </Stack>
+}
+
+
+
+
+
+const ActionMenu = ({ item }: { item: Result }) => {
+    const { init } = useCourseStatStore((state) => state);
+
+    return (
+        <Menu.Root size="md" onSelect={(d) => {
+            if (d.value === "stats") {
+                init(item);
+            }
+        }}>
+            <Menu.Trigger asChild>
+                <IconButton colorPalette="gray" size="sm" variant="ghost">
+                    <LuEllipsisVertical />
+                </IconButton>
+            </Menu.Trigger>
+            <Portal>
+                <Menu.Positioner>
+                    <Menu.Content>
+                        <Menu.Item value="stats">
+                            <LuActivity /> View Stats
+                        </Menu.Item>
+                    </Menu.Content>
+                </Menu.Positioner>
+            </Portal>
+        </Menu.Root >
+    )
 }
 
 

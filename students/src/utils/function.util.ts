@@ -31,3 +31,26 @@ export const formatTime = (isoString: string, referenceStart?: string) => {
 export const formatWeekday = (date: Date) => moment(date).format("dddd")
 
 export const formatMonthDay = (date: Date) => moment(date).format("MMMM D")
+
+
+export const gradeColor = (grade: string) => {
+    if (grade === "A") {
+        return "green";
+    }
+    if (grade === "B") {
+        return "blue";
+    }
+    if (grade === "C") {
+        return "gray";
+    }
+    if (grade === "D") {
+        return "yellow";
+    }
+    if (grade === "E") {
+        return "orange";
+    }
+    if (grade === "F") {
+        return "red";
+    }
+    return "gray";
+}
