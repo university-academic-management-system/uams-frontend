@@ -69,18 +69,18 @@ const TranscriptsTabsContent = () => {
                     <Table.Root size="lg" variant="outline" stickyHeader>
                         <Table.Header>
                             <Table.Row bg="bg.muted">
-                                <Table.ColumnHeader>Reference</Table.ColumnHeader>
-                                <Table.ColumnHeader>Purpose</Table.ColumnHeader>
-                                <Table.ColumnHeader>Delivery Method</Table.ColumnHeader>
-                                <Table.ColumnHeader>Status</Table.ColumnHeader>
-                                <Table.ColumnHeader>Payment status</Table.ColumnHeader>
-                                <Table.ColumnHeader>Date </Table.ColumnHeader>
-                                <Table.ColumnHeader>Receipt</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Reference</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Purpose</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Delivery Method</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Status</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Payment status</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Date </Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Receipt</Table.ColumnHeader>
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>
                             {data?.transcripts.map((item) => (
-                                <Table.Row key={item.id}>
+                                <Table.Row borderBottomColor="border.muted" key={item.id}>
                                     <Table.Cell fontWeight="medium">{item.reference}</Table.Cell>
                                     <Table.Cell>{item.purpose}</Table.Cell>
                                     <Table.Cell>

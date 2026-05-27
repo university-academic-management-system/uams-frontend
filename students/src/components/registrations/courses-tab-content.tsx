@@ -6,11 +6,13 @@ import { useCourses, useRegisterCourses } from "@hooks/course.hook";
 import { EmptyStateView } from "@components/shared/empty-state";
 import { Chart, useChart } from "@chakra-ui/charts"
 import { Label, Pie, PieChart, Sector, Tooltip } from "recharts"
-import { normaliseLevel, normaliseSemester } from "@utils/function.util";
+import { normalizeLevel, normalizeSemester } from "@utils/function.util";
 import { LuX } from "react-icons/lu";
 import { Tooltip as CTooltip } from "@components/ui/tooltip";
 import { useDashboardStats } from "@hooks/dashboard.hook";
 import { toaster } from "@components/ui/toaster";
+import type { CoursesResponse } from "@type/course.type";
+import { useSearchParams } from "react-router";
 
 
 
@@ -164,6 +166,7 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
             key={item.id}
             data-selected={selection.some((id) => id.id === item.id) ? "" : undefined}
             bg="bg"
+            borderBottomColor="border.muted"
         >
             <Table.Cell borderBottomColor="border.muted">
                 <Checkbox.Root
@@ -231,7 +234,7 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
         return (
             <EmptyStateView
                 title="No courses found"
-                description={`No courses available for ${normaliseLevel(level)} Level - ${normaliseSemester(semester)} semester.`}
+                description={`No courses available for ${normalizeLevel(level)} Level - ${normalizeSemester(semester)} semester.`}
             />
         )
     }
@@ -245,7 +248,7 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
                     <Table.Root variant="outline" stickyHeader size="lg" w="full">
                         <Table.Header>
                             <Table.Row bg="bg.muted">
-                                <Table.ColumnHeader w="6">
+                                <Table.ColumnHeader w="6" borderBottomColor="border.muted">
                                     <Checkbox.Root
                                         disabled={settings?.currentSemester != semester || selectableItems.length === 0}
                                         size="sm"
@@ -274,11 +277,11 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
                                         <Checkbox.Control />
                                     </Checkbox.Root>
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader>Code</Table.ColumnHeader>
-                                <Table.ColumnHeader>Title</Table.ColumnHeader>
-                                <Table.ColumnHeader>Units</Table.ColumnHeader>
-                                <Table.ColumnHeader>Type</Table.ColumnHeader>
-                                <Table.ColumnHeader>Status</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Code</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Title</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Units</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Type</Table.ColumnHeader>
+                                <Table.ColumnHeader borderBottomColor="border.muted">Status</Table.ColumnHeader>
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>{rows}</Table.Body>
@@ -322,11 +325,6 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
     </SimpleGrid>
 }
 
-
-
-
-import type { CoursesResponse } from "@type/course.type";
-import { useSearchParams } from "react-router";
 
 // ... (skipping imports already there)
 
@@ -437,7 +435,7 @@ const RegistrationStatusChart = ({ response, isLoading }: { response?: CoursesRe
                                             <CheckboxCard.Description>
                                                 <Text>{item.units} units</Text>
                                                 <Text>
-                                                    {`${normaliseLevel(item.level)} Level - ${normaliseSemester(item.semester)}`}
+                                                    {`${normalizeLevel(item.level)} Level - ${normalizeSemester(item.semester)}`}
                                                 </Text>
                                             </CheckboxCard.Description>
                                         </CheckboxCard.Content>

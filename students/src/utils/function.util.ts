@@ -2,9 +2,9 @@ import moment from "moment";
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const normaliseLevel = (level: string) => level.replace("L", "");
+export const normalizeLevel = (level: string) => level.replace("L", "");
 
-export const normaliseSemester = (semester: string) => `${semester === "FIRST" ? "1st Semester" : "2nd Semester"}`;
+export const normalizeSemester = (semester: string) => `${semester === "FIRST" ? "1st Semester" : "2nd Semester"}`;
 
 export const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {
