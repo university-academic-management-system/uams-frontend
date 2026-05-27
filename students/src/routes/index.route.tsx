@@ -4,7 +4,7 @@ import { AuthMiddleware } from "@middlewares/auth.middleware";
 
 const DashboardPage = lazy(() => import("@app/page"));
 const Registrations = lazy(() => import("@app/registrations/page"));
-
+const Courses = lazy(() => import("@app/courses/page"));
 
 
 const router = createBrowserRouter([
@@ -25,7 +25,12 @@ const router = createBrowserRouter([
                     </Suspense>
                 )
             },
-            { path: "/courses", element: <p>Courses</p> },
+            {
+                path: "/courses", element:
+                    <Suspense>
+                        <Courses />
+                    </Suspense>
+            },
             { path: "/payments", element: <p>Payments</p> },
             { path: "/projects", element: <p>Projects</p> },
             { path: "/timetable", element: <p>Time Table</p> },
