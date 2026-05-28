@@ -1,24 +1,30 @@
 import axiosClient from "@configs/axios.config"
 import type { ProgramTypeResponse } from "@type/program.type"
 
+interface ApiResponse<T> {
+    status: string;
+    message: string;
+    data: T;
+}
+
 export const ProgramServices = {
     getProgramTypes: async (): Promise<ProgramTypeResponse[]> => {
-        const { data } = await axiosClient.get<{ status: string; message: string; data: ProgramTypeResponse[] }>("/programmes");
+        const { data } = await axiosClient.get<ApiResponse<ProgramTypeResponse[]>>("/programmes");
         return data.data;
     },
 
     getProgramTypeById: async (id: string): Promise<ProgramTypeResponse> => {
-        const { data } = await axiosClient.get<{ status: string; message: string; data: ProgramTypeResponse }>(`/programmes/${id}`);
+        const { data } = await axiosClient.get<ApiResponse<ProgramTypeResponse>>(`/programmes/${id}`);
         return data.data;
     },
 
     createProgramType: async (payload: Record<string, unknown>): Promise<ProgramTypeResponse> => {
-        const { data } = await axiosClient.post<{ status: string; message: string; data: ProgramTypeResponse }>("/programmes", payload);
+        const { data } = await axiosClient.post<ApiResponse<ProgramTypeResponse>>("/programmes", payload);
         return data.data;
     },
 
     updateProgramType: async (id: string, payload: Record<string, unknown>): Promise<ProgramTypeResponse> => {
-        const { data } = await axiosClient.patch<{ status: string; message: string; data: ProgramTypeResponse }>(`/programmes/${id}`, payload);
+        const { data } = await axiosClient.patch<ApiResponse<ProgramTypeResponse>>(`/programmes/${id}`, payload);
         return data.data;
     },
 

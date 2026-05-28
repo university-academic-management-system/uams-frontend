@@ -113,9 +113,11 @@ const CoursesTab = () => {
 
   const { data: courses = [] } = CourseHook.useCourses(filters);
   const { data: programTypes = [] } = CourseHook.useProgramTypes();
-  const { mutate: createCourse, isPending: isCreating } = CourseHook.useCreateCourse();
-  const { mutate: updateCourse, isPending: isUpdating } = CourseHook.useUpdateCourse();
+  const { mutateAsync: createCourse, isPending: isCreating } = CourseHook.useCreateCourse();
+  const { mutateAsync: updateCourse, isPending: isUpdating } = CourseHook.useUpdateCourse();
   const { mutate: deleteCourse } = CourseHook.useDeleteCourse();
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const isSaving = isCreating || isUpdating;
 
@@ -126,6 +128,11 @@ const CoursesTab = () => {
     if (name.toLowerCase() === "semester 3" || name.toUpperCase() === "THIRD") return "3rd Semester";
     return name;
   },[]);
+
+  const formatLevel = useCallback((level: string) => {
+    if (!level) return level;
+    return level.toUpperCase().startsWith("L") ? level.substring(1) : level;
+  }, []);
 
   const filtered = useMemo(() => {
     return courses.filter(
@@ -140,23 +147,32 @@ const CoursesTab = () => {
   }, [courses, searchTerm]);
 
   const programTypeCollection = createListCollection({
-    items: programTypes.map((pt: { id: string, name: string }) => ({ label: pt.name, value: pt.id })),
+    items: (programTypes as { id: string; name: string }[]).map((pt) => ({ label: pt.name, value: pt.id })),
   });
 
 
 
   const handleSave = useCallback(async (data: CourseFormData) => {
-    if (isEditing && editingCourseId) {
-      updateCourse({ id: editingCourseId, data });
-    } else {
-      createCourse(data);
+    try {
+      if (isEditing && editingCourseId) {
+        await updateCourse({ id: editingCourseId, data });
+      } else {
+        await createCourse(data);
+      }
+      setIsDialogOpen(false);
+      form.reset(defaultCourseFormData);
+      setIsEditing(false);
+      setEditingCourseId(null);
+    } catch {
+      // errors handled by interceptor or hook
     }
-  }, [isEditing, editingCourseId, updateCourse, createCourse]);
+  }, [isEditing, editingCourseId, updateCourse, createCourse, form]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditClick = useCallback((course: any) => {
     setIsEditing(true);
     setEditingCourseId(course.id);
+    setIsDialogOpen(true);
     form.reset({
       title: course.title || course.name || "",
       code: course.code || "",
@@ -164,7 +180,7 @@ const CoursesTab = () => {
       description: course.description || "",
       semester: typeof course.semester === "string" ? course.semester : (course.semester?.name || "FIRST"),
       level: typeof course.level === "string" ? course.level : (course.level?.name || "L100"),
-      programTypeId: course.programmeTypeId || course.programTypeId || "",
+      programTypeId: course.programmeId || course.programmeTypeId || course.programTypeId || "",
       courseType: course.courseType || "CORE",
       allowCarryover: course.isCarryoverAllowed ?? course.allowCarryover ?? true,
     });
@@ -215,7 +231,7 @@ const CoursesTab = () => {
       courses.map((c: any) => ({
         Code: c.code,
         "Course Title": c.title || c.name,
-        Level: typeof c.level === "string" ? c.level : (c.level?.name || "N/A"),
+        Level: typeof c.level === "string" ? formatLevel(c.level) : (formatLevel(c.level?.name) || "N/A"),
         Semester: typeof c.semester === "string" ? formatSemesterName(c.semester) : (formatSemesterName(c.semester?.name) || "N/A"),
         "Credit Units": c.units ?? c.creditUnits ?? c.creditUnit,
         "Learning Hours": c.learningHours || "N/A",
@@ -225,7 +241,7 @@ const CoursesTab = () => {
       "Courses",
       "Courses",
     );
-  }, [courses, formatSemesterName]);
+  }, [courses, formatLevel, formatSemesterName]);
 
   const handleExportPDF = useCallback(() => {
     import("jspdf").then(({ jsPDF }) => {
@@ -252,17 +268,17 @@ const CoursesTab = () => {
           y = 20;
         }
         doc.text(`${i + 1}`, 14, y);
-        doc.text(`${c.code}`, 25, y);
-        doc.text(`${(c.title || c.name).substring(0, 35)}`, 50, y);
-        doc.text(`${typeof c.level === "string" ? c.level : (c.level?.name || "N/A")}`, 130, y);
-        doc.text(`${c.units ?? c.creditUnits ?? c.creditUnit ?? ""}`, 160, y);
-        y += 8;
+        doc.text(`${c.code || "N/A"}`, 25, y);
+        doc.text(`${(c.title || c.name || "N/A").substring(0, 30)}`, 50, y);
+        doc.text(`${typeof c.level === "string" ? formatLevel(c.level) : (formatLevel(c.level?.name) || "N/A")}`, 130, y);
+        doc.text(`${c.units ?? c.creditUnits ?? c.creditUnit ?? "N/A"}`, 160, y);
+        y += 10;
       });
 
       doc.save("Courses_Report.pdf");
       toaster.success({ title: "PDF Report downloaded" });
     });
-  }, [courses]);
+  }, [courses, formatLevel]);
 
 
 
@@ -328,7 +344,7 @@ const CoursesTab = () => {
 
 
   return (
-    <Dialog.Root size="lg" role="alertdialog" onExitComplete={() => { form.reset(defaultCourseFormData); setIsEditing(false); setEditingCourseId(null); }} placement="center" closeOnInteractOutside={false}>
+    <Dialog.Root open={isDialogOpen} onOpenChange={(e) => setIsDialogOpen(e.open)} size="lg" role="alertdialog" onExitComplete={() => { form.reset(defaultCourseFormData); setIsEditing(false); setEditingCourseId(null); }} placement="center" closeOnInteractOutside={false}>
     <Flex direction="column" gap="8">
       <Flex position="absolute" top="0" right="0" zIndex="10">
         <Menu.Root positioning={{ placement: "bottom-end" }}>
@@ -360,11 +376,10 @@ const CoursesTab = () => {
                   <Menu.Item
                     value="single"
                     closeOnSelect={false}
-                    onClick={() => { setIsEditing(false); form.reset(defaultCourseFormData); }}
+                    onClick={() => { setIsEditing(false); form.reset(defaultCourseFormData); setIsDialogOpen(true); }}
                     cursor="pointer"
                     py="3"
                     px="4"
-                    _hover={{ bg: "slate.50" }}
                   >
                     <LuPlus size={18} />
                     <Box flex="1" ml="2">
@@ -673,7 +688,7 @@ const CoursesTab = () => {
           <Table.Root w="full" variant="outline" interactive>
             <Table.Header bg="bg.subtle">
               <Table.Row borderY="xs" borderColor="border.muted">
-                <Table.ColumnHeader px="6" py="4" w="12" textAlign="center">
+                <Table.ColumnHeader px="6" py="4" w="12" textAlign="center" position="sticky" left="0" zIndex="3" bg="bg.subtle">
                   <Checkbox.Root
                     variant="outline"
                     checked={
@@ -698,7 +713,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("sn")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     S/N {renderSortIcon("sn")}
@@ -715,7 +729,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("code")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     COURSE CODE {renderSortIcon("code")}
@@ -732,7 +745,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("title")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     COURSE TITLE {renderSortIcon("title")}
@@ -749,7 +761,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("level")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     LEVEL {renderSortIcon("level")}
@@ -766,7 +777,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("semester")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     SEMESTER {renderSortIcon("semester")}
@@ -783,7 +793,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("units")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     CREDIT UNITS {renderSortIcon("units")}
@@ -800,7 +809,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("learningHours")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     LEARNING HOURS {renderSortIcon("learningHours")}
@@ -817,7 +825,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("practicalHours")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     PRACTICAL HOURS {renderSortIcon("practicalHours")}
@@ -834,7 +841,6 @@ const CoursesTab = () => {
                   cursor="pointer"
                   onClick={() => requestSort("status")}
                   userSelect="none"
-                  _hover={{ bg: "slate.100" }}
                 >
                   <Flex alignItems="center" gap="1">
                     STATUS {renderSortIcon("status")}
@@ -849,6 +855,10 @@ const CoursesTab = () => {
                   textTransform="uppercase"
                   letterSpacing="wider"
                   textAlign="center"
+                  position="sticky"
+                  right="0"
+                  zIndex="3"
+                  bg="bg.subtle"
                 >
                   ACTIONS
                 </Table.ColumnHeader>
@@ -856,7 +866,7 @@ const CoursesTab = () => {
             </Table.Header>
             <Table.Body>
               {filtered.length === 0 ? (
-                <Table.Row _hover={{ bg: "transparent" }}>
+                <Table.Row>
                   <Table.Cell colSpan={11} py="12">
                     <EmptyState.Root>
                       <EmptyState.Content>
@@ -884,13 +894,13 @@ const CoursesTab = () => {
                 sortedAndFiltered.map((course: any, index: number) => (
                   <Table.Row
                     key={course.id}
-                    _hover={{ bg: "slate.50" }}
                     borderColor="border.muted"
                     fontSize="sm"
                     color="fg.muted"
                     bg={selectedIds.includes(course.id) ? "blue.50" : undefined}
+                    data-group
                   >
-                    <Table.Cell px="6" py="4" textAlign="center">
+                    <Table.Cell px="6" py="4" textAlign="center" position="sticky" left="0" zIndex="2" bg={selectedIds.includes(course.id) ? "blue.50" : "white"}>
                       <Checkbox.Root
                         variant="outline"
                         checked={selectedIds.includes(course.id)}
@@ -911,7 +921,7 @@ const CoursesTab = () => {
                       {course.title || course.name}
                     </Table.Cell>
                     <Table.Cell px="6" py="4">
-                      {typeof course.level === "string" ? course.level : (course.level?.name || "—")}
+                      {typeof course.level === "string" ? formatLevel(course.level) : (formatLevel(course.level?.name) || "—")}
                     </Table.Cell>
                     <Table.Cell px="6" py="4">
                       {typeof course.semester === "string" ? formatSemesterName(course.semester) : (formatSemesterName(course.semester?.name) || "—")}
@@ -928,14 +938,16 @@ const CoursesTab = () => {
                     <Table.Cell px="6" py="4">
                       {(course.courseType || course.status) === "CORE" || (course.courseType || course.status) === "C" ? "Core" : "Elective"}
                     </Table.Cell>
-                    <Table.Cell px="6" py="4" textAlign="center">
-                      <Flex justifyContent="center" gap="2">
+                    <Table.Cell px="3" py="4" textAlign="center" position="sticky" right="0" zIndex="2" bg={selectedIds.includes(course.id) ? "blue.50" : "white"}>
+                      <Flex justifyContent="center" gap="0">
                         <Dialog.Trigger asChild>
                           <Button
                             onClick={() => handleEditClick(course)}
                             variant="ghost"
+                            colorPalette="gray"
+                            color="fg.muted"
                             size="xl"
-                            borderRadius="full"
+                            borderRadius="md"
                             minW="auto"
                           >
                             <Edit size={16} />
@@ -944,8 +956,10 @@ const CoursesTab = () => {
                         <Button
                           onClick={() => handleDelete(course.id)}
                           variant="ghost"
+                          colorPalette="gray"
+                          color="fg.muted"
                           size="xl"
-                          borderRadius="full"
+                          borderRadius="md"
                           minW="auto"
                         >
                           <Trash2 size={16} />
@@ -989,6 +1003,7 @@ const CoursesTab = () => {
             size="xl"
             borderRadius="md"
             fontSize="xs"
+            colorPalette="accent"
           >
             <Trash2 size={16} /> Delete
           </Button>
