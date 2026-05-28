@@ -1,5 +1,9 @@
 import type { ReactElement } from "react";
 
+
+export type Level = "L100" | "L200" | "L300" | "L400";
+export type Semester = "FIRST" | "SECOND";
+
 // components/header.tsx
 export interface HeadProps {
   title?: string;

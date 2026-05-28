@@ -7,6 +7,8 @@ import { lazy, Suspense } from "react";
 import { Outlet } from "react-router";
 
 const ReceiptTemplate = lazy(() => import("@components/shared/reciept"));
+const ResultTemplate = lazy(() => import("@components/courses/result-template"));
+
 
 
 const RootLayout = () => {
@@ -33,6 +35,9 @@ const RootLayout = () => {
                             <Outlet />
                             <Suspense>
                                 <ReceiptTemplate />
+                            </Suspense>
+                            <Suspense>
+                                {/* <ResultTemplate /> */}
                             </Suspense>
                         </ScrollArea.Content>
                     </ScrollArea.Viewport>
