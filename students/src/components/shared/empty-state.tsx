@@ -12,7 +12,7 @@ export const EmptyStateView = ({ icon, title, description, action }: EmptyStateV
                     </EmptyState.Indicator>
                 )}
                 <VStack textAlign="center">
-                    <EmptyState.Title>{title}</EmptyState.Title>
+                    <EmptyState.Title w="full" textAlign={"center"}>{title}</EmptyState.Title>
                     {description && (
                         <EmptyState.Description>
                             {description}

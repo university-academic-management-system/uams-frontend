@@ -1,4 +1,5 @@
 import { Flex, Tabs } from "@chakra-ui/react";
+import type { Level } from "@type/index.type";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 
@@ -34,12 +35,12 @@ const LevelTabContent = ({ level }: { level: "L100" | "L200" | "L300" | "L400" |
 
             <Tabs.Content value="FIRST" w="full">
                 <Suspense>
-                    <SemesterTabContent level={level} semester="FIRST" />
+                    <SemesterTabContent level={level as Level} semester="FIRST" />
                 </Suspense>
             </Tabs.Content>
             <Tabs.Content value="SECOND" w="full">
                 <Suspense>
-                    <SemesterTabContent level={level} semester="SECOND" />
+                    <SemesterTabContent level={level as Level} semester="SECOND" />
                 </Suspense>
             </Tabs.Content>
         </Tabs.Root>

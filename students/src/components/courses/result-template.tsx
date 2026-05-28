@@ -1,7 +1,8 @@
-import { Badge, Box, DataList, Flex, Heading, Icon, Image, Separator, SimpleGrid, Stack, Table, Text } from "@chakra-ui/react";
+import { Badge, Box, DataList, Heading, Image, Separator, SimpleGrid, Stack, Table, Text } from "@chakra-ui/react";
 import { useMe } from "@hooks/auth.hook";
 import { useResults } from "@hooks/course.hook";
 import { useResultStore } from "@stores/data.store";
+import type { Result } from "@type/course.type";
 import type { Level, Semester } from "@type/index.type";
 import { gradeColor, normalizeLevel, normalizeSemester } from "@utils/function.util";
 import moment from "moment";
@@ -12,15 +13,9 @@ import { useSearchParams } from "react-router";
 const StatsChart = lazy(() => import("./stats-chart"));
 
 
-const ResultTemplate = () => {
+const SemesterSection = ({ semester, results }: { semester: Semester, results: Result[] }) => {
     const [sp] = useSearchParams();
-    const { type } = useResultStore();
-    const { data: me, isLoading } = useMe();
-    const { data: resultRes, isLoading: resultLoading } = useResults({ level: sp.get("level") || "L100", ...(type !== "ALL" && { semester: type }) });
-
-    const session = useMemo(() => resultRes?.results?.[0]?.session || "N/A", [resultRes])
-
-    const rows = useMemo(() => resultRes?.results?.map((item, index) => (
+    const rows = useMemo(() => results.map((item, index) => (
         <Table.Row key={item.id} borderBottomColor="border.muted">
             <Table.Cell borderBottomColor="border.muted">{index + 1}</Table.Cell>
             <Table.Cell borderBottomColor="border.muted">{item.course.code}</Table.Cell>
@@ -42,14 +37,62 @@ const ResultTemplate = () => {
             <Table.Cell borderBottomColor="border.muted">{item.gradePoint}</Table.Cell>
             <Table.Cell borderBottomColor="border.muted">{item.gradePointCredit}</Table.Cell>
         </Table.Row>
-    )), [resultRes?.results]);
+    )), [results]);
+
+    if (results.length === 0) return null;
+
+    return (
+        <Stack w="full" gap="4">
+            <Heading size="md">{normalizeSemester(semester)}</Heading>
+            {/* chart */}
+            <Suspense>
+                <StatsChart level={sp.get("level") as Level} semester={semester as Semester | "ALL"} />
+            </Suspense>
+
+            <Box rounded={"md"} overflow={"hidden"} border="xs" borderColor="border.muted" w="full">
+                <Table.Root variant="outline" stickyHeader size="lg" w="full">
+                    <Table.Header>
+                        <Table.Row bg="bg.muted" borderBottomColor="border.muted">
+                            <Table.ColumnHeader w="6" borderBottomColor="border.muted">S/N</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Code</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Title</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Units</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Type</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">CA</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Exam Score</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Total Score</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Grade</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Grade Point</Table.ColumnHeader>
+                            <Table.ColumnHeader borderBottomColor="border.muted">Grade Point Credits</Table.ColumnHeader>
+                        </Table.Row>
+                    </Table.Header>
+                    <Table.Body bg="bg">{rows}</Table.Body>
+                </Table.Root>
+            </Box>
+        </Stack>
+    );
+};
 
 
-    return <Stack id="result-template" bg="bg" align="center" p="12" gap="12">
+const ResultTemplate = () => {
+    const [sp] = useSearchParams();
+    const { type } = useResultStore();
+    const { data: me } = useMe();
+    const { data: resultRes } = useResults({ level: sp.get("level") || "L100", ...(type !== "ALL" ? { semester: type } : {}) });
+
+    const session = useMemo(() => resultRes?.results?.[0]?.session || "N/A", [resultRes])
+
+    const firstSemesterResults = useMemo(() => resultRes?.results?.filter(item => item.semester === "FIRST") || [], [resultRes?.results]);
+    const secondSemesterResults = useMemo(() => resultRes?.results?.filter(item => item.semester === "SECOND") || [], [resultRes?.results]);
+
+    const displaySemester = useMemo(() => type === "ALL" ? "Full Session" : normalizeSemester(type), [type]);
+
+
+    return <Stack id="result-template" bg="bg" align="center" p="12" gap="12" pos="fixed" top="-500vh" w="1800px">
 
         <Stack w="full" align="center">
             <Image src="/students/uphcsc-logo.png" alt="UPHCSC Logo" h="auto" w="72" />
-            <Heading size="3xl" w="full" textAlign="center">{normalizeSemester(type)} Result</Heading>
+            <Heading size="3xl" w="full" textAlign="center">{displaySemester} Result</Heading>
         </Stack>
 
         <DataList.Root size="sm" w="full" gap="6">
@@ -92,7 +135,7 @@ const ResultTemplate = () => {
                     </DataList.Item>
                     <DataList.Item>
                         <DataList.ItemLabel color="fg.subtle">Semester</DataList.ItemLabel>
-                        <DataList.ItemValue fontWeight={"semibold"}>{normalizeSemester(type)}</DataList.ItemValue>
+                        <DataList.ItemValue fontWeight={"semibold"}>{displaySemester}</DataList.ItemValue>
                     </DataList.Item>
                     <DataList.Item>
                         <DataList.ItemLabel color="fg.subtle" w="full" textAlign="right">Faculty</DataList.ItemLabel>
@@ -110,31 +153,20 @@ const ResultTemplate = () => {
 
         <Separator borderStyle={"dashed"} w="full" />
 
-        {/* chart */}
-        <Suspense>
-            <StatsChart level={sp.get("level") as Level} semester={type as Semester | "ALL"} />
-        </Suspense>
 
-        <Box rounded={"md"} overflow={"hidden"} border="xs" borderColor="border.muted" w="full">
-            <Table.Root variant="outline" stickyHeader size="lg" w="full">
-                <Table.Header>
-                    <Table.Row bg="bg.muted" borderBottomColor="border.muted">
-                        <Table.ColumnHeader w="6" borderBottomColor="border.muted">S/N</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Code</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Title</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Units</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Type</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">CA</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Exam Score</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Total Score</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Grade</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Grade Point</Table.ColumnHeader>
-                        <Table.ColumnHeader borderBottomColor="border.muted">Grade Point Credits</Table.ColumnHeader>
-                    </Table.Row>
-                </Table.Header>
-                <Table.Body bg="bg">{rows}</Table.Body>
-            </Table.Root>
-        </Box>
+        <Stack w="full" gap="8">
+            {type === "ALL" ? (
+                <>
+                    <SemesterSection semester="FIRST" results={firstSemesterResults} />
+                    <Separator borderStyle={"dashed"} w="full" />
+                    <SemesterSection semester="SECOND" results={secondSemesterResults} />
+                </>
+            ) : (
+                <SemesterSection semester={type as Semester} results={resultRes?.results || []} />
+            )}
+        </Stack>
+
+        <Separator borderStyle={"dashed"} w="full" />
 
         <Text color="fg.subtle" textAlign={"center"} fontSize="xs">© {moment().year()} University of Port Harcourt, Department of Computer Science. All rights reserved. Choba, Port Harcourt, Rivers State, Nigeria.</Text>
 
