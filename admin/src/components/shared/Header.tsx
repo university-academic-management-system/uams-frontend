@@ -5,7 +5,7 @@ import AuditLogs from "./audit-log";
 import { useSidebarStore } from "@stores/ui.store";
 import { useLocation } from "react-router";
 import { useCallback, useMemo } from "react";
-import { navigationLinks, type NavigationLink } from "../../constants/navigation";
+import { navigationLinks, type NavigationLink } from "@constants/navigation";
 import MobileSideDrawer from "./mobile-side-drawer";
 
 const Header = () => {

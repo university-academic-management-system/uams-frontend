@@ -152,7 +152,7 @@ const StaffPage = () => {
   // };
 
   return (
-    <Box w="full">
+    <Box w="full" overflow="hidden">
       <Box mb="6">
         <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Lecturers</Text>
         <Text fontSize="sm" color="fg.subtle">Manage department lecturers and their roles</Text>
@@ -199,11 +199,11 @@ const StaffPage = () => {
 
       {/* Table */}
       <Box bg="white" borderRadius="md" border="xs" borderColor="border.muted" overflow="hidden">
-        <Box overflowX="auto">
-          <Table.Root w="full" textAlign="left" variant="outline" interactive>
+        <Box overflow="auto" maxH="calc(100vh - 300px)">
+          <Table.Root w="full" textAlign="left" variant="outline" interactive css={{ "& thead th": { position: "sticky", top: 0, zIndex: 20, background: "var(--chakra-colors-slate-50)", boxShadow: "inset 0 -1px 0 var(--chakra-colors-border-muted)" }, "& thead th:first-of-type": { left: 0, zIndex: 30 }, "& thead th:last-of-type": { right: 0, zIndex: 30 } }}>
             <Table.Header bg="bg.subtle">
               <Table.Row borderY="xs" borderColor="border.muted">
-                <Table.ColumnHeader bg="slate.50" px="6" py="4" w="12" textAlign="center" position="sticky" left="0" zIndex="20" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
+                <Table.ColumnHeader bg="slate.50" px="6" py="4" w="12" textAlign="center" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">
                   <Checkbox.Root
                     variant="outline"
                     checked={filteredStaff.length > 0 && selectedIds.length > 0 && selectedIds.length === filteredStaff.length}
@@ -221,7 +221,7 @@ const StaffPage = () => {
                 <Table.ColumnHeader bg="slate.50" px="6" py="4" minW="150px" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">Department</Table.ColumnHeader>
                 <Table.ColumnHeader bg="slate.50" px="6" py="4" minW="150px" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">Rank</Table.ColumnHeader>
                 <Table.ColumnHeader bg="slate.50" px="6" py="4" minW="200px" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">Course(s)</Table.ColumnHeader>
-                <Table.ColumnHeader bg="slate.50" px="6" py="4" textAlign="right" pr="12" position="sticky" right="0" zIndex="20" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">Action</Table.ColumnHeader>
+                <Table.ColumnHeader bg="slate.50" px="6" py="4" textAlign="right" pr="12" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">Action</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body fontSize="xs">

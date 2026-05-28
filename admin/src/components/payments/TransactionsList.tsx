@@ -59,7 +59,12 @@ const TransactionsList = ({ onBack, programTypeId, programTypeName }: Transactio
         ),
     });
 
-    const payments = useMemo(() => response?.data || [], [response?.data]);
+    const payments = useMemo(() => {
+        const arr = Array.isArray(response?.data) 
+            ? response.data 
+            : (Array.isArray(response?.data?.data) ? response.data.data : []);
+        return arr;
+    }, [response?.data]);
     const pagination = response?.pagination;
 
     // Dynamically derive unique values from fetched data for filters

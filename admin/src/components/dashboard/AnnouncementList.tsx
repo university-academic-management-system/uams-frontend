@@ -7,7 +7,7 @@ interface Props {
     announcements: Announcement[];
 }
 
-export const AnnouncementList = ({ announcements }: Props) => {
+const AnnouncementList = ({ announcements }: Props) => {
     const navigate = useNavigate();
 
     return (
@@ -64,3 +64,5 @@ export const AnnouncementList = ({ announcements }: Props) => {
         </Box>
     );
 };
+
+export default AnnouncementList;
