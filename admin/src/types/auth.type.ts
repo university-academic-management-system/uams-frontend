@@ -1,4 +1,4 @@
-
+import {type StudentProfile } from "./student.type";
 // ── User profile from login response ────────────────────────────────
 
 export interface UserProfile {
@@ -61,7 +61,7 @@ export interface UserData {
     status?: string;
     createdAt?: string;
     updatedAt?: string;
-    studentProfile?: any | null;
+    studentProfile?: StudentProfile | null;
     staffProfile?: StaffProfile | null;
 }
 

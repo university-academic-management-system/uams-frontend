@@ -37,13 +37,17 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
     });
 
     const programTypeList = useMemo(() => {
-        if (!response?.data) return [];
+        const paymentsArray = Array.isArray(response?.data) 
+            ? response.data 
+            : (Array.isArray(response?.data?.data) ? response.data.data : []);
+
+        if (paymentsArray.length === 0) return [];
         
         let totalAccess = 0;
         let totalIdCard = 0;
         let totalTranscript = 0;
         
-        response.data.forEach((payment) => {
+        paymentsArray.forEach((payment: any) => {
             if (payment.status !== "PAID") return;
             const type = payment.type || "";
             if (type.includes("ACCESS_FEE")) totalAccess += Number(payment.amount);

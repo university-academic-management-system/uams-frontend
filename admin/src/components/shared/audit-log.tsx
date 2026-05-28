@@ -96,7 +96,7 @@ const AuditLogs = () => {
             </Tooltip>
             <Portal>
                 <Drawer.Positioner pt="14" pr={{ base: "0", md: "4" }} pb="0">
-                    <Drawer.Content rounded={{ base: "none", md: "md" }} w="full" maxW="100vw">
+                    <Drawer.Content rounded={{ base: "none", md: "md" }}>
                         <Drawer.Header borderBottomWidth="1px" borderColor="border.subtle" pb="4">
                             <Flex direction="column" gap="4">
                                 <Flex direction="row" justifyContent="space-between" alignItems="center" gap="4">
@@ -147,7 +147,6 @@ const AuditLogs = () => {
                                             variant="ghost"
                                             size={{ base: "md", md: "xl" }}
                                             colorPalette="red"
-                                            w="full"
                                             onClick={() => {
                                                 setAction("");
                                                 setEntity("");
@@ -161,7 +160,7 @@ const AuditLogs = () => {
                                     </GridItem>
 
                                     {/* All Actions */}
-                                    <GridItem colSpan={{ base: 1, md: 2 }} order={{ base: 4, md: 3 }}>
+                                    <GridItem colSpan={{ base: 1, md: 3 }} order={{ base: 4, md: 3 }}>
                                         <Select.Root 
                                             collection={actionsCollection} 
                                             size={{ base: "md", md: "lg" }} 
@@ -199,7 +198,7 @@ const AuditLogs = () => {
                                     </GridItem>
 
                                     {/* All Entities */}
-                                    <GridItem colSpan={{ base: 1, md: 2 }} order={{ base: 5, md: 4 }}>
+                                    <GridItem colSpan={{ base: 1, md: 3 }} order={{ base: 5, md: 4 }}>
                                         <Select.Root 
                                             collection={entitiesCollection} 
                                             size={{ base: "md", md: "lg" }} 
@@ -237,7 +236,7 @@ const AuditLogs = () => {
                                     </GridItem>
 
                                     {/* Date Picker */}
-                                    <GridItem colSpan={{ base: 2, md: 6 }} order={{ base: 6, md: 5 }}>
+                                    <GridItem colSpan={{ base: 2, md: 4 }} order={{ base: 6, md: 5 }}>
                                         <DatePicker.Root openOnClick
                                             key={resetKey}
                                             size={{ base: "md", md: "xl" }}
@@ -368,7 +367,7 @@ const AuditLogs = () => {
                                                 pageSize={ITEMS_PER_PAGE}
                                                 page={currentPage}
                                                 onPageChange={(e) => setCurrentPage(e.page)}
-                                                size={{ base: "sm", md: "md" }}
+                                                size="sm"
                                             >
                                                 <Flex gap="2">
                                                     <PaginationPrevTrigger />
