@@ -6,13 +6,15 @@ import type { Result } from "@type/course.type";
 import { gradeColor, normalizeLevel, normalizeSemester } from "@utils/function.util";
 import { lazy, Suspense, useMemo } from "react";
 import { LuActivity, LuEllipsisVertical } from "react-icons/lu";
+import ResultTemplate from "./result-template";
+import type { Level, Semester } from "@type/index.type";
 
 
 // lazy import
 const StatsDrawer = lazy(() => import("@components/courses/stats-drawer"));
 const StatsChart = lazy(() => import("@components/courses/stats-chart"));
 
-const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L300" | "L400" | "L500"; semester: "FIRST" | "SECOND" }) => {
+const SemesterTabContent = ({ level, semester }: { level: Level, semester: Semester }) => {
     const { data: response, isLoading } = useResults({ level, semester });
     const items = useMemo(() => response?.results || [], [response])
 
@@ -86,7 +88,7 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
 
         <Box rounded={"md"} overflow={"hidden"} border="xs" borderColor="border.muted">
             <Table.ScrollArea maxW={{ base: "xl", md: "full" }}>
-                <Table.Root variant="outline" stickyHeader size="lg" w="full">
+                <Table.Root id={semester} variant="outline" stickyHeader size="lg" w="full">
                     <Table.Header>
                         <Table.Row bg="bg.muted" borderBottomColor="border.muted">
                             <Table.ColumnHeader w="6" borderBottomColor="border.muted">S/N</Table.ColumnHeader>
@@ -111,6 +113,7 @@ const SemesterTabContent = ({ level, semester }: { level: "L100" | "L200" | "L30
             <StatsDrawer />
         </Box>
 
+        <ResultTemplate />
     </Stack>
 }
 

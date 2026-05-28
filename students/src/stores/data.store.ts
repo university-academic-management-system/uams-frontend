@@ -20,3 +20,12 @@ export const useCourseStatStore = create<{
     data: null,
     init: (data) => set({ data }),
 }))
+
+
+export const useResultStore = create<{
+    type: "FIRST" | "SECOND" | "ALL";
+    setType: (type: "FIRST" | "SECOND" | "ALL") => void;  
+}>()((set) => ({
+    type: "FIRST",
+    setType: (type) => set({ type }),
+}))
