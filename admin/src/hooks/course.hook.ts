@@ -1,19 +1,22 @@
 import { CourseServices } from "@services/course.service";
 import { ProgramServices } from "@services/program.service";
-import { useMutation, useQueryClient, useSuspenseQuery, keepPreviousData } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery, keepPreviousData } from "@tanstack/react-query";
 import { toaster } from "@components/ui/toaster";
+import type { CreateCourseData } from "@type/course.type";
+import type { CourseFormData } from "@schemas/program.schema";
 
 export const CourseHook = {
     useCourses: (filters: { level?: string; semester?: string }) =>
-        useSuspenseQuery({
+        useQuery({
             queryKey: ["courses", filters],
             queryFn: async () => {
                 const response = await CourseServices.getCourses(filters);
                 const data = Array.isArray(response)
                     ? response
-                    : (response as any)?.data || (response as any)?.courses || [];
+                    : (response as { data?: unknown[] })?.data || [];
                 return data;
             },
+            placeholderData: keepPreviousData,
         }),
 
     useProgramTypes: () =>
@@ -23,7 +26,7 @@ export const CourseHook = {
                 const response = await ProgramServices.getProgramTypes();
                 const data = Array.isArray(response)
                     ? response
-                    : (response as any)?.data || [];
+                    : (response as { data?: unknown[] })?.data || [];
                 return data;
             },
         }),
@@ -31,14 +34,18 @@ export const CourseHook = {
     useCreateCourse: () => {
         const queryClient = useQueryClient();
         return useMutation({
-            mutationFn: async (formData: any) => {
-                return await CourseServices.createCourse({
-                    ...formData,
+            mutationFn: async (formData: CourseFormData) => {
+                const payload: CreateCourseData = {
+                    title: formData.title,
+                    code: formData.code,
+                    description: formData.description || "",
                     units: Number(formData.units),
+                    semester: formData.semester as "FIRST" | "SECOND" | "SUMMER",
+                    level: formData.level,
+                    programmeId: formData.programTypeId,
                     isElective: formData.courseType === "ELECTIVE",
-                    programmeTypeId: formData.programTypeId,
-                    isCarryoverAllowed: formData.allowCarryover,
-                } as any);
+                };
+                return await CourseServices.createCourse(payload);
             },
             onSuccess: () => {
                 toaster.success({ title: "Course created successfully" });
@@ -53,12 +60,16 @@ export const CourseHook = {
     useUpdateCourse: () => {
         const queryClient = useQueryClient();
         return useMutation({
-            mutationFn: async ({ id, data }: { id: string; data: any }) => {
+            mutationFn: async ({ id, data }: { id: string; data: CourseFormData }) => {
                 return await CourseServices.updateCourse(id, {
-                    ...data,
+                    title: data.title,
+                    code: data.code,
+                    description: data.description || "",
                     units: Number(data.units),
-                    isElective: data.courseType === "ELECTIVE",
-                    programmeTypeId: data.programTypeId,
+                    semester: data.semester,
+                    level: data.level,
+                    programmeId: data.programTypeId,
+                    courseType: data.courseType,
                     isCarryoverAllowed: data.allowCarryover,
                 });
             },

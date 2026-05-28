@@ -3,7 +3,10 @@ import type { Course, CreateCourseData, CoursesApiResponse } from "@type/course.
 
 export const CourseServices = {
     getCourses: async (filters?: { level?: string; semester?: string }): Promise<CoursesApiResponse> => {
-        const { data } = await axiosClient.get<CoursesApiResponse>("/courses", { params: filters });
+        const cleanFilters = Object.fromEntries(
+            Object.entries(filters || {}).filter(([, v]) => v !== "" && v !== undefined && v !== null)
+        );
+        const { data } = await axiosClient.get<CoursesApiResponse>("/courses", { params: cleanFilters });
         return data;
     },
 

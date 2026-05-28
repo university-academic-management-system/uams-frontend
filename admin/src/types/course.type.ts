@@ -20,7 +20,7 @@ export interface CreateCourseData {
     units: number;
     semester: "FIRST" | "SECOND" | "SUMMER";
     level: string;
-    programTypeId: string;
+    programmeId: string;
     isElective: boolean;
 }
 

@@ -1,12 +1,14 @@
 import { AbsoluteCenter, ButtonGroup, Flex, Group, Heading, Icon, Image } from "@chakra-ui/react";
 import { SidebarToggleButton } from "./Sidebar";
-import NotificationDrawer from "./notification-drawer";
-import AuditLogs from "./audit-log";
 import { useSidebarStore } from "@stores/ui.store";
 import { useLocation } from "react-router";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, lazy, Suspense } from "react";
 import { navigationLinks, type NavigationLink } from "@constants/navigation";
 import MobileSideDrawer from "./mobile-side-drawer";
+import { ErrorBoundary } from "react-error-boundary";
+
+const NotificationDrawer = lazy(() => import("./notification-drawer"));
+const AuditLogs = lazy(() => import("./audit-log"));
 
 const Header = () => {
     const { isCollapsed } = useSidebarStore();
@@ -42,8 +44,15 @@ const Header = () => {
             </AbsoluteCenter>
 
             <ButtonGroup gap="2">
-                <NotificationDrawer />
-                <AuditLogs />
+                <Suspense fallback={null}>
+                    <NotificationDrawer />
+                </Suspense>
+
+                <ErrorBoundary fallback={<></>}>
+                    <Suspense fallback={null}>
+                        <AuditLogs />
+                    </Suspense>
+                </ErrorBoundary>
                 <MobileSideDrawer />
             </ButtonGroup>
         </Flex>
