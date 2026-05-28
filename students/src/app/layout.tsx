@@ -37,7 +37,7 @@ const RootLayout = () => {
                                 <ReceiptTemplate />
                             </Suspense>
                             <Suspense>
-                                {/* <ResultTemplate /> */}
+                                <ResultTemplate />
                             </Suspense>
                         </ScrollArea.Content>
                     </ScrollArea.Viewport>

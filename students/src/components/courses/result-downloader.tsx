@@ -5,7 +5,7 @@ import { normalizeSemester } from "@utils/function.util";
 import { snapdom } from "@zumer/snapdom";
 import type { SelectionDetails } from "node_modules/@chakra-ui/react/dist/types/components/menu/namespace";
 import { useCallback, useTransition } from "react";
-import { LuDownload } from "react-icons/lu";
+import { LuDownload, LuEllipsis } from "react-icons/lu";
 
 
 const ResultDownloader = () => {
@@ -44,15 +44,51 @@ const ResultDownloader = () => {
                 }
             }
                 break;
-            case "ALL":
+            case "ALL": {
+                try {
+                    setType("ALL");
+                    startTransition(async () => {
+                        const blob = await snapdom(document.getElementById("result-template") as HTMLDivElement);
+                        await blob.toJpg({ scale: 2, quality: 1, cache: "disabled" });
+                        await blob.download({ filename: `full-session-result.jpg`, type: "jpg", scale: 2 });
+                    })
+                } catch (error) {
+                    toaster.error({ description: "Error downloading result" })
+                    console.error("Error downloading result", error);
+                }
+            }
                 break;
         }
     }, [setType]);
 
-    return (
+    return <>
+
+        {/* mobile */}
         <Menu.Root onSelect={handleClick} closeOnSelect>
             <Menu.Trigger asChild>
-                <Button loading={isPending} colorPalette={"accent"} variant="ghost" size="sm">
+                <Button hideFrom={"md"} loading={isPending} colorPalette={"gray"} variant="ghost" size="sm">
+                    <LuEllipsis />
+                </Button>
+            </Menu.Trigger>
+            <Portal>
+                <Menu.Positioner>
+                    <Menu.Content>
+                        <Menu.ItemGroup>
+                            <Menu.ItemGroupLabel>Download Result</Menu.ItemGroupLabel>
+                            <Menu.Item value="FIRST">1st Semester</Menu.Item>
+                            <Menu.Item value="SECOND">2nd Semester</Menu.Item>
+                            <Menu.Item value="ALL">All Semesters</Menu.Item>
+                        </Menu.ItemGroup>
+                    </Menu.Content>
+                </Menu.Positioner>
+            </Portal>
+        </Menu.Root>
+
+
+        {/* desktop */}
+        <Menu.Root onSelect={handleClick} closeOnSelect>
+            <Menu.Trigger asChild>
+                <Button hideBelow={"md"} loading={isPending} colorPalette={"accent"} variant="ghost" size="sm">
                     <LuDownload />  Download Result
                 </Button>
             </Menu.Trigger>
@@ -66,7 +102,7 @@ const ResultDownloader = () => {
                 </Menu.Positioner>
             </Portal>
         </Menu.Root>
-    )
+    </>
 }
 
 

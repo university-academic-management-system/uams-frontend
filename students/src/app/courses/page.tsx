@@ -48,7 +48,7 @@ const Courses = () => {
             lazyMount
             gap="12"
         >
-            <Tabs.List pos={{ base: "static", md: "fixed" }} left="" top="20" bg="bg.subtle" h="full" zIndex={"sticky"}>
+            <Tabs.List w="fit" pos={{ base: "static", md: "fixed" }} left="" top="20" bg="bg.subtle" h="full" zIndex={"sticky"}>
                 <Tabs.Trigger value="L100">
                     100 Level
                 </Tabs.Trigger>
