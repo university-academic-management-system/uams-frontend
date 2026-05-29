@@ -368,12 +368,8 @@ const TimetableCalendarView = memo(
                                                                                 <Text textStyle="xs">
                                                                                     {moment
                                                                                         .duration(
-                                                                                            moment(
-                                                                                                item.endTime
-                                                                                            ).diff(
-                                                                                                moment(
-                                                                                                    item.startTime
-                                                                                                )
+                                                                                            moment.utc(item.endTime).diff(
+                                                                                                moment.utc(item.startTime)
                                                                                             )
                                                                                         )
                                                                                         .asHours()}{" "}

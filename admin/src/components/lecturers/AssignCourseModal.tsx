@@ -64,12 +64,12 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
         <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) onClose() }} placement="center" closeOnInteractOutside={false}>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content bg="white" borderRadius="md" boxShadow="none" w="full" maxW="lg" overflow="hidden" colorPalette="accent">
+                <Dialog.Content bg="white" borderRadius="md" boxShadow="none" w="full" maxW="lg" overflow="hidden">
                     {/* Header */}
                     <Flex p="6" borderBottom="xs" borderColor="border.muted" alignItems="center" justifyContent="space-between">
-                        <Text fontSize="xl" fontWeight="bold" color="#1D7AD9">Assign Course To Lecturer</Text>
+                        <Text fontSize="xl" fontWeight="bold">Assign Course To Lecturer</Text>
                         <Dialog.CloseTrigger asChild>
-                            <Box as="button" onClick={onClose} p="2" _hover={{ bg: "slate.50" }} borderRadius="full" color="fg.subtle" cursor="pointer" bg="transparent" border="none">
+                            <Box as="button" onClick={onClose} p="2" _hover={{ bg: "slate.50" }} color="fg.subtle" cursor="pointer" bg="transparent" border="none">
                                 <X size={20} />
                             </Box>
                         </Dialog.CloseTrigger>
@@ -87,14 +87,14 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
                                 <Select.Root 
                                     multiple 
                                     collection={courseCollection} 
-                                    size="md" 
+                                    size="lg" 
                                     width="full"
                                     value={courseIds}
                                     onValueChange={(details) => setCourseIds(details.value)}
                                     disabled={isLoadingCourses}
                                 >
                                     <Select.HiddenSelect />
-                                    <Select.Control bg="#F8FAFC" borderColor="#E2E8F0" borderRadius="md" minHeight="40px" _hover={{ borderColor: "#CBD5E1" }}>
+                                    <Select.Control borderColor="#E2E8F0" borderRadius="md" minHeight="40px" _hover={{ borderColor: "#CBD5E1" }}>
                                         <Select.Trigger>
                                             <Select.ValueText placeholder={isLoadingCourses ? "Loading courses..." : "Select course(s)..."} />
                                         </Select.Trigger>
@@ -123,8 +123,9 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
                                     value={session}
                                     onChange={(e) => setSession(e.target.value)}
                                     placeholder="e.g. 2025/2026"
-                                    bg="#F8FAFC"
-                                    borderColor="#E2E8F0"
+                                    borderColor="border.muted"
+                                    size="lg"
+                                    colorPalette="accent"
                                     borderRadius="md"
                                     minHeight="40px"
                                     fontSize="sm"

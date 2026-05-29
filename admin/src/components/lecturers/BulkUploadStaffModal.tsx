@@ -45,11 +45,11 @@ const BulkUploadStaffModal = ({ isOpen, onClose, onUploaded }: Props) => {
         <Dialog.Root open={isOpen} onOpenChange={(e) => { if (!e.open) handleClose() }} placement="center" closeOnInteractOutside={false}>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content bg="white" borderRadius="md" shadow="none" w="full" maxW="lg" position="relative" colorPalette="accent">
+                <Dialog.Content bg="white" borderRadius="md" shadow="none" w="full" maxW="lg" position="relative">
                     {/* Header */}
                     <Box p="6" borderBottom="xs" borderColor="border.muted">
                         <Dialog.CloseTrigger asChild>
-                            <Box as="button" onClick={handleClose} position="absolute" top="4" right="4" p="1" _hover={{ bg: "fg.subtle" }} borderRadius="full" cursor="pointer" border="none" bg="transparent" color="fg.subtle"><X size={20} /></Box>
+                            <Box as="button" onClick={handleClose} position="absolute" top="4" right="4" cursor="pointer" border="none" bg="transparent" color="fg.subtle"><X size={20} /></Box>
                         </Dialog.CloseTrigger>
                         <Text fontSize="lg" fontWeight="bold" color="fg.muted" mb="2">Upload Lecturers</Text>
                         <Text fontSize="sm" color="fg.muted" mb="4">Upload a CSV file containing the lecturers data. Download the sample file below to see the required format.</Text>
@@ -100,7 +100,7 @@ const BulkUploadStaffModal = ({ isOpen, onClose, onUploaded }: Props) => {
 
                     {/* Actions */}
                     <Flex p="6" borderTop="xs" borderColor="border.muted" justifyContent="flex-end" gap="3">
-                        <Button variant="subtle" onClick={handleClose} size="xl" borderRadius="md">Cancel</Button>
+                        <Button variant="outline" onClick={handleClose} size="xl" borderRadius="md">Cancel</Button>
                         <Button onClick={handleUpload} size="xl" borderRadius="md" bg="#1D7AD9" color="white" cursor={(!file || uploadMutation.isPending) ? "not-allowed" : "pointer"} _hover={{ bg: (!file || uploadMutation.isPending) ? "#1D7AD9" : "blue.700" }} opacity={(!file || uploadMutation.isPending) ? 0.5 : 1} alignItems="center" gap="2" disabled={!file || uploadMutation.isPending} loading={uploadMutation.isPending}>
                             Upload
                         </Button>

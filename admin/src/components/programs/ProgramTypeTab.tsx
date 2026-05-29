@@ -20,8 +20,9 @@ import {
   EmptyState,
   VStack,
   CloseButton,
+  Popover,
 } from "@chakra-ui/react";
-import { Edit, Trash2, Plus, GraduationCap, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import {Trash2, Plus, GraduationCap, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil } from "lucide-react";
 
 const typeCollection = createListCollection({
   items: [
@@ -35,6 +36,7 @@ const typeCollection = createListCollection({
 const ProgramTypeTab = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
   const createForm = useProgramTypeForm();
@@ -566,32 +568,67 @@ const ProgramTypeTab = () => {
                     <Table.Cell px="6" py="4">{pt.code || "—"}</Table.Cell>
                     <Table.Cell px="6" py="4">{pt.type || "—"}</Table.Cell>
                     <Table.Cell px="6" py="4" textAlign="center">
-                      <Flex justifyContent="center" gap="2">
-                        <Button
-                            aria-label="Edit"
-                            size="xl"
+                      <Popover.Root
+                        positioning={{ placement: "bottom-end" }}
+                        open={openPopoverId === pt.id}
+                        onOpenChange={(e) => setOpenPopoverId(e.open ? pt.id : null)}
+                      >
+                        <Popover.Trigger asChild>
+                          <Button
                             variant="ghost"
-                            colorPalette="gray"
-                            color="fg.muted"
-                            onClick={() => handleEdit(pt)}
-                            borderRadius="full"
-                            minW="auto"
+                            size="sm"
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                            px="0"
+                            color="fg.subtle"
                           >
-                            <Edit size={16} />
+                            <MoreHorizontal size={20} />
                           </Button>
-                        <Button
-                          aria-label="Delete"
-                          size="xl"
-                          variant="ghost"
-                          colorPalette="gray"
-                          color="fg.muted"
-                          onClick={() => handleDelete(pt.id)}
-                          borderRadius="full"
-                          minW="auto"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </Flex>
+                        </Popover.Trigger>
+                        <Portal>
+                          <Popover.Positioner zIndex="popover">
+                            <Popover.Content
+                              bg="white"
+                              borderRadius="md"
+                              boxShadow="md"
+                              border="xs"
+                              borderColor="border.muted"
+                              w="48"
+                              overflow="hidden"
+                              outline="none"
+                            >
+                              <Popover.Body p="1">
+                                <Button
+                                  variant="ghost"
+                                  onClick={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    setOpenPopoverId(null);
+                                    handleEdit(pt);
+                                  }}
+                                  w="full"
+                                  justifyContent="flex-start"
+                                  size="sm"
+                                >
+                                  <Pencil size={16} /> Edit details
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  colorPalette="red"
+                                  onClick={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    setOpenPopoverId(null);
+                                    handleDelete(pt.id);
+                                  }}
+                                  w="full"
+                                  justifyContent="flex-start"
+                                  size="sm"
+                                >
+                                  <Trash2 size={16} /> Delete programme
+                                </Button>
+                              </Popover.Body>
+                            </Popover.Content>
+                          </Popover.Positioner>
+                        </Portal>
+                      </Popover.Root>
                     </Table.Cell>
                   </Table.Row>
                 ))
