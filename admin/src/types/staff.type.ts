@@ -14,6 +14,7 @@ export interface Staff {
     role?: string;
     staffRoles?: string[];
     status?: string;
+    totalAssignedCourses?: number;
     activeFeatures?: {
         results: boolean;
         finance: boolean;

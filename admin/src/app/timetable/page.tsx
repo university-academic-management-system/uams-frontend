@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { TimetableHook } from "@hooks/timetable.hook";
 import { useMemo, useState, lazy, Suspense } from "react";
-import { Toaster } from "@components/ui/toaster";
+
 import { CalendarX } from "lucide-react";
 
 const TimetableUploadDialog = lazy(() => import("@components/timetable/TimetableUploadDialog"));
@@ -219,7 +219,7 @@ const TimeTable = () => {
                 </Suspense>
             )}
 
-            <Toaster />
+
         </Stack>
     );
 };

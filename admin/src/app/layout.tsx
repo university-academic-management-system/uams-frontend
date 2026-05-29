@@ -15,7 +15,7 @@ const RootLayout = () => {
             overflow="hidden"
 
         >
-            {/* siderbar */}
+            {/* sidebar */}
             <Sidebar />
 
             <Stack flex="1" h="100vh" gap="0" bg="bg" overflow="hidden" minW="0">

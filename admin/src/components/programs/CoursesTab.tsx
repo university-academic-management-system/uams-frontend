@@ -3,7 +3,7 @@ import { Controller } from "react-hook-form";
 import { type CourseFormData } from "@schemas/program.schema";
 import useCourseForm, { defaultCourseFormData } from "@forms/course.form";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Download, Edit, Trash2, X, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Download, Trash2, X, Search, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil } from "lucide-react";
 import { CourseHook } from "@hooks/course.hook";
 import { CourseServices } from "@services/course.service";
 import { toaster } from "@components/ui/toaster";
@@ -27,6 +27,8 @@ import {
   CloseButton,
   Field,
   Checkbox,
+  Skeleton,
+  Popover,
 } from "@chakra-ui/react";
 import { Switch } from "@components/ui/switch";
 import {
@@ -99,6 +101,7 @@ const CoursesTab = () => {
   const [filters, setFilters] = useState({ level: "", semester: "" });
   const [isEditing, setIsEditing] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
   const requestSort = useCallback((key: string) => {
@@ -111,7 +114,7 @@ const CoursesTab = () => {
 
   const form = useCourseForm();
 
-  const { data: courses = [] } = CourseHook.useCourses(filters);
+  const { data: courses = [], isLoading: isCoursesLoading } = CourseHook.useCourses(filters);
   const { data: programTypes = [] } = CourseHook.useProgramTypes();
   const { mutate: createCourse, isPending: isCreating } = CourseHook.useCreateCourse();
   const { mutate: updateCourse, isPending: isUpdating } = CourseHook.useUpdateCourse();
@@ -429,7 +432,7 @@ const CoursesTab = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               bg="white"
-              border="1px"
+              border="1px solid"
               borderColor="border.muted"
               size="lg"
               ps="11"
@@ -693,7 +696,6 @@ const CoursesTab = () => {
               <Table.Row borderY="xs" borderColor="border.muted">
                 <Table.ColumnHeader px="6" py="4" w="12" textAlign="center" position="sticky" left="0" zIndex="11" bg="bg.subtle">
                   <Checkbox.Root
-                    variant="outline"
                     checked={
                       filtered.length > 0 &&
                       selectedIds.length === filtered.length
@@ -884,7 +886,27 @@ const CoursesTab = () => {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {filtered.length === 0 ? (
+              {isCoursesLoading ? (
+                Array.from({ length: 7 }).map((_, i) => (
+                  <Table.Row key={i}>
+                    <Table.Cell position="sticky" left="0" zIndex={0} bg="white">
+                      <Skeleton h="4" w="4" />
+                    </Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                    <Table.Cell position="sticky" right="0" zIndex={0} bg="white">
+                      <Skeleton h="4" w="8" />
+                    </Table.Cell>
+                  </Table.Row>
+                ))
+              ) : filtered.length === 0 ? (
                 <Table.Row>
                   <Table.Cell colSpan={9} py="12">
                     <EmptyState.Root>
@@ -921,7 +943,6 @@ const CoursesTab = () => {
                   >
                     <Table.Cell px="6" py="4" textAlign="center" position="sticky" left="0" zIndex="2" bg={selectedIds.includes(course.id) ? "blue.50" : "white"}>
                       <Checkbox.Root
-                        variant="outline"
                         checked={selectedIds.includes(course.id)}
                         onCheckedChange={() => toggleSelection(course.id)}
                         onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -967,32 +988,67 @@ const CoursesTab = () => {
                       </Box>
                     </Table.Cell>
                     <Table.Cell px="3" py="4" textAlign="center" position="sticky" right="0" zIndex="2" bg={selectedIds.includes(course.id) ? "blue.50" : "white"}>
-                      <Flex justifyContent="center" gap="0">
-                        <Dialog.Trigger asChild>
+                      <Popover.Root
+                        positioning={{ placement: "bottom-end" }}
+                        open={openPopoverId === course.id}
+                        onOpenChange={(e) => setOpenPopoverId(e.open ? course.id : null)}
+                      >
+                        <Popover.Trigger asChild>
                           <Button
-                            onClick={() => handleEditClick(course)}
                             variant="ghost"
-                            colorPalette="gray"
-                            color="fg.muted"
-                            size="xl"
-                            borderRadius="md"
-                            minW="auto"
+                            size="sm"
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                            px="0"
+                            color="fg.subtle"
                           >
-                            <Edit size={16} />
+                            <MoreHorizontal size={20} />
                           </Button>
-                        </Dialog.Trigger>
-                        <Button
-                          onClick={() => handleDelete(course.id)}
-                          variant="ghost"
-                          colorPalette="gray"
-                          color="fg.muted"
-                          size="xl"
-                          borderRadius="md"
-                          minW="auto"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </Flex>
+                        </Popover.Trigger>
+                        <Portal>
+                          <Popover.Positioner zIndex="popover">
+                            <Popover.Content
+                              bg="white"
+                              borderRadius="md"
+                              boxShadow="md"
+                              border="xs"
+                              borderColor="border.muted"
+                              w="48"
+                              overflow="hidden"
+                              outline="none"
+                            >
+                              <Popover.Body p="1">
+                                <Button
+                                  variant="ghost"
+                                  onClick={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    setOpenPopoverId(null);
+                                    handleEditClick(course);
+                                  }}
+                                  w="full"
+                                  justifyContent="flex-start"
+                                  size="sm"
+                                >
+                                  <Pencil size={16} /> Edit details
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  colorPalette="red"
+                                  onClick={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    setOpenPopoverId(null);
+                                    handleDelete(course.id);
+                                  }}
+                                  w="full"
+                                  justifyContent="flex-start"
+                                  size="sm"
+                                >
+                                  <Trash2 size={16} /> Delete course
+                                </Button>
+                              </Popover.Body>
+                            </Popover.Content>
+                          </Popover.Positioner>
+                        </Portal>
+                      </Popover.Root>
                     </Table.Cell>
                   </Table.Row>
                 ))
