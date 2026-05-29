@@ -113,8 +113,8 @@ const CoursesTab = () => {
 
   const { data: courses = [] } = CourseHook.useCourses(filters);
   const { data: programTypes = [] } = CourseHook.useProgramTypes();
-  const { mutateAsync: createCourse, isPending: isCreating } = CourseHook.useCreateCourse();
-  const { mutateAsync: updateCourse, isPending: isUpdating } = CourseHook.useUpdateCourse();
+  const { mutate: createCourse, isPending: isCreating } = CourseHook.useCreateCourse();
+  const { mutate: updateCourse, isPending: isUpdating } = CourseHook.useUpdateCourse();
   const { mutate: deleteCourse } = CourseHook.useDeleteCourse();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -152,19 +152,18 @@ const CoursesTab = () => {
 
 
 
-  const handleSave = useCallback(async (data: CourseFormData) => {
-    try {
-      if (isEditing && editingCourseId) {
-        await updateCourse({ id: editingCourseId, data });
-      } else {
-        await createCourse(data);
-      }
+  const handleSave = useCallback((data: CourseFormData) => {
+    const onSuccessCb = () => {
       setIsDialogOpen(false);
       form.reset(defaultCourseFormData);
       setIsEditing(false);
       setEditingCourseId(null);
-    } catch {
-      // errors handled by interceptor or hook
+    };
+
+    if (isEditing && editingCourseId) {
+      updateCourse({ id: editingCourseId, data }, { onSuccess: onSuccessCb });
+    } else {
+      createCourse(data, { onSuccess: onSuccessCb });
     }
   }, [isEditing, editingCourseId, updateCourse, createCourse, form]);
 
@@ -231,12 +230,13 @@ const CoursesTab = () => {
       courses.map((c: any) => ({
         Code: c.code,
         "Course Title": c.title || c.name,
+        Programme: c.programmeId || c.programme?.name || "—",
         Level: typeof c.level === "string" ? formatLevel(c.level) : (formatLevel(c.level?.name) || "N/A"),
         Semester: typeof c.semester === "string" ? formatSemesterName(c.semester) : (formatSemesterName(c.semester?.name) || "N/A"),
         "Credit Units": c.units ?? c.creditUnits ?? c.creditUnit,
-        "Learning Hours": c.learningHours || "N/A",
-        "Practical Hours": c.practicalHours || "N/A",
-        Status: (c.courseType || c.status) === "CORE" || (c.courseType || c.status) === "C" ? "Core" : "Elective",
+        "Course Type": c.courseType || "N/A",
+        Carryover: c.isCarryoverAllowed ? "Yes" : "No",
+        Status: c.status || "ACTIVE",
       })),
       "Courses",
       "Courses",
@@ -318,15 +318,18 @@ const CoursesTab = () => {
       } else if (key === "units") {
         valA = a.units ?? a.creditUnits ?? a.creditUnit ?? 0;
         valB = b.units ?? b.creditUnits ?? b.creditUnit ?? 0;
-      } else if (key === "learningHours") {
-        valA = a.learningHours || 0;
-        valB = b.learningHours || 0;
-      } else if (key === "practicalHours") {
-        valA = a.practicalHours || 0;
-        valB = b.practicalHours || 0;
+      } else if (key === "courseType") {
+        valA = a.courseType || "CORE";
+        valB = b.courseType || "CORE";
+      } else if (key === "isCarryoverAllowed") {
+        valA = a.isCarryoverAllowed ? 1 : 0;
+        valB = b.isCarryoverAllowed ? 1 : 0;
       } else if (key === "status") {
-        valA = (a.courseType || a.status) === "CORE" || (a.courseType || a.status) === "C" ? "CORE" : "ELECTIVE";
-        valB = (b.courseType || b.status) === "CORE" || (b.courseType || b.status) === "C" ? "CORE" : "ELECTIVE";
+        valA = a.status || "ACTIVE";
+        valB = b.status || "ACTIVE";
+      } else if (key === "programmeId") {
+        valA = a.programmeId || a.programme?.name || "";
+        valB = b.programmeId || b.programme?.name || "";
       }
 
       if (typeof valA === "string") {
@@ -684,11 +687,11 @@ const CoursesTab = () => {
           </Flex>
         </Flex>
 
-        <Table.ScrollArea w="full">
+        <Table.ScrollArea maxW={{ base: "xl", md: "full" }} maxH="calc(100vh - 285px)">
           <Table.Root w="full" variant="outline" interactive>
-            <Table.Header bg="bg.subtle">
+            <Table.Header bg="bg.subtle" position="sticky" top="0" zIndex={10}>
               <Table.Row borderY="xs" borderColor="border.muted">
-                <Table.ColumnHeader px="6" py="4" w="12" textAlign="center" position="sticky" left="0" zIndex="3" bg="bg.subtle">
+                <Table.ColumnHeader px="6" py="4" w="12" textAlign="center" position="sticky" left="0" zIndex="11" bg="bg.subtle">
                   <Checkbox.Root
                     variant="outline"
                     checked={
@@ -759,6 +762,22 @@ const CoursesTab = () => {
                   textTransform="uppercase"
                   letterSpacing="wider"
                   cursor="pointer"
+                  onClick={() => requestSort("programmeId")}
+                  userSelect="none"
+                >
+                  <Flex alignItems="center" gap="1">
+                    PROGRAMME {renderSortIcon("programmeId")}
+                  </Flex>
+                </Table.ColumnHeader>
+                <Table.ColumnHeader
+                  px="6"
+                  py="4"
+                  fontSize="11px"
+                  fontWeight="bold"
+                  color="fg.muted"
+                  textTransform="uppercase"
+                  letterSpacing="wider"
+                  cursor="pointer"
                   onClick={() => requestSort("level")}
                   userSelect="none"
                 >
@@ -807,11 +826,11 @@ const CoursesTab = () => {
                   textTransform="uppercase"
                   letterSpacing="wider"
                   cursor="pointer"
-                  onClick={() => requestSort("learningHours")}
+                  onClick={() => requestSort("courseType")}
                   userSelect="none"
                 >
                   <Flex alignItems="center" gap="1">
-                    LEARNING HOURS {renderSortIcon("learningHours")}
+                    COURSE TYPE {renderSortIcon("courseType")}
                   </Flex>
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
@@ -823,11 +842,11 @@ const CoursesTab = () => {
                   textTransform="uppercase"
                   letterSpacing="wider"
                   cursor="pointer"
-                  onClick={() => requestSort("practicalHours")}
+                  onClick={() => requestSort("isCarryoverAllowed")}
                   userSelect="none"
                 >
                   <Flex alignItems="center" gap="1">
-                    PRACTICAL HOURS {renderSortIcon("practicalHours")}
+                    CARRYOVER <br></br>ALLOWED{renderSortIcon("isCarryoverAllowed")}
                   </Flex>
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
@@ -857,7 +876,7 @@ const CoursesTab = () => {
                   textAlign="center"
                   position="sticky"
                   right="0"
-                  zIndex="3"
+                  zIndex="11"
                   bg="bg.subtle"
                 >
                   ACTIONS
@@ -867,7 +886,7 @@ const CoursesTab = () => {
             <Table.Body>
               {filtered.length === 0 ? (
                 <Table.Row>
-                  <Table.Cell colSpan={11} py="12">
+                  <Table.Cell colSpan={9} py="12">
                     <EmptyState.Root>
                       <EmptyState.Content>
                         <EmptyState.Indicator>
@@ -921,6 +940,9 @@ const CoursesTab = () => {
                       {course.title || course.name}
                     </Table.Cell>
                     <Table.Cell px="6" py="4">
+                      {course.programmeId || course.programme?.name || "—"}
+                    </Table.Cell>
+                    <Table.Cell px="6" py="4">
                       {typeof course.level === "string" ? formatLevel(course.level) : (formatLevel(course.level?.name) || "—")}
                     </Table.Cell>
                     <Table.Cell px="6" py="4">
@@ -930,13 +952,19 @@ const CoursesTab = () => {
                       {course.units ?? course.creditUnits ?? course.creditUnit ?? "—"}
                     </Table.Cell>
                     <Table.Cell px="6" py="4">
-                      {course.learningHours || "—"}
+                      {course.courseType ? course.courseType.charAt(0).toUpperCase() + course.courseType.slice(1).toLowerCase() : "Core"}
                     </Table.Cell>
                     <Table.Cell px="6" py="4">
-                      {course.practicalHours || "—"}
+                      {course.isCarryoverAllowed ? "Yes" : "No"}
                     </Table.Cell>
                     <Table.Cell px="6" py="4">
-                      {(course.courseType || course.status) === "CORE" || (course.courseType || course.status) === "C" ? "Core" : "Elective"}
+                      <Box
+                        px="2" py="1" borderRadius="full" fontSize="10px" fontWeight="bold" display="inline-block"
+                        bg={course.status === "ACTIVE" ? "green.50" : "red.50"}
+                        color={course.status === "ACTIVE" ? "green.600" : "red.600"}
+                      >
+                        {course.status || "ACTIVE"}
+                      </Box>
                     </Table.Cell>
                     <Table.Cell px="3" py="4" textAlign="center" position="sticky" right="0" zIndex="2" bg={selectedIds.includes(course.id) ? "blue.50" : "white"}>
                       <Flex justifyContent="center" gap="0">

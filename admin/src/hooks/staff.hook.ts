@@ -21,6 +21,8 @@ export const StaffHook = {
                     email: item.email || "—",
                     phone: item.staffProfile?.phone || "—",
                     gender: item.staffProfile?.gender || "—",
+                    staffRoles: item.staffProfile?.staffRoles || [],
+                    status: item.status || "—",
                     department: item.staffProfile?.department || "—",
                     level: item.staffProfile?.title || "—",
                     courses: item.courses?.map((course: any) => course.code).join(", ") || "—",

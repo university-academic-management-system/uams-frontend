@@ -21,11 +21,24 @@ import useAuthStore from "@stores/auth.store";
 import { getCurrentDepartmentId } from "@utils/auth.util";
 import { PasswordInput } from "@components/ui/password-input";
 
+import type { Staff, CreateLecturerPayload } from "@type/staff.type";
+
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any) => Promise<void>;
-    initialData?: any;
+    onSubmit: (data: CreateLecturerPayload) => Promise<void>;
+    initialData?: (Staff & { 
+        title?: string; 
+        highestDegree?: string; 
+        category?: string; 
+        faculty?: string; 
+        department?: string; 
+        staffId?: string;
+        firstname?: string;
+        othername?: string;
+        sex?: string;
+        phoneNumber?: string;
+    }) | null;
 }
 
 // Helper function 
@@ -78,7 +91,7 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
         formState: { errors, isSubmitting, isValid },
     } = useForm<StaffFormData>({
         mode: "onChange",
-        resolver: zodResolver(StaffSchema) as any,
+        resolver: zodResolver(StaffSchema),
         defaultValues: {
             staffNumber: "",
             title: "",
@@ -100,20 +113,20 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
     useEffect(() => {
         if (initialData) {
             reset({
-                staffNumber: initialData.staffNumber || initialData.staffId || "",
+                staffNumber: initialData.staffNumber || "",
                 title: initialData.title || "",
-                firstName: initialData.firstName || initialData.firstname || "",
+                firstName: initialData.firstName || "",
                 surname: initialData.surname || "",
-                otherName: initialData.otherName || initialData.othername || "",
-                gender: initialData.gender || initialData.sex || "",
+                otherName: initialData.otherName || "",
+                gender: initialData.gender || "",
                 highestDegree: initialData.highestDegree || "",
-                phone: initialData.phone || initialData.phoneNumber || "",
+                phone: initialData.phone || "",
                 email: initialData.email || "",
                 password: "",
                 staffRoles: initialData.staffRoles || [],
                 category: initialData.category || "",
-                faculty: initialData.faculty || (user as any)?.staffProfile?.faculty || "",
-                department: initialData.department || (user as any)?.staffProfile?.department || "",
+                faculty: initialData.faculty || (user as { staffProfile?: { faculty?: string } })?.staffProfile?.faculty || "",
+                department: initialData.department || (user as { staffProfile?: { department?: string } })?.staffProfile?.department || "",
             });
         } else {
             reset({
@@ -129,18 +142,19 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                 password: "",
                 staffRoles: [],
                 category: "",
-                faculty: (user as any)?.staffProfile?.faculty || "",
-                department: (user as any)?.staffProfile?.department || "",
+                faculty: (user as { staffProfile?: { faculty?: string } })?.staffProfile?.faculty || "",
+                department: (user as { staffProfile?: { department?: string } })?.staffProfile?.department || "",
             });
         }
     }, [initialData, reset, isOpen, user]);
 
     const onFormSubmit = async (data: StaffFormData) => {
-        const payload = {
+        const payload: CreateLecturerPayload = {
             ...data,
+            otherName: data.otherName || "",
             type: "STAFF",
-            departmentId: authDepartmentId,
-            ...(data.password ? {} : (!initialData ? { password: data.phone } : {})),
+            departmentId: authDepartmentId || "",
+            ...(data.password ? {} : (!initialData ? { password: data.phone || "" } : {})),
         };
         try {
             await onSubmit(payload);
@@ -166,7 +180,7 @@ const AddStaffForm = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
                         </Dialog.CloseTrigger>
                     </Flex>
 
-                    <form onSubmit={handleSubmit(onFormSubmit as any)}>
+                    <form onSubmit={handleSubmit((data) => onFormSubmit(data))}>
                         <SimpleGrid columns={{ base: 1, md: 2 }} gap="6">
                             <Field.Root invalid={!!errors.staffNumber}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Staff ID</Field.Label>
