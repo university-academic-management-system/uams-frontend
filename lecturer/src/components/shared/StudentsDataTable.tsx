@@ -49,7 +49,6 @@ const COLUMNS = [
   { key: "action", label: "", width: "50px" },
 ] as const;
 
-// Helper to format and color registration status
 const getRegistrationStatusBadge = (status: string | undefined) => {
   if (!status) return <Badge>Unknown</Badge>;
   const normalized = status.toUpperCase();
@@ -72,7 +71,6 @@ const getRegistrationStatusBadge = (status: string | undefined) => {
   return <Badge colorPalette={colorScheme}>{label}</Badge>;
 };
 
-// Helper to format and color academic standing
 const getAcademicStandingBadge = (standing: string | undefined) => {
   if (!standing) return <Badge>Unknown</Badge>;
   const normalized = standing.toUpperCase();
@@ -99,23 +97,11 @@ const getAcademicStandingBadge = (standing: string | undefined) => {
   return <Badge colorPalette={colorScheme}>{label}</Badge>;
 };
 
-export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTableProps) => {
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+// ─── Student Action Cell with its own drawer (uncontrolled)
+const StudentActionCell = ({ student }: { student: Student }) => {
   const [isExporting, setIsExporting] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
 
-  const totalPages = Math.ceil(students.length / perPage);
-  const startIndex = (currentPage - 1) * perPage;
-  const paginatedStudents = students.slice(startIndex, startIndex + perPage);
-
-  const handleOpenDrawer = (student: Student) => {
-    setSelectedStudent(student);
-    setDrawerOpen(true);
-  };
-
-  const exportStudentRecord = async (student: Student) => {
+  const exportStudentRecord = async () => {
     try {
       setIsExporting(true);
       const doc = new jsPDF({ orientation: "portrait" });
@@ -151,51 +137,120 @@ export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTa
   };
 
   return (
+    <Drawer.Root>
+      <Menu.Root>
+        <Menu.Trigger asChild>
+          <IconButton size="sm" variant="ghost">
+            <LuEllipsis />
+          </IconButton>
+        </Menu.Trigger>
+        <Portal>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Drawer.Trigger asChild>
+                <Menu.Item value="stats">
+                  <LuChartNoAxesCombined /> Stats & Records
+                </Menu.Item>
+              </Drawer.Trigger>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Portal>
+      </Menu.Root>
+
+      <Portal>
+        <Drawer.Backdrop />
+        <Drawer.Positioner>
+          <Drawer.Content>
+            <Drawer.Header>
+              <Drawer.Title>Student Performance Dashboard</Drawer.Title>
+            </Drawer.Header>
+            <Drawer.Body>
+              {(() => {
+                const profile = student.studentProfile;
+                if (!profile) return <Text>No profile data available.</Text>;
+                return (
+                  <Box>
+                    <Text fontSize="lg" mb={4}>
+                      {capitaliseName(profile.firstName)} {capitaliseName(profile.otherName)}
+                    </Text>
+                    <Grid templateColumns="1fr 1fr" gap={4} mb={6}>
+                      <Box p={3} rounded="md" borderColor="border.muted">
+                        <Text fontSize="sm" color="fg.subtle">CGPA</Text>
+                        <Text fontSize="md">{profile.cgpa ?? "N/A"}</Text>
+                      </Box>
+                      <Box p={3} rounded="md" borderColor="border.muted">
+                        <Text fontSize="sm" color="fg.subtle">GPA</Text>
+                        <Text fontSize="md">{profile.gpa ?? "N/A"}</Text>
+                      </Box>
+                      <Box p={3} rounded="md" borderColor="border.muted">
+                        <Text fontSize="sm" color="fg.subtle">SGPA</Text>
+                        <Text fontSize="md">{profile.sgpa ?? "N/A"}</Text>
+                      </Box>
+                      <Box p={3} rounded="md" borderColor="border.muted">
+                        <Text fontSize="sm" color="fg.subtle">Carryover Courses</Text>
+                        <Text fontSize="md">{profile.carryoverCourses ?? 0}</Text>
+                      </Box>
+                      <Box p={3} rounded="md" borderColor="border.muted">
+                        <Text fontSize="sm" color="fg.subtle">Credits Earned</Text>
+                        <Text fontSize="md">{profile.totalCreditsEarned}</Text>
+                      </Box>
+                      <Box p={3} rounded="md" borderColor="border.muted">
+                        <Text fontSize="sm" color="fg.subtle">Credits Attempted</Text>
+                        <Text fontSize="md">{profile.totalCreditsAttempted}</Text>
+                      </Box>
+                    </Grid>
+                    <Button
+                      onClick={exportStudentRecord}
+                      loading={isExporting}
+                      colorPalette="accent"
+                      size="md"
+                    >
+                      <LuFileText /> Download Full Academic Record
+                    </Button>
+                  </Box>
+                );
+              })()}
+            </Drawer.Body>
+            <Drawer.CloseTrigger asChild>
+              <CloseButton size="sm" />
+            </Drawer.CloseTrigger>
+          </Drawer.Content>
+        </Drawer.Positioner>
+      </Portal>
+    </Drawer.Root>
+  );
+};
+
+export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTableProps) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+
+  const totalPages = Math.ceil(students.length / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const paginatedStudents = students.slice(startIndex, startIndex + perPage);
+
+  return (
     <Box>
-      {/* Page size selector – left aligned */}
-      <Flex justify="flex-start" mb="4">
-        <Menu.Root>
+      {/* Page size selector */}
+      <Box mb="4">
+        <Menu.Root onValueChange={(e) => setPerPage(Number(e.value))}>
           <Menu.Trigger asChild>
-            <Flex
-              align="center"
-              gap="2"
-              border="xs"
-              borderColor="border.muted"
-              px="4"
-              h="36px"
-              rounded="md"
-              bg="white"
-              cursor="pointer"
-            >
-              <Text fontSize="sm" color="fg.muted" fontWeight="500">Show</Text>
-              <Flex
-                bg="accent.50"
-                color="accent.500"
-                px="2"
-                py="0.5"
-                rounded="sm"
-                align="center"
-                justify="center"
-              >
-                <Text fontSize="sm" fontWeight="600">{perPage}</Text>
-              </Flex>
-              <Box color="fg.muted">
-                <LuChevronDown size={14} />
-              </Box>
-            </Flex>
+            <Button variant="outline" size="sm">
+              Show {perPage} <LuChevronDown size={14} />
+            </Button>
           </Menu.Trigger>
           <Portal>
             <Menu.Positioner>
               <Menu.Content>
-                <Menu.Item value="10" onClick={() => { setPerPage(10); setCurrentPage(1); }}>10 rows</Menu.Item>
-                <Menu.Item value="20" onClick={() => { setPerPage(20); setCurrentPage(1); }}>20 rows</Menu.Item>
-                <Menu.Item value="50" onClick={() => { setPerPage(50); setCurrentPage(1); }}>50 rows</Menu.Item>
-                <Menu.Item value="100" onClick={() => { setPerPage(100); setCurrentPage(1); }}>100 rows</Menu.Item>
+                <Menu.Item value="10">10 rows</Menu.Item>
+                <Menu.Item value="20">20 rows</Menu.Item>
+                <Menu.Item value="50">50 rows</Menu.Item>
+                <Menu.Item value="100">100 rows</Menu.Item>
               </Menu.Content>
             </Menu.Positioner>
           </Portal>
         </Menu.Root>
-      </Flex>
+      </Box>
 
       <Box borderWidth="1px" borderColor="border.muted" rounded="md" overflowX="auto">
         <Table.Root size="lg" variant="outline" stickyHeader>
@@ -313,22 +368,7 @@ export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTa
                       <Badge colorPalette={student.status === "ACTIVE" ? "green" : "red"}>{student.status || "ACTIVE"}</Badge>
                     </Table.Cell>
                     <Table.Cell px="3" py="3" whiteSpace="nowrap">
-                      <Menu.Root>
-                        <Menu.Trigger asChild>
-                          <IconButton size="sm" variant="ghost">
-                            <LuEllipsis />
-                          </IconButton>
-                        </Menu.Trigger>
-                        <Portal>
-                          <Menu.Positioner>
-                            <Menu.Content>
-                              <Menu.Item value="stats" onClick={() => handleOpenDrawer(student)}>
-                                <LuChartNoAxesCombined /> Stats & Records
-                              </Menu.Item>
-                            </Menu.Content>
-                          </Menu.Positioner>
-                        </Portal>
-                      </Menu.Root>
+                      <StudentActionCell student={student} />
                     </Table.Cell>
                   </Table.Row>
                 );
@@ -338,7 +378,7 @@ export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTa
         </Table.Root>
       </Box>
 
-      {/* Pagination – centered */}
+      {/* Pagination */}
       {!isLoading && students.length > 0 && totalPages > 1 && (
         <Flex justify="center" mt="4">
           <Pagination.Root
@@ -369,71 +409,6 @@ export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTa
           </Pagination.Root>
         </Flex>
       )}
-
-      {/* Right Drawer – unchanged */}
-      <Drawer.Root open={drawerOpen} onOpenChange={(details) => setDrawerOpen(details.open)} placement="end" size="md">
-        <Portal>
-          <Drawer.Backdrop />
-          <Drawer.Positioner>
-            <Drawer.Content>
-              <Drawer.Header>
-                <Drawer.Title>Student Performance Dashboard</Drawer.Title>
-                <Drawer.CloseTrigger asChild>
-                  <CloseButton />
-                </Drawer.CloseTrigger>
-              </Drawer.Header>
-              <Drawer.Body>
-                {selectedStudent && (() => {
-                  const profile = selectedStudent.studentProfile;
-                  if (!profile) return <Text>No profile data available.</Text>;
-                  return (
-                    <Box>
-                      <Text fontSize="lg" mb={4}>
-                        {capitaliseName(profile.firstName)} {capitaliseName(profile.otherName)}
-                      </Text>
-                      <Grid templateColumns="1fr 1fr" gap={4} mb={6}>
-                        <Box p={3} rounded="md" borderColor="border.muted">
-                          <Text fontSize="sm" color="fg.subtle">CGPA</Text>
-                          <Text fontSize="md">{profile.cgpa ?? "N/A"}</Text>
-                        </Box>
-                        <Box p={3} rounded="md" borderColor="border.muted">
-                          <Text fontSize="sm" color="fg.subtle">GPA</Text>
-                          <Text fontSize="md">{profile.gpa ?? "N/A"}</Text>
-                        </Box>
-                        <Box p={3} rounded="md" borderColor="border.muted">
-                          <Text fontSize="sm" color="fg.subtle">SGPA</Text>
-                          <Text fontSize="md">{profile.sgpa ?? "N/A"}</Text>
-                        </Box>
-                        <Box p={3} rounded="md" borderColor="border.muted">
-                          <Text fontSize="sm" color="fg.subtle">Carryover Courses</Text>
-                          <Text fontSize="md">{profile.carryoverCourses ?? 0}</Text>
-                        </Box>
-                        <Box p={3} rounded="md" borderColor="border.muted">
-                          <Text fontSize="sm" color="fg.subtle">Credits Earned</Text>
-                          <Text fontSize="md">{profile.totalCreditsEarned}</Text>
-                        </Box>
-                        <Box p={3} rounded="md" borderColor="border.muted">
-                          <Text fontSize="sm" color="fg.subtle">Credits Attempted</Text>
-                          <Text fontSize="md">{profile.totalCreditsAttempted}</Text>
-                        </Box>
-                      </Grid>
-                      <Button
-                        onClick={() => exportStudentRecord(selectedStudent)}
-                        loading={isExporting}
-                        colorPalette="accent"
-                        w="full"
-                        size="lg"
-                      >
-                        <LuFileText /> Download Full Academic Record
-                      </Button>
-                    </Box>
-                  );
-                })()}
-              </Drawer.Body>
-            </Drawer.Content>
-          </Drawer.Positioner>
-        </Portal>
-      </Drawer.Root>
     </Box>
   );
 };

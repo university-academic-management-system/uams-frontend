@@ -1,14 +1,10 @@
 import axiosClient from "@configs/axios.config";
-import type { TimetableItem, TimetableParams } from "@type/timetable.type";
+import type { TimetableData, TimetableResponse, TimetableParams, CreateTimetableEntryPayload, UpdateTimetableEntryPayload } from "@type/timetable.type";
 
 export const TimetableService = {
-    getTimetable: async (): Promise<TimetableItem[]> => {
-        const { data } = await axiosClient.get<{ data: TimetableItem[] }>(`/timetables`);
-        return data.data || data;
-    },
-    getTimetableParams: async (): Promise<TimetableParams> => {
-        const { data } = await axiosClient.get<{ data: TimetableParams }>(`/timetables/params`);
-        return data.data || data;
+    getTimetable: async (params: { session: string; semester: string }): Promise<TimetableData> => {
+        const { data } = await axiosClient.get<TimetableResponse>(`/timetables`, { params });
+        return data.data;
     },
 
     // The timetable template file is a static file built into the frontend's public/documents folder, not a backend API endpoint.
@@ -18,10 +14,28 @@ export const TimetableService = {
         return response.blob();
     },
     uploadTimetable: async (formData: FormData): Promise<void> => {
-        await axiosClient.post(`/timetables`, formData, {
+        await axiosClient.post(`/timetables/bulk-upload`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
         });
+    },
+
+    createSingleTimetableEntry: async (payload: CreateTimetableEntryPayload): Promise<void> => {
+        await axiosClient.post(`/timetables`, payload);
+    },
+
+    updateTimetableEntry: async ({ id, payload }: {
+        id: string; payload: UpdateTimetableEntryPayload; }): Promise<void> => {
+        await axiosClient.patch(`/timetables/${id}`, payload);
+    },
+
+    deleteTimetableEntry: async (id: string): Promise<void> => {
+        await axiosClient.delete(`/timetables/${id}`);
+    },
+
+    getTimetableParams: async (): Promise<TimetableParams> => {
+        const { data } = await axiosClient.get<{ data: TimetableParams }>(`/timetables/params`);
+        return data.data;
     },
 };

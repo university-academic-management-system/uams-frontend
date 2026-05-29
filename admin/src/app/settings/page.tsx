@@ -1,8 +1,10 @@
+import { lazy, Suspense } from "react";
 import { UserSquare, CreditCard, Settings2 } from "lucide-react";
-import { Box, Tabs } from "@chakra-ui/react";
-import IDCardSettingsTab from "@components/settings/IDCardSettingsTab";
-import PaymentSettingsTab from "@components/settings/PaymentSettingsTab";
-import SystemSettingsTab from "@components/settings/SystemSettingsTab";
+import { Box, Tabs, Spinner, Center } from "@chakra-ui/react";
+
+const IDCardSettingsTab = lazy(() => import("@components/settings/IDCardSettingsTab"));
+const PaymentSettingsTab = lazy(() => import("@components/settings/PaymentSettingsTab"));
+const SystemSettingsTab = lazy(() => import("@components/settings/SystemSettingsTab"));
 
 const SettingsPage = () => {
     return (
@@ -21,13 +23,19 @@ const SettingsPage = () => {
                 </Tabs.List>
 
                 <Tabs.Content value="id-card">
-                    <IDCardSettingsTab />
+                    <Suspense fallback={<Center p="10"><Spinner /></Center>}>
+                        <IDCardSettingsTab />
+                    </Suspense>
                 </Tabs.Content>
                 <Tabs.Content value="payment">
-                    <PaymentSettingsTab />
+                    <Suspense fallback={<Center p="10"><Spinner /></Center>}>
+                        <PaymentSettingsTab />
+                    </Suspense>
                 </Tabs.Content>
                 <Tabs.Content value="system">
-                    <SystemSettingsTab />
+                    <Suspense fallback={<Center p="10"><Spinner /></Center>}>
+                        <SystemSettingsTab />
+                    </Suspense>
                 </Tabs.Content>
             </Tabs.Root>
         </Box>

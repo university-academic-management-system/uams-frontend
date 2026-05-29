@@ -13,14 +13,14 @@ interface Props {
 const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
     const [courseIds, setCourseIds] = useState<string[]>([]);
     const [session, setSession] = useState("2025/2026");
-    const [courses, setCourses] = useState<any[]>([]);
+    const [courses, setCourses] = useState<Record<string, unknown>[]>([]);
     const [isLoadingCourses, setIsLoadingCourses] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const courseCollection = useMemo(() => {
         return createListCollection({
-            items: courses.map((c: any) => ({
-                value: c.id,
+            items: courses.map((c: Record<string, unknown>) => ({
+                value: String(c.id),
                 label: `${c.code} - ${c.title || c.name}`,
             }))
         });
@@ -30,8 +30,8 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
         try {
             setIsLoadingCourses(true);
             const response = await CourseServices.getCourses();
-            const list = Array.isArray(response) ? response : (response as any)?.data || (response as any)?.courses || [];
-            setCourses(list);
+            const list = Array.isArray(response) ? response : (response as { data?: unknown[]; courses?: unknown[] })?.data || (response as { data?: unknown[]; courses?: unknown[] })?.courses || [];
+            setCourses(list as Record<string, unknown>[]);
         } catch (err) {
             console.error("Failed to fetch courses:", err);
         } finally {

@@ -1,4 +1,4 @@
-import { LuHouse, LuLibrary, LuUser, LuBanknote, LuCalendarDays, LuFolderKanban } from "react-icons/lu";
+import { LuHouse, LuLibrary, LuUser, LuBanknote, LuCalendarDays, LuFolderKanban, LuSettings } from "react-icons/lu";
 import { PiAddressBook } from "react-icons/pi";
 import type { ElementType } from "react";
 
@@ -17,5 +17,6 @@ export const navigationLinks: NavigationLink[] = [
     { label: "ID Cards", href: "/id-card", icon: PiAddressBook },
     { label: "Timetable", href: "/timetable", icon: LuCalendarDays },
     { label: "Announcements", href: "/announcements", icon: LuFolderKanban },
+    { label: "Settings", href: "/settings", icon: LuSettings },
     { label: "Profile", href: "/profile", icon: LuUser }
 ];

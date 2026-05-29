@@ -11,9 +11,11 @@ export const AuditLogServices = {
         startDate = "", 
         endDate = ""
     ): Promise<AuditLogsResponse> => {
-        const { data } = await axiosClient.get("/audit-logs", {
-            params: { page, limit, search, action, entity, startDate, endDate }
-        });
+        const params = Object.fromEntries(
+            Object.entries({ page, limit, search, action, entity, startDate, endDate })
+                .filter(([, v]) => v !== "" && v !== undefined && v !== null)
+        );
+        const { data } = await axiosClient.get("/audit-logs", { params });
         return data;
     },
 }

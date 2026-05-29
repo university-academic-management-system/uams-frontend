@@ -23,7 +23,7 @@ const AcademicSettingsTab = () => {
     const handleSave = async (data: ProgramTypeFormData) => {
         try {
             setIsSaving(true);
-            await ProgramServices.createProgramType({ ...data, type: data.type.toUpperCase() });
+            await ProgramServices.createProgramType({ ...data, id: data.code.toLowerCase(), type: data.type.toUpperCase() });
             toaster.success({ title: "Program Type created successfully" });
             handleCancel();
         } catch (error: any) {
