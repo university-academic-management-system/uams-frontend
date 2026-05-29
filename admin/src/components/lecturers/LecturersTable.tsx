@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import {
   Table,
   Checkbox,
@@ -9,8 +9,7 @@ import {
   Popover,
   Portal,
   EmptyState,
-  Badge,
-  Box,
+  Badge
 } from "@chakra-ui/react";
 import {
   MoreHorizontal,
@@ -100,6 +99,8 @@ const LecturersTable = ({
     [sortConfig]
   );
 
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+
   const memoizedTableRows = useMemo(() => {
     return paginatedStaff.map((s) => (
       <Table.Row
@@ -118,7 +119,6 @@ const LecturersTable = ({
           borderColor="border.muted"
         >
           <Checkbox.Root
-            variant="outline"
             checked={selectedIds.includes(s.id)}
             onCheckedChange={() => toggleSelection(s.id)}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -127,7 +127,7 @@ const LecturersTable = ({
             <Checkbox.Control />
           </Checkbox.Root>
         </Table.Cell>
-        <Table.Cell fontWeight="medium" color="fg.subtle">
+        <Table.Cell fontWeight="medium">
           {s.staffNumber || "—"}
         </Table.Cell>
         <Table.Cell fontWeight="bold">
@@ -158,8 +158,8 @@ const LecturersTable = ({
                 fontSize="10px"
                 fontWeight="bold"
                 textAlign="center"
-                bg="blue.50"
-                color="blue.600"
+                bg="gray.100"
+                color="gray.600"
               >
                 {role.replace("_", " ")}
               </Badge>
@@ -180,23 +180,17 @@ const LecturersTable = ({
           </Badge>
         </Table.Cell>
         <Table.Cell>
-          <Flex gap="1.5" wrap="wrap" maxW="200px">
-            {s.courses?.split(", ").map((course, idx) => (
-              <Badge
-                key={idx}
-                px="2"
-                py="1"
-                fontSize="10px"
-                fontWeight="bold"
-                textAlign="center"
-                minW={course === "N/A" ? "60px" : "auto"}
-                bg={course === "N/A" ? "gray.50" : "green.50"}
-                color={course === "N/A" ? "gray.600" : "green.600"}
-              >
-                {course}
-              </Badge>
-            ))}
-          </Flex>
+          <Badge
+            px="2"
+            py="1"
+            fontSize="10px"
+            fontWeight="bold"
+            textAlign="center"
+            bg="gray.100"
+            color="gray.600"
+          >
+            {s.totalAssignedCourses ?? 0} {(s.totalAssignedCourses ?? 0) === 1 ? "Course" : "Courses"}
+          </Badge>
         </Table.Cell>
         <Table.Cell
           textAlign="right"
@@ -207,21 +201,21 @@ const LecturersTable = ({
           borderLeft="1px solid"
           borderColor="border.muted"
         >
-          <Popover.Root positioning={{ placement: "bottom-end" }}>
+          <Popover.Root
+            positioning={{ placement: "bottom-end" }}
+            open={openPopoverId === s.id}
+            onOpenChange={(e) => setOpenPopoverId(e.open ? s.id : null)}
+          >
             <Popover.Trigger asChild>
-              <Box
-                as="button"
+              <Button
+                variant="ghost"
+                size="md"
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                p="1"
-                _hover={{ bg: "fg.subtle" }}
-                borderRadius="full"
-                cursor="pointer"
-                border="none"
-                bg="transparent"
+                px="0"
                 color="fg.subtle"
               >
                 <MoreHorizontal size={20} />
-              </Box>
+              </Button>
             </Popover.Trigger>
             <Portal>
               <Popover.Positioner zIndex="popover">
@@ -236,77 +230,48 @@ const LecturersTable = ({
                   outline="none"
                 >
                   <Popover.Body p="1">
-                    <Box
-                      as="button"
+                    <Button
+                      variant="ghost"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
+                        setOpenPopoverId(null);
                         setSelectedStaff(s);
                         setShowAssignCourse(true);
                       }}
                       w="full"
-                      display="flex"
-                      alignItems="center"
-                      gap="2"
-                      px="3"
-                      py="2"
-                      fontSize="sm"
-                      fontWeight="medium"
-                      color="green.600"
-                      _hover={{ bg: "green.50" }}
-                      borderRadius="md"
-                      cursor="pointer"
-                      border="none"
-                      bg="transparent"
+                      justifyContent="flex-start"
+                      size="sm"
                     >
                       <UserCog size={16} /> Assign Course
-                    </Box>
-                    <Box
-                      as="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
+                        setOpenPopoverId(null);
                         setStaffToEdit(s);
                         setShowAddEditForm(true);
                       }}
                       w="full"
-                      display="flex"
-                      alignItems="center"
-                      gap="2"
-                      px="3"
-                      py="2"
-                      fontSize="sm"
-                      fontWeight="medium"
-                      color="amber.600"
-                      _hover={{ bg: "amber.50" }}
-                      borderRadius="md"
-                      cursor="pointer"
-                      border="none"
-                      bg="transparent"
+                      justifyContent="flex-start"
+                      size="sm"
                     >
                       <Pencil size={16} /> Edit details
-                    </Box>
-                    <Box
-                      as="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      colorPalette="red"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
+                        setOpenPopoverId(null);
                         handleDelete(s);
                       }}
                       w="full"
-                      display="flex"
-                      alignItems="center"
-                      gap="2"
-                      px="3"
-                      py="2"
-                      fontSize="sm"
-                      fontWeight="medium"
-                      color="red.600"
-                      _hover={{ bg: "red.50" }}
-                      borderRadius="md"
-                      cursor="pointer"
-                      border="none"
-                      bg="transparent"
+                      justifyContent="flex-start"
+                      size="sm"
                     >
                       <Trash2 size={16} /> Delete Lecturer
-                    </Box>
+                    </Button>
                   </Popover.Body>
                 </Popover.Content>
               </Popover.Positioner>
@@ -324,6 +289,8 @@ const LecturersTable = ({
     setStaffToEdit,
     setShowAssignCourse,
     setShowAddEditForm,
+    openPopoverId,
+    setOpenPopoverId,
   ]);
 
   return (
@@ -357,7 +324,6 @@ const LecturersTable = ({
               letterSpacing="wider"
             >
               <Checkbox.Root
-                variant="outline"
                 checked={
                   filteredStaffLength > 0 &&
                   selectedIds.length > 0 &&

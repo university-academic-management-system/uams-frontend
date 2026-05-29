@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import {
   Table,
   Checkbox,
@@ -95,6 +95,8 @@ const StudentsTable = ({
     [sortConfig]
   );
 
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+
   const memoizedTableRows = useMemo(() => {
     return paginatedStudents.map((s) => (
       <Table.Row
@@ -113,7 +115,6 @@ const StudentsTable = ({
           borderColor="border.muted"
         >
           <Checkbox.Root
-            variant="outline"
             checked={selectedIds.includes(s.id)}
             onCheckedChange={() => toggleSelection(s.id)}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -122,7 +123,7 @@ const StudentsTable = ({
             <Checkbox.Control />
           </Checkbox.Root>
         </Table.Cell>
-        <Table.Cell color="fg.subtle" fontWeight="medium">
+        <Table.Cell fontWeight="medium">
           {s.registrationNo || "—"}
         </Table.Cell>
         <Table.Cell>{s.matricNumber || "—"}</Table.Cell>
@@ -139,7 +140,7 @@ const StudentsTable = ({
         <Table.Cell>{s.department || "—"}</Table.Cell>
         <Table.Cell>{s.level ? s.level.replace(/^L/i, "") : "—"}</Table.Cell>
         <Table.Cell>{s.degreeCourse || "—"}</Table.Cell>
-        <Table.Cell>{s.courseDuration || "—"}</Table.Cell>
+        <Table.Cell>{s.courseDuration ? `${s.courseDuration} ${Number(s.courseDuration) === 1 ? 'Year' : 'Years'}` : "—"}</Table.Cell>
         <Table.Cell>{s.degreeAwarded || "—"}</Table.Cell>
         <Table.Cell>
           <Text
@@ -164,13 +165,16 @@ const StudentsTable = ({
           borderLeft="1px solid"
           borderColor="border.muted"
         >
-          <Popover.Root positioning={{ placement: "bottom-end" }}>
+          <Popover.Root
+            positioning={{ placement: "bottom-end" }}
+            open={openPopoverId === s.id}
+            onOpenChange={(e) => setOpenPopoverId(e.open ? s.id : null)}
+          >
             <Popover.Trigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                borderRadius="full"
                 px="0"
                 color="fg.subtle"
               >
@@ -192,9 +196,9 @@ const StudentsTable = ({
                   <Popover.Body p="1">
                     <Button
                       variant="ghost"
-                      colorPalette="green"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
+                        setOpenPopoverId(null);
                         setSelectedStudent(s);
                       }}
                       w="full"
@@ -205,9 +209,9 @@ const StudentsTable = ({
                     </Button>
                     <Button
                       variant="ghost"
-                      colorPalette="orange"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
+                        setOpenPopoverId(null);
                         setStudentToEdit(s);
                         setShowAddForm(true);
                       }}
@@ -222,6 +226,7 @@ const StudentsTable = ({
                       colorPalette="red"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
+                        setOpenPopoverId(null);
                         handleSingleDelete(s.id);
                       }}
                       w="full"
@@ -246,6 +251,8 @@ const StudentsTable = ({
     setSelectedStudent,
     setStudentToEdit,
     setShowAddForm,
+    openPopoverId,
+    setOpenPopoverId,
   ]);
 
   return (
@@ -277,12 +284,10 @@ const StudentsTable = ({
               fontSize="11px"
               fontWeight="bold"
               color="fg.muted"
-              textTransform="uppercase"
               letterSpacing="wider"
               whiteSpace="nowrap"
             >
               <Checkbox.Root
-                variant="outline"
                 checked={
                   filteredStudentsLength > 0 &&
                   selectedIds.length > 0 &&

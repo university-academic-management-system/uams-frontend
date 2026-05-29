@@ -14,11 +14,7 @@ export const TimetableService = {
         return response.blob();
     },
     uploadTimetable: async (formData: FormData): Promise<void> => {
-        await axiosClient.post(`/timetables/bulk-upload`, formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+        await axiosClient.post(`/timetables/bulk-upload`, formData);
     },
 
     createSingleTimetableEntry: async (payload: CreateTimetableEntryPayload): Promise<void> => {

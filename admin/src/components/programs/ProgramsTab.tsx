@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Plus, Download, Edit, Trash2, X, Search } from "lucide-react";
+import { Plus, Download, Edit, Trash2, X, Search, MoreHorizontal, Pencil } from "lucide-react";
 import { ProgramServices } from "@services/program.service";
 import { toaster } from "@components/ui/toaster";
 import { exportToExcel } from "@utils/excel.util";
-import { Box, Flex, Text, Input, Spinner, Button, InputGroup } from "@chakra-ui/react";
+import { Box, Flex, Text, Input, Spinner, Button, InputGroup, Checkbox, Popover, Portal } from "@chakra-ui/react";
 
 interface ProgramsTabProps {
     isCreatingRoute?: boolean;
@@ -19,6 +19,7 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
+    const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({ name: "", code: "", programTypeId: "", description: "", type: "", duration: 4 });
 
@@ -176,7 +177,14 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
                         <Box as="thead">
                             <Box as="tr" bg="slate.50" borderY="1px solid" borderColor="border.muted">
                                 <Box as="th" px="6" py="4" w="12" textAlign="center">
-                                    <input type="checkbox" checked={filtered.length > 0 && selectedIds.length === filtered.length} onChange={toggleSelectAll} style={{ cursor: "pointer" }} />
+                                    <Checkbox.Root
+                                        checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                                        onCheckedChange={toggleSelectAll}
+                                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                    >
+                                        <Checkbox.HiddenInput />
+                                        <Checkbox.Control />
+                                    </Checkbox.Root>
                                 </Box>
                                 <Box as="th" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase">Program Name</Box>
                                 <Box as="th" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase">Type</Box>
@@ -191,7 +199,14 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
                             ) : filtered.map((prog) => (
                                 <Box as="tr" key={prog.id} _hover={{ bg: "slate.50" }} borderBottom="xs" borderColor="border.muted" fontSize="sm" color="fg.muted" bg={selectedIds.includes(prog.id) ? "blue.50" : undefined}>
                                     <Box as="td" px="6" py="4" textAlign="center">
-                                        <input type="checkbox" checked={selectedIds.includes(prog.id)} onChange={() => toggleSelection(prog.id)} style={{ cursor: "pointer" }} />
+                                        <Checkbox.Root
+                                            checked={selectedIds.includes(prog.id)}
+                                            onCheckedChange={() => toggleSelection(prog.id)}
+                                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                        >
+                                            <Checkbox.HiddenInput />
+                                            <Checkbox.Control />
+                                        </Checkbox.Root>
                                     </Box>
                                     <Box as="td" px="6" py="4" fontWeight="semibold" color="fg.muted">{prog.name}</Box>
                                     <Box as="td" px="6" py="4">{prog.programType?.name || getTypeLabel(prog.programTypeId)}</Box>
@@ -202,10 +217,68 @@ const ProgramsTab = ({ isCreatingRoute, isEditingRoute }: ProgramsTabProps) => {
                                         </Text>
                                     </Box>
                                     <Box as="td" px="6" py="4" textAlign="center">
-                                        <Flex justifyContent="center" gap="2">
-                                            <Box as="button" onClick={() => navigate(`/program-courses/programs/edit/${prog.id}`)} p="1" _hover={{ bg: "fg.subtle" }} borderRadius="full" color="fg.subtle" cursor="pointer" border="none" bg="transparent"><Edit size={16} /></Box>
-                                            <Box as="button" onClick={() => handleDelete(prog.id)} p="1" _hover={{ bg: "red.50" }} borderRadius="full" color="red.400" cursor="pointer" border="none" bg="transparent"><Trash2 size={16} /></Box>
-                                        </Flex>
+                                        <Popover.Root
+                                            positioning={{ placement: "bottom-end" }}
+                                            open={openPopoverId === prog.id}
+                                            onOpenChange={(e) => setOpenPopoverId(e.open ? prog.id : null)}
+                                        >
+                                            <Popover.Trigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                                    px="0"
+                                                    color="fg.subtle"
+                                                >
+                                                    <MoreHorizontal size={20} />
+                                                </Button>
+                                            </Popover.Trigger>
+                                            <Portal>
+                                                <Popover.Positioner zIndex="popover">
+                                                    <Popover.Content
+                                                        bg="white"
+                                                        borderRadius="md"
+                                                        boxShadow="md"
+                                                        border="xs"
+                                                        borderColor="border.muted"
+                                                        w="48"
+                                                        overflow="hidden"
+                                                        outline="none"
+                                                    >
+                                                        <Popover.Body p="1">
+                                                            <Button
+                                                                variant="ghost"
+                                                                colorPalette="orange"
+                                                                onClick={(e: React.MouseEvent) => {
+                                                                    e.stopPropagation();
+                                                                    setOpenPopoverId(null);
+                                                                    navigate(`/program-courses/programs/edit/${prog.id}`);
+                                                                }}
+                                                                w="full"
+                                                                justifyContent="flex-start"
+                                                                size="sm"
+                                                            >
+                                                                <Pencil size={16} /> Edit details
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                colorPalette="red"
+                                                                onClick={(e: React.MouseEvent) => {
+                                                                    e.stopPropagation();
+                                                                    setOpenPopoverId(null);
+                                                                    handleDelete(prog.id);
+                                                                }}
+                                                                w="full"
+                                                                justifyContent="flex-start"
+                                                                size="sm"
+                                                            >
+                                                                <Trash2 size={16} /> Delete program
+                                                            </Button>
+                                                        </Popover.Body>
+                                                    </Popover.Content>
+                                                </Popover.Positioner>
+                                            </Portal>
+                                        </Popover.Root>
                                     </Box>
                                 </Box>
                             ))}
