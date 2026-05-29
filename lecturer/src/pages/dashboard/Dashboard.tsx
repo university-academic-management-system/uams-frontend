@@ -23,7 +23,7 @@ import {
   TrendingUp,
   CheckCircle,
 } from "lucide-react";
-import { DashboardHook } from "@hooks/dashboard.hook";
+import { useTotals } from "@hooks/dashboard.hook";
 import StatCard from "@components/shared/StatCard";
 import TimetablePanel from "@components/shared/TimetablePanel";
 import { useNavigate } from "react-router";
@@ -35,7 +35,7 @@ const Dashboard = () => {
   const { user } = useAuthStore();
   const [timetableFilter, setTimetableFilter] = useState<"today" | "tomorrow" | "week">("today");
 
-  const { data: totals } = DashboardHook.useTotals();
+  const { data: totals } = useTotals();
 
   const displayName = user?.name || "User";
 

@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { LuChartLine, LuUsers } from "react-icons/lu";
 import useAuthStore from "@stores/auth.store";
-import { StudentHook } from "@hooks/student.hook";
+import { useStudents } from "@hooks/student.hook";
 import { useMemo } from "react";
 
 // Helper to extract numeric level from "L100", "L200", etc.
@@ -29,7 +29,7 @@ const formatLevelLabel = (level: string): string => {
 export const AcademicPerformanceChart = () => {
   
   const { user } = useAuthStore();
-  const { data: students = [], isLoading } = StudentHook.useStudents();
+  const { data: students = [], isLoading } = useStudents();
   const role = user?.role;
   const isHodOrEro = role === "HOD" || role === "ERO";
 

@@ -42,3 +42,19 @@ export interface ApiResponse<T> {
 }
 
 export type StaffResponse = ApiResponse<Staff>;
+
+export interface LecturersTableProps {
+  lecturers: Staff[];
+  isLoading?: boolean;
+}
+
+export const LECTURERS_TABLE_COLUMNS = [
+  { key: "sn",            label: "S/N",            width: "60px"  },
+  { key: "staffId",       label: "Staff ID",       width: "140px" },
+  { key: "name",          label: "Name",           width: "160px" },
+  { key: "email",         label: "Email",          width: "200px" },
+  { key: "phoneNo",       label: "Phone No",       width: "160px" },
+  { key: "role",          label: "Role",           width: "100px" },
+  { key: "AssignedCourse",label: "Assigned Course",width: "160px" },
+  { key: "action",        label: "Action",         width: "70px"  },
+] as const;
