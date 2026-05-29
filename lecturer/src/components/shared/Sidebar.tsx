@@ -3,7 +3,7 @@ import { sidebarStore } from "@stores/ui.store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
 import LinkButton from "@components/ui/LinkButton";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 import { Tooltip } from "@components/ui/tooltip";
 import useAuthStore from "@stores/auth.store";
 import sidebarItems from "@configs/sidebar.config";
@@ -70,7 +70,7 @@ const Sidebar = () => {
             w={isCollapsed ? "78px" : "240px"}>
             <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
                 {/* logo */}
-                {!isCollapsed ? <Image src="public/assets/sidebar-image.png" alt="UPHCSC Logo" h="auto" w="auto" /> : <Image src="public/assets/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={12} h={"auto"} />}
+                {!isCollapsed ? <Image src="assets/sidebar-image.png" alt="UPHCSC Logo" h="auto" w="auto" /> : <Image src="assets/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={12} h={"auto"} />}
             </Flex>
 
             <ScrollArea.Root h="full" size="xs">
@@ -117,7 +117,7 @@ const Sidebar = () => {
 
 
 
-            <Stack flex="1" justify={"end"} p="4">
+            <Stack flex="1" justify={"end"}>
                 <LogoutButton />
                 <Separator borderColor="border.muted" />
                 <UserPersona />
