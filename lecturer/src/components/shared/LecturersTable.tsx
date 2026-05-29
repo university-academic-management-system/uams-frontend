@@ -1,3 +1,4 @@
+// src/components/shared/LecturersTable.tsx
 import {
   Box,
   Table,
@@ -18,13 +19,11 @@ import {
   Badge,
   Menu,
 } from "@chakra-ui/react";
-import { MoreHorizontal, Users, ChevronDown } from "lucide-react";
+import { MoreHorizontal, Users } from "lucide-react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import type { Staff, LecturersTableProps } from "@type/lecturer.type";
 import { LECTURERS_TABLE_COLUMNS } from "@type/lecturer.type";
 import { formatRole } from "@utils/function.util";
-import { useState, useEffect } from "react";
-
 
 const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
   const courses = lecturer.courses || [];
@@ -92,42 +91,27 @@ const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
   );
 };
 
-// ─── Main table
-const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+interface LecturersTablePropsExtended extends LecturersTableProps {
+  paginatedLecturers: Staff[];
+  startIndex: number;
+  currentPage: number;
+  totalPages: number;
+  perPage: number;
+  onPageChange: (page: number) => void;
+}
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [lecturers, perPage]);
-
-  const totalPages = Math.ceil(lecturers.length / perPage);
-  const startIndex = (currentPage - 1) * perPage;
-  const paginatedLecturers = lecturers.slice(startIndex, startIndex + perPage);
-
+const LecturersTable = ({
+  lecturers,          // not used directly for rendering, but still passed for pagination info
+  isLoading,
+  paginatedLecturers,
+  startIndex,
+  currentPage,
+  totalPages,
+  perPage,
+  onPageChange,
+}: LecturersTablePropsExtended) => {
   return (
     <Box>
-      {/* Toolbar – page size selector on the left */}
-      <Box mb="4">
-        <Menu.Root onValueChange={(e) => setPerPage(Number(e.value))}>
-          <Menu.Trigger asChild>
-            <Button variant="outline" size="sm">
-              Show {perPage} <ChevronDown size={14} />
-            </Button>
-          </Menu.Trigger>
-          <Portal>
-            <Menu.Positioner>
-              <Menu.Content>
-                <Menu.Item value="10">10 rows</Menu.Item>
-                <Menu.Item value="20">20 rows</Menu.Item>
-                <Menu.Item value="50">50 rows</Menu.Item>
-                <Menu.Item value="100">100 rows</Menu.Item>
-              </Menu.Content>
-            </Menu.Positioner>
-          </Portal>
-        </Menu.Root>
-      </Box>
-
       <Table.ScrollArea>
         <Table.Root size="lg" variant="outline" stickyHeader>
           <Table.Header>
@@ -203,7 +187,7 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
                       {lecturer.staffProfile?.phone || "—"}
                     </Table.Cell>
                     <Table.Cell px="4" py="3.5" whiteSpace="nowrap">
-                      <Badge colorPalette="blue" variant="subtle" fontSize="sm" px="2" py="0.5">
+                      <Badge colorPalette="gray" variant="subtle" fontSize="sm" px="2" py="0.5">
                         {formattedRole}
                       </Badge>
                     </Table.Cell>
@@ -221,14 +205,14 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
         </Table.Root>
       </Table.ScrollArea>
 
-      {/* Pagination (centered) */}
+      {/* Pagination controls */}
       {!isLoading && lecturers.length > 0 && totalPages > 1 && (
         <Flex justify="center" mt="4">
           <Pagination.Root
             count={lecturers.length}
             pageSize={perPage}
             page={currentPage}
-            onPageChange={(e) => setCurrentPage(e.page)}
+            onPageChange={(e) => onPageChange(e.page)}
           >
             <ButtonGroup variant="ghost" size="sm">
               <Pagination.PrevTrigger asChild>
@@ -238,9 +222,7 @@ const LecturersTable = ({ lecturers, isLoading }: LecturersTableProps) => {
               </Pagination.PrevTrigger>
               <Pagination.Items
                 render={(page) => (
-                  <IconButton
-                    variant={{ base: "ghost", _selected: "outline" }}
-                  >
+                  <IconButton variant={{ base: "ghost", _selected: "outline" }}>
                     {page.value}
                   </IconButton>
                 )}

@@ -1,3 +1,4 @@
+// src/pages/Students.tsx
 import { useState, useEffect, useMemo } from "react";
 import {
   Box,
@@ -14,6 +15,8 @@ import {
   SelectItemIndicator,
   Menu,
   Portal,
+  HStack,
+  Text,
 } from "@chakra-ui/react";
 import { LuSearch, LuChevronLeft, LuChevronRight, LuDownload, LuFileSpreadsheet, LuFileText } from "react-icons/lu";
 import jsPDF from "jspdf";
@@ -52,7 +55,6 @@ const DISPLAY_LABELS: Record<degreeAwarded, string> = {
 };
 
 const LEVEL_OPTIONS = ["All", ...STUDENT_LEVELS];
-const ITEMS_PER_PAGE = 10;
 
 const levelCollection = createListCollection({
   items: LEVEL_OPTIONS.map((opt) => ({
@@ -91,6 +93,7 @@ const Students = () => {
   const [sessionFilter, setSessionFilter] = useState("All");
   const [selectedDegree, setSelectedDegree] = useState<degreeAwarded>("BS.c");
   const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 500);
@@ -99,9 +102,8 @@ const Students = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, level, sessionFilter, selectedDegree]);
+  }, [debouncedSearch, level, sessionFilter, selectedDegree, perPage]);
 
-  // Students that pass the shared filters (search + level + session), NOT filtered by degree
   const baseFiltered = useMemo(() => {
     if (!students.length) return [];
     return students.filter((student: Student) => {
@@ -119,7 +121,6 @@ const Students = () => {
     });
   }, [students, level, sessionFilter, debouncedSearch]);
 
-  // Group base-filtered students by degree — each tab reads its own bucket
   const studentsByDegree = useMemo(() => {
     const buckets: Record<degreeAwarded, Student[]> = {
       "BS.c": [],
@@ -134,7 +135,6 @@ const Students = () => {
     return buckets;
   }, [baseFiltered]);
 
-  // Live counts per tab (reflect current filters)
   const degreeCounts = useMemo(
     () => ({
       "BS.c": studentsByDegree["BS.c"].length,
@@ -145,7 +145,6 @@ const Students = () => {
     [studentsByDegree]
   );
 
-  // Chart data computed per degree bucket
   const chartDataByDegree = useMemo(() => {
     const compute = (list: Student[]) => {
       const uniqueLevels = Array.from(
@@ -187,11 +186,12 @@ const Students = () => {
   }, [studentsByDegree]);
 
   const currentTabStudents = studentsByDegree[selectedDegree] ?? [];
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const totalItems = currentTabStudents.length;
+  const startIndex = (currentPage - 1) * perPage;
+  const paginatedStudents = currentTabStudents.slice(startIndex, startIndex + perPage);
 
-  
   const handleExportExcel = () => {
-    const exportData = currentTabStudents.map((s) => ({
+    const exportData = paginatedStudents.map((s) => ({
       "Full Name": `${s.studentProfile?.firstName || ""} ${s.studentProfile?.lastName || ""} ${s.studentProfile?.otherName || ""}`.trim(),
       "Email": s.email,
       "Matric Number": s.studentProfile?.matricNumber || "—",
@@ -212,7 +212,7 @@ const Students = () => {
     try {
       const doc = new jsPDF({ orientation: "landscape" });
       const tableColumn = ["Full Name", "Email", "Matric Number", "Level", "Degree Awarded", "Current Session"];
-      const tableRows = currentTabStudents.map((s) => [
+      const tableRows = paginatedStudents.map((s) => [
         `${s.studentProfile?.firstName || ""} ${s.studentProfile?.lastName || ""} ${s.studentProfile?.otherName || ""}`.trim(),
         s.email,
         s.studentProfile?.matricNumber || "—",
@@ -237,6 +237,15 @@ const Students = () => {
     }
   };
 
+  // Create collection for per-page options
+  const perPageOptions = [10, 20, 50, 100];
+  const perPageCollection = createListCollection({
+    items: perPageOptions.map((opt) => ({
+      label: `${opt} rows`,
+      value: opt.toString(),
+    })),
+  });
+
   return (
     <Box maxW="100vw" overflowX="hidden">
       <Tabs.Root
@@ -245,7 +254,6 @@ const Students = () => {
         variant="line"
         colorPalette="accent"
       >
-        {/* Tab triggers */}
         <Tabs.List mb="6">
           {INTERNAL_DEGREES.map((deg) => (
             <Tabs.Trigger key={deg} value={deg}>
@@ -255,7 +263,7 @@ const Students = () => {
         </Tabs.List>
 
         <Box bg="bg" rounded="md" p="4">
-          {/* Shared filters — sit above all tab panels */}
+          {/* Shared filters row */}
           <Flex
             align="center"
             justify="space-between"
@@ -263,7 +271,6 @@ const Students = () => {
             mb="5"
             wrap="wrap"
             direction={{ base: "column", sm: "row" }}
-            colorPalette="accent"
           >
             <InputGroup startElement={<LuSearch />} width={{ base: "100%", sm: "300px" }}>
               <Input
@@ -275,6 +282,7 @@ const Students = () => {
             </InputGroup>
 
             <Flex gap="3" align="center" wrap="wrap">
+              {/* Level select */}
               <Select.Root
                 collection={levelCollection}
                 value={[level]}
@@ -303,6 +311,7 @@ const Students = () => {
                 </Select.Positioner>
               </Select.Root>
 
+              {/* Session select */}
               <Select.Root
                 collection={sessionCollection}
                 value={[sessionFilter]}
@@ -331,12 +340,42 @@ const Students = () => {
                 </Select.Positioner>
               </Select.Root>
 
+              {/* Rows per page SELECT */}
+              <Select.Root
+                collection={perPageCollection}
+                value={[perPage.toString()]}
+                onValueChange={(e) => setPerPage(Number(e.value[0]))}
+                size="lg"
+                width={{ base: "100%", sm: "120px" }}
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger>
+                    <Select.ValueText placeholder="Rows per page" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Select.Positioner>
+                  <Select.Content>
+                    {perPageCollection.items.map((item) => (
+                      <Select.Item key={item.value} item={item}>
+                        {item.label}
+                        <SelectItemIndicator />
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Positioner>
+              </Select.Root>
+
+              {/* Export menu */}
               <Menu.Root>
                 <Menu.Trigger asChild>
                   <Button
                     display="flex"
                     alignItems="center"
-                    size="xl"
+                    size="lg"
                     bg="accent"
                     color="white"
                     width={{ base: "100%", sm: "auto" }}
@@ -360,7 +399,7 @@ const Students = () => {
             </Flex>
           </Flex>
 
-          {/* Per-degree tab panels */}
+          {/* Tab panels */}
           {INTERNAL_DEGREES.map((deg) => (
             <Tabs.Content key={deg} value={deg}>
               {studentsByDegree[deg].length > 0 && (
@@ -373,7 +412,7 @@ const Students = () => {
               )}
               <Box overflowX="auto">
                 <StudentsDataTable
-                  students={studentsByDegree[deg].slice(startIndex, startIndex + ITEMS_PER_PAGE)}
+                  students={paginatedStudents}
                   isLoading={isLoading}
                   error={error}
                 />
@@ -381,12 +420,12 @@ const Students = () => {
             </Tabs.Content>
           ))}
 
-          {/* Pagination — keyed to the active tab's list */}
-          {currentTabStudents.length > ITEMS_PER_PAGE && (
+          {/* Pagination controls */}
+          {totalItems > perPage && (
             <Flex alignItems="center" justifyContent="flex-end" mt="4">
               <Pagination.Root
-                count={currentTabStudents.length}
-                pageSize={ITEMS_PER_PAGE}
+                count={totalItems}
+                pageSize={perPage}
                 page={currentPage}
                 onPageChange={(e) => setCurrentPage(e.page)}
               >
