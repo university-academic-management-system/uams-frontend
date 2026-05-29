@@ -31,7 +31,7 @@ const BulkUploadStaffModal = ({ isOpen, onClose, onUploaded }: Props) => {
             formData.append("file", file);
             await uploadMutation.mutateAsync(formData);
             onUploaded();
-        } catch (err) {
+        } catch {
             // Error handled by mutation
         }
     };
