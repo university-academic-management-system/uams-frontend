@@ -1,3 +1,4 @@
+// src/pages/Lecturers.tsx
 import { useState, useMemo, useEffect } from "react";
 import {
   Box,
@@ -10,6 +11,7 @@ import {
   InputGroup,
   Input,
   Button,
+  HStack,
 } from "@chakra-ui/react";
 import { LuSearch, LuDownload } from "react-icons/lu";
 import { useStaff } from "@hooks/lecturer.hook";
@@ -22,11 +24,17 @@ const Lecturers = () => {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(handler);
   }, [search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, roleFilter, perPage]);
 
   const { data: lecturers = [], isLoading } = useStaff();
 
@@ -86,6 +94,12 @@ const Lecturers = () => {
     return result;
   }, [lecturers, debouncedSearch, roleFilter]);
 
+  // Pagination
+  const totalItems = filteredLecturers.length;
+  const totalPages = Math.ceil(totalItems / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const paginatedLecturers = filteredLecturers.slice(startIndex, startIndex + perPage);
+
   const handleExport = () => {
     if (!filteredLecturers.length) {
       toaster.warning({ title: "No lecturers to export", description: "There are no lecturers matching the current filters." });
@@ -113,10 +127,19 @@ const Lecturers = () => {
     }
   };
 
+  // Collection for per‑page select
+  const perPageOptions = [10, 20, 50, 100];
+  const perPageCollection = createListCollection({
+    items: perPageOptions.map((opt) => ({
+      label: `${opt} rows`,
+      value: opt.toString(),
+    })),
+  });
+
   return (
-    <Box maxW="100vw" overflowX="hidden">
+    <Box maxW="100vw" overflowX="hidden" p="4">
       <Box bg="bg" rounded="md" p="4">
-        {/* Filters */}
+        {/* Filters + per‑page select */}
         <Flex 
           align="center" 
           justify="space-between" 
@@ -165,10 +188,40 @@ const Lecturers = () => {
               </Portal>
             </Select.Root>
 
+            {/* Rows per page SELECT */}
+            <Select.Root
+              collection={perPageCollection}
+              value={[perPage.toString()]}
+              onValueChange={(e) => setPerPage(Number(e.value[0]))}
+              size="lg"
+              width={{ base: "100%", sm: "120px" }}
+            >
+              <Select.HiddenSelect />
+              <Select.Control>
+                <Select.Trigger>
+                  <Select.ValueText placeholder="Rows per page" />
+                </Select.Trigger>
+                <Select.IndicatorGroup>
+                  <Select.Indicator />
+                </Select.IndicatorGroup>
+              </Select.Control>
+              <Portal>
+                <Select.Positioner>
+                  <Select.Content>
+                    {perPageCollection.items.map((item) => (
+                      <Select.Item key={item.value} item={item}>
+                        {item.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Positioner>
+              </Portal>
+            </Select.Root>
+
             <Button
               onClick={handleExport}
               colorPalette="accent"
-              size="xl"
+              size="lg"
               width={{ base: "100%", sm: "auto" }}
             >
               <LuDownload size={16} /> Export Table
@@ -178,7 +231,16 @@ const Lecturers = () => {
 
         {/* Scrollable table wrapper */}
         <Box overflowX="auto">
-          <LecturersTable lecturers={filteredLecturers} isLoading={isLoading} />
+          <LecturersTable
+            lecturers={filteredLecturers}
+            isLoading={isLoading}
+            paginatedLecturers={paginatedLecturers}
+            startIndex={startIndex}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            perPage={perPage}
+            onPageChange={setCurrentPage}
+          />
         </Box>
       </Box>
     </Box>

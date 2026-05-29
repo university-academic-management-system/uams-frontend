@@ -12,7 +12,7 @@ interface RegistrationPieChartProps {
   colors?: string[];
 }
 
-export const RegistrationPieChart = ({ data, colors = ["green", "red"] }: RegistrationPieChartProps) => {
+export const RegistrationPieChart = ({ data, colors = ["green", "gray"] }: RegistrationPieChartProps) => {
   return (
     <Box h="350px" p={4} rounded="md" borderColor="border.muted" display="flex" justifyContent="center">
       <Box width="100%" maxW="500px">

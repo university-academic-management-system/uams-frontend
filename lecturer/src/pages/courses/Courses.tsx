@@ -2,8 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import {
   Box,
   Flex,
-  Text,
-  Heading,
   InputGroup,
   Input,
   Select,
@@ -17,12 +15,26 @@ import {
   IconButton,
   Pagination,
   ButtonGroup,
+  HStack,
+  Menu,
+  Portal,
+  Badge, // ← added Badge
 } from "@chakra-ui/react";
-import { LuSearch, LuBookOpen, LuCircleAlert, LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import {
+  LuSearch,
+  LuBookOpen,
+  LuCircleAlert,
+  LuChevronLeft,
+  LuChevronRight,
+  LuUsers,
+  LuEllipsis,
+  LuChartBar,
+} from "react-icons/lu";
 import { CourseHook } from "@hooks/course.hook";
 import { useCurrentUser } from "@hooks/currentUser.hook";
 import useAuthStore from "@stores/auth.store";
 import type { CourseLevel, Semester as CourseSemester } from "../../types/course.type";
+import { useNavigate } from "react-router";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -48,34 +60,55 @@ const semesterCollection = createListCollection({
   ],
 });
 
-const getSessionOptions = () => {
-  const currentYear = new Date().getFullYear();
-  const startYear = 1999;
-  const sessions = ["All"];
-  for (let year = currentYear; year >= startYear; year--) {
-    sessions.push(`${year}/${year + 1}`);
-  }
-  return sessions;
+const normalizeLevel = (level: string) => {
+  return level.replace(/^L/, "") 
 };
 
-const SESSION_OPTIONS = getSessionOptions();
-const sessionCollection = createListCollection({
-  items: SESSION_OPTIONS.map((opt) => ({
-    label: opt === "All" ? "All Sessions" : opt,
-    value: opt,
-  })),
-});
+const normalizeSemester = (semester: string) => {
+  return semester.charAt(0) + semester.slice(1).toLowerCase() + " Semester";
+};
+
+// Action cell component (menu)
+const CourseActionCell = ({ courseId }: { courseId: string }) => {
+  const navigate = useNavigate();
+
+  return (
+    <Menu.Root>
+      <Menu.Trigger asChild>
+        <IconButton size="sm" variant="ghost">
+          <LuEllipsis />
+        </IconButton>
+      </Menu.Trigger>
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item
+              value="students"
+              onClick={() => navigate(`/courses/${courseId}/students`)}
+            >
+              <LuUsers /> Students
+            </Menu.Item>
+            <Menu.Item
+              value="results"
+              onClick={() => navigate(`/courses/${courseId}/results`)}
+            >
+              <LuChartBar /> Results
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
+    </Menu.Root>
+  );
+};
 
 const Courses = () => {
   const { user } = useAuthStore();
-  const currentSession = user?.currentSession || "All";
   const { isHOD } = useCurrentUser();
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [level, setLevel] = useState("All");
   const [semester, setSemester] = useState("All");
-  const [session, setSession] = useState(currentSession);
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: allCourses = [], isLoading: allLoading, error: allError } = CourseHook.useAllCourses();
@@ -85,7 +118,6 @@ const Courses = () => {
   const isLoading = allLoading || assignedLoading;
   const error = isHOD ? allError : assignedError;
 
-  // Debounce search
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(handler);
@@ -93,7 +125,7 @@ const Courses = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, level, semester, session]);
+  }, [debouncedSearch, level, semester]);
 
   const filteredCourses = useMemo(() => {
     let filtered = courses;
@@ -105,234 +137,200 @@ const Courses = () => {
     }
     if (level !== "All") filtered = filtered.filter((c) => c.level === level);
     if (semester !== "All") filtered = filtered.filter((c) => c.semester === semester);
-    if (session !== "All") filtered = filtered.filter((c) => c.session === session);
     return filtered;
-  }, [courses, debouncedSearch, level, semester, session]);
+  }, [courses, debouncedSearch, level, semester]);
 
-  const totalCount = courses.length;
   const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
+  const paginatedCourses = filteredCourses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const columns = ["Code", "Title", "Units", "Level", "Semester", "Session", "Course Type"];
+  const columns = ["S/N", "Code", "Title", "Units", "Level", "Semester", "Course Type", "Actions"];
 
   return (
-    <Box>
+    <Box p="4" bg="bg" rounded="md">
+      {/* Filters row */}
+      <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
+        <InputGroup startElement={<LuSearch />} width={{ base: "100%", sm: "300px" }}>
+          <Input
+            placeholder="Search by title or code"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            size="lg"
+          />
+        </InputGroup>
 
-      <Box bg="bg" rounded="md">
-        {/* Filters row */}
-        <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
-          <InputGroup startElement={<LuSearch />} width="300px">
-            <Input
-              placeholder="Search by title or code"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              size="lg"
-            />
-          </InputGroup>
+        <Flex gap="3" align="center" wrap="wrap">
+          <Select.Root
+            collection={levelCollection}
+            value={[level]}
+            onValueChange={(e) => setLevel(e.value[0])}
+            size="lg"
+            width="140px"
+          >
+            <Select.HiddenSelect />
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText placeholder="All Levels" />
+              </Select.Trigger>
+              <Select.IndicatorGroup>
+                <Select.Indicator />
+              </Select.IndicatorGroup>
+            </Select.Control>
+            <Select.Positioner>
+              <Select.Content>
+                {levelCollection.items.map((item) => (
+                  <Select.Item key={item.value} item={item}>
+                    {item.label}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Select.Root>
 
-          <Flex gap="3" align="center">
-            {/* Level filter */}
-            <Select.Root
-              collection={levelCollection}
-              value={[level]}
-              onValueChange={(e) => setLevel(e.value[0])}
-              size="lg"
-              width="140px"
-            >
-              <Select.HiddenSelect />
-              <Select.Control>
-                <Select.Trigger>
-                  <Select.ValueText placeholder="All Levels" />
-                </Select.Trigger>
-                <Select.IndicatorGroup>
-                  <Select.Indicator />
-                </Select.IndicatorGroup>
-              </Select.Control>
-              <Select.Positioner>
-                <Select.Content>
-                  {levelCollection.items.map((item) => (
-                    <Select.Item key={item.value} item={item}>
-                      {item.label}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Select.Root>
-
-            {/* Semester filter */}
-            <Select.Root
-              collection={semesterCollection}
-              value={[semester]}
-              onValueChange={(e) => setSemester(e.value[0])}
-              size="lg"
-              width="160px"
-            >
-              <Select.HiddenSelect />
-              <Select.Control>
-                <Select.Trigger>
-                  <Select.ValueText placeholder="All Semesters" />
-                </Select.Trigger>
-                <Select.IndicatorGroup>
-                  <Select.Indicator />
-                </Select.IndicatorGroup>
-              </Select.Control>
-              <Select.Positioner>
-                <Select.Content>
-                  {semesterCollection.items.map((item) => (
-                    <Select.Item key={item.value} item={item}>
-                      {item.label}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Select.Root>
-
-            {/* Session filter */}
-            <Select.Root
-              collection={sessionCollection}
-              value={[session]}
-              onValueChange={(e) => setSession(e.value[0])}
-              size="lg"
-              width="160px"
-            >
-              <Select.HiddenSelect />
-              <Select.Control>
-                <Select.Trigger>
-                  <Select.ValueText placeholder="All Sessions" />
-                </Select.Trigger>
-                <Select.IndicatorGroup>
-                  <Select.Indicator />
-                </Select.IndicatorGroup>
-              </Select.Control>
-              <Select.Positioner>
-                <Select.Content>
-                  {SESSION_OPTIONS.map((opt) => (
-                    <Select.Item key={opt} item={opt}>
-                      {opt === "All" ? "All Sessions" : opt}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Select.Root>
-          </Flex>
+          <Select.Root
+            collection={semesterCollection}
+            value={[semester]}
+            onValueChange={(e) => setSemester(e.value[0])}
+            size="lg"
+            width="180px"
+          >
+            <Select.HiddenSelect />
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText placeholder="All Semesters" />
+              </Select.Trigger>
+              <Select.IndicatorGroup>
+                <Select.Indicator />
+              </Select.IndicatorGroup>
+            </Select.Control>
+            <Select.Positioner>
+              <Select.Content>
+                {semesterCollection.items.map((item) => (
+                  <Select.Item key={item.value} item={item}>
+                    {item.label}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Select.Root>
         </Flex>
+      </Flex>
 
-        {/* Table */}
-        <Table.ScrollArea>
-          <Table.Root size="lg" variant="outline" stickyHeader>
-            <Table.Header>
+      {/* Table */}
+      <Table.ScrollArea>
+        <Table.Root size="lg" variant="outline" stickyHeader>
+          <Table.Header>
+            <Table.Row>
+              {columns.map((col) => (
+                <Table.ColumnHeader bg="bg.muted" key={col}>
+                  {col}
+                </Table.ColumnHeader>
+              ))}
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {isLoading && (
               <Table.Row>
-                {columns.map((col) => (
-                  <Table.ColumnHeader bg="bg.muted" key={col}>{col}</Table.ColumnHeader>
-                ))}
+                <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
+                  <Center>
+                    <Spinner size="lg" color="accent.500" />
+                  </Center>
+                </Table.Cell>
               </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {isLoading && (
-                <Table.Row>
-                  <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
-                    <Center>
-                      <Spinner size="lg" color="accent.500" />
-                    </Center>
+            )}
+
+            {!isLoading && error && (
+              <Table.Row>
+                <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
+                  <EmptyState.Root>
+                    <EmptyState.Content>
+                      <EmptyState.Indicator>
+                        <LuCircleAlert />
+                      </EmptyState.Indicator>
+                      <VStack textAlign="center">
+                        <EmptyState.Title>Failed to load courses</EmptyState.Title>
+                        <EmptyState.Description>{error.message}</EmptyState.Description>
+                      </VStack>
+                    </EmptyState.Content>
+                  </EmptyState.Root>
+                </Table.Cell>
+              </Table.Row>
+            )}
+
+            {!isLoading && !error && paginatedCourses.length === 0 && (
+              <Table.Row>
+                <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
+                  <EmptyState.Root>
+                    <EmptyState.Content>
+                      <EmptyState.Indicator>
+                        <LuBookOpen />
+                      </EmptyState.Indicator>
+                      <VStack textAlign="center">
+                        <EmptyState.Title>No courses found</EmptyState.Title>
+                        <EmptyState.Description>
+                          {courses.length === 0
+                            ? "No courses have been created yet."
+                            : "Try adjusting your search or filters."}
+                        </EmptyState.Description>
+                      </VStack>
+                    </EmptyState.Content>
+                  </EmptyState.Root>
+                </Table.Cell>
+              </Table.Row>
+            )}
+
+            {!isLoading && !error && paginatedCourses.length > 0 &&
+              paginatedCourses.map((course, idx) => (
+                <Table.Row key={course.id}>
+                  <Table.Cell>{startIndex + idx + 1}</Table.Cell>
+                  <Table.Cell>{course.code}</Table.Cell>
+                  <Table.Cell>{course.title}</Table.Cell>
+                  <Table.Cell>{course.units}</Table.Cell>
+                  <Table.Cell>{normalizeLevel(course.level)}</Table.Cell>
+                  <Table.Cell>{normalizeSemester(course.semester)}</Table.Cell>
+                  <Table.Cell>
+                    <Badge colorPalette="gray">{course.courseType}</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <CourseActionCell courseId={course.id} />
                   </Table.Cell>
                 </Table.Row>
-              )}
+              ))}
+          </Table.Body>
+        </Table.Root>
+      </Table.ScrollArea>
 
-              {!isLoading && error && (
-                <Table.Row>
-                  <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
-                    <EmptyState.Root>
-                      <EmptyState.Content>
-                        <EmptyState.Indicator>
-                          <LuCircleAlert />
-                        </EmptyState.Indicator>
-                        <VStack textAlign="center">
-                          <EmptyState.Title>Failed to load courses</EmptyState.Title>
-                          <EmptyState.Description>{error.message}</EmptyState.Description>
-                        </VStack>
-                      </EmptyState.Content>
-                    </EmptyState.Root>
-                  </Table.Cell>
-                </Table.Row>
-              )}
-
-              {!isLoading && !error && paginatedCourses.length === 0 && (
-                <Table.Row>
-                  <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
-                    <EmptyState.Root>
-                      <EmptyState.Content>
-                        <EmptyState.Indicator>
-                          <LuBookOpen />
-                        </EmptyState.Indicator>
-                        <VStack textAlign="center">
-                          <EmptyState.Title>No courses found</EmptyState.Title>
-                          <EmptyState.Description>
-                            {courses.length === 0
-                              ? "No courses have been created yet."
-                              : "Try adjusting your search or filters."}
-                          </EmptyState.Description>
-                        </VStack>
-                      </EmptyState.Content>
-                    </EmptyState.Root>
-                  </Table.Cell>
-                </Table.Row>
-              )}
-
-              {!isLoading && !error && paginatedCourses.length > 0 &&
-                paginatedCourses.map((course) => (
-                  <Table.Row key={course.id}>
-                    <Table.Cell>{course.code}</Table.Cell>
-                    <Table.Cell>{course.title}</Table.Cell>
-                    <Table.Cell>{course.units}</Table.Cell>
-                    <Table.Cell>{course.level}</Table.Cell>
-                    <Table.Cell>{course.semester}</Table.Cell>
-                    <Table.Cell>{course.session || "—"}</Table.Cell>
-                    <Table.Cell>{course.courseType}</Table.Cell>
-                  </Table.Row>
-                ))}
-            </Table.Body>
-          </Table.Root>
-        </Table.ScrollArea>
-
-        {/* Pagination */}
-        <Box flex={1} display="flex" alignItems="center" justifyContent="right" mt={4}>
-
-          {filteredCourses.length >= 20 && (
-            <Pagination.Root
-              count={filteredCourses.length}
-              pageSize={ITEMS_PER_PAGE}
-              page={currentPage}
-              onPageChange={(e) => setCurrentPage(e.page)}
-            >
-              <ButtonGroup variant="ghost" size="sm" gap="1">
-                <Pagination.PrevTrigger asChild>
-                  <IconButton>
-                    <LuChevronLeft />
+      {/* Pagination */}
+      {filteredCourses.length > ITEMS_PER_PAGE && (
+        <Flex justify="flex-end" mt={4}>
+          <Pagination.Root
+            count={filteredCourses.length}
+            pageSize={ITEMS_PER_PAGE}
+            page={currentPage}
+            onPageChange={(e) => setCurrentPage(e.page)}
+          >
+            <ButtonGroup variant="ghost" size="sm" gap="1">
+              <Pagination.PrevTrigger asChild>
+                <IconButton>
+                  <LuChevronLeft />
+                </IconButton>
+              </Pagination.PrevTrigger>
+              <Pagination.Items
+                render={(page) => (
+                  <IconButton variant={{ base: "ghost", _selected: "outline" }}>
+                    {page.value}
                   </IconButton>
-                </Pagination.PrevTrigger>
-
-                <Pagination.Items
-                  render={(page) => (
-                    <IconButton
-                      variant={{ base: "ghost", _selected: "outline" }}>
-
-                      {page.value}
-                    </IconButton>
-                  )}
-                />
-
-                <Pagination.NextTrigger asChild>
-                  <IconButton>
-                    <LuChevronRight />
-                  </IconButton>
-                </Pagination.NextTrigger>
-              </ButtonGroup>
-            </Pagination.Root>
-          )}
-        </Box>
-      </Box>
+                )}
+              />
+              <Pagination.NextTrigger asChild>
+                <IconButton>
+                  <LuChevronRight />
+                </IconButton>
+              </Pagination.NextTrigger>
+            </ButtonGroup>
+          </Pagination.Root>
+        </Flex>
+      )}
     </Box>
   );
 };

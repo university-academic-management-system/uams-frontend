@@ -17,10 +17,8 @@ import {
   Text,
   Button,
   Grid,
-  ButtonGroup,
-  Pagination,
 } from "@chakra-ui/react";
-import { LuUsers, LuCircleAlert, LuFileText, LuChartNoAxesCombined, LuEllipsis, LuChevronRight, LuChevronLeft, LuChevronDown } from "react-icons/lu";
+import { LuUsers, LuCircleAlert, LuFileText, LuChartNoAxesCombined, LuEllipsis } from "react-icons/lu";
 import type { Student } from "@type/student.type";
 import jsPDF from "jspdf";
 import { capitaliseName, formatLevel } from "@utils/function.util";
@@ -52,52 +50,51 @@ const COLUMNS = [
 const getRegistrationStatusBadge = (status: string | undefined) => {
   if (!status) return <Badge>Unknown</Badge>;
   const normalized = status.toUpperCase();
-  let colorScheme = "gray";
+  let colorPalette = "gray";
   let label = status.replace("_", " ");
   switch (normalized) {
     case "REGISTERED":
-      colorScheme = "green";
+      colorPalette = "green";
       break;
     case "PENDING":
-      colorScheme = "yellow";
+      colorPalette = "yellow";
       break;
     case "INCOMPLETE":
-      colorScheme = "orange";
+      colorPalette = "orange";
       break;
     case "CLEARED":
-      colorScheme = "blue";
+      colorPalette = "blue";
       break;
   }
-  return <Badge colorPalette={colorScheme}>{label}</Badge>;
+  return <Badge colorPalette={colorPalette}>{label}</Badge>;
 };
 
 const getAcademicStandingBadge = (standing: string | undefined) => {
   if (!standing) return <Badge>Unknown</Badge>;
   const normalized = standing.toUpperCase();
-  let colorScheme = "gray";
+  let colorPalette = "gray";
   let label = standing.replace("_", " ");
   switch (normalized) {
     case "GOOD_STANDING":
-      colorScheme = "green";
+      colorPalette = "green";
       label = "Good Standing";
       break;
     case "PROBATION":
-      colorScheme = "red";
+      colorPalette = "red";
       break;
     case "SUSPENDED":
-      colorScheme = "red";
+      colorPalette = "red";
       break;
     case "WARNING":
-      colorScheme = "yellow";
+      colorPalette = "yellow";
       break;
     case "WITHDRAWN":
-      colorScheme = "gray";
+      colorPalette = "gray";
       break;
   }
-  return <Badge colorPalette={colorScheme}>{label}</Badge>;
+  return <Badge colorPalette={colorPalette}>{label}</Badge>;
 };
 
-// ─── Student Action Cell with its own drawer (uncontrolled)
 const StudentActionCell = ({ student }: { student: Student }) => {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -222,193 +219,131 @@ const StudentActionCell = ({ student }: { student: Student }) => {
 };
 
 export const StudentsDataTable = ({ students, isLoading, error }: StudentsDataTableProps) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-
-  const totalPages = Math.ceil(students.length / perPage);
-  const startIndex = (currentPage - 1) * perPage;
-  const paginatedStudents = students.slice(startIndex, startIndex + perPage);
-
   return (
-    <Box>
-      {/* Page size selector */}
-      <Box mb="4">
-        <Menu.Root onValueChange={(e) => setPerPage(Number(e.value))}>
-          <Menu.Trigger asChild>
-            <Button variant="outline" size="sm">
-              Show {perPage} <LuChevronDown size={14} />
-            </Button>
-          </Menu.Trigger>
-          <Portal>
-            <Menu.Positioner>
-              <Menu.Content>
-                <Menu.Item value="10">10 rows</Menu.Item>
-                <Menu.Item value="20">20 rows</Menu.Item>
-                <Menu.Item value="50">50 rows</Menu.Item>
-                <Menu.Item value="100">100 rows</Menu.Item>
-              </Menu.Content>
-            </Menu.Positioner>
-          </Portal>
-        </Menu.Root>
-      </Box>
-
-      <Box borderWidth="1px" borderColor="border.muted" rounded="md" overflowX="auto">
-        <Table.Root size="lg" variant="outline" stickyHeader>
-          <Table.Header>
+    <Box borderWidth="1px" borderColor="border.muted" rounded="md" overflowX="auto">
+      <Table.Root size="lg" variant="outline" stickyHeader>
+        <Table.Header>
+          <Table.Row>
+            {COLUMNS.map((col) => (
+              <Table.ColumnHeader
+                key={col.key}
+                fontSize="md"
+                bg="bg.muted"
+                color="fg.subtle"
+                textTransform="none"
+                minW={col.width}
+                px="3"
+                py="3"
+                whiteSpace="nowrap"
+                borderBottomWidth="1px"
+                borderBottomColor="border.muted"
+              >
+                {col.label}
+              </Table.ColumnHeader>
+            ))}
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {isLoading ? (
             <Table.Row>
-              {COLUMNS.map((col) => (
-                <Table.ColumnHeader
-                  key={col.key}
-                  fontSize="md"
-                  bg="bg.muted"
-                  color="fg.subtle"
-                  textTransform="none"
-                  minW={col.width}
-                  px="3"
-                  py="3"
-                  whiteSpace="nowrap"
-                  borderBottomWidth="1px"
-                  borderBottomColor="border.muted"
-                >
-                  {col.label}
-                </Table.ColumnHeader>
-              ))}
+              <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                <Center>
+                  <Spinner size="lg" color="accent.500" />
+                </Center>
+              </Table.Cell>
             </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {isLoading ? (
-              <Table.Row>
-                <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
-                  <Center>
-                    <Spinner size="lg" color="accent.500" />
-                  </Center>
-                </Table.Cell>
-              </Table.Row>
-            ) : error ? (
-              <Table.Row>
-                <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
-                  <EmptyState.Root>
-                    <EmptyState.Content>
-                      <EmptyState.Indicator>
-                        <LuCircleAlert />
-                      </EmptyState.Indicator>
-                      <VStack textAlign="center">
-                        <EmptyState.Title>Failed to load students</EmptyState.Title>
-                        <EmptyState.Description>{error.message}</EmptyState.Description>
-                      </VStack>
-                    </EmptyState.Content>
-                  </EmptyState.Root>
-                </Table.Cell>
-              </Table.Row>
-            ) : students.length === 0 ? (
-              <Table.Row>
-                <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
-                  <EmptyState.Root>
-                    <EmptyState.Content>
-                      <EmptyState.Indicator>
-                        <LuUsers />
-                      </EmptyState.Indicator>
-                      <VStack textAlign="center">
-                        <EmptyState.Title>No students found</EmptyState.Title>
-                        <EmptyState.Description>Try adjusting your search or filters.</EmptyState.Description>
-                      </VStack>
-                    </EmptyState.Content>
-                  </EmptyState.Root>
-                </Table.Cell>
-              </Table.Row>
-            ) : (
-              paginatedStudents.map((student, index) => {
-                const profile = student.studentProfile;
-                const firstName = capitaliseName(profile?.firstName);
-                const lastName = capitaliseName(profile?.lastName);
-                const otherName = capitaliseName(profile?.otherName);
-                const fullName = [firstName, lastName, otherName].filter((p) => p !== "—").join(" ");
-                return (
-                  <Table.Row key={student.id} borderBottomWidth="1px" borderBottomColor="border.muted">
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {startIndex + index + 1}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
-                      {fullName || "—"}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
-                      {profile?.registrationNo || "—"}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
-                      {profile?.matricNumber || "—"}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {student.email}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {profile?.phone || "—"}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {profile?.gender || "—"}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {formatLevel(profile?.level)}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {profile?.admissionYear || "—"}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {profile?.admissionSession || "—"}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {getRegistrationStatusBadge(profile?.registrationStatus)}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {getAcademicStandingBadge(profile?.academicStanding)}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      {profile?.cgpa ?? "—"}
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
-                      <Badge colorPalette={student.status === "ACTIVE" ? "green" : "red"}>{student.status || "ACTIVE"}</Badge>
-                    </Table.Cell>
-                    <Table.Cell px="3" py="3" whiteSpace="nowrap">
-                      <StudentActionCell student={student} />
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              })
-            )}
-          </Table.Body>
-        </Table.Root>
-      </Box>
-
-      {/* Pagination */}
-      {!isLoading && students.length > 0 && totalPages > 1 && (
-        <Flex justify="center" mt="4">
-          <Pagination.Root
-            count={students.length}
-            pageSize={perPage}
-            page={currentPage}
-            onPageChange={(e) => setCurrentPage(e.page)}
-          >
-            <ButtonGroup variant="ghost" size="sm">
-              <Pagination.PrevTrigger asChild>
-                <IconButton>
-                  <LuChevronLeft />
-                </IconButton>
-              </Pagination.PrevTrigger>
-              <Pagination.Items
-                render={(page) => (
-                  <IconButton variant={{ base: "ghost", _selected: "outline" }}>
-                    {page.value}
-                  </IconButton>
-                )}
-              />
-              <Pagination.NextTrigger asChild>
-                <IconButton>
-                  <LuChevronRight />
-                </IconButton>
-              </Pagination.NextTrigger>
-            </ButtonGroup>
-          </Pagination.Root>
-        </Flex>
-      )}
+          ) : error ? (
+            <Table.Row>
+              <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                <EmptyState.Root>
+                  <EmptyState.Content>
+                    <EmptyState.Indicator>
+                      <LuCircleAlert />
+                    </EmptyState.Indicator>
+                    <VStack textAlign="center">
+                      <EmptyState.Title>Failed to load students</EmptyState.Title>
+                      <EmptyState.Description>{error.message}</EmptyState.Description>
+                    </VStack>
+                  </EmptyState.Content>
+                </EmptyState.Root>
+              </Table.Cell>
+            </Table.Row>
+          ) : students.length === 0 ? (
+            <Table.Row>
+              <Table.Cell colSpan={COLUMNS.length} textAlign="center" py={10}>
+                <EmptyState.Root>
+                  <EmptyState.Content>
+                    <EmptyState.Indicator>
+                      <LuUsers />
+                    </EmptyState.Indicator>
+                    <VStack textAlign="center">
+                      <EmptyState.Title>No students found</EmptyState.Title>
+                      <EmptyState.Description>Try adjusting your search or filters.</EmptyState.Description>
+                    </VStack>
+                  </EmptyState.Content>
+                </EmptyState.Root>
+              </Table.Cell>
+            </Table.Row>
+          ) : (
+            students.map((student, idx) => {
+              const profile = student.studentProfile;
+              const firstName = capitaliseName(profile?.firstName);
+              const lastName = capitaliseName(profile?.lastName);
+              const otherName = capitaliseName(profile?.otherName);
+              const fullName = [firstName, lastName, otherName].filter((p) => p !== "—").join(" ");
+              return (
+                <Table.Row key={student.id} borderBottomWidth="1px" borderBottomColor="border.muted">
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {idx + 1}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                    {fullName || "—"}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                    {profile?.registrationNo || "—"}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted" fontWeight="500">
+                    {profile?.matricNumber || "—"}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {student.email}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {profile?.phone || "—"}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {profile?.gender || "—"}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {formatLevel(profile?.level)}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {profile?.admissionYear || "—"}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {profile?.admissionSession || "—"}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {getRegistrationStatusBadge(profile?.registrationStatus)}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {getAcademicStandingBadge(profile?.academicStanding)}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    {profile?.cgpa ?? "—"}
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap" fontSize="md" color="fg.muted">
+                    <Badge colorPalette={student.status === "ACTIVE" ? "green" : "red"}>{student.status || "ACTIVE"}</Badge>
+                  </Table.Cell>
+                  <Table.Cell px="3" py="3" whiteSpace="nowrap">
+                    <StudentActionCell student={student} />
+                  </Table.Cell>
+                </Table.Row>
+              );
+            })
+          )}
+        </Table.Body>
+      </Table.Root>
     </Box>
   );
 };
