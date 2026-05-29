@@ -21,9 +21,9 @@ import autoTable from "jspdf-autotable";
 import type { Student, degreeAwarded } from "@type/student.type";
 import { STUDENT_LEVELS } from "@type/student.type";
 import { useStudents } from "@hooks/student.hook";
-import { StudentsDataTable } from "@components/shared/StudentsDataTable";
-import { AcademicLineChart } from "@components/shared/AcademicStudentsChart";
-import { RegistrationPieChart } from "@components/shared/RegistrationPieChart";
+import { StudentsDataTable } from "@components/shared/students-data-table";
+import { AcademicLineChart } from "@components/shared/academic-students-chart";
+import { RegistrationPieChart } from "@components/shared/registration-pie-chart";
 import { formatLevel } from "@utils/function.util";
 import { exportToExcel } from "@utils/excel.util";
 import { toaster } from "@components/ui/toaster";
@@ -156,22 +156,22 @@ const Students = () => {
         .map((lvl) => {
           const inLevel = list.filter((s) => formatLevel(s.studentProfile?.level) === lvl);
           const avgCgpa = inLevel.reduce((sum, s) => sum + (s.studentProfile?.cgpa || 0), 0) / (inLevel.length || 1);
-          const avgGpa  = inLevel.reduce((sum, s) => sum + (s.studentProfile?.gpa  || 0), 0) / (inLevel.length || 1);
+          const avgGpa = inLevel.reduce((sum, s) => sum + (s.studentProfile?.gpa || 0), 0) / (inLevel.length || 1);
           const carryovers = inLevel.filter((s) => (s.studentProfile?.carryoverCourses || 0) > 0).length;
           return {
             level: lvl,
             levelLabel: `${lvl} Level`,
             avgCgpa: Number(avgCgpa.toFixed(2)),
-            avgGpa:  Number(avgGpa.toFixed(2)),
+            avgGpa: Number(avgGpa.toFixed(2)),
             carryovers,
           };
         })
         .sort((a, b) => parseInt(a.level, 10) - parseInt(b.level, 10));
 
-      const registered   = list.filter((s) => s.studentProfile?.registrationStatus === "REGISTERED").length;
+      const registered = list.filter((s) => s.studentProfile?.registrationStatus === "REGISTERED").length;
       const unregistered = list.length - registered;
       const registrationData = [
-        { name: "Registered",   value: registered },
+        { name: "Registered", value: registered },
         { name: "Unregistered", value: unregistered },
       ];
 
@@ -179,9 +179,9 @@ const Students = () => {
     };
 
     return {
-      "BS.c":       compute(studentsByDegree["BS.c"]),
-      "MS.c":       compute(studentsByDegree["MS.c"]),
-      "Ph.D":       compute(studentsByDegree["Ph.D"]),
+      "BS.c": compute(studentsByDegree["BS.c"]),
+      "MS.c": compute(studentsByDegree["MS.c"]),
+      "Ph.D": compute(studentsByDegree["Ph.D"]),
       POSTGRADUATE: compute(studentsByDegree.POSTGRADUATE),
     } as Record<degreeAwarded, ReturnType<typeof compute>>;
   }, [studentsByDegree]);
@@ -189,7 +189,7 @@ const Students = () => {
   const currentTabStudents = studentsByDegree[selectedDegree] ?? [];
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
-  
+
   const handleExportExcel = () => {
     const exportData = currentTabStudents.map((s) => ({
       "Full Name": `${s.studentProfile?.firstName || ""} ${s.studentProfile?.lastName || ""} ${s.studentProfile?.otherName || ""}`.trim(),

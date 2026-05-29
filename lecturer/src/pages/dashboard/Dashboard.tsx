@@ -13,22 +13,13 @@ import {
   Icon,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import {
-  BookOpen,
-  Calendar,
-  Clock,
-  FolderKanban,
-  Building2,
-  GraduationCap,
-  TrendingUp,
-  CheckCircle,
-} from "lucide-react";
 import { useTotals } from "@hooks/dashboard.hook";
-import StatCard from "@components/shared/StatCard";
-import TimetablePanel from "@components/shared/TimetablePanel";
+import StatCard from "@components/shared/statcard";
+import TimetablePanel from "@components/shared/timetable-chart";
 import { useNavigate } from "react-router";
 import useAuthStore from "@stores/auth.store";
-import AcademicPerformanceChart from "@components/shared/AcademicChart";
+import AcademicPerformanceChart from "@components/shared/academic-chart";
+import { LuBookOpen, LuBuilding2, LuCalendar, LuCircleCheck, LuClock, LuFolderKanban, LuGraduationCap, LuTrendingUp } from "react-icons/lu";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -77,11 +68,11 @@ const Dashboard = () => {
 
         {/* Top stats cards */}
         <SimpleGrid columns={statsColumns} gap={6} mb={8}>
-          <StatCard label="Assigned Courses" value={assignedCourses} icon={<BookOpen size={22} strokeWidth={1.8} />} />
-          <StatCard label="Current Session" value={currentSession} icon={<Calendar size={22} strokeWidth={1.8} />} />
-          <StatCard label="Semester" value={semesterLabel} icon={<GraduationCap size={22} strokeWidth={1.8} />} />
-          <StatCard label="Today's Classes" value={todayClasses} icon={<Clock size={22} strokeWidth={1.8} />} />
-          <StatCard label="Active Projects" value={projects} icon={<FolderKanban size={22} strokeWidth={1.8} />} />
+          <StatCard label="Assigned Courses" value={assignedCourses} icon={<LuBookOpen size={22} strokeWidth={1.8} />} />
+          <StatCard label="Current Session" value={currentSession} icon={<LuCalendar size={22} strokeWidth={1.8} />} />
+          <StatCard label="Semester" value={semesterLabel} icon={<LuGraduationCap size={22} strokeWidth={1.8} />} />
+          <StatCard label="Today's Classes" value={todayClasses} icon={<LuClock size={22} strokeWidth={1.8} />} />
+          <StatCard label="Active Projects" value={projects} icon={<LuFolderKanban size={22} strokeWidth={1.8} />} />
         </SimpleGrid>
 
       
@@ -89,8 +80,8 @@ const Dashboard = () => {
         
           <GridItem h="100%">
             <Grid templateColumns="1fr 1fr" gap={4} h="100%">
-              <StatCard label="Department" value={department} icon={<Building2 size={20} />} />
-              <StatCard label="Faculty" value={faculty} icon={<GraduationCap size={20} />} />
+              <StatCard label="Department" value={department} icon={<LuBuilding2 size={20} />} />
+              <StatCard label="Faculty" value={faculty} icon={<LuGraduationCap size={20} />} />
             </Grid>
           </GridItem>
 
@@ -99,25 +90,25 @@ const Dashboard = () => {
             <Box {...cardStyle}>
               <Flex align="center" gap={3} mb={3}>
                 <Box p={2} bg="green.50" rounded="md">
-                  <TrendingUp size={20} color="green" />
+                  <LuTrendingUp size={20} color="green" />
                 </Box>
                 <Text fontWeight="500" color="fg.muted">Quick Overview</Text>
               </Flex>
               <VStack align="start" gap={3}>
                 <HStack>
-                  <Icon as={CheckCircle} color="green.500" boxSize={4} />
+                  <Icon as={LuCircleCheck} color="green.500" boxSize={4} />
                   <Text fontSize="sm" color="fg.muted">{todayClasses} class{todayClasses !== 1 && "es"} today</Text>
                 </HStack>
                 <HStack>
-                  <Icon as={FolderKanban} color="blue.500" boxSize={4} />
+                  <Icon as={LuFolderKanban} color="blue.500" boxSize={4} />
                   <Text fontSize="sm" color="fg.muted">{projects} active project{projects !== 1 && "s"}</Text>
                 </HStack>
                 <HStack>
-                  <Icon as={Calendar} color="orange.500" boxSize={4} />
+                  <Icon as={LuCalendar} color="orange.500" boxSize={4} />
                   <Text fontSize="sm" color="fg.muted">Session: {currentSession} – {semesterLabel}</Text>
                 </HStack>
                 <HStack>
-                  <Icon as={BookOpen} color="purple.500" boxSize={4} />
+                  <Icon as={LuBookOpen} color="purple.500" boxSize={4} />
                   <Text fontSize="sm" color="fg.muted">{assignedCourses} course{assignedCourses !== 1 && "s"} assigned</Text>
                 </HStack>
               </VStack>

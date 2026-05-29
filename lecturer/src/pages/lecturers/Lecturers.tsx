@@ -14,7 +14,7 @@ import {
 import { LuSearch, LuDownload } from "react-icons/lu";
 import { useStaff } from "@hooks/lecturer.hook";
 import type { Staff } from "@type/lecturer.type";
-import LecturersTable from "@components/shared/LecturersTable";
+import LecturersTable from "@components/shared/lecturers-table";
 import { exportToExcel } from "@utils/excel.util";
 import { toaster } from "@components/ui/toaster";
 

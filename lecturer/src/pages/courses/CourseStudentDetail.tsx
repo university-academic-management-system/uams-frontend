@@ -3,7 +3,7 @@ import { Box, Flex, Text, Heading } from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { CourseHook } from "@hooks/course.hook";
-import StudentInfoPanel from "@components/shared/StudentInfoPanel";
+import StudentInfoPanel from "@components/shared/student-info-panel";
 
 const CourseStudentDetail = () => {
     const { courseId, studentId } = useParams();

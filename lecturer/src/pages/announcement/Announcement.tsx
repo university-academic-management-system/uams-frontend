@@ -11,7 +11,7 @@ import {
 import type { DateValue } from "@internationalized/date";
 import { LuMegaphone } from "react-icons/lu";
 import { NotificationHook } from "@hooks/notification.hook";
-import AnnouncementList from "@components/shared/AnnouncementList";
+import AnnouncementList from "@components/shared/announcement-list";
 
 // Helper to convert any DateValue to YYYY-MM-DD string
 const toDateString = (date: DateValue | null): string => {

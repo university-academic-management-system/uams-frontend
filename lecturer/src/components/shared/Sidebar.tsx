@@ -3,7 +3,7 @@ import { sidebarStore } from "@stores/ui.store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoSidebarCollapse, GoSidebarExpand } from "react-icons/go";
 import LinkButton from "@components/ui/LinkButton";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 import { Tooltip } from "@components/ui/tooltip";
 import useAuthStore from "@stores/auth.store";
 import sidebarItems from "@configs/sidebar.config";

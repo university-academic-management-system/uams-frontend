@@ -3,8 +3,8 @@ import { Box, Flex, Text, Heading, Grid, Stack, Tabs, GridItem, Avatar } from "@
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { CourseHook } from "@hooks/course.hook";
-import CourseStudentsTable from "@components/shared/CourseStudentsTable";
-import CourseAttendanceTab from "@components/shared/CourseAttendanceTab";
+import CourseStudentsTable from "@components/shared/course-students-table";
+import CourseAttendanceTab from "@components/shared/course-attendance-tab";
 
 const CourseDetail = () => {
     const { courseId } = useParams();

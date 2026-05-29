@@ -1,6 +1,6 @@
 import { useState } from "react";
-import PaymentsSummaryView from "@components/shared/PaymentsSummaryView";
-import TransactionsList from "@components/shared/TransactionsList";
+import PaymentsSummaryView from "@components/shared/payment-summary-view";
+import TransactionsList from "@components/shared/transaction-list";
 
 const Payments = () => {
     const [view, setView] = useState<"summary" | "transactions">("summary");

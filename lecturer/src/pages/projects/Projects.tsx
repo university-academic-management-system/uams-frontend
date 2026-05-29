@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Box, Flex, Text, Heading, EmptyState, VStack, Center } from "@chakra-ui/react";
 import { LuBookOpen } from "react-icons/lu";
 import { ProjectHook } from "@hooks/project.hook";
-import ProjectsTable from "@components/shared/ProjectsTable";
+import ProjectsTable from "@components/shared/projects-table";
 import type { ProjectTopic, Student } from "@type/project.type";
 import { Toaster } from "@components/ui/toaster";
 

@@ -1,4 +1,4 @@
-import DashboardLayout from "@pages/layouts/DashboardLayout";
+import DashboardLayout from "@pages/layouts/layout";
 import useAuthStore from "@stores/auth.store";
 import { Navigate } from "react-router";
 
