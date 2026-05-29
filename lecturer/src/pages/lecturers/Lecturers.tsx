@@ -12,7 +12,7 @@ import {
   Button,
 } from "@chakra-ui/react";
 import { LuSearch, LuDownload } from "react-icons/lu";
-import { StaffHook } from "@hooks/lecturer.hook";
+import { useStaff } from "@hooks/lecturer.hook";
 import type { Staff } from "@type/lecturer.type";
 import LecturersTable from "@components/shared/LecturersTable";
 import { exportToExcel } from "@utils/excel.util";
@@ -28,7 +28,7 @@ const Lecturers = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
-  const { data: lecturers = [], isLoading } = StaffHook.useStaff();
+  const { data: lecturers = [], isLoading } = useStaff();
 
   const uniqueRoles = useMemo<string[]>(() => {
     if (!lecturers.length) return [];
@@ -87,20 +87,30 @@ const Lecturers = () => {
   }, [lecturers, debouncedSearch, roleFilter]);
 
   const handleExport = () => {
-    const exportData = filteredLecturers.map((l) => ({
-      "Staff Number": l.staffProfile?.staffNumber || "—",
-      "Full Name": `${l.staffProfile?.firstName || ""} ${l.staffProfile?.lastName || ""} ${l.staffProfile?.otherName || ""}`.trim(),
-      "Email": l.email || "—",
-      "Phone": l.staffProfile?.phone || "—",
-      "Title": l.staffProfile?.title || "—",
-      "Roles": l.staffProfile?.staffRoles?.join(", ") || "—",
-      "Specialization": l.staffProfile?.specialization || "—",
-      "Department": l.staffProfile?.department || "—",
-      "Faculty": l.staffProfile?.faculty || "—",
-      "Status": l.status || "—",
-    }));
-    exportToExcel(exportData, "Lecturers_List", "Lecturers");
-    toaster.success({ title: "Exported successfully" });
+    if (!filteredLecturers.length) {
+      toaster.warning({ title: "No lecturers to export", description: "There are no lecturers matching the current filters." });
+      return;
+    }
+
+    try {
+      const exportData = filteredLecturers.map((l) => ({
+        "Staff Number": l.staffProfile?.staffNumber || "—",
+        "Full Name": `${l.staffProfile?.firstName || ""} ${l.staffProfile?.lastName || ""} ${l.staffProfile?.otherName || ""}`.trim(),
+        "Email": l.email || "—",
+        "Phone": l.staffProfile?.phone || "—",
+        "Title": l.staffProfile?.title || "—",
+        "Roles": l.staffProfile?.staffRoles?.join(", ") || "—",
+        "Specialization": l.staffProfile?.specialization || "—",
+        "Department": l.staffProfile?.department || "—",
+        "Faculty": l.staffProfile?.faculty || "—",
+        "Status": l.status || "—",
+      }));
+      exportToExcel(exportData, "Lecturers_List", "Lecturers");
+      toaster.success({ title: "Exported successfully" });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toaster.error({ title: "Export failed", description: "An unexpected error occurred while exporting. Please try again later." });
+    }
   };
 
   return (
@@ -158,9 +168,7 @@ const Lecturers = () => {
             <Button
               onClick={handleExport}
               colorPalette="accent"
-              gap="2"
-              size="lg"
-              rounded="md"
+              size="xl"
               width={{ base: "100%", sm: "auto" }}
             >
               <LuDownload size={16} /> Export Table
@@ -168,7 +176,7 @@ const Lecturers = () => {
           </Flex>
         </Flex>
 
-      
+        {/* Scrollable table wrapper */}
         <Box overflowX="auto">
           <LecturersTable lecturers={filteredLecturers} isLoading={isLoading} />
         </Box>

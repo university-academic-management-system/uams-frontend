@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import { Box, Flex, Heading, Button, Text } from "@chakra-ui/react";
 import { LuFileText } from "react-icons/lu";
-import { StudentHook } from "@hooks/student.hook";
+import { useStudents } from "@hooks/student.hook";
 import { AcademicLineChart } from "./AcademicStudentsChart";
 import { RegistrationPieChart } from "./RegistrationPieChart";
 import { StudentsDataTable } from "./StudentsDataTable";
@@ -11,7 +11,7 @@ import html2canvas from "html2canvas";
 import { formatLevel } from "@utils/function.util";
 
 const StudentsOverview = () => {
-  const { data: students = [], isLoading, error } = StudentHook.useStudents();
+  const { data: students = [], isLoading, error } = useStudents();
   const chartsRef = useRef<HTMLDivElement>(null);
 
   // Compute levelStats for the line chart
