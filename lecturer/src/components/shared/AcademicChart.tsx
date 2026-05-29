@@ -128,9 +128,9 @@ export const AcademicPerformanceChart = () => {
         <Box minH="400px" w="full">
           <Chart.Root maxH="sm" chart={chart}>
             <LineChart margin={{ left: -30, right: 10 }} data={chart.data} responsive>
-              <CartesianGrid stroke={chart.color("border.subtle")} vertical={false} />
+              <CartesianGrid stroke={chart.color("border.muted")} strokeWidth={0.5} vertical={false} />
               <XAxis
-                axisLine={false}
+                axisLine={{ stroke: chart.color("border"), strokeWidth: 0.5 }}
                 dataKey={chart.key("level")}
                 tickFormatter={(value) => value}
                 stroke={chart.color("border")}
@@ -138,7 +138,7 @@ export const AcademicPerformanceChart = () => {
                 tick={{ fontSize: 11 }}
               />
               <YAxis
-                axisLine={false}
+                axisLine={{ stroke: chart.color("border"), strokeWidth: 0.5 }}
                 tickLine={false}
                 tickMargin={10}
                 domain={[0, 5]}
@@ -157,10 +157,10 @@ export const AcademicPerformanceChart = () => {
                   type="bump"
                   isAnimationActive={false}
                   dataKey={chart.key(item.name)}
-                  strokeWidth={2}
+                  strokeWidth={1}
                   stroke={chart.color(item.color)}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 4 }}
                 />
               ))}
             </LineChart>

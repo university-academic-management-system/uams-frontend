@@ -1,67 +1,47 @@
 // Dashboard.tsx
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+import { Box, Heading, SimpleGrid, Flex, Text, Skeleton } from "@chakra-ui/react";
 import {
-  Box,
-  Heading,
-  SimpleGrid,
-  Grid,
-  GridItem,
-  Flex,
-  Text,
-  HStack,
-  VStack,
-  Icon,
-  useBreakpointValue,
-} from "@chakra-ui/react";
-import {
-  BookOpen,
-  Calendar,
-  Clock,
-  FolderKanban,
-  Building2,
-  GraduationCap,
-  TrendingUp,
-  CheckCircle,
-} from "lucide-react";
+  LuBookOpen,
+  LuBuilding2,
+  LuCalendar,
+  LuClock,
+  LuFolderKanban,
+  LuGraduationCap,
+} from "react-icons/lu";
 import { useTotals } from "@hooks/dashboard.hook";
-import StatCard from "@components/shared/StatCard";
-import TimetablePanel from "@components/shared/TimetablePanel";
 import { useNavigate } from "react-router";
 import useAuthStore from "@stores/auth.store";
-import AcademicPerformanceChart from "@components/shared/AcademicChart";
+
+// Lazy load components
+const TotalsStatCard = lazy(() => import("@components/shared/total-stat-card"));
+const AcademicPerformanceChart = lazy(() => import("@components/shared/AcademicChart"));
+const TimetablePanel = lazy(() => import("@components/shared/TimetablePanel"));
+
+// Simple fallback while component loads
+const CardSkeleton = () => (
+  <Box bg="bg" border="xs" borderColor="border.muted" rounded="md" p="5">
+    <Skeleton h="6" w="6" mb="4" />
+    <Skeleton h="4" w="24" mb="2" />
+    <Skeleton h="8" w="16" />
+  </Box>
+);
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [timetableFilter, setTimetableFilter] = useState<"today" | "tomorrow" | "week">("today");
 
-  const { data: totals } = useTotals();
+  const { data: totals, isLoading } = useTotals();
 
   const displayName = user?.name || "User";
 
-  const assignedCourses = totals?.totalAssignedCourses ?? 0;
-  const currentSession = totals?.currentSession ?? "N/A";
-  const currentSemester = totals?.currentSemester ?? "N/A";
-  const todayClasses = totals?.totalClassesForTheDay ?? 0;
-  const projects = totals?.totalProjects ?? 0;
-  const department = totals?.department ?? "N/A";
-  const faculty = totals?.faculty ?? "N/A";
-
-  const semesterLabel = currentSemester === "FIRST" ? "First Semester" 
-                      : currentSemester === "SECOND" ? "Second Semester" 
-                      : currentSemester;
-
-  const statsColumns = useBreakpointValue({ base: 1, sm: 2, md: 3, lg: 5 });
-
-  
-  const cardStyle = {
-    bg: "white",
-    rounded: "md",
-    border: "1px solid",
-    borderColor: "border.muted",
-    p: 5,
-    h: "100%",                  
-  };
+  const semesterLabel =
+    totals?.currentSemester === "FIRST"
+      ? "First Semester"
+      : totals?.currentSemester === "SECOND"
+      ? "Second Semester"
+      : totals?.currentSemester ?? "N/A";
 
   return (
     <Flex gap="10" h="100%" direction="column">
@@ -75,68 +55,79 @@ const Dashboard = () => {
           </Heading>
         </Box>
 
-        {/* Top stats cards */}
-        <SimpleGrid columns={statsColumns} gap={6} mb={8}>
-          <StatCard label="Assigned Courses" value={assignedCourses} icon={<BookOpen size={22} strokeWidth={1.8} />} />
-          <StatCard label="Current Session" value={currentSession} icon={<Calendar size={22} strokeWidth={1.8} />} />
-          <StatCard label="Semester" value={semesterLabel} icon={<GraduationCap size={22} strokeWidth={1.8} />} />
-          <StatCard label="Today's Classes" value={todayClasses} icon={<Clock size={22} strokeWidth={1.8} />} />
-          <StatCard label="Active Projects" value={projects} icon={<FolderKanban size={22} strokeWidth={1.8} />} />
+        <SimpleGrid hideBelow={"md"} columns={{ base: 1, sm: 2, md: 3, lg: 4, xl: 7 }} gap={4} mb={8}>
+          <Suspense fallback={<CardSkeleton />}>
+            <TotalsStatCard
+              label="Assigned Courses"
+              icon={LuBookOpen}
+              value={totals?.totalAssignedCourses ?? 0}
+              isLoading={isLoading}
+            />
+          </Suspense>
+          <Suspense fallback={<CardSkeleton />}>
+            <TotalsStatCard
+              label="Current Session"
+              icon={LuCalendar}
+              value={totals?.currentSession ?? "N/A"}
+              isLoading={isLoading}
+            />
+          </Suspense>
+          <Suspense fallback={<CardSkeleton />}>
+            <TotalsStatCard
+              label="Semester"
+              icon={LuGraduationCap}
+              value={semesterLabel}
+              isLoading={isLoading}
+            />
+          </Suspense>
+          <Suspense fallback={<CardSkeleton />}>
+            <TotalsStatCard
+              label="Today's Classes"
+              icon={LuClock}
+              value={totals?.totalClassesForTheDay ?? 0}
+              isLoading={isLoading}
+            />
+          </Suspense>
+          <Suspense fallback={<CardSkeleton />}>
+            <TotalsStatCard
+              label="Active Projects"
+              icon={LuFolderKanban}
+              value={totals?.totalProjects ?? 0}
+              isLoading={isLoading}
+            />
+          </Suspense>
+          <Suspense fallback={<CardSkeleton />}>
+            <TotalsStatCard
+              label="Department"
+              icon={LuBuilding2}
+              value={totals?.department ?? "N/A"}
+              isLoading={isLoading}
+            />
+          </Suspense>
+          <Suspense fallback={<CardSkeleton />}>
+            <TotalsStatCard
+              label="Faculty"
+              icon={LuGraduationCap}
+              value={totals?.faculty ?? "N/A"}
+              isLoading={isLoading}
+            />
+          </Suspense>
         </SimpleGrid>
 
-      
-        <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6} mb={8}>
-        
-          <GridItem h="100%">
-            <Grid templateColumns="1fr 1fr" gap={4} h="100%">
-              <StatCard label="Department" value={department} icon={<Building2 size={20} />} />
-              <StatCard label="Faculty" value={faculty} icon={<GraduationCap size={20} />} />
-            </Grid>
-          </GridItem>
-
-          {/* Right column – Quick Overview, styled like a StatCard */}
-          <GridItem h="100%">
-            <Box {...cardStyle}>
-              <Flex align="center" gap={3} mb={3}>
-                <Box p={2} bg="green.50" rounded="md">
-                  <TrendingUp size={20} color="green" />
-                </Box>
-                <Text fontWeight="500" color="fg.muted">Quick Overview</Text>
-              </Flex>
-              <VStack align="start" gap={3}>
-                <HStack>
-                  <Icon as={CheckCircle} color="green.500" boxSize={4} />
-                  <Text fontSize="sm" color="fg.muted">{todayClasses} class{todayClasses !== 1 && "es"} today</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FolderKanban} color="blue.500" boxSize={4} />
-                  <Text fontSize="sm" color="fg.muted">{projects} active project{projects !== 1 && "s"}</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={Calendar} color="orange.500" boxSize={4} />
-                  <Text fontSize="sm" color="fg.muted">Session: {currentSession} – {semesterLabel}</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={BookOpen} color="purple.500" boxSize={4} />
-                  <Text fontSize="sm" color="fg.muted">{assignedCourses} course{assignedCourses !== 1 && "s"} assigned</Text>
-                </HStack>
-              </VStack>
-            </Box>
-          </GridItem>
-        </Grid>
-
-        {/* Academic Performance Chart */}
         <Box mb={8}>
-          <AcademicPerformanceChart />
+          <Suspense fallback={<Skeleton h="300px" w="full" />}>
+            <AcademicPerformanceChart />
+          </Suspense>
         </Box>
 
-        {/* Timetable Panel */}
         <Box>
-          <TimetablePanel
-            selectedFilter={timetableFilter}
-            onFilterChange={setTimetableFilter}
-            onViewFullTimetable={() => navigate("/timetable")}
-          />
+          <Suspense fallback={<Skeleton h="400px" w="full" />}>
+            <TimetablePanel
+              selectedFilter={timetableFilter}
+              onFilterChange={setTimetableFilter}
+              onViewFullTimetable={() => navigate("/timetable")}
+            />
+          </Suspense>
         </Box>
       </Box>
     </Flex>
