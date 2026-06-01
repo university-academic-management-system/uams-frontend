@@ -5,7 +5,7 @@ import AuditLogs from "./audit-log";
 import { sidebarStore } from "@stores/ui.store";
 import { useLocation } from "react-router";
 import { useCallback, useMemo } from "react";
-import { LuBanknote, LuCalendarDays, LuFolderKanban, LuHouse, LuLibrary, LuUser } from "react-icons/lu";
+import { LuBanknote, LuFolderKanban, LuHouse, LuLibrary, LuUser } from "react-icons/lu";
 import { PiAddressBook } from "react-icons/pi";
 import MobileSideDrawer from "./mobile-side-drawer";
 import { Image } from "@chakra-ui/react";
@@ -35,11 +35,6 @@ const Header = () => {
             label: "Project",
             href: "/projects",
             icon: LuFolderKanban
-        },
-        {
-            label: "Timetable",
-            href: "/timetable",
-            icon: LuCalendarDays
         },
         {
             label: "Payments",

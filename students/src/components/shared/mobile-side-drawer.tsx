@@ -69,7 +69,7 @@ const MobileSideDrawer = () => {
                 </Drawer.Trigger>
             </Tooltip>
             <Portal>
-                <Drawer.Positioner pt="14" pr="4" pb="4">
+                <Drawer.Positioner pt={{ base: 0, md: 14 }} pr={{ base: 0, md: 4 }} pb={{ base: 0, md: 4 }}>
                     <Drawer.Content rounded="md">
                         <Drawer.Header>
                             <Image src="/students/uphcsc-logo.png" alt="UPHCSC Logo" h="10" w="auto" />
