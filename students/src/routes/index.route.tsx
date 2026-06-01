@@ -7,6 +7,7 @@ const Registrations = lazy(() => import("@app/registrations/page"));
 const Courses = lazy(() => import("@app/courses/page"));
 const Projects = lazy(() => import("@app/projects/page"));
 const Payments = lazy(() => import("@app/payments/page"));
+const Profile = lazy(() => import("@app/profile/page"));
 const AnnouncementsPage = lazy(() => import("@app/announcements/page"));
 
 
@@ -50,12 +51,20 @@ const router = createBrowserRouter([
                     </Suspense>
                 )
             },
-            { path: "/announcements", element: (
-                <Suspense>
-                    <AnnouncementsPage />
-                </Suspense>
-            ) },
-            { path: "/profile", element: <p>Profile</p> },
+            {
+                path: "/announcements", element: (
+                    <Suspense>
+                        <AnnouncementsPage />
+                    </Suspense>
+                )
+            },
+            {
+                path: "/profile", element: (
+                    <Suspense>
+                        <Profile />
+                    </Suspense>
+                )
+            },
         ]
     }
 ], {

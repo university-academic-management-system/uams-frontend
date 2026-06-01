@@ -24,6 +24,30 @@ export interface LoginResponse {
     expireAt: string;
 }
 
+// update contact
+export interface UpdateContactPayload {
+    email?: string;
+    phone?: string;
+}
+
+export interface UpdateContactResponse {
+    status: string;
+    message: string;
+    data: string;
+}
+
+// change password
+export interface ChangePasswordPayload {
+    currentPassword?: string;
+    newPassword?: string;
+}
+
+export interface ChangePasswordResponse {
+    status: string;
+    message: string;
+    data: string;
+}
+
 // signup
 export type { SignupFormData } from "@schemas/auth.schema";
 export interface SignupData {
