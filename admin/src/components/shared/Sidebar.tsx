@@ -7,7 +7,7 @@ import LinkButton from "./buttons/LinkButton";
 import { Link, useLocation } from "react-router";
 import { Tooltip } from "@components/ui/tooltip";
 import useAuthStore from "@stores/auth.store";
-import { navigationLinks, type NavigationLink } from "../../constants/navigation";
+import { navigationLinks, type NavigationLink } from "@constants/navigation";
 
 const Sidebar = () => {
     const { isCollapsed } = useSidebarStore();
@@ -50,7 +50,7 @@ const Sidebar = () => {
             gap="4"
             hideBelow={"md"}
             transition="width 0.3s ease-in-out"
-            w={isCollapsed ? "74px" : "240px"}>
+            w={isCollapsed ? "78px" : "240px"}>
             <Flex align="center" h="16" p="6" transition="transform 0.3s ease-in-out">
                 {/* logo */}
                 {!isCollapsed ? <Image src="/admin/assets/uphcscLG.png" alt="UPHCSC Logo" h="auto" w="auto" /> : <Image src="/admin/assets/sidebar-collapsed-logo.png" alt="UPHCSC Logo" w={12} h={"auto"} />}
@@ -148,7 +148,7 @@ export const LogoutButton = () => {
     const { isCollapsed } = useSidebarStore();
     const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
 
-    return (isDesktop && !isCollapsed) || !isDesktop ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
+    return (isDesktop && !isCollapsed) || !isDesktop ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => { window.location.replace('/auth/login'); clearAuth(); }}>
         <Icon as={LuLogOut} size="md" /> Logout
     </Button> :
         <Tooltip content={"Logout"} positioning={{ placement: "right" }}>
@@ -158,7 +158,7 @@ export const LogoutButton = () => {
                 width="fit"
                 colorPalette={"red"}
                 color="red.500"
-                onClick={() => clearAuth()}
+                onClick={() => { window.location.replace('/auth/login'); clearAuth(); }}
             >
                 <Icon as={LuLogOut} size="md" />
             </IconButton>

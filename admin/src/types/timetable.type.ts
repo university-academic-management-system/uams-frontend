@@ -1,44 +1,32 @@
-export interface TimetableItem {
+export interface TimetableEntry {
   id: string;
-  title: string;
-  semester: {
+  courseId: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  venue: string | null;
+  session: string;
+  semester: string;
+  level: string;
+  createdAt: string;
+  updatedAt: string;
+  course: {
     id: string;
-    name: string;
-  };
-  level: {
-    id: string;
-    name: string;
-  };
-  session: {
-    id: string;
-    name: string;
-  };
-  programme: {
-    id: string;
-    name: string;
-  };
-  schedule: {
-    monday?: CourseSlot[];
-    tuesday?: CourseSlot[];
-    wednesday?: CourseSlot[];
-    thursday?: CourseSlot[];
-    friday?: CourseSlot[];
-    saturday?: CourseSlot[];
-    sunday?: CourseSlot[];
+    code: string;
+    title: string;
   };
 }
 
-export interface CourseSlot {
-  endTime: string;
-  courseId: string;
-  startTime: string;
-  courseCode: string;
-  originalText: string;
+export interface TimetableData {
+  semesterStartDate: string;
+  semesterEndDate: string;
+  entries: TimetableEntry[];
 }
 
 export interface TimetableResponse {
-  success: boolean;
-  data: TimetableItem[];
+  status: string;
+  message: string;
+  data: TimetableData;
 }
 
 export interface TimetableParams {
@@ -46,4 +34,26 @@ export interface TimetableParams {
   sessions: Array<{ id: string; name: string }>;
   levels: Array<{ id: string; name: string }>;
   programs: Array<{ id: string; name: string }>;
+}
+
+export interface CreateTimetableEntryPayload {
+  courseId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  venue?: string;
+  session: string;
+  semester: string;
+  level: string;
+}
+
+export interface UpdateTimetableEntryPayload {
+  courseId?: string;
+  dayOfWeek?: number;
+  startTime?: string;
+  endTime?: string;
+  venue?: string;
+  session?: string;
+  semester?: string;
+  level?: string;
 }

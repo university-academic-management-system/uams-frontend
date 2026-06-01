@@ -54,3 +54,20 @@ const useAuthStore = create<AuthState>()(
 );
 
 export default useAuthStore;
+
+
+// const useAuthStore = create<AuthState>()((set) => ({
+//   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwZmI1ZDVlLTcxYmEtNGZmYi1hMGZhLWY0NDYzMmVlYThjNiIsInJvbGUiOiJTVEFGRiIsImlhdCI6MTc3OTcwMDc2MCwiZXhwIjoxNzgwMzA1NTYwfQ.tR6spUo_G_SmS0h9SjXFKe8zzJYsg_jLvDWiILuv7Ic",
+//   expireAt: "7d",
+//   user: {
+//     id: "90fb5d5e-71ba-4ffb-a0fa-f44632eea8c6",
+//     email: "friday.joshua@speedlinkng.com",
+//     name: "Admin Dept One",
+//     roles: ["STAFF", "DEPARTMENT_ADMIN"],
+//   },
+//   isAuthenticated: true,
+//   setAuth: (auth: Partial<AuthState>) => set((state) => ({ ...state, ...auth })),
+//   clearAuth: () => set({ token: "", expireAt: "", user: null, isAuthenticated: false }),
+// }));
+
+// export default useAuthStore;

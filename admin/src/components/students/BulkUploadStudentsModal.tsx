@@ -39,7 +39,7 @@ const BulkUploadStudentsModal = ({ isOpen, onClose, onUploaded }: Props) => {
                 errors: data.errors || [] 
             });
             onUploaded();
-        } catch (err) {
+        } catch {
             // Error handled by mutation
         }
     };

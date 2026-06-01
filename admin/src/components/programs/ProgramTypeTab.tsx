@@ -67,6 +67,7 @@ const ProgramTypeTab = () => {
   const handleCreate = useCallback(async (data: ProgramTypeFormData) => {
     try {
       await createProgramType({
+        id: data.code.toLowerCase(),
         code: data.code,
         name: data.name,
         type: data.type.toUpperCase(),
@@ -566,22 +567,24 @@ const ProgramTypeTab = () => {
                     <Table.Cell px="6" py="4">{pt.type || "—"}</Table.Cell>
                     <Table.Cell px="6" py="4" textAlign="center">
                       <Flex justifyContent="center" gap="2">
-                        <Dialog.Trigger asChild>
-                          <Button
+                        <Button
                             aria-label="Edit"
                             size="xl"
                             variant="ghost"
+                            colorPalette="gray"
+                            color="fg.muted"
                             onClick={() => handleEdit(pt)}
                             borderRadius="full"
                             minW="auto"
                           >
                             <Edit size={16} />
                           </Button>
-                        </Dialog.Trigger>
                         <Button
                           aria-label="Delete"
                           size="xl"
                           variant="ghost"
+                          colorPalette="gray"
+                          color="fg.muted"
                           onClick={() => handleDelete(pt.id)}
                           borderRadius="full"
                           minW="auto"

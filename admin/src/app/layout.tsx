@@ -1,4 +1,4 @@
-import { Flex, ScrollArea, Stack } from "@chakra-ui/react";
+import { Box, Flex, Stack } from "@chakra-ui/react";
 import Header from "@components/shared/Header";
 import Sidebar from "@components/shared/Sidebar";
 import ToasterReseter from "@components/shared/ToasterReseter";
@@ -18,22 +18,32 @@ const RootLayout = () => {
             {/* siderbar */}
             <Sidebar />
 
-            <Stack flex="1" h="100vh" gap="0" bg="bg" overflow="hidden">
+            <Stack flex="1" h="100vh" gap="0" bg="bg" overflow="hidden" minW="0">
                 {/* header */}
                 <Header />
 
                 {/* main */}
-                <ScrollArea.Root size="xs" h="calc(100vh - 64px)" bg="bg.subtle" border="xs" borderColor="border.muted" rounded="md" >
-                    <ScrollArea.Viewport>
-                        <ScrollArea.Content p="4">
-                            <Outlet />
-                        </ScrollArea.Content>
-                    </ScrollArea.Viewport>
-                    <ScrollArea.Scrollbar>
-                        <ScrollArea.Thumb />
-                    </ScrollArea.Scrollbar>
-                    <ScrollArea.Corner />
-                </ScrollArea.Root>
+                <Box
+                    overflowY="auto"
+                    overflowX="hidden"
+                    h="calc(100vh - 64px)"
+                    bg="bg.subtle"
+                    border="xs"
+                    borderColor="border.muted"
+                    rounded="md"
+                    css={{
+                        "&::-webkit-scrollbar": { width: "6px" },
+                        "&::-webkit-scrollbar-track": { background: "transparent" },
+                        "&::-webkit-scrollbar-thumb": { background: "#cbd5e1", borderRadius: "3px" },
+                        "&::-webkit-scrollbar-thumb:hover": { background: "#94a3b8" },
+                        scrollbarWidth: "thin",
+                        scrollbarColor: "#cbd5e1 transparent",
+                    }}
+                >
+                    <Box p="4">
+                        <Outlet />
+                    </Box>
+                </Box>
             </Stack>
         </Flex>
         <Toaster /> {/* global */}

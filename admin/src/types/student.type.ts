@@ -37,7 +37,7 @@ export interface Student {
     registrationStatus?: string;
     cgpa?: number | null;
     createdAt: string;
-    studentProfile?: any;
+    studentProfile?: StudentProfile;
 }
 
 export interface CreateStudentPayload {

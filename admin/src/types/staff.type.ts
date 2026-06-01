@@ -13,6 +13,7 @@ export interface Staff {
     courses?: string;
     role?: string;
     staffRoles?: string[];
+    status?: string;
     activeFeatures?: {
         results: boolean;
         finance: boolean;

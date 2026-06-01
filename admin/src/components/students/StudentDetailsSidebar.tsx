@@ -131,7 +131,7 @@ const StudentDetailsSidebar = ({ student, onClose }: StudentDetailsSidebarProps)
                         <BioItem icon={<Calendar size={14} />} label="Session" value={profile.session?.name || "N/A"} />
                         <BioItem icon={<ShieldCheck size={14} />} label="Department" value={profile.Department?.name || "N/A"} />
                         <BioItem icon={<ShieldCheck size={14} />} label="Program" value={profile.Program?.name || "N/A"} />
-                        <BioItem icon={<ShieldCheck size={14} />} label="Level" value={profile.level || student.level || "N/A"} />
+                        <BioItem icon={<ShieldCheck size={14} />} label="Level" value={(profile.level || student.level)?.replace(/^L/i, '') || "N/A"} />
 
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: "16px" }}>
                             <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "12px", border: "1px solid #f1f5f9" }}>

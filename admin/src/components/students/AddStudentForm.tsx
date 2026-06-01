@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { X, ChevronDown } from "lucide-react";
 import { 
-    Box, 
     Flex, 
     Text, 
     Spinner, 
@@ -15,7 +14,8 @@ import {
     createListCollection
 } from "@chakra-ui/react";
 import { Controller } from "react-hook-form";
-import { StudentSchema, type StudentFormData } from "@schemas/student.schema";
+import { type StudentFormData } from "@schemas/student.schema";
+import type { Student } from "@type/student.type";
 import useStudentForm from "@forms/student.form";
 
 const GENDER_COLLECTION = createListCollection({
@@ -37,7 +37,7 @@ interface AddStudentFormProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: StudentFormData) => Promise<void>;
-    initialData?: any;
+    initialData?: Student | null;
 }
 
 const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFormProps) => {
@@ -52,8 +52,8 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
     useEffect(() => {
         if (initialData) {
             reset({
-                registrationNo: initialData.registrationNo || initialData.regNo || "",
-                matricNumber: initialData.matricNumber || initialData.matNo || "",
+                registrationNo: initialData.registrationNo || "",
+                matricNumber: initialData.matricNumber || "",
                 firstName: initialData.firstName || "",
                 surname: initialData.surname || "",
                 otherName: initialData.otherName || "",
@@ -65,7 +65,7 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                 faculty: initialData.faculty || "",
                 department: initialData.department || "",
                 degreeCourse: initialData.degreeCourse || "",
-                degreeAwardedCode: initialData.degreeAwardedCode || initialData.degreeAwarded || "",
+                degreeAwardedCode: initialData.degreeAwardedCode || "",
                 degreeDuration: initialData.degreeDuration || initialData.courseDuration || "4 Years",
                 admissionYear: initialData.admissionYear || 2023,
                 admissionSession: initialData.admissionSession || "2023/2024",
@@ -108,16 +108,17 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
             <Dialog.Positioner>
                 <Dialog.Content bg="white" borderRadius="md" maxW="4xl" p="8" colorPalette="accent">
                     <Flex justifyContent="space-between" alignItems="center" mb="8">
-                        <Text fontSize="2xl" fontWeight="bold" color="#1D7AD9">
+                        <Text fontSize="2xl" fontWeight="bold">
                             {initialData ? "Edit Student" : "Add Student"}
                         </Text>
                         <Dialog.CloseTrigger asChild>
-                            <Box as="button" p="2" _hover={{ bg: "fg.subtle" }} borderRadius="full" cursor="pointer" border="none" bg="transparent">
-                                <X size={24} color="#94a3b8" />
-                            </Box>
+                            <Button  variant="ghost" size="xl" colorPalette="grey">
+                                <X size={24} color="grey"/>
+                            </Button>
                         </Dialog.CloseTrigger>
                     </Flex>
 
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     <form onSubmit={handleSubmit(onFormSubmit as any)}>
                         <SimpleGrid columns={{ base: 1, md: 3 }} gap="6">
                             <Field.Root invalid={!!errors.registrationNo}>

@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Flex,
-  Text,
-  Heading,
   Input,
   InputGroup,
   Select,
@@ -22,8 +20,11 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Student, degreeAwarded } from "@type/student.type";
 import { STUDENT_LEVELS } from "@type/student.type";
-import { StudentHook } from "@hooks/student.hook";
-import StudentsTable from "@components/shared/StudentsTable";
+import { useStudents } from "@hooks/student.hook";
+import { StudentsDataTable } from "@components/shared/StudentsDataTable";
+import { AcademicLineChart } from "@components/shared/AcademicStudentsChart";
+import { RegistrationPieChart } from "@components/shared/RegistrationPieChart";
+import { formatLevel } from "@utils/function.util";
 import { exportToExcel } from "@utils/excel.util";
 import { toaster } from "@components/ui/toaster";
 import useAuthStore from "@stores/auth.store";
@@ -42,7 +43,7 @@ const normalizeDegree = (raw: string | undefined): degreeAwarded | null => {
   return null;
 };
 
-// Display labels (as they appear in API: B.SC, M.SC, PH.D, POSTGRADUATE)
+// Display labels
 const DISPLAY_LABELS: Record<degreeAwarded, string> = {
   "BS.c": "B.SC",
   "MS.c": "M.SC",
@@ -62,7 +63,7 @@ const levelCollection = createListCollection({
 
 const Students = () => {
   const { user } = useAuthStore();
-  const { data: students = [], isLoading, error } = StudentHook.useStudents();
+  const { data: students = [], isLoading, error } = useStudents();
 
   const sessionCollection = useMemo(() => {
     let currentYear = new Date().getFullYear();
@@ -84,22 +85,6 @@ const Students = () => {
     });
   }, [user?.currentSession]);
 
-  // Count students per internal degree key, using normalisation
-  const degreeCounts = useMemo(() => {
-    const counts: Record<degreeAwarded, number> = {
-      "BS.c": 0,
-      "MS.c": 0,
-      "Ph.D": 0,
-      POSTGRADUATE: 0,
-    };
-    students.forEach((s) => {
-      const rawDeg = s.studentProfile?.degreeAwarded;
-      const norm = normalizeDegree(rawDeg);
-      if (norm && norm in counts) counts[norm]++;
-    });
-    return counts;
-  }, [students]);
-
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [level, setLevel] = useState("All");
@@ -116,30 +101,97 @@ const Students = () => {
     setCurrentPage(1);
   }, [debouncedSearch, level, sessionFilter, selectedDegree]);
 
-  const filteredStudents = useMemo(() => {
+  // Students that pass the shared filters (search + level + session), NOT filtered by degree
+  const baseFiltered = useMemo(() => {
     if (!students.length) return [];
     return students.filter((student: Student) => {
       const profile = student.studentProfile;
       if (!profile) return false;
-
       const matchesLevel = level === "All" || profile.level === level;
       const matchesSession = sessionFilter === "All" || profile.currentSession === sessionFilter;
-      const matchesDegree = normalizeDegree(profile.degreeAwarded) === selectedDegree;
-
       const fullName = `${profile.firstName || ""} ${profile.lastName || ""} ${profile.otherName || ""}`.toLowerCase();
       const matchesSearch =
         !debouncedSearch ||
         fullName.includes(debouncedSearch.toLowerCase()) ||
         student.email?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         profile.matricNumber?.toLowerCase().includes(debouncedSearch.toLowerCase());
-
-      return matchesLevel && matchesSession && matchesDegree && matchesSearch;
+      return matchesLevel && matchesSession && matchesSearch;
     });
-  }, [students, level, sessionFilter, selectedDegree, debouncedSearch]);
+  }, [students, level, sessionFilter, debouncedSearch]);
 
-  // Excel export
+  // Group base-filtered students by degree — each tab reads its own bucket
+  const studentsByDegree = useMemo(() => {
+    const buckets: Record<degreeAwarded, Student[]> = {
+      "BS.c": [],
+      "MS.c": [],
+      "Ph.D": [],
+      POSTGRADUATE: [],
+    };
+    baseFiltered.forEach((s) => {
+      const deg = normalizeDegree(s.studentProfile?.degreeAwarded);
+      if (deg) buckets[deg].push(s);
+    });
+    return buckets;
+  }, [baseFiltered]);
+
+  // Live counts per tab (reflect current filters)
+  const degreeCounts = useMemo(
+    () => ({
+      "BS.c": studentsByDegree["BS.c"].length,
+      "MS.c": studentsByDegree["MS.c"].length,
+      "Ph.D": studentsByDegree["Ph.D"].length,
+      POSTGRADUATE: studentsByDegree.POSTGRADUATE.length,
+    }),
+    [studentsByDegree]
+  );
+
+  // Chart data computed per degree bucket
+  const chartDataByDegree = useMemo(() => {
+    const compute = (list: Student[]) => {
+      const uniqueLevels = Array.from(
+        new Set(list.map((s) => formatLevel(s.studentProfile?.level)).filter(Boolean))
+      ).sort();
+
+      const levelStats = uniqueLevels
+        .map((lvl) => {
+          const inLevel = list.filter((s) => formatLevel(s.studentProfile?.level) === lvl);
+          const avgCgpa = inLevel.reduce((sum, s) => sum + (s.studentProfile?.cgpa || 0), 0) / (inLevel.length || 1);
+          const avgGpa  = inLevel.reduce((sum, s) => sum + (s.studentProfile?.gpa  || 0), 0) / (inLevel.length || 1);
+          const carryovers = inLevel.filter((s) => (s.studentProfile?.carryoverCourses || 0) > 0).length;
+          return {
+            level: lvl,
+            levelLabel: `${lvl} Level`,
+            avgCgpa: Number(avgCgpa.toFixed(2)),
+            avgGpa:  Number(avgGpa.toFixed(2)),
+            carryovers,
+          };
+        })
+        .sort((a, b) => parseInt(a.level, 10) - parseInt(b.level, 10));
+
+      const registered   = list.filter((s) => s.studentProfile?.registrationStatus === "REGISTERED").length;
+      const unregistered = list.length - registered;
+      const registrationData = [
+        { name: "Registered",   value: registered },
+        { name: "Unregistered", value: unregistered },
+      ];
+
+      return { levelStats, registrationData };
+    };
+
+    return {
+      "BS.c":       compute(studentsByDegree["BS.c"]),
+      "MS.c":       compute(studentsByDegree["MS.c"]),
+      "Ph.D":       compute(studentsByDegree["Ph.D"]),
+      POSTGRADUATE: compute(studentsByDegree.POSTGRADUATE),
+    } as Record<degreeAwarded, ReturnType<typeof compute>>;
+  }, [studentsByDegree]);
+
+  const currentTabStudents = studentsByDegree[selectedDegree] ?? [];
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  
   const handleExportExcel = () => {
-    const exportData = filteredStudents.map((s) => ({
+    const exportData = currentTabStudents.map((s) => ({
       "Full Name": `${s.studentProfile?.firstName || ""} ${s.studentProfile?.lastName || ""} ${s.studentProfile?.otherName || ""}`.trim(),
       "Email": s.email,
       "Matric Number": s.studentProfile?.matricNumber || "—",
@@ -156,19 +208,11 @@ const Students = () => {
     toaster.success({ title: "Exported as Excel successfully" });
   };
 
-  // PDF export using jsPDF + autoTable
   const handleExportPDF = () => {
     try {
       const doc = new jsPDF({ orientation: "landscape" });
-      const tableColumn = [
-        "Full Name",
-        "Email",
-        "Matric Number",
-        "Level",
-        "Degree Awarded",
-        "Current Session",
-      ];
-      const tableRows = filteredStudents.map((s) => [
+      const tableColumn = ["Full Name", "Email", "Matric Number", "Level", "Degree Awarded", "Current Session"];
+      const tableRows = currentTabStudents.map((s) => [
         `${s.studentProfile?.firstName || ""} ${s.studentProfile?.lastName || ""} ${s.studentProfile?.otherName || ""}`.trim(),
         s.email,
         s.studentProfile?.matricNumber || "—",
@@ -176,7 +220,6 @@ const Students = () => {
         s.studentProfile?.degreeAwarded || "—",
         s.studentProfile?.currentSession || "—",
       ]);
-
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
@@ -186,29 +229,23 @@ const Students = () => {
         alternateRowStyles: { fillColor: [240, 248, 255] },
         margin: { top: 20, left: 10, right: 10 },
       });
-
       doc.save("Students_List.pdf");
       toaster.success({ title: "Exported as PDF successfully" });
-    } catch (error) {
-      console.error("PDF export failed:", error);
+    } catch (err) {
+      console.error("PDF export failed:", err);
       toaster.error({ title: "PDF export failed", description: "Please try again later." });
     }
   };
 
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedStudents = filteredStudents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
   return (
     <Box maxW="100vw" overflowX="hidden">
-
       <Tabs.Root
         value={selectedDegree}
         onValueChange={(e) => setSelectedDegree(e.value as degreeAwarded)}
-        mb={6}
         variant="line"
-        gap="12"
         colorPalette="accent"
       >
+        {/* Tab triggers */}
         <Tabs.List mb="6">
           {INTERNAL_DEGREES.map((deg) => (
             <Tabs.Trigger key={deg} value={deg}>
@@ -216,156 +253,167 @@ const Students = () => {
             </Tabs.Trigger>
           ))}
         </Tabs.List>
-      </Tabs.Root>
 
-      <Box bg="bg" rounded="md" p="4">
-        {/* Filters – responsive, never overflow */}
-        <Flex
-          align="center"
-          justify="space-between"
-          gap="3"
-          mb="5"
-          wrap="wrap"
-          direction={{ base: "column", sm: "row" }}
-          colorPalette="accent"
-        >
-          <InputGroup startElement={<LuSearch />} width={{ base: "100%", sm: "300px" }}>
-            <Input
-              placeholder="Search by Name, Email or Mat. Num"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              size="lg"
-            />
-          </InputGroup>
+        <Box bg="bg" rounded="md" p="4">
+          {/* Shared filters — sit above all tab panels */}
+          <Flex
+            align="center"
+            justify="space-between"
+            gap="3"
+            mb="5"
+            wrap="wrap"
+            direction={{ base: "column", sm: "row" }}
+            colorPalette="accent"
+          >
+            <InputGroup startElement={<LuSearch />} width={{ base: "100%", sm: "300px" }}>
+              <Input
+                placeholder="Search by Name, Email or Mat. Num"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                size="lg"
+              />
+            </InputGroup>
 
-          <Flex gap="3" align="center" wrap="wrap">
-            <Select.Root
-              collection={levelCollection}
-              value={[level]}
-              onValueChange={(e) => setLevel(e.value[0])}
-              size="lg"
-              width={{ base: "100%", sm: "140px" }}
-            >
-              <Select.HiddenSelect />
-              <Select.Control>
-                <Select.Trigger>
-                  <Select.ValueText placeholder="All Levels" />
-                </Select.Trigger>
-                <Select.IndicatorGroup>
-                  <Select.Indicator />
-                </Select.IndicatorGroup>
-              </Select.Control>
-              <Select.Positioner>
-                <Select.Content>
-                  {levelCollection.items.map((item) => (
-                    <Select.Item key={item.value} item={item}>
-                      {item.label}
-                      <SelectItemIndicator />
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Select.Root>
+            <Flex gap="3" align="center" wrap="wrap">
+              <Select.Root
+                collection={levelCollection}
+                value={[level]}
+                onValueChange={(e) => setLevel(e.value[0])}
+                size="lg"
+                width={{ base: "100%", sm: "140px" }}
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger>
+                    <Select.ValueText placeholder="All Levels" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Select.Positioner>
+                  <Select.Content>
+                    {levelCollection.items.map((item) => (
+                      <Select.Item key={item.value} item={item}>
+                        {item.label}
+                        <SelectItemIndicator />
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Positioner>
+              </Select.Root>
 
-            <Select.Root
-              collection={sessionCollection}
-              value={[sessionFilter]}
-              onValueChange={(e) => setSessionFilter(e.value[0])}
-              size="lg"
-              width={{ base: "100%", sm: "180px" }}
-            >
-              <Select.HiddenSelect />
-              <Select.Control>
-                <Select.Trigger>
-                  <Select.ValueText placeholder="All Sessions" />
-                </Select.Trigger>
-                <Select.IndicatorGroup>
-                  <Select.Indicator />
-                </Select.IndicatorGroup>
-              </Select.Control>
-              <Select.Positioner>
-                <Select.Content>
-                  {sessionCollection.items.map((item) => (
-                    <Select.Item key={item.value} item={item}>
-                      {item.label}
-                      <SelectItemIndicator />
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Select.Root>
+              <Select.Root
+                collection={sessionCollection}
+                value={[sessionFilter]}
+                onValueChange={(e) => setSessionFilter(e.value[0])}
+                size="lg"
+                width={{ base: "100%", sm: "180px" }}
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger>
+                    <Select.ValueText placeholder="All Sessions" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Select.Positioner>
+                  <Select.Content>
+                    {sessionCollection.items.map((item) => (
+                      <Select.Item key={item.value} item={item}>
+                        {item.label}
+                        <SelectItemIndicator />
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Positioner>
+              </Select.Root>
 
-            {/* Export Dropdown Menu */}
-            <Menu.Root>
-              <Menu.Trigger asChild>
-                <Button
-                  display="flex"
-                  alignItems="center"
-                  size="lg"
-                  gap="2"
-                  bg="accent"
-                  color="white"
-                  width={{ base: "100%", sm: "auto" }}
-                >
-                  <LuDownload size={16} /> Export Table
-                </Button>
-              </Menu.Trigger>
-              <Portal>
-                <Menu.Positioner>
-                  <Menu.Content>
-                    <Menu.Item value="excel" onClick={handleExportExcel}>
-                      <LuFileSpreadsheet /> Export as Excel
-                    </Menu.Item>
-                    <Menu.Item value="pdf" onClick={handleExportPDF}>
-                      <LuFileText /> Export as PDF
-                    </Menu.Item>
-                  </Menu.Content>
-                </Menu.Positioner>
-              </Portal>
-            </Menu.Root>
+              <Menu.Root>
+                <Menu.Trigger asChild>
+                  <Button
+                    display="flex"
+                    alignItems="center"
+                    size="xl"
+                    bg="accent"
+                    color="white"
+                    width={{ base: "100%", sm: "auto" }}
+                  >
+                    <LuDownload size={16} /> Export Table
+                  </Button>
+                </Menu.Trigger>
+                <Portal>
+                  <Menu.Positioner>
+                    <Menu.Content>
+                      <Menu.Item value="excel" onClick={handleExportExcel}>
+                        <LuFileSpreadsheet /> Export as Excel
+                      </Menu.Item>
+                      <Menu.Item value="pdf" onClick={handleExportPDF}>
+                        <LuFileText /> Export as PDF
+                      </Menu.Item>
+                    </Menu.Content>
+                  </Menu.Positioner>
+                </Portal>
+              </Menu.Root>
+            </Flex>
           </Flex>
-        </Flex>
 
-        {/* Scrollable table container – horizontal scroll only for the table */}
-        <Box overflowX="auto">
-          <StudentsTable
-            students={paginatedStudents}
-            isLoading={isLoading}
-            error={error}
-          />
-        </Box>
-
-        {filteredStudents.length >= 20 && (
-          <Flex alignItems="center" justifyContent="flex-end" mt="4">
-            <Pagination.Root
-              count={filteredStudents.length}
-              pageSize={ITEMS_PER_PAGE}
-              page={currentPage}
-              onPageChange={(e) => setCurrentPage(e.page)}
-            >
-              <ButtonGroup variant="ghost" size="sm" gap="1">
-                <Pagination.PrevTrigger asChild>
-                  <IconButton>
-                    <LuChevronLeft />
-                  </IconButton>
-                </Pagination.PrevTrigger>
-                <Pagination.Items
-                  render={(page) => (
-                    <IconButton variant={{ base: "ghost", _selected: "outline" }}>
-                      {page.value}
-                    </IconButton>
-                  )}
+          {/* Per-degree tab panels */}
+          {INTERNAL_DEGREES.map((deg) => (
+            <Tabs.Content key={deg} value={deg}>
+              {studentsByDegree[deg].length > 0 && (
+                <Box mb={6} p={4} rounded="md" borderColor="border.muted" bg="bg.panel">
+                  <Flex direction="column" gap={9}>
+                    <AcademicLineChart data={chartDataByDegree[deg].levelStats} />
+                    <RegistrationPieChart data={chartDataByDegree[deg].registrationData} />
+                  </Flex>
+                </Box>
+              )}
+              <Box overflowX="auto">
+                <StudentsDataTable
+                  students={studentsByDegree[deg].slice(startIndex, startIndex + ITEMS_PER_PAGE)}
+                  isLoading={isLoading}
+                  error={error}
                 />
-                <Pagination.NextTrigger asChild>
-                  <IconButton>
-                    <LuChevronRight />
-                  </IconButton>
-                </Pagination.NextTrigger>
-              </ButtonGroup>
-            </Pagination.Root>
-          </Flex>
-        )}
-      </Box>
+              </Box>
+            </Tabs.Content>
+          ))}
+
+          {/* Pagination — keyed to the active tab's list */}
+          {currentTabStudents.length > ITEMS_PER_PAGE && (
+            <Flex alignItems="center" justifyContent="flex-end" mt="4">
+              <Pagination.Root
+                count={currentTabStudents.length}
+                pageSize={ITEMS_PER_PAGE}
+                page={currentPage}
+                onPageChange={(e) => setCurrentPage(e.page)}
+              >
+                <ButtonGroup variant="ghost" size="sm" gap="1">
+                  <Pagination.PrevTrigger asChild>
+                    <IconButton>
+                      <LuChevronLeft />
+                    </IconButton>
+                  </Pagination.PrevTrigger>
+                  <Pagination.Items
+                    render={(page) => (
+                      <IconButton variant={{ base: "ghost", _selected: "outline" }}>
+                        {page.value}
+                      </IconButton>
+                    )}
+                  />
+                  <Pagination.NextTrigger asChild>
+                    <IconButton>
+                      <LuChevronRight />
+                    </IconButton>
+                  </Pagination.NextTrigger>
+                </ButtonGroup>
+              </Pagination.Root>
+            </Flex>
+          )}
+        </Box>
+      </Tabs.Root>
     </Box>
   );
 };

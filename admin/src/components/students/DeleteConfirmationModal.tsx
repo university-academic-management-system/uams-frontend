@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import { Dialog, Button, Box, Text } from "@chakra-ui/react";
+import { Dialog, Button, Box, Text, Textarea } from "@chakra-ui/react";
 
 interface DeleteConfirmationModalProps {
     isOpen: boolean;
@@ -53,10 +53,8 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, title, descriptio
                             <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="2">
                                 Reason for deletion <Box as="span" color="red.500">*</Box>
                             </Text>
-                            <Box 
-                                as="textarea"
+                            <Textarea 
                                 value={reason}
-                                // @ts-expect-error Types for textarea onChange
                                 onChange={(e) => setReason(e.target.value)}
                                 placeholder="e.g. Students graduated and left the university"
                                 w="full"
