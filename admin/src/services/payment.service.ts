@@ -24,6 +24,31 @@ export const PaymentServices = {
         return data; 
     },
     
+    getPaymentsSummary: async () => {
+        const { data } = await axiosClient.get("/payments");
+        return data;
+    },
+
+    getPaymentsByType: async (
+        programTypeCode: string,
+        paymentType: string,
+        page = 1,
+        limit = 10,
+        search = "",
+        status = "",
+        session = "",
+        level = "",
+        semester = "",
+        startDate = "",
+        endDate = "",
+        deliveryMethod = ""
+    ) => {
+        const { data } = await axiosClient.get(`/payments/${programTypeCode}/${paymentType}`, {
+            params: { page, limit, search, status, session, level, semester, startDate, endDate, deliveryMethod }
+        });
+        return data;
+    },
+
     getPayments: async (
         page = 1, 
         limit = 10, 

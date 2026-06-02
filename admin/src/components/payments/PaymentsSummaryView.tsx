@@ -13,57 +13,49 @@ import {
     Text 
 } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
+import type { PaymentSummaryItem } from "@type/payment.type";
 
 interface PaymentsSummaryViewProps {
-    onViewAllRevenue: (programTypeId: string, programTypeName: string) => void;
+    onViewDetails: (programTypeCode: string) => void;
 }
 
-// interface ProgramTypeSummary {
-//     id: string;
-//     name: string;
-//     code: string;
-//     totalAmount: string;
-//     totalPayments: number;
-//     accessFee: { total: string; count: number; amount: number; average: string | number };
-//     idCardFee: { total: string; count: number; amount: number; average: string | number };
-//     transcriptFee?: { total: string; count: number; amount: number; average: string | number };
-//     otherPayments: { total: string; count: number; amount: number };
-// }
+/** Converts SCREAMING_SNAKE_CASE keys into readable labels. */
+const formatPaymentType = (key: string): string =>
+    key
+        .split("_")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
 
-const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => {
+const PaymentsSummaryView = ({ onViewDetails }: PaymentsSummaryViewProps) => {
     const { data: response, isLoading: summaryLoading, isError } = useQuery({
-        queryKey: ["payments-summary-aggregation"],
-        queryFn: () => PaymentServices.getPayments(1, 10000), // Fetch a large batch to aggregate summary
+        queryKey: ["payments-summary"],
+        queryFn: () => PaymentServices.getPaymentsSummary(),
     });
 
-    const programTypeList = useMemo(() => {
-        const paymentsArray = Array.isArray(response?.data) 
-            ? response.data 
-            : (Array.isArray(response?.data?.data) ? response.data.data : []);
+    const { paymentTypeKeys, rows } = useMemo(() => {
+        const rawData: Record<string, PaymentSummaryItem> | undefined =
+            response?.data;
 
-        if (paymentsArray.length === 0) return [];
-        
-        let totalAccess = 0;
-        let totalIdCard = 0;
-        let totalTranscript = 0;
-        
-        paymentsArray.forEach((payment: any) => {
-            if (payment.status !== "PAID") return;
-            const type = payment.type || "";
-            if (type.includes("ACCESS_FEE")) totalAccess += Number(payment.amount);
-            if (type.includes("ID_CARD")) totalIdCard += Number(payment.amount);
-            if (type.includes("TRANSCRIPT")) totalTranscript += Number(payment.amount);
-        });
+        if (!rawData || typeof rawData !== "object") {
+            return { paymentTypeKeys: [] as string[], rows: [] as { id: string; title: string; code: string; summaries: Record<string, number> }[] };
+        }
 
-        // We return a single aggregated "All Programmes" row
-        return [{
-            id: "",
-            name: "All Programmes",
-            code: "ALL",
-            accessFee: { amount: totalAccess },
-            idCardFee: { amount: totalIdCard },
-            transcriptFee: { amount: totalTranscript },
-        }];
+        const keySet = new Set<string>();
+        const rowList: { id: string; title: string; code: string; summaries: Record<string, number> }[] = [];
+
+        for (const [id, item] of Object.entries(rawData)) {
+            rowList.push({
+                id,
+                title: item.title,
+                code: item.code,
+                summaries: item.paymentSummaries ?? {},
+            });
+            if (item.paymentSummaries) {
+                Object.keys(item.paymentSummaries).forEach((k) => keySet.add(k));
+            }
+        }
+
+        return { paymentTypeKeys: Array.from(keySet), rows: rowList };
     }, [response]);
 
     const formatCurrency = useCallback((amount: number) => {
@@ -73,15 +65,18 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
         }).format(amount);
     }, []);
 
+    const columnTotals = useMemo(() => {
+        const totals: Record<string, number> = {};
+        for (const key of paymentTypeKeys) {
+            totals[key] = rows.reduce((sum, r) => sum + (r.summaries[key] ?? 0), 0);
+        }
+        return totals;
+    }, [paymentTypeKeys, rows]);
+
     return (
         <Box>
             <Flex direction="column" gap="6">
-                {/* Header */}
-                <Flex justifyContent="space-between" alignItems="center">
-                    <Box>
-                        <Heading size="3xl" fontWeight="bold" color="fg.muted">Payments Overview</Heading>
-                        <Text fontSize="sm" color="fg.subtle">Revenue summary across different programme types</Text>
-                    </Box>
+                <Flex justifyContent="flex-end" alignItems="center">
                     <Button bg="accent" color="white" borderRadius="md" fontWeight="bold" size="xl" variant="solid">
                         <Download size={16} /> Export Summary
                     </Button>
@@ -94,16 +89,29 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                             <Table.Row>
                                 <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">S/N</Table.ColumnHeader>
                                 <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">PROGRAMME TYPE</Table.ColumnHeader>
-                                <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">ACCESS FEE</Table.ColumnHeader>
-                                <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">ID CARD FEE</Table.ColumnHeader>
-                                <Table.ColumnHeader bg="slate.50" px="6" py="4" fontSize="11px" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" whiteSpace="nowrap">TRANSCRIPT FEE</Table.ColumnHeader>
+                                {paymentTypeKeys.map((key) => (
+                                    <Table.ColumnHeader
+                                        key={key}
+                                        bg="slate.50"
+                                        px="6"
+                                        py="4"
+                                        fontSize="11px"
+                                        fontWeight="bold"
+                                        color="fg.muted"
+                                        textTransform="uppercase"
+                                        letterSpacing="wider"
+                                        whiteSpace="nowrap"
+                                    >
+                                        {formatPaymentType(key)}
+                                    </Table.ColumnHeader>
+                                ))}
                                 <Table.ColumnHeader bg="slate.50" px="6" py="4" textAlign="right"></Table.ColumnHeader>
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>
                             {summaryLoading ? (
                                 <Table.Row>
-                                    <Table.Cell colSpan={6} py="20">
+                                    <Table.Cell colSpan={paymentTypeKeys.length + 3} py="20">
                                         <Flex direction="column" alignItems="center" justify="center" gap="4">
                                             <Spinner size="xl" color="accent" />
                                             <Text color="fg.muted">Loading summary data...</Text>
@@ -112,15 +120,15 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                                 </Table.Row>
                             ) : isError ? (
                                 <Table.Row>
-                                    <Table.Cell colSpan={6} py="20">
+                                    <Table.Cell colSpan={paymentTypeKeys.length + 3} py="20">
                                         <Flex justify="center">
                                             <Text color="red.500">Failed to load revenue data. Please try again.</Text>
                                         </Flex>
                                     </Table.Cell>
                                 </Table.Row>
-                            ) : programTypeList.length === 0 ? (
+                            ) : rows.length === 0 ? (
                                 <Table.Row>
-                                    <Table.Cell colSpan={6} py="20">
+                                    <Table.Cell colSpan={paymentTypeKeys.length + 3} py="20">
                                         <EmptyState.Root>
                                             <EmptyState.Content>
                                                 <EmptyState.Indicator>
@@ -137,33 +145,48 @@ const PaymentsSummaryView = ({ onViewAllRevenue }: PaymentsSummaryViewProps) => 
                                     </Table.Cell>
                                 </Table.Row>
                             ) : (
-                                programTypeList.map((pt, index) => (
-                                    <Table.Row key={pt.id} _hover={{ bg: "slate.50" }} borderColor="border.muted">
-                                        <Table.Cell px="6" py="4" fontSize="xs" fontWeight="medium">{index + 1}</Table.Cell>
-                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="bold">{pt.name}</Table.Cell>
-                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="medium" color="fg.muted">
-                                            {formatCurrency(pt.accessFee?.amount ?? 0)}
+                                <>
+                                    {rows.map((row, index) => (
+                                        <Table.Row key={row.id} _hover={{ bg: "slate.50" }} borderColor="border.muted">
+                                            <Table.Cell px="6" py="4" fontSize="xs" fontWeight="medium">{index + 1}</Table.Cell>
+                                            <Table.Cell px="6" py="4" fontSize="sm" fontWeight="bold">
+                                                {row.title}
+                                                <Text fontSize="2xs" color="fg.subtle" fontWeight="medium">{row.code}</Text>
+                                            </Table.Cell>
+                                            {paymentTypeKeys.map((key) => (
+                                                <Table.Cell key={key} px="6" py="4" fontSize="sm" fontWeight="medium" color="fg.muted">
+                                                    {formatCurrency(row.summaries[key] ?? 0)}
+                                                </Table.Cell>
+                                            ))}
+                                            <Table.Cell px="6" py="4" textAlign="right">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="xs"
+                                                    borderRadius="md"
+                                                    color="#1D7AD9"
+                                                    fontWeight="bold"
+                                                    onClick={() => onViewDetails(row.id)}
+                                                >
+                                                    View Details
+                                                </Button>
+                                            </Table.Cell>
+                                        </Table.Row>
+                                    ))}
+
+                                    {/* Totals Row */}
+                                    <Table.Row bg="slate.50" borderTop="2px solid" borderColor="border.muted">
+                                        <Table.Cell px="6" py="4"></Table.Cell>
+                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="bold" color="fg">
+                                            Total
                                         </Table.Cell>
-                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="medium" color="fg.muted">
-                                            {formatCurrency(pt.idCardFee?.amount ?? 0)}
-                                        </Table.Cell>
-                                        <Table.Cell px="6" py="4" fontSize="sm" fontWeight="medium" color="fg.muted">
-                                            {formatCurrency(pt.transcriptFee?.amount ?? 0)}
-                                        </Table.Cell>
-                                        <Table.Cell px="6" py="4" textAlign="right">
-                                            <Button
-                                                variant="ghost"
-                                                size="xs"
-                                                borderRadius="md"
-                                                color="#1D7AD9"
-                                                fontWeight="bold"
-                                                onClick={() => onViewAllRevenue(pt.id, pt.name)}
-                                            >
-                                                View Details
-                                            </Button>
-                                        </Table.Cell>
+                                        {paymentTypeKeys.map((key) => (
+                                            <Table.Cell key={key} px="6" py="4" fontSize="sm" fontWeight="bold" color="fg">
+                                                {formatCurrency(columnTotals[key] ?? 0)}
+                                            </Table.Cell>
+                                        ))}
+                                        <Table.Cell px="6" py="4"></Table.Cell>
                                     </Table.Row>
-                                ))
+                                </>
                             )}
                         </Table.Body>
                     </Table.Root>

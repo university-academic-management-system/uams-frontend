@@ -116,7 +116,10 @@ export default function PaymentDetailsSidebar({ isOpen, onClose, payment }: Paym
                                     <Text fontSize="sm" fontWeight="bold" color="accent" mb="4">Academic Context</Text>
                                     <Grid templateColumns="repeat(2, 1fr)" gap="4">
                                         <GridItem>
-                                            <DetailItem label="Student ID" value={payment.studentId} />
+                                            <DetailItem label="Student Name" value={payment.student ? `${payment.student.surname} ${payment.student.firstName}`.trim() : "—"} />
+                                        </GridItem>
+                                        <GridItem>
+                                            <DetailItem label="Matric No" value={payment.student?.matricNumber || payment.student?.registrationNo || payment.studentId.slice(0, 8) + "..."} />
                                         </GridItem>
                                         <GridItem>
                                             <DetailItem label="Academic Session" value={payment.session} />
