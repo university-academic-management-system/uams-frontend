@@ -39,7 +39,7 @@ const RevenueChart = ({ data }: RevenueChartProps) => {
                     <Chart.Root h="100%" w="100%" chart={revenueChart}>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={revenueChart.data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                                <CartesianGrid vertical={false} stroke={revenueChart.color("border.subtle")} />
+                                <CartesianGrid vertical={false} stroke={revenueChart.color("gray.200")} />
                                 <XAxis 
                                     dataKey={revenueChart.key("year")} 
                                     axisLine={false} 
