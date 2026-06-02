@@ -78,7 +78,6 @@ const PaymentTypePanel = ({
             semesterFilter,
             startDate,
             endDate,
-            deliveryMethodFilter,
         ],
         queryFn: () =>
             PaymentServices.getPaymentsByType(
@@ -92,16 +91,20 @@ const PaymentTypePanel = ({
                 levelFilter,
                 semesterFilter,
                 startDate,
-                endDate,
-                deliveryMethodFilter
+                endDate
             ),
     });
 
     const payments: Payment[] = useMemo(() => {
-        if (Array.isArray(response?.data)) return response.data;
-        if (Array.isArray(response?.data?.data)) return response.data.data;
-        return [];
-    }, [response]);
+        let items: Payment[] = [];
+        if (Array.isArray(response?.data)) items = response.data;
+        else if (Array.isArray(response?.data?.data)) items = response.data.data;
+        
+        if (deliveryMethodFilter) {
+            items = items.filter(p => p.metadata?.deliveryMethod === deliveryMethodFilter);
+        }
+        return items;
+    }, [response, deliveryMethodFilter]);
 
     const pagination = response?.pagination;
 

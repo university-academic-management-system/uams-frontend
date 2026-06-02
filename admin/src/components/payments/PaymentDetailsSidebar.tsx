@@ -5,6 +5,8 @@ import {
 import { Drawer } from "@chakra-ui/react";
 import { Download, Printer } from "lucide-react";
 import type { Payment } from "@type/payment.type";
+import { useState } from "react";
+import Receipt from "@components/shared/receipt";
 
 interface PaymentDetailsSidebarProps {
     isOpen: boolean;
@@ -55,6 +57,9 @@ const DetailItem = ({ label, value }: { label: string, value: React.ReactNode })
 );
 
 export default function PaymentDetailsSidebar({ isOpen, onClose, payment }: PaymentDetailsSidebarProps) {
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [isPrinting, setIsPrinting] = useState(false);
+
     if (!payment) return null;
 
     return (
@@ -67,7 +72,7 @@ export default function PaymentDetailsSidebar({ isOpen, onClose, payment }: Paym
                             <Flex justify="space-between" align="center">
                                 <Drawer.Title fontSize="lg" fontWeight="bold">Transaction Details</Drawer.Title>
                                 <Drawer.CloseTrigger asChild>
-                                    <CloseButton size="sm" />
+                                    <CloseButton size="xl" mt="-2" />
                                 </Drawer.CloseTrigger>
                             </Flex>
                         </Drawer.Header>
@@ -155,10 +160,22 @@ export default function PaymentDetailsSidebar({ isOpen, onClose, payment }: Paym
                         
                         <Drawer.Footer borderTop="1px solid" borderColor="border.muted" py="4" px="6" bg="white">
                             <Flex w="full" gap="3">
-                                <Button variant="outline" flex="1">
+                                <Button 
+                                    variant="outline" 
+                                    size="xl" 
+                                    flex="1"
+                                    loading={isPrinting}
+                                    onClick={() => setIsPrinting(true)}
+                                >
                                     <Printer size={16} /> Print
                                 </Button>
-                                <Button colorPalette="blue" flex="1">
+                                <Button 
+                                    colorPalette="accent" 
+                                    size="xl" 
+                                    flex="1"
+                                    loading={isDownloading}
+                                    onClick={() => setIsDownloading(true)}
+                                >
                                     <Download size={16} /> Download Receipt
                                 </Button>
                             </Flex>
@@ -166,6 +183,13 @@ export default function PaymentDetailsSidebar({ isOpen, onClose, payment }: Paym
                     </Drawer.Content>
                 </Drawer.Positioner>
             </Portal>
+            <Receipt 
+                data={payment} 
+                isDownloading={isDownloading} 
+                isPrinting={isPrinting}
+                onDownloadComplete={() => setIsDownloading(false)} 
+                onPrintComplete={() => setIsPrinting(false)}
+            />
         </Drawer.Root>
     );
 }
