@@ -35,6 +35,9 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.20.0
         version: 3.22.3
+      '@zumer/snapdom':
+        specifier: ^2.12.2
+        version: 2.12.2
       axios:
         specifier: ^1.13.2
         version: 1.15.0
@@ -1242,6 +1245,9 @@ packages:
 
   '@zag-js/utils@1.40.0':
     resolution: {integrity: sha512-XUpqDtXfHe7CySjOhLPLj9H8rxbiFUJAGgmBzNdpsGPP4wx12cpOXrpSjRXZ2kMwooMPz/P7RPDBteto8sqhAQ==}
+
+  '@zumer/snapdom@2.12.2':
+    resolution: {integrity: sha512-WJNJkQoU99BkR4S/NlLlen42G7ZS3keb2rIYH3hUMGef/8XeWOz99glPZgGN4ZcYe4AXraQ9HESgWM08sC4pkw==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -3895,6 +3901,8 @@ snapshots:
       csstype: 3.2.3
 
   '@zag-js/utils@1.40.0': {}
+
+  '@zumer/snapdom@2.12.2': {}
 
   acorn-jsx@5.3.2(acorn@8.16.0):
     dependencies:

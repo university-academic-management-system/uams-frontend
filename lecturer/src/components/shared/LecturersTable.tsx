@@ -11,8 +11,6 @@ import {
   For,
   Heading,
   Spinner,
-  EmptyState,
-  VStack,
   ButtonGroup,
   IconButton,
   Pagination,
@@ -24,6 +22,7 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import type { Staff, LecturersTableProps } from "@type/lecturer.type";
 import { LECTURERS_TABLE_COLUMNS } from "@type/lecturer.type";
 import { formatRole } from "@utils/function.util";
+import EmptyStateView from "@components/shared/empty-state";
 
 const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
   const courses = lecturer.courses || [];
@@ -32,7 +31,7 @@ const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
     "Staff";
 
   return (
-    <Drawer.Root>
+    <Drawer.Root size="md">
       <Menu.Root>
         <Menu.Trigger asChild>
           <Button variant="ghost" size="xs">
@@ -55,16 +54,18 @@ const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
         <Drawer.Positioner>
           <Drawer.Content>
             <Drawer.Header>
-              <Drawer.Title fontSize="lg">{name}</Drawer.Title>
+              <Drawer.Title fontSize="md">Courses for {name}</Drawer.Title>
             </Drawer.Header>
             <Drawer.Body spaceY="4" py="6">
               <Heading size="sm" color="fg.muted">Assigned Courses</Heading>
               <For
                 each={courses}
                 fallback={
-                  <Flex direction="column" align="center" justify="center" py="10" opacity="0.6">
-                    <Text fontSize="sm" color="fg.subtle">No courses assigned</Text>
-                  </Flex>
+                  <EmptyStateView
+                    icon={<Users />}
+                    title="No courses assigned"
+                    description="This lecturer has not been assigned any courses."
+                  />
                 }
               >
                 {(course) => (
@@ -101,7 +102,7 @@ interface LecturersTablePropsExtended extends LecturersTableProps {
 }
 
 const LecturersTable = ({
-  lecturers,          // not used directly for rendering, but still passed for pagination info
+  lecturers,
   isLoading,
   paginatedLecturers,
   startIndex,
@@ -147,21 +148,11 @@ const LecturersTable = ({
             ) : lecturers.length === 0 ? (
               <Table.Row>
                 <Table.Cell colSpan={LECTURERS_TABLE_COLUMNS.length} textAlign="center" py={12}>
-                  <Flex justify="center">
-                    <EmptyState.Root>
-                      <EmptyState.Content>
-                        <EmptyState.Indicator>
-                          <Users />
-                        </EmptyState.Indicator>
-                        <VStack textAlign="center">
-                          <EmptyState.Title>No lecturers found</EmptyState.Title>
-                          <EmptyState.Description>
-                            Try adjusting your search or filter criteria.
-                          </EmptyState.Description>
-                        </VStack>
-                      </EmptyState.Content>
-                    </EmptyState.Root>
-                  </Flex>
+                  <EmptyStateView
+                    icon={<Users />}
+                    title="No lecturers found"
+                    description="Try adjusting your search or filter criteria."
+                  />
                 </Table.Cell>
               </Table.Row>
             ) : (

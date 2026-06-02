@@ -6,19 +6,17 @@ import {
   Input,
   Select,
   createListCollection,
-  EmptyState,
   VStack,
   Table,
-  Button,
-  Center,
-  Spinner,
   IconButton,
   Pagination,
   ButtonGroup,
-  HStack,
   Menu,
   Portal,
-  Badge, // ← added Badge
+  Badge,
+  Drawer,
+  CloseButton,
+  Skeleton,
 } from "@chakra-ui/react";
 import {
   LuSearch,
@@ -30,11 +28,13 @@ import {
   LuEllipsis,
   LuChartBar,
 } from "react-icons/lu";
-import { CourseHook } from "@hooks/course.hook";
+import { useAllCourses } from "@hooks/course.hook";
 import { useCurrentUser } from "@hooks/currentUser.hook";
 import useAuthStore from "@stores/auth.store";
-import type { CourseLevel, Semester as CourseSemester } from "../../types/course.type";
-import { useNavigate } from "react-router";
+import type { Course, CourseLevel, Semester as CourseSemester } from "../../types/course.type";
+import CourseStudentsTable from "@components/shared/CourseStudentsTable";
+import CourseResultsView from "@components/shared/CourseResultsView";
+import EmptyStateView from "@components/shared/empty-state";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -61,7 +61,7 @@ const semesterCollection = createListCollection({
 });
 
 const normalizeLevel = (level: string) => {
-  return level.replace(/^L/, "") 
+  return level.replace(/^L/, "");
 };
 
 const normalizeSemester = (semester: string) => {
@@ -69,35 +69,119 @@ const normalizeSemester = (semester: string) => {
 };
 
 // Action cell component (menu)
-const CourseActionCell = ({ courseId }: { courseId: string }) => {
-  const navigate = useNavigate();
+const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; courseId: string; courseTitle: string }) => {
+  const [isStudentsOpen, setIsStudentsOpen] = useState(false);
+  const [isResultsOpen, setIsResultsOpen] = useState(false);
 
   return (
-    <Menu.Root>
-      <Menu.Trigger asChild>
-        <IconButton size="sm" variant="ghost">
-          <LuEllipsis />
-        </IconButton>
-      </Menu.Trigger>
-      <Portal>
-        <Menu.Positioner>
-          <Menu.Content>
-            <Menu.Item
-              value="students"
-              onClick={() => navigate(`/courses/${courseId}/students`)}
-            >
-              <LuUsers /> Students
-            </Menu.Item>
-            <Menu.Item
-              value="results"
-              onClick={() => navigate(`/courses/${courseId}/results`)}
-            >
-              <LuChartBar /> Results
-            </Menu.Item>
-          </Menu.Content>
-        </Menu.Positioner>
-      </Portal>
-    </Menu.Root>
+    <>
+      <Menu.Root>
+        <Menu.Trigger asChild>
+          <IconButton size="sm" variant="ghost">
+            <LuEllipsis />
+          </IconButton>
+        </Menu.Trigger>
+        <Portal>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Menu.Item value="students" onClick={() => setIsStudentsOpen(true)}>
+                <LuUsers /> Students
+              </Menu.Item>
+              <Menu.Item value="results" onClick={() => setIsResultsOpen(true)}>
+                <LuChartBar /> Results
+              </Menu.Item>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Portal>
+      </Menu.Root>
+
+      {/* Drawer for Students */}
+      <Drawer.Root size="xl" open={isStudentsOpen} onOpenChange={(e) => setIsStudentsOpen(e.open)}>
+        <Portal>
+          <Drawer.Backdrop />
+          <Drawer.Positioner>
+            <Drawer.Content bg="bg">
+              <Drawer.Header>
+                <Drawer.Title>{courseTitle}</Drawer.Title>
+              </Drawer.Header>
+              <Drawer.Body>
+                <CourseStudentsTable courseId={courseId} />
+              </Drawer.Body>
+              <Drawer.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Drawer.CloseTrigger>
+            </Drawer.Content>
+          </Drawer.Positioner>
+        </Portal>
+      </Drawer.Root>
+
+      {/* Drawer for Results */}
+      <Drawer.Root size="full" open={isResultsOpen} onOpenChange={(e) => setIsResultsOpen(e.open)}>
+        <Portal>
+          <Drawer.Backdrop />
+          <Drawer.Positioner>
+            <Drawer.Content bg="bg">
+              <Drawer.Header>
+                <Drawer.Title>Course Results Details: {courseTitle}</Drawer.Title>
+              </Drawer.Header>
+              <Drawer.Body>
+                <CourseResultsView courseId={courseId} course={course} />
+              </Drawer.Body>
+              <Drawer.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Drawer.CloseTrigger>
+            </Drawer.Content>
+          </Drawer.Positioner>
+        </Portal>
+      </Drawer.Root>
+    </>
+  );
+};
+
+// Skeleton component for the entire page
+const CoursesSkeleton = () => {
+  return (
+    <Box p="4" bg="bg" rounded="md">
+      {/* Filters row skeleton */}
+      <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap">
+        <Skeleton h="10" w={{ base: "100%", sm: "300px" }} rounded="md" />
+        <Flex gap="3" align="center" wrap="wrap">
+          <Skeleton h="10" w="140px" rounded="md" />
+          <Skeleton h="10" w="180px" rounded="md" />
+        </Flex>
+      </Flex>
+
+      {/* Table skeleton */}
+      <Table.ScrollArea>
+        <Table.Root size="lg" variant="outline" stickyHeader>
+          <Table.Header>
+            <Table.Row>
+              {["S/N", "Code", "Title", "Units", "Level", "Semester", "Course Type", "Actions"].map((col) => (
+                <Table.ColumnHeader key={col} bg="bg.muted">
+                  <Skeleton h="4" w="20" />
+                </Table.ColumnHeader>
+              ))}
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Table.Row key={i}>
+                {Array.from({ length: 8 }).map((_, j) => (
+                  <Table.Cell key={j}>
+                    <Skeleton h="4" w={j === 2 ? "32" : "16"} />
+                  </Table.Cell>
+                ))}
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      </Table.ScrollArea>
+
+      {/* Pagination skeleton */}
+      <Flex justify="flex-end" mt={4}>
+        <Skeleton h="8" w="40" rounded="md" />
+      </Flex>
+    </Box>
   );
 };
 
@@ -111,8 +195,8 @@ const Courses = () => {
   const [semester, setSemester] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: allCourses = [], isLoading: allLoading, error: allError } = CourseHook.useAllCourses();
-  const { data: assignedCourses = [], isLoading: assignedLoading, error: assignedError } = CourseHook.useAllCourses();
+  const { data: allCourses = [], isLoading: allLoading, error: allError } = useAllCourses();
+  const { data: assignedCourses = [], isLoading: assignedLoading, error: assignedError } = useAllCourses();
 
   const courses = isHOD ? allCourses : assignedCourses;
   const isLoading = allLoading || assignedLoading;
@@ -145,6 +229,11 @@ const Courses = () => {
   const paginatedCourses = filteredCourses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const columns = ["S/N", "Code", "Title", "Units", "Level", "Semester", "Course Type", "Actions"];
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return <CoursesSkeleton />;
+  }
 
   return (
     <Box p="4" bg="bg" rounded="md">
@@ -229,57 +318,35 @@ const Courses = () => {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {isLoading && (
+            {error && (
               <Table.Row>
                 <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
-                  <Center>
-                    <Spinner size="lg" color="accent.500" />
-                  </Center>
+                  <EmptyStateView
+                    icon={<LuCircleAlert />}
+                    title="Failed to load courses"
+                    description={error.message}
+                  />
                 </Table.Cell>
               </Table.Row>
             )}
 
-            {!isLoading && error && (
+            {!error && filteredCourses.length === 0 && (
               <Table.Row>
                 <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
-                  <EmptyState.Root>
-                    <EmptyState.Content>
-                      <EmptyState.Indicator>
-                        <LuCircleAlert />
-                      </EmptyState.Indicator>
-                      <VStack textAlign="center">
-                        <EmptyState.Title>Failed to load courses</EmptyState.Title>
-                        <EmptyState.Description>{error.message}</EmptyState.Description>
-                      </VStack>
-                    </EmptyState.Content>
-                  </EmptyState.Root>
+                  <EmptyStateView
+                    icon={<LuBookOpen />}
+                    title="No courses found"
+                    description={
+                      courses.length === 0
+                        ? "No courses have been created yet."
+                        : "Try adjusting your search or filters."
+                    }
+                  />
                 </Table.Cell>
               </Table.Row>
             )}
 
-            {!isLoading && !error && paginatedCourses.length === 0 && (
-              <Table.Row>
-                <Table.Cell colSpan={columns.length} textAlign="center" py={10}>
-                  <EmptyState.Root>
-                    <EmptyState.Content>
-                      <EmptyState.Indicator>
-                        <LuBookOpen />
-                      </EmptyState.Indicator>
-                      <VStack textAlign="center">
-                        <EmptyState.Title>No courses found</EmptyState.Title>
-                        <EmptyState.Description>
-                          {courses.length === 0
-                            ? "No courses have been created yet."
-                            : "Try adjusting your search or filters."}
-                        </EmptyState.Description>
-                      </VStack>
-                    </EmptyState.Content>
-                  </EmptyState.Root>
-                </Table.Cell>
-              </Table.Row>
-            )}
-
-            {!isLoading && !error && paginatedCourses.length > 0 &&
+            {!error && filteredCourses.length > 0 &&
               paginatedCourses.map((course, idx) => (
                 <Table.Row key={course.id}>
                   <Table.Cell>{startIndex + idx + 1}</Table.Cell>
@@ -292,7 +359,7 @@ const Courses = () => {
                     <Badge colorPalette="gray">{course.courseType}</Badge>
                   </Table.Cell>
                   <Table.Cell>
-                    <CourseActionCell courseId={course.id} />
+                    <CourseActionCell course={course} courseId={course.id} courseTitle={`${course.title} (${course.code})`} />
                   </Table.Cell>
                 </Table.Row>
               ))}

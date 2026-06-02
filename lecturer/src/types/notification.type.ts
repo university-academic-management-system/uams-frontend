@@ -21,6 +21,84 @@ export interface NotificationsResponse {
     data: Notification[];
 }
 
+export interface GetNotificationsResponse {
+    status: string;
+    message: string;
+    data: Notification[];
+}
+
+export interface MarkAllReadResponse {
+    status: string;
+    message: string;
+    data: {
+        updatedCount: number;
+    };
+}
+
+export interface MarkReadResponse {
+    status: string;
+    message: string;
+    data: Notification;
+}
+
+export interface AuditLog {
+    id: string;
+    userId: string;
+    action: string;
+    entity: string;
+    entityId: string;
+    details: Record<string, string>;
+    ipAddress: string;
+    createdAt: string;
+    user: {
+        email: string;
+        role: string;
+    };
+}
+
+export interface GetAuditLogsResponse {
+    status: string;
+    message: string;
+    data: {
+        data: AuditLog[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+        };
+    };
+}
+
+export interface AuditLog {
+    id: string;
+    userId: string;
+    action: string;
+    entity: string;
+    entityId: string;
+    details: Record<string, string>;
+    ipAddress: string;
+    createdAt: string;
+    user: {
+        email: string;
+        role: string;
+    };
+}
+
+export interface GetAuditLogsResponse {
+    status: string;
+    message: string;
+    data: {
+        data: AuditLog[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+        };
+    };
+}
+
 export type CreateRecipientType = "ALL" | "ROLE";
 
 export interface CreateNotificationPayload {

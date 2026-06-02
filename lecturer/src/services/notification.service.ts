@@ -1,19 +1,29 @@
 import axiosClient from "@configs/axios.config";
-import type { NotificationsResponse } from "@type/notification.type"
+import type { NotificationsResponse, GetAuditLogsResponse, MarkAllReadResponse, MarkReadResponse } from "@type/notification.type";
 
-export const NotificationServices = {
-    getNotifications: async (): Promise<NotificationsResponse> => {
-        const { data } = await axiosClient.get("/notifications");
-        return data;
-    },
+export const getNotificationsApi = async (): Promise<NotificationsResponse> => {
+    const { data } = await axiosClient.get<NotificationsResponse>("/notifications");
+    return data;
+}
 
-    markAsRead: async (id: string) => {
-        const { data } = await axiosClient.patch(`/notifications/${id}/read`);
-        return data;
-    },
+ export const markAllNotificationsReadApi = async (): Promise<MarkAllReadResponse> => {
+    const { data } = await axiosClient.patch<MarkAllReadResponse>("/notifications/read-all");
+    return data;
+}
 
-    markAllAsRead: async () => {
-        const { data } = await axiosClient.patch("/notifications/read-all");
-        return data;
-    },
+export const markNotificationReadApi = async (id: string): Promise<MarkReadResponse> => {
+    const { data } = await axiosClient.patch<MarkReadResponse>(`/notifications/${id}/read`);
+    return data;
+}
+
+export const getMyAuditLogsApi = async (params?: {
+  action?: string;
+  entity?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}): Promise<GetAuditLogsResponse> => {
+  const { data } = await axiosClient.get<GetAuditLogsResponse>("/audit-logs/me", { params });
+  return data;
 };

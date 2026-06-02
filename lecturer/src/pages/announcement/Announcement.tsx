@@ -1,123 +1,67 @@
-import { useState } from "react";
-import {
-  Box,
-  Flex,
-  Heading,
-  Portal,
-  DatePicker,
-  EmptyState,
-  VStack,
-} from "@chakra-ui/react";
-import type { DateValue } from "@internationalized/date";
-import { LuMegaphone } from "react-icons/lu";
-import { NotificationHook } from "@hooks/notification.hook";
-import AnnouncementList from "@components/shared/AnnouncementList";
+import { Card, For, Heading, Skeleton, Stack, Text, Separator } from "@chakra-ui/react"
+import { useNotifications } from "@hooks/notification.hook"
+import { EmptyStateView } from "@components/shared/empty-state"
+import { LuBell, } from "react-icons/lu"
+import moment from "moment"
+import React from "react"
 
-// Helper to convert any DateValue to YYYY-MM-DD string
-const toDateString = (date: DateValue | null): string => {
-  if (!date) return "";
-  if ("year" in date && "month" in date && "day" in date) {
-    return `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
-  }
-  return "";
-};
+const AnnouncementsPage = () => {
+    const { data, isLoading } = useNotifications()
+    const notifications = (data?.data || []).filter(n => ["LECTURER", "ALL"].includes(n.recipientType));
 
-// Helper to get start and end from a range value (array of 2 dates)
-const getRangeDates = (range: DateValue[]) => {
-  const start = range[0] || null;
-  const end = range[1] || null;
-  return { startDate: toDateString(start), endDate: toDateString(end) };
-};
+    if (isLoading) {
+        return (
+            <Stack gap="4" p="4">
+                <Skeleton h="10" w="200px" />
+                <Skeleton h="32" />
+                <Skeleton h="32" />
+                <Skeleton h="32" />
+            </Stack>
+        )
+    }
 
-const Announcement = () => {
-  const [dateRange, setDateRange] = useState<DateValue[]>([]);
+    return (
+        <Stack gap="4" bg="bg" border="xs" borderColor="border.muted" rounded="md">
+            <For
+                each={notifications}
+                fallback={
+                    <EmptyStateView
+                        icon={<LuBell />}
+                        title="No announcements"
+                        description="You don't have any announcements yet."
+                    />
+                }
+            >
+                {(item, index) => (
+                    <React.Fragment key={item.id}>
+                        <Card.Root
+                            key={index}
+                            variant="outline"
+                            border="none"
+                            bg="bg"
+                        >
+                            <Card.Body>
+                                <Stack gap="1" flex="1">
+                                    <Heading size="sm" fontWeight={item.read ? "semibold" : "bold"}>
+                                        {item.title}
+                                    </Heading>
+                                    <Text color={item.read ? "fg.muted" : "fg"} fontSize="sm">
+                                        {item.message}
+                                    </Text>
+                                    <Text fontSize="xs" color="fg.subtle" mt="2">
+                                        {moment(item.createdAt).fromNow()}
+                                    </Text>
+                                </Stack>
+                            </Card.Body>
+                        </Card.Root>
+                        {index < notifications.length - 1 && (
+                            <Separator borderColor="border.muted" />
+                        )}
+                    </React.Fragment>
+                )}
+            </For>
+        </Stack >
+    )
+}
 
-  const { startDate, endDate } = getRangeDates(dateRange);
-
-  const {
-    data: announcements = [],
-    isLoading,
-    error,
-    refetch,
-  } = NotificationHook.useNotifications();
-
-  // Check if no announcements and not loading
-  const hasNoAnnouncements = !isLoading && announcements.length === 0;
-
-  return (
-    <Box maxW="full" mx="auto">
-      <Flex align="center" justify="flex-end" mb="8" flexWrap="wrap" gap="4">
-
-        <Flex align="center" gap="3" flexWrap="wrap" colorPalette={"accent"}>
-          <DatePicker.Root
-            openOnClick
-            selectionMode="range"
-            value={dateRange}
-            onValueChange={(e) => setDateRange(e.value)}
-            size="sm"
-            width="260px"
-          >
-            <DatePicker.Control>
-              <DatePicker.Input index={0} />
-              <DatePicker.Input index={1} />
-            </DatePicker.Control>
-            <Portal>
-              <DatePicker.Positioner>
-                <DatePicker.Content>
-                  <DatePicker.View view="day">
-                    <DatePicker.Header />
-                    <DatePicker.DayTable />
-                  </DatePicker.View>
-                  <DatePicker.View view="month">
-                    <DatePicker.Header />
-                    <DatePicker.MonthTable />
-                  </DatePicker.View>
-                  <DatePicker.View view="year">
-                    <DatePicker.Header />
-                    <DatePicker.YearTable />
-                  </DatePicker.View>
-                </DatePicker.Content>
-              </DatePicker.Positioner>
-            </Portal>
-          </DatePicker.Root>
-        </Flex>
-      </Flex>
-
-      {hasNoAnnouncements ? (
-        <Box
-          bg="white"
-          rounded="md"
-          border="1px solid"
-          borderColor="border.muted"
-          p="5"
-          textAlign="center"
-        >
-          <EmptyState.Root>
-            <EmptyState.Content>
-              <EmptyState.Indicator>
-                <LuMegaphone />
-              </EmptyState.Indicator>
-              <VStack textAlign="center">
-                <EmptyState.Title>No announcements found</EmptyState.Title>
-                <EmptyState.Description>
-                  {startDate || endDate
-                    ? "No announcements match the selected date range."
-                    : "There are no announcements available at the moment."}
-                </EmptyState.Description>
-              </VStack>
-            </EmptyState.Content>
-          </EmptyState.Root>
-        </Box>
-      ) : (
-        <AnnouncementList
-          announcements={announcements}
-          isLoading={isLoading}
-          error={error}
-          onRetry={refetch}
-        />
-      )}
-    </Box>
-  );
-};
-
-export default Announcement;
+export default AnnouncementsPage;

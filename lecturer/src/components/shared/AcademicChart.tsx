@@ -33,6 +33,8 @@ export const AcademicPerformanceChart = () => {
   const role = user?.role;
   const isHodOrEro = role === "HOD" || role === "ERO";
 
+   const mutedBorder = "var(--chakra-colors-border-muted)";
+
   // Compute chart data only if user is HOD/ERO and there are students
   const chartData = useMemo(() => {
     if (!isHodOrEro || students.length === 0) return [];
@@ -128,7 +130,7 @@ export const AcademicPerformanceChart = () => {
         <Box minH="400px" w="full">
           <Chart.Root maxH="sm" chart={chart}>
             <LineChart margin={{ left: -30, right: 10 }} data={chart.data} responsive>
-              <CartesianGrid stroke={chart.color("border.muted")} strokeWidth={0.5} vertical={false} />
+              <CartesianGrid stroke={mutedBorder} strokeWidth={0.5} vertical={false} />
               <XAxis
                 axisLine={{ stroke: chart.color("border"), strokeWidth: 0.5 }}
                 dataKey={chart.key("level")}
@@ -147,7 +149,7 @@ export const AcademicPerformanceChart = () => {
               />
               <Tooltip
                 animationDuration={100}
-                cursor={{ stroke: chart.color("border") }}
+                cursor={{ stroke: mutedBorder }}
                 content={<Chart.Tooltip />}
               />
               <Legend verticalAlign="top" align="right" content={<Chart.Legend />} />
@@ -158,7 +160,7 @@ export const AcademicPerformanceChart = () => {
                   isAnimationActive={false}
                   dataKey={chart.key(item.name)}
                   strokeWidth={1}
-                  stroke={chart.color(item.color)}
+                  stroke={mutedBorder}
                   dot={{ r: 3 }}
                   activeDot={{ r: 4 }}
                 />
