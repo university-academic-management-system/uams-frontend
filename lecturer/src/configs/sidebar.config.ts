@@ -26,7 +26,7 @@ const sidebarItems: SidebarItem[] = [
     { label: "Students", icon: GraduationCap, path: "/students", accessLevel: ["HOD", "ERO"] },
     { label: "Lecturers", icon: Users, path: "/lecturers", accessLevel: ["HOD", "ERO"] },
     { label: "Courses", icon: BookOpen, path: "/courses", accessLevel: "ALL" },
-    { label: "Results", icon: ClipboardList, path: "/results", accessLevel: "ALL" },
+   // { label: "Results", icon: ClipboardList, path: "/results", accessLevel: "ALL" },
     { label: "Projects", icon: ChartColumn, path: "/projects", accessLevel: ["HOD", "LECTURER", "ERO"] },
     { label: "Timetable", icon: CalendarDays, path: "/timetable", accessLevel: "ALL" },
     // { label: "Payments", icon: CreditCard, path: "/payments" },

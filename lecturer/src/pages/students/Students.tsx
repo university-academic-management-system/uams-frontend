@@ -15,8 +15,8 @@ import {
   SelectItemIndicator,
   Menu,
   Portal,
-  HStack,
-  Text,
+  Skeleton,
+  Table,
 } from "@chakra-ui/react";
 import { LuSearch, LuChevronLeft, LuChevronRight, LuDownload, LuFileSpreadsheet, LuFileText } from "react-icons/lu";
 import jsPDF from "jspdf";
@@ -63,6 +63,76 @@ const levelCollection = createListCollection({
   })),
 });
 
+// ─── Skeleton component ─────────────────────────────────────────────
+const StudentsSkeleton = () => {
+  return (
+    <Box maxW="100vw" overflowX="hidden">
+      <Tabs.Root variant="line" colorPalette="accent">
+        <Tabs.List mb="6">
+          {INTERNAL_DEGREES.map((deg) => (
+            <Tabs.Trigger key={deg} value={deg} disabled>
+              <Skeleton h="6" w="16" />
+            </Tabs.Trigger>
+          ))}
+        </Tabs.List>
+
+        <Box bg="bg" rounded="md" p="4">
+          {/* Filters row skeleton */}
+          <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" direction={{ base: "column", sm: "row" }}>
+            <Skeleton h="10" w={{ base: "100%", sm: "300px" }} rounded="md" />
+            <Flex gap="3" align="center" wrap="wrap">
+              <Skeleton h="10" w={{ base: "100%", sm: "140px" }} rounded="md" />
+              <Skeleton h="10" w={{ base: "100%", sm: "180px" }} rounded="md" />
+              <Skeleton h="10" w={{ base: "100%", sm: "120px" }} rounded="md" />
+              <Skeleton h="10" w={{ base: "100%", sm: "auto" }} rounded="md" />
+            </Flex>
+          </Flex>
+
+          {/* Charts area skeleton */}
+          <Box mb={6} p={4} rounded="md" borderColor="border.muted" bg="bg.panel">
+            <Flex direction="column" gap={9}>
+              <Skeleton h="300px" w="full" rounded="md" />
+              <Skeleton h="300px" w="full" rounded="md" />
+            </Flex>
+          </Box>
+
+          {/* Table skeleton */}
+          <Table.ScrollArea>
+            <Table.Root size="lg" variant="outline" stickyHeader>
+              <Table.Header>
+                <Table.Row>
+                  {["S/N", "Full Name", "Reg No.", "Mat. No.", "Email", "Phone No", "Gender", "Level", "Admission Year", "Admission Session", "Registration Status", "Academic Standing", "CGPA", "Status", "Actions"].map((col) => (
+                    <Table.ColumnHeader key={col} bg="bg.muted">
+                      <Skeleton h="4" w="20" />
+                    </Table.ColumnHeader>
+                  ))}
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Table.Row key={i}>
+                    {Array.from({ length: 15 }).map((_, j) => (
+                      <Table.Cell key={j}>
+                        <Skeleton h="4" w={j === 1 ? "32" : "16"} />
+                      </Table.Cell>
+                    ))}
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </Table.ScrollArea>
+
+          {/* Pagination skeleton */}
+          <Flex justify="flex-end" mt={4}>
+            <Skeleton h="8" w="40" rounded="md" />
+          </Flex>
+        </Box>
+      </Tabs.Root>
+    </Box>
+  );
+};
+
+// ─── Main component ─────────────────────────────────────────────
 const Students = () => {
   const { user } = useAuthStore();
   const { data: students = [], isLoading, error } = useStudents();
@@ -155,22 +225,22 @@ const Students = () => {
         .map((lvl) => {
           const inLevel = list.filter((s) => formatLevel(s.studentProfile?.level) === lvl);
           const avgCgpa = inLevel.reduce((sum, s) => sum + (s.studentProfile?.cgpa || 0), 0) / (inLevel.length || 1);
-          const avgGpa  = inLevel.reduce((sum, s) => sum + (s.studentProfile?.gpa  || 0), 0) / (inLevel.length || 1);
+          const avgGpa = inLevel.reduce((sum, s) => sum + (s.studentProfile?.gpa || 0), 0) / (inLevel.length || 1);
           const carryovers = inLevel.filter((s) => (s.studentProfile?.carryoverCourses || 0) > 0).length;
           return {
             level: lvl,
             levelLabel: `${lvl} Level`,
             avgCgpa: Number(avgCgpa.toFixed(2)),
-            avgGpa:  Number(avgGpa.toFixed(2)),
+            avgGpa: Number(avgGpa.toFixed(2)),
             carryovers,
           };
         })
         .sort((a, b) => parseInt(a.level, 10) - parseInt(b.level, 10));
 
-      const registered   = list.filter((s) => s.studentProfile?.registrationStatus === "REGISTERED").length;
+      const registered = list.filter((s) => s.studentProfile?.registrationStatus === "REGISTERED").length;
       const unregistered = list.length - registered;
       const registrationData = [
-        { name: "Registered",   value: registered },
+        { name: "Registered", value: registered },
         { name: "Unregistered", value: unregistered },
       ];
 
@@ -178,9 +248,9 @@ const Students = () => {
     };
 
     return {
-      "BS.c":       compute(studentsByDegree["BS.c"]),
-      "MS.c":       compute(studentsByDegree["MS.c"]),
-      "Ph.D":       compute(studentsByDegree["Ph.D"]),
+      "BS.c": compute(studentsByDegree["BS.c"]),
+      "MS.c": compute(studentsByDegree["MS.c"]),
+      "Ph.D": compute(studentsByDegree["Ph.D"]),
       POSTGRADUATE: compute(studentsByDegree.POSTGRADUATE),
     } as Record<degreeAwarded, ReturnType<typeof compute>>;
   }, [studentsByDegree]);
@@ -237,7 +307,6 @@ const Students = () => {
     }
   };
 
-  // Create collection for per-page options
   const perPageOptions = [10, 20, 50, 100];
   const perPageCollection = createListCollection({
     items: perPageOptions.map((opt) => ({
@@ -245,6 +314,11 @@ const Students = () => {
       value: opt.toString(),
     })),
   });
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return <StudentsSkeleton />;
+  }
 
   return (
     <Box maxW="100vw" overflowX="hidden">
@@ -282,7 +356,6 @@ const Students = () => {
             </InputGroup>
 
             <Flex gap="3" align="center" wrap="wrap">
-              {/* Level select */}
               <Select.Root
                 collection={levelCollection}
                 value={[level]}
@@ -311,7 +384,6 @@ const Students = () => {
                 </Select.Positioner>
               </Select.Root>
 
-              {/* Session select */}
               <Select.Root
                 collection={sessionCollection}
                 value={[sessionFilter]}
@@ -340,7 +412,6 @@ const Students = () => {
                 </Select.Positioner>
               </Select.Root>
 
-              {/* Rows per page SELECT */}
               <Select.Root
                 collection={perPageCollection}
                 value={[perPage.toString()]}
@@ -369,7 +440,6 @@ const Students = () => {
                 </Select.Positioner>
               </Select.Root>
 
-              {/* Export menu */}
               <Menu.Root>
                 <Menu.Trigger asChild>
                   <Button
@@ -413,7 +483,7 @@ const Students = () => {
               <Box overflowX="auto">
                 <StudentsDataTable
                   students={paginatedStudents}
-                  isLoading={isLoading}
+                  isLoading={false}
                   error={error}
                 />
               </Box>

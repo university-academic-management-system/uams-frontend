@@ -3,15 +3,14 @@ import { useState, useMemo, useEffect } from "react";
 import {
   Box,
   Flex,
-  Text,
-  Heading,
   Select,
   Portal,
   createListCollection,
   InputGroup,
   Input,
   Button,
-  HStack,
+  Skeleton,
+  Table,
 } from "@chakra-ui/react";
 import { LuSearch, LuDownload } from "react-icons/lu";
 import { useStaff } from "@hooks/lecturer.hook";
@@ -19,6 +18,51 @@ import type { Staff } from "@type/lecturer.type";
 import LecturersTable from "@components/shared/LecturersTable";
 import { exportToExcel } from "@utils/excel.util";
 import { toaster } from "@components/ui/toaster";
+
+// Skeleton component for the entire page
+const LecturersSkeleton = () => {
+  return (
+    <Box maxW="100vw" overflowX="hidden">
+      <Box bg="bg" rounded="md" p="4">
+        <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" direction={{ base: "column", sm: "row" }}>
+          <Skeleton h="10" w={{ base: "100%", sm: "300px" }} rounded="md" />
+          <Flex gap="3" align="center" wrap="wrap">
+            <Skeleton h="10" w={{ base: "100%", sm: "200px" }} rounded="md" />
+            <Skeleton h="10" w={{ base: "100%", sm: "120px" }} rounded="md" />
+            <Skeleton h="10" w={{ base: "100%", sm: "auto" }} rounded="md" />
+          </Flex>
+        </Flex>
+        <Table.ScrollArea>
+          <Table.Root size="lg" variant="outline" stickyHeader>
+            <Table.Header>
+              <Table.Row>
+                {["S/N", "Staff No.", "Full Name", "Email", "Phone", "Role", "Courses", "Actions"].map((col) => (
+                  <Table.ColumnHeader key={col} bg="bg.muted">
+                    <Skeleton h="4" w="20" />
+                  </Table.ColumnHeader>
+                ))}
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Table.Row key={i}>
+                  {Array.from({ length: 8 }).map((_, j) => (
+                    <Table.Cell key={j}>
+                      <Skeleton h="4" w={j === 2 ? "32" : "16"} />
+                    </Table.Cell>
+                  ))}
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </Table.ScrollArea>
+        <Flex justify="flex-end" mt={4}>
+          <Skeleton h="8" w="40" rounded="md" />
+        </Flex>
+      </Box>
+    </Box>
+  );
+};
 
 const Lecturers = () => {
   const [search, setSearch] = useState("");
@@ -58,8 +102,8 @@ const Lecturers = () => {
       items: [
         { label: "All Roles", value: "" },
         ...uniqueRoles.map((role) => ({
-          label: ["HOD", "ERO"].includes(role) 
-            ? role 
+          label: ["HOD", "ERO"].includes(role)
+            ? role
             : role.replace(/_/g, " ")
                   .split(" ")
                   .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -94,7 +138,6 @@ const Lecturers = () => {
     return result;
   }, [lecturers, debouncedSearch, roleFilter]);
 
-  // Pagination
   const totalItems = filteredLecturers.length;
   const totalPages = Math.ceil(totalItems / perPage);
   const startIndex = (currentPage - 1) * perPage;
@@ -127,7 +170,6 @@ const Lecturers = () => {
     }
   };
 
-  // Collection for per‑page select
   const perPageOptions = [10, 20, 50, 100];
   const perPageCollection = createListCollection({
     items: perPageOptions.map((opt) => ({
@@ -136,15 +178,18 @@ const Lecturers = () => {
     })),
   });
 
+  if (isLoading) {
+    return <LecturersSkeleton />;
+  }
+
   return (
-    <Box maxW="100vw" overflowX="hidden" p="4">
+    <Box maxW="100vw" overflowX="hidden">
       <Box bg="bg" rounded="md" p="4">
-        {/* Filters + per‑page select */}
-        <Flex 
-          align="center" 
-          justify="space-between" 
-          gap="3" 
-          mb="5" 
+        <Flex
+          align="center"
+          justify="space-between"
+          gap="3"
+          mb="5"
           wrap="wrap"
           direction={{ base: "column", sm: "row" }}
           colorPalette="accent"
@@ -188,7 +233,6 @@ const Lecturers = () => {
               </Portal>
             </Select.Root>
 
-            {/* Rows per page SELECT */}
             <Select.Root
               collection={perPageCollection}
               value={[perPage.toString()]}
@@ -229,11 +273,10 @@ const Lecturers = () => {
           </Flex>
         </Flex>
 
-        {/* Scrollable table wrapper */}
         <Box overflowX="auto">
           <LecturersTable
             lecturers={filteredLecturers}
-            isLoading={isLoading}
+            isLoading={false}
             paginatedLecturers={paginatedLecturers}
             startIndex={startIndex}
             currentPage={currentPage}
