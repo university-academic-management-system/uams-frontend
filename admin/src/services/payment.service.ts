@@ -40,11 +40,10 @@ export const PaymentServices = {
         level = "",
         semester = "",
         startDate = "",
-        endDate = "",
-        deliveryMethod = ""
+        endDate = ""
     ) => {
         const { data } = await axiosClient.get(`/payments/${programTypeCode}/${paymentType}`, {
-            params: { page, limit, search, status, session, level, semester, startDate, endDate, deliveryMethod }
+            params: { page, limit, search, status, session, level, semester, startDate, endDate }
         });
         return data;
     },

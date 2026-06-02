@@ -6,8 +6,7 @@ import {
     Table, 
     EmptyState, 
     VStack, 
-    Flex, 
-    Heading, 
+    Flex,
     Button, 
     Spinner, 
     Text 
