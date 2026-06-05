@@ -42,3 +42,11 @@ export const formatRole = (role: string | undefined | null): string => {
 };
 
 export const toTitleCase = (str: string) => str[0].toUpperCase() + str.slice(1).toLowerCase().replaceAll("_", " ");
+
+export const getDegreeDisplayLabel = (code: string): string => {
+  return code.toUpperCase().replace(/\./g, "");
+};
+
+export const normalizeDegree = (deg: string): string => {
+  return deg.toUpperCase().replace(/\./g, "").replace(/\s/g, "");
+};

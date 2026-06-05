@@ -10,7 +10,7 @@ import {
   HStack,
   Portal,
   Select,
-  Spinner,
+  Skeleton,
   Stack,
   Table,
   Text,
@@ -56,6 +56,39 @@ const semesterOptions = createListCollection({
   })),
 });
 
+// Table skeleton component
+const TableSkeleton = () => {
+  const columns = [
+    "Day", "Start Time", "End Time", "Venue", "Level", "Semester", "Session", "Course Code", "Actions"
+  ];
+  return (
+    <Box rounded="md" borderWidth="1px" borderColor="border.muted" overflowX="auto">
+      <Table.Root size="sm" variant="outline">
+        <Table.Header>
+          <Table.Row>
+            {columns.map((col) => (
+              <Table.ColumnHeader key={col} bg="bg.muted" fontSize="md" fontWeight="600" color="fg.muted" px="4" py="3">
+                {col}
+              </Table.ColumnHeader>
+            ))}
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <Table.Row key={idx}>
+              {columns.map((col, i) => (
+                <Table.Cell key={i} px="4" py="3">
+                  <Skeleton h="4" w={col === "Actions" ? "16" : "24"} />
+                </Table.Cell>
+              ))}
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table.Root>
+    </Box>
+  );
+};
+
 const Timetable = () => {
   const { user } = useAuthStore();
 
@@ -66,17 +99,12 @@ const Timetable = () => {
   const [selectedSemester, setSelectedSemester] = useState(user?.currentSemester || "FIRST");
   const [selectedSession, setSelectedSession] = useState(user?.currentSession || fallbackSession);
 
-  // Synchronize state when user details load
   useEffect(() => {
-    if (user?.currentSemester) {
-      setSelectedSemester(user.currentSemester);
-    }
-    if (user?.currentSession) {
-      setSelectedSession(user.currentSession);
-    }
+    if (user?.currentSemester) setSelectedSemester(user.currentSemester);
+    if (user?.currentSession) setSelectedSession(user.currentSession);
   }, [user]);
 
-  const { data: timetables = [], isLoading: isQueryLoading, error } = TimetableHook.useTimetable(
+  const { data: timetables, isLoading: isQueryLoading, error } = TimetableHook.useTimetable(
     { session: selectedSession, semester: selectedSemester },
     !!selectedSession && !!selectedSemester
   );
@@ -90,34 +118,30 @@ const Timetable = () => {
     for (let year = currentYear; year >= startYear; year--) {
       sessions.push(`${year}/${year + 1}`);
     }
-    return createListCollection({
-      items: sessions.map((s) => ({ label: s, value: s })),
-    });
+    return createListCollection({ items: sessions.map((s) => ({ label: s, value: s })) });
   }, []);
 
   const filteredTimetables = useMemo(() => {
-    let filtered = timetables;
-    if (selectedSession) {
-      filtered = filtered.filter((t: TimetableEntry) => t.session === selectedSession);
-    }
-    if (selectedLevel) {
-      filtered = filtered.filter((t: TimetableEntry) => t.level === selectedLevel);
-    }
-    if (selectedSemester) {
-      filtered = filtered.filter((t: TimetableEntry) => t.semester === selectedSemester);
-    }
+    const entries = Array.isArray(timetables) ? timetables : [];
+    let filtered = entries;
+    if (selectedSession) filtered = filtered.filter((t) => t.session === selectedSession);
+    if (selectedLevel) filtered = filtered.filter((t) => t.level === selectedLevel);
+    if (selectedSemester) filtered = filtered.filter((t) => t.semester === selectedSemester);
     return filtered;
   }, [timetables, selectedSession, selectedLevel, selectedSemester]);
 
-
   if (isLoading) {
     return (
-      <Center minH="100vh">
-        <Spinner size="xl" color="accent.500" />
-      </Center>
+      <Box p="4">
+        <HStack gap="4" mb="4" justify="flex-end">
+          <Skeleton h="10" w="160px" />
+          <Skeleton h="10" w="140px" />
+          <Skeleton h="10" w="180px" />
+        </HStack>
+        <TableSkeleton />
+      </Box>
     );
   }
-
 
   if (error) {
     return (
@@ -129,9 +153,7 @@ const Timetable = () => {
             </EmptyState.Indicator>
             <VStack textAlign="center">
               <EmptyState.Title>Error</EmptyState.Title>
-              <EmptyState.Description>
-                {error.message}
-              </EmptyState.Description>
+              <EmptyState.Description>{error.message}</EmptyState.Description>
             </VStack>
           </EmptyState.Content>
         </EmptyState.Root>
@@ -141,7 +163,6 @@ const Timetable = () => {
 
   return (
     <Stack>
-
       <Box bg="bg" rounded="md" p="4">
         <HStack gap="4" mb="4" justify="flex-end">
           <Select.Root
@@ -259,7 +280,7 @@ const Timetable = () => {
                         <VStack textAlign="center">
                           <EmptyState.Title>No timetable entries found</EmptyState.Title>
                           <EmptyState.Description>
-                            {timetables.length === 0
+                            {timetables && Array.isArray(timetables) && timetables.length === 0
                               ? "No timetable data available for the selected session and semester."
                               : "Try adjusting your filters to see more results."}
                           </EmptyState.Description>
@@ -269,7 +290,7 @@ const Timetable = () => {
                   </Table.Cell>
                 </Table.Row>
               ) : (
-                filteredTimetables.map((item: TimetableEntry) => (
+                filteredTimetables.map((item) => (
                   <Table.Row key={item.id}>
                     <Table.Cell>{item.dayOfWeek}</Table.Cell>
                     <Table.Cell>{formatTime(item.startTime)}</Table.Cell>
@@ -297,9 +318,7 @@ const DetailsDrawer = memo(({ item }: { item: TimetableEntry }) => {
   return (
     <Drawer.Root size="md">
       <Drawer.Trigger asChild>
-        <Button variant="outline" size="xs">
-          View
-        </Button>
+        <Button variant="outline" size="xs">View</Button>
       </Drawer.Trigger>
       <Portal>
         <Drawer.Backdrop />
@@ -310,36 +329,13 @@ const DetailsDrawer = memo(({ item }: { item: TimetableEntry }) => {
             </Drawer.Header>
             <Drawer.Body>
               <Stack gap="3">
-                <HStack>
-                  <Text fontWeight="bold">Course Code:</Text>
-                  <Text>{item.course.code}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontWeight="bold">Day:</Text>
-                  <Text>{item.dayOfWeek}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontWeight="bold">Time:</Text>
-                  <Text>
-                    {formatTime(item.startTime)} – {formatTime(item.endTime)}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Text fontWeight="bold">Venue:</Text>
-                  <Text>{item.venue}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontWeight="bold">Session:</Text>
-                  <Text>{item.session}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontWeight="bold">Semester:</Text>
-                  <Text>{item.semester}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontWeight="bold">Level:</Text>
-                  <Text>{formatLevelDisplay(item.level, true)}</Text>
-                </HStack>
+                <HStack><Text fontWeight="bold">Course Code:</Text><Text>{item.course.code}</Text></HStack>
+                <HStack><Text fontWeight="bold">Day:</Text><Text>{item.dayOfWeek}</Text></HStack>
+                <HStack><Text fontWeight="bold">Time:</Text><Text>{formatTime(item.startTime)} – {formatTime(item.endTime)}</Text></HStack>
+                <HStack><Text fontWeight="bold">Venue:</Text><Text>{item.venue}</Text></HStack>
+                <HStack><Text fontWeight="bold">Session:</Text><Text>{item.session}</Text></HStack>
+                <HStack><Text fontWeight="bold">Semester:</Text><Text>{item.semester}</Text></HStack>
+                <HStack><Text fontWeight="bold">Level:</Text><Text>{formatLevelDisplay(item.level, true)}</Text></HStack>
               </Stack>
             </Drawer.Body>
             <Drawer.CloseTrigger asChild>
