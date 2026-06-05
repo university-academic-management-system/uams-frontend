@@ -1,42 +1,37 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import { NotificationServices } from "@services/notification.service";
-import type { Notification } from "@type/notification.type";
+import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
+import { getMyAuditLogsApi, getNotificationsApi, markAllNotificationsReadApi, markNotificationReadApi } from "@services/notification.service";
+import type { MarkAllReadResponse, MarkReadResponse, NotificationsResponse } from "@type/notification.type";
+import type { GetAuditLogsResponse } from "@type/notification.type"; 
 
-export const NotificationHook = {
-    useNotifications: (
-        options?: Partial<UseQueryOptions<Notification[]>>
-    ) =>
-        useQuery<Notification[]>({
-            queryKey: ["notifications"],
-            queryFn: async () => {
-                const response = await NotificationServices.getNotifications();
-                return response?.data || [];
-            },
-            staleTime: 2 * 60 * 1000,
-            ...options,
-        }),
+export const useNotifications = (options?: Partial<UseQueryOptions<NotificationsResponse, Error>>) => useQuery<NotificationsResponse, Error>({
+    queryKey: ["notifications"],
+    queryFn: () => getNotificationsApi(),
+    ...options
+})
 
-    useMarkAllAsRead: () => {
-        const queryClient = useQueryClient();
-        return useMutation({
-            mutationFn: () => NotificationServices.markAllAsRead(),
-            onSuccess: () => {
-                queryClient.setQueryData<Notification[]>(["notifications"], (old) =>
-                    old?.map((n) => ({ ...n, read: true })) ?? []
-                );
-            },
-        });
-    },
+export const useMarkAllNotificationsRead = (options?: UseMutationOptions<MarkAllReadResponse, Error, void>) => useMutation<MarkAllReadResponse, Error, void>({
+    mutationFn: () => markAllNotificationsReadApi(),
+    ...options
+})
 
-    useMarkAsRead: () => {
-        const queryClient = useQueryClient();
-        return useMutation({
-            mutationFn: (id: string) => NotificationServices.markAsRead(id),
-            onSuccess: (_data, id) => {
-                queryClient.setQueryData<Notification[]>(["notifications"], (old) =>
-                    old?.map((n) => (n.id === id ? { ...n, read: true } : n)) ?? []
-                );
-            },
-        });
-    },
-};
+export const useMarkNotificationRead = (options?: UseMutationOptions<MarkReadResponse, Error, string>) => useMutation<MarkReadResponse, Error, string>({
+    mutationFn: (id: string) => markNotificationReadApi(id),
+    ...options
+})
+
+export const useMyAuditLogs = (
+  params?: {
+    action?: string;
+    entity?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  },
+  options?: Partial<UseQueryOptions<GetAuditLogsResponse, Error>>
+) =>
+  useQuery<GetAuditLogsResponse, Error>({
+    queryKey: ["audit-logs", params],
+    queryFn: () => getMyAuditLogsApi(params),
+    ...options,
+  });

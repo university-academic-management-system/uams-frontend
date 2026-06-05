@@ -40,3 +40,5 @@ export const formatRole = (role: string | undefined | null): string => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 };
+
+export const toTitleCase = (str: string) => str[0].toUpperCase() + str.slice(1).toLowerCase().replaceAll("_", " ");

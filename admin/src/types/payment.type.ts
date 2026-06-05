@@ -88,6 +88,16 @@ export interface Payment {
     metadata: PaymentMetadata;
     createdAt: string;
     updatedAt: string;
+    student?: {
+        matricNumber: string;
+        registrationNo: string;
+        userId: string;
+        firstName: string;
+        surname: string;
+        otherName: string;
+        degreeAwarded: string;
+        degreeAwardedCode: string;
+    };
 }
 
 export interface PaymentPagination {
@@ -104,4 +114,16 @@ export interface PaymentsResponse {
     message: string;
     data: Payment[];
     pagination: PaymentPagination;
+}
+
+export interface PaymentSummaryItem {
+    title: string;
+    code: string;
+    paymentSummaries: Record<string, number>;
+}
+
+export interface PaymentsSummaryResponse {
+    status: string;
+    message: string;
+    data: Record<string, PaymentSummaryItem>;
 }
