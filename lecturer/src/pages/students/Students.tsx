@@ -356,6 +356,7 @@ const Students = () => {
             </InputGroup>
 
             <Flex gap="3" align="center" wrap="wrap">
+              {/* Level select */}
               <Select.Root
                 collection={levelCollection}
                 value={[level]}
@@ -384,6 +385,7 @@ const Students = () => {
                 </Select.Positioner>
               </Select.Root>
 
+              {/* Session select */}
               <Select.Root
                 collection={sessionCollection}
                 value={[sessionFilter]}
