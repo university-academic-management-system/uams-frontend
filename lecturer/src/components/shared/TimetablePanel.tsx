@@ -11,7 +11,6 @@ import {
   Spinner,
   parseDate,
   ScrollArea,
-  Button,
   type MenuValueChangeDetails,
 } from "@chakra-ui/react";
 import {
@@ -21,9 +20,9 @@ import {
   today,
   type DateValue as IntlDateValue,
 } from "@internationalized/date";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { LuGlobe, LuClock, LuMapPin, LuBookOpen } from "react-icons/lu";
-import { TimetableHook } from "@hooks/timetable.hooks";
+import { useTimetable } from "@hooks/timetable.hooks";
 import useAuthStore from "@stores/auth.store";
 import moment from "moment";
 import { formatMonthDay, formatTime, formatWeekday } from "@utils/function.util";
@@ -34,7 +33,6 @@ type DateValue = DatePicker.DateValue;
 
 interface TimetablePanelProps {
   onViewFullTimetable: () => void;
-  // selectedFilter and onFilterChange are removed; parent should stop passing them.
 }
 
 const TimetablePanel = ({ onViewFullTimetable }: TimetablePanelProps) => {
@@ -44,15 +42,30 @@ const TimetablePanel = ({ onViewFullTimetable }: TimetablePanelProps) => {
   const session = user?.currentSession || fallbackSession;
   const semester = user?.currentSemester || "FIRST";
 
-  const { data: timetableData = [], isLoading: isQueryLoading, error } = TimetableHook.useTimetable(
+  const { data: timetableData, isLoading: isQueryLoading, error } = useTimetable(
     { session, semester },
     !!session && !!semester
   );
 
-  // Determine the default date (first valid day in semester range or today)
+  const entries = timetableData?.entries ?? [];
+  const semesterStartDate = timetableData?.semesterStartDate;
+  const semesterEndDate = timetableData?.semesterEndDate;
+
+  // Compute default date: today if within semester, otherwise semester start (if available)
   const defaultDate = useMemo(() => {
-    return parseDate(moment(today(tz).toString()).format("YYYY-MM-DD"));
-  }, []);
+    const todayMoment = moment(today(tz).toString());
+    if (semesterStartDate) {
+      const start = moment(semesterStartDate);
+      const end = semesterEndDate ? moment(semesterEndDate) : start.clone().add(6, "months");
+      if (todayMoment.isBetween(start, end, undefined, "[]")) {
+        return parseDate(todayMoment.format("YYYY-MM-DD"));
+      } else {
+        return parseDate(start.format("YYYY-MM-DD"));
+      }
+    }
+    // Fallback to today if no semester dates
+    return parseDate(todayMoment.format("YYYY-MM-DD"));
+  }, [semesterStartDate, semesterEndDate]);
 
   const [selectedDate, setSelectedDate] = useState<DateValue[]>([defaultDate]);
   const date = selectedDate[0] || defaultDate;
@@ -66,14 +79,13 @@ const TimetablePanel = ({ onViewFullTimetable }: TimetablePanelProps) => {
     setSelectedDate(details.value);
   };
 
-  // Filter timetable for the selected day
   const slots = useMemo(() => {
-    if (!timetableData.length || !nativeDate) return [];
+    if (!entries.length || !nativeDate) return [];
     const selectedDayName = formatWeekday(nativeDate).toUpperCase();
-    return timetableData
+    return entries
       .filter((item) => item.dayOfWeek.toUpperCase() === selectedDayName)
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
-  }, [timetableData, nativeDate]);
+  }, [entries, nativeDate]);
 
   const isLoading = isQueryLoading || !session || !semester;
 
@@ -96,7 +108,7 @@ const TimetablePanel = ({ onViewFullTimetable }: TimetablePanelProps) => {
       borderColor="border.muted"
       width="full"
     >
-      {/* Calendar Column – exactly as in TimetableComp */}
+      {/* Calendar Column */}
       <Box
         borderRight={{ base: "none", md: "xs" }}
         borderBottom={{ base: "xs", md: "none" }}
@@ -110,7 +122,7 @@ const TimetablePanel = ({ onViewFullTimetable }: TimetablePanelProps) => {
         </Stack>
 
         <DatePicker.Root
-          key="timetable-datepicker" // force re-render if needed
+          key="timetable-panel"
           inline
           value={selectedDate as never}
           onValueChange={handleDateChange}
@@ -136,7 +148,7 @@ const TimetablePanel = ({ onViewFullTimetable }: TimetablePanelProps) => {
         </HStack>
       </Box>
 
-      {/* Schedule Column – with header and timeline */}
+      {/* Schedule Column */}
       <Stack minW="240px" flex="1" bg="bg">
         {date && nativeDate ? (
           <Stack gap="0" flex="1">

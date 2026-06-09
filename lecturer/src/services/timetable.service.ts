@@ -1,9 +1,7 @@
 import axiosClient from "@configs/axios.config";
-import type { ApiResponse, TimetableEntry } from "@type/timetable.type";
+import type { TimetableData, TimetableResponse } from "@type/timetable.type";
 
-export const TimetableService = {
-  getTimetable: async (filters?: { session?: string; semester?: string }): Promise<ApiResponse<TimetableEntry []>> => {
-    const { data } = await axiosClient.get<ApiResponse<TimetableEntry[]>>("/timetables", { params: filters });
-    return data;
-  },
+export const getTimetable = async (params: { session: string; semester: string }): Promise<TimetableData> => {
+  const { data } = await axiosClient.get<TimetableResponse>("/timetables", { params });
+  return data.data;
 };
