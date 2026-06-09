@@ -57,7 +57,7 @@ export default useAuthStore;
 
 
 // const useAuthStore = create<AuthState>()((set) => ({
-//   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwZmI1ZDVlLTcxYmEtNGZmYi1hMGZhLWY0NDYzMmVlYThjNiIsInJvbGUiOiJTVEFGRiIsImlhdCI6MTc3OTcwMDc2MCwiZXhwIjoxNzgwMzA1NTYwfQ.tR6spUo_G_SmS0h9SjXFKe8zzJYsg_jLvDWiILuv7Ic",
+//   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwZmI1ZDVlLTcxYmEtNGZmYi1hMGZhLWY0NDYzMmVlYThjNiIsInJvbGUiOiJTVEFGRiIsImlhdCI6MTc4MDM1Njc4MCwiZXhwIjoxNzgwOTYxNTgwfQ.TOX2aU2qpiZkS37CKyUxAVCVLaNi2iu5SqQC3zh4vmI",
 //   expireAt: "7d",
 //   user: {
 //     id: "90fb5d5e-71ba-4ffb-a0fa-f44632eea8c6",

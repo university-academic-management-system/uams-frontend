@@ -35,7 +35,7 @@ const EnrollmentChart = ({ data }: EnrollmentChartProps) => {
                     <Chart.Root h="100%" w="100%" chart={enrollmentChart}>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={enrollmentChart.data} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
-                                <CartesianGrid vertical={false} stroke={enrollmentChart.color("border.subtle")} />
+                                <CartesianGrid vertical={false} stroke={enrollmentChart.color("gray.200")} />
                                 <XAxis 
                                     dataKey={enrollmentChart.key("year")} 
                                     axisLine={false} 

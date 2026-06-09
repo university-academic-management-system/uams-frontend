@@ -8,6 +8,7 @@ const ProgramCoursesPage = lazy(() => import("@app/programs/page"));
 const StudentsPage = lazy(() => import("@app/students/page"));
 const StaffPage = lazy(() => import("@app/lecturers/page"));
 const PaymentsPage = lazy(() => import("@app/payments/page"));
+const PaymentsDetailPage = lazy(() => import("@app/payments/detail"));
 const IDCardPage = lazy(() => import("@app/idcard/page"));
 const TimetablePage = lazy(() => import("@app/timetable/page"));
 const AnnouncementsPage = lazy(() => import("@app/announcements/page"));
@@ -54,6 +55,12 @@ const router = createBrowserRouter([
                 path: "payments",
                 element: <Suspense>
                             <PaymentsPage />
+                        </Suspense>,
+            },
+            {
+                path: "payments/:programTypeCode",
+                element: <Suspense>
+                            <PaymentsDetailPage />
                         </Suspense>,
             },
             {
