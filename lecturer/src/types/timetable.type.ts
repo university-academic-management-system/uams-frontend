@@ -32,10 +32,16 @@ export interface TimetableEntry {
 }
 }
 
+export interface TimetableData {
+  semesterStartDate: string;
+  semesterEndDate: string;
+  entries: TimetableEntry[];
+}
+
 export interface ApiResponse<T> {
   status: "success" | "error";
   message: string;
   data: T;
 }
 
-export type TimetableResponse = ApiResponse<TimetableEntry[]>;
+export type TimetableResponse = ApiResponse<TimetableData>;
