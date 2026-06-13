@@ -1,26 +1,117 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import { ProjectService } from "@services/project.service";
-import type { ProjectsResponse, ProjectTopic } from "@type/project.type";
+// @hooks/project.hook.ts
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getProjectTopics,
+  createProjectTopic,
+  updateProjectTopic,
+  approveProjectTopic,
+  getProjects,
+  startProject,
+  gradeProject,
+  bulkAssignSupervisors,
+  unassignStudent,
+} from "@services/project.service";
+import type {
+  ProjectTopicFilters,
+  CreateProjectTopicPayload,
+  UpdateProjectTopicPayload,
+  ApproveTopicPayload,
+  ProjectFilters,
+  GradeProjectPayload,
+  BulkAssignPayload,
+} from "@type/project.type";
 
-export const ProjectHook = {
-    useProjects: (
-        filters?: Record<string, string>,
-        options?: Partial<UseQueryOptions<ProjectsResponse>>
-    ) =>
-        useQuery<ProjectsResponse>({
-            queryKey: ["projects", filters],
-            queryFn: async () => ProjectService.getProjects(filters),
-            staleTime: 5 * 60 * 1000,
-            ...options,
-        }),
+const PROJECT_TOPICS_KEY = "project-topics";
+const PROJECTS_KEY = "projects";
 
-    useUpdateProject: () => {
-        const queryClient = useQueryClient();
-        return useMutation({
-            mutationFn: ({ id, payload }: { id: string; payload: Partial<ProjectTopic> }) => ProjectService.updateProject(id, payload),
-            onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ["projects"] });
-            }
-        });
-    }
+// Project Topics
+export const useProjectTopics = (filters?: ProjectTopicFilters) => {
+  return useQuery({
+    queryKey: [PROJECT_TOPICS_KEY, filters],
+    queryFn: () => getProjectTopics(filters),
+  });
+};
+
+export const useCreateProjectTopic = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateProjectTopicPayload) => createProjectTopic(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
+    },
+  });
+};
+
+export const useUpdateProjectTopic = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ topicId, payload }: { topicId: string; payload: UpdateProjectTopicPayload }) =>
+      updateProjectTopic(topicId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
+    },
+  });
+};
+
+export const useApproveProjectTopic = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ topicId, payload }: { topicId: string; payload: ApproveTopicPayload }) =>
+      approveProjectTopic(topicId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
+    },
+  });
+};
+
+// Projects 
+export const useProjects = (filters?: ProjectFilters) => {
+  return useQuery({
+    queryKey: [PROJECTS_KEY, filters],
+    queryFn: () => getProjects(filters),
+  });
+};
+
+export const useStartProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => startProject(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
+    },
+  });
+};
+
+export const useGradeProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, payload }: { projectId: string; payload: GradeProjectPayload }) =>
+      gradeProject(projectId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
+    },
+  });
+};
+
+// Assignment (Admin/HOD) 
+export const useBulkAssignSupervisors = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: BulkAssignPayload) => bulkAssignSupervisors(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
+    },
+  });
+};
+
+export const useUnassignStudent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (studentId: string) => unassignStudent(studentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
+    },
+  });
 };

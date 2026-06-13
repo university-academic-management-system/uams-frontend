@@ -17,13 +17,24 @@ import {
   Portal,
   Skeleton,
   Table,
+  EmptyState,
+  VStack,
 } from "@chakra-ui/react";
-import { LuSearch, LuChevronLeft, LuChevronRight, LuDownload, LuFileSpreadsheet, LuFileText } from "react-icons/lu";
+import {
+  LuSearch,
+  LuChevronLeft,
+  LuChevronRight,
+  LuDownload,
+  LuFileSpreadsheet,
+  LuFileText,
+  LuBookOpen,
+} from "react-icons/lu";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { Student, degreeAwarded } from "@type/student.type";
+import type { Student } from "@type/student.type";
 import { STUDENT_LEVELS } from "@type/student.type";
 import { useStudents } from "@hooks/student.hook";
+import { useProgrammes } from "@hooks/programmes.hook";
 import { StudentsDataTable } from "@components/shared/StudentsDataTable";
 import { AcademicLineChart } from "@components/shared/AcademicStudentsChart";
 import { RegistrationPieChart } from "@components/shared/RegistrationPieChart";
@@ -31,31 +42,9 @@ import { formatLevel } from "@utils/function.util";
 import { exportToExcel } from "@utils/excel.util";
 import { toaster } from "@components/ui/toaster";
 import useAuthStore from "@stores/auth.store";
-
-// Internal keys (matching the type)
-const INTERNAL_DEGREES: degreeAwarded[] = ["BS.c", "MS.c", "Ph.D", "POSTGRADUATE"];
-
-// Normalise API degree string to internal key
-const normalizeDegree = (raw: string | undefined): degreeAwarded | null => {
-  if (!raw) return null;
-  const upper = raw.toUpperCase().replace(/\./g, "");
-  if (upper === "BSC") return "BS.c";
-  if (upper === "MSC") return "MS.c";
-  if (upper === "PHD") return "Ph.D";
-  if (upper === "POSTGRADUATE") return "POSTGRADUATE";
-  return null;
-};
-
-// Display labels
-const DISPLAY_LABELS: Record<degreeAwarded, string> = {
-  "BS.c": "B.SC",
-  "MS.c": "M.SC",
-  "Ph.D": "PH.D",
-  POSTGRADUATE: "POSTGRADUATE",
-};
+import { getDegreeDisplayLabel, normalizeDegree } from "@utils/function.util";
 
 const LEVEL_OPTIONS = ["All", ...STUDENT_LEVELS];
-
 const levelCollection = createListCollection({
   items: LEVEL_OPTIONS.map((opt) => ({
     label: opt === "All" ? "All Levels" : opt.replace(/^L/, ""),
@@ -63,21 +52,20 @@ const levelCollection = createListCollection({
   })),
 });
 
-// ─── Skeleton component ─────────────────────────────────────────────
+// Skeleton component
 const StudentsSkeleton = () => {
   return (
     <Box maxW="100vw" overflowX="hidden">
       <Tabs.Root variant="line" colorPalette="accent">
         <Tabs.List mb="6">
-          {INTERNAL_DEGREES.map((deg) => (
-            <Tabs.Trigger key={deg} value={deg} disabled>
+          {[1, 2, 3, 4].map((i) => (
+            <Tabs.Trigger key={i} value={String(i)} disabled>
               <Skeleton h="6" w="16" />
             </Tabs.Trigger>
           ))}
         </Tabs.List>
 
         <Box bg="bg" rounded="md" p="4">
-          {/* Filters row skeleton */}
           <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" direction={{ base: "column", sm: "row" }}>
             <Skeleton h="10" w={{ base: "100%", sm: "300px" }} rounded="md" />
             <Flex gap="3" align="center" wrap="wrap">
@@ -88,7 +76,6 @@ const StudentsSkeleton = () => {
             </Flex>
           </Flex>
 
-          {/* Charts area skeleton */}
           <Box mb={6} p={4} rounded="md" borderColor="border.muted" bg="bg.panel">
             <Flex direction="column" gap={9}>
               <Skeleton h="300px" w="full" rounded="md" />
@@ -96,7 +83,6 @@ const StudentsSkeleton = () => {
             </Flex>
           </Box>
 
-          {/* Table skeleton */}
           <Table.ScrollArea>
             <Table.Root size="lg" variant="outline" stickyHeader>
               <Table.Header>
@@ -122,7 +108,6 @@ const StudentsSkeleton = () => {
             </Table.Root>
           </Table.ScrollArea>
 
-          {/* Pagination skeleton */}
           <Flex justify="flex-end" mt={4}>
             <Skeleton h="8" w="40" rounded="md" />
           </Flex>
@@ -132,10 +117,23 @@ const StudentsSkeleton = () => {
   );
 };
 
-// ─── Main component ─────────────────────────────────────────────
+// Main component
 const Students = () => {
   const { user } = useAuthStore();
-  const { data: students = [], isLoading, error } = useStudents();
+  const { data: students = [], isLoading: studentsLoading, error: studentsError } = useStudents();
+  const { data: programmes = [], isLoading: programmesLoading } = useProgrammes();
+
+  // Extract unique degree codes from programmes
+  const degreeCodeList = useMemo(() => {
+    if (!programmes.length) return [];
+    const codes = new Set<string>();
+    programmes.forEach((p) => {
+      if (p.code) codes.add(p.code);
+    });
+    return Array.from(codes).sort();
+  }, [programmes]);
+
+  const isLoading = studentsLoading || programmesLoading;
 
   const sessionCollection = useMemo(() => {
     let currentYear = new Date().getFullYear();
@@ -161,9 +159,16 @@ const Students = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [level, setLevel] = useState("All");
   const [sessionFilter, setSessionFilter] = useState("All");
-  const [selectedDegree, setSelectedDegree] = useState<degreeAwarded>("BS.c");
+  const [selectedDegree, setSelectedDegree] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+
+  // Set first degree as default when programmes load
+  useEffect(() => {
+    if (degreeCodeList.length > 0 && !selectedDegree) {
+      setSelectedDegree(degreeCodeList[0]);
+    }
+  }, [degreeCodeList, selectedDegree]);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 500);
@@ -174,6 +179,7 @@ const Students = () => {
     setCurrentPage(1);
   }, [debouncedSearch, level, sessionFilter, selectedDegree, perPage]);
 
+  // Apply search, level, session filters
   const baseFiltered = useMemo(() => {
     if (!students.length) return [];
     return students.filter((student: Student) => {
@@ -191,30 +197,32 @@ const Students = () => {
     });
   }, [students, level, sessionFilter, debouncedSearch]);
 
+  // Group filtered students by programme code (normalised matching)
   const studentsByDegree = useMemo(() => {
-    const buckets: Record<degreeAwarded, Student[]> = {
-      "BS.c": [],
-      "MS.c": [],
-      "Ph.D": [],
-      POSTGRADUATE: [],
-    };
+    const buckets: Record<string, Student[]> = {};
+    degreeCodeList.forEach((code) => { buckets[code] = []; });
     baseFiltered.forEach((s) => {
-      const deg = normalizeDegree(s.studentProfile?.degreeAwarded);
-      if (deg) buckets[deg].push(s);
+      const studentDeg = s.studentProfile?.degreeAwarded;
+      if (studentDeg) {
+        const normalizedStudent = normalizeDegree(studentDeg);
+        const matchedCode = degreeCodeList.find(code => normalizeDegree(code) === normalizedStudent);
+        if (matchedCode && buckets[matchedCode]) {
+          buckets[matchedCode].push(s);
+        }
+      }
     });
     return buckets;
-  }, [baseFiltered]);
+  }, [baseFiltered, degreeCodeList]);
 
-  const degreeCounts = useMemo(
-    () => ({
-      "BS.c": studentsByDegree["BS.c"].length,
-      "MS.c": studentsByDegree["MS.c"].length,
-      "Ph.D": studentsByDegree["Ph.D"].length,
-      POSTGRADUATE: studentsByDegree.POSTGRADUATE.length,
-    }),
-    [studentsByDegree]
-  );
+  const degreeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    degreeCodeList.forEach((code) => {
+      counts[code] = studentsByDegree[code]?.length || 0;
+    });
+    return counts;
+  }, [studentsByDegree, degreeCodeList]);
 
+  // Chart data per degree
   const chartDataByDegree = useMemo(() => {
     const compute = (list: Student[]) => {
       const uniqueLevels = Array.from(
@@ -247,15 +255,14 @@ const Students = () => {
       return { levelStats, registrationData };
     };
 
-    return {
-      "BS.c": compute(studentsByDegree["BS.c"]),
-      "MS.c": compute(studentsByDegree["MS.c"]),
-      "Ph.D": compute(studentsByDegree["Ph.D"]),
-      POSTGRADUATE: compute(studentsByDegree.POSTGRADUATE),
-    } as Record<degreeAwarded, ReturnType<typeof compute>>;
-  }, [studentsByDegree]);
+    const result: Record<string, ReturnType<typeof compute>> = {};
+    degreeCodeList.forEach((code) => {
+      result[code] = compute(studentsByDegree[code] || []);
+    });
+    return result;
+  }, [studentsByDegree, degreeCodeList]);
 
-  const currentTabStudents = studentsByDegree[selectedDegree] ?? [];
+  const currentTabStudents = selectedDegree ? (studentsByDegree[selectedDegree] || []) : [];
   const totalItems = currentTabStudents.length;
   const startIndex = (currentPage - 1) * perPage;
   const paginatedStudents = currentTabStudents.slice(startIndex, startIndex + perPage);
@@ -315,23 +322,42 @@ const Students = () => {
     })),
   });
 
-  // Show skeleton while loading
   if (isLoading) {
     return <StudentsSkeleton />;
+  }
+
+  if (degreeCodeList.length === 0) {
+    return (
+      <Box p="4" bg="bg" rounded="md" textAlign="center">
+        <EmptyState.Root>
+          <EmptyState.Content>
+            <EmptyState.Indicator>
+              <LuBookOpen />
+            </EmptyState.Indicator>
+            <VStack textAlign="center">
+              <EmptyState.Title>No programmes found</EmptyState.Title>
+              <EmptyState.Description>
+                Please add programmes first to see student data grouped by degree.
+              </EmptyState.Description>
+            </VStack>
+          </EmptyState.Content>
+        </EmptyState.Root>
+      </Box>
+    );
   }
 
   return (
     <Box maxW="100vw" overflowX="hidden">
       <Tabs.Root
         value={selectedDegree}
-        onValueChange={(e) => setSelectedDegree(e.value as degreeAwarded)}
+        onValueChange={(e) => setSelectedDegree(e.value)}
         variant="line"
         colorPalette="accent"
       >
         <Tabs.List mb="6">
-          {INTERNAL_DEGREES.map((deg) => (
-            <Tabs.Trigger key={deg} value={deg}>
-              {DISPLAY_LABELS[deg]} ({degreeCounts[deg]})
+          {degreeCodeList.map((code) => (
+            <Tabs.Trigger key={code} value={code}>
+              {getDegreeDisplayLabel(code)} ({degreeCounts[code] || 0})
             </Tabs.Trigger>
           ))}
         </Tabs.List>
@@ -472,13 +498,13 @@ const Students = () => {
           </Flex>
 
           {/* Tab panels */}
-          {INTERNAL_DEGREES.map((deg) => (
-            <Tabs.Content key={deg} value={deg}>
-              {studentsByDegree[deg].length > 0 && (
+          {degreeCodeList.map((code) => (
+            <Tabs.Content key={code} value={code}>
+              {studentsByDegree[code]?.length > 0 && (
                 <Box mb={6} p={4} rounded="md" borderColor="border.muted" bg="bg.panel">
                   <Flex direction="column" gap={9}>
-                    <AcademicLineChart data={chartDataByDegree[deg].levelStats} />
-                    <RegistrationPieChart data={chartDataByDegree[deg].registrationData} />
+                    <AcademicLineChart data={chartDataByDegree[code]?.levelStats || []} />
+                    <RegistrationPieChart data={chartDataByDegree[code]?.registrationData || []} />
                   </Flex>
                 </Box>
               )}
@@ -486,7 +512,7 @@ const Students = () => {
                 <StudentsDataTable
                   students={paginatedStudents}
                   isLoading={false}
-                  error={error}
+                  error={studentsError}
                 />
               </Box>
             </Tabs.Content>

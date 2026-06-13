@@ -27,6 +27,7 @@ import {
   LuUsers,
   LuEllipsis,
   LuChartBar,
+  LuClipboardCheck,
 } from "react-icons/lu";
 import { useAllCourses } from "@hooks/course.hook";
 import { useCurrentUser } from "@hooks/currentUser.hook";
@@ -35,6 +36,7 @@ import type { Course, CourseLevel, Semester as CourseSemester } from "../../type
 import CourseStudentsTable from "@components/shared/CourseStudentsTable";
 import CourseResultsView from "@components/shared/CourseResultsView";
 import EmptyStateView from "@components/shared/empty-state";
+import { HODResultsDrawer } from "@components/shared/HODResultsDrawer";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -68,10 +70,11 @@ const normalizeSemester = (semester: string) => {
   return semester.charAt(0) + semester.slice(1).toLowerCase() + " Semester";
 };
 
-// Action cell component (menu)
+// Action cell component with three drawers
 const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; courseId: string; courseTitle: string }) => {
   const [isStudentsOpen, setIsStudentsOpen] = useState(false);
   const [isResultsOpen, setIsResultsOpen] = useState(false);
+  const [isHODResultsOpen, setIsHODResultsOpen] = useState(false);
 
   return (
     <>
@@ -90,12 +93,15 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
               <Menu.Item value="results" onClick={() => setIsResultsOpen(true)}>
                 <LuChartBar /> Results
               </Menu.Item>
+              <Menu.Item value="hod-results" onClick={() => setIsHODResultsOpen(true)}>
+                <LuClipboardCheck /> Result Approvals
+              </Menu.Item>
             </Menu.Content>
           </Menu.Positioner>
         </Portal>
       </Menu.Root>
 
-      {/* Drawer for Students */}
+      {/* Students Drawer */}
       <Drawer.Root size="xl" open={isStudentsOpen} onOpenChange={(e) => setIsStudentsOpen(e.open)}>
         <Portal>
           <Drawer.Backdrop />
@@ -115,7 +121,7 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
         </Portal>
       </Drawer.Root>
 
-      {/* Drawer for Results */}
+      {/* Results Drawer */}
       <Drawer.Root size="full" open={isResultsOpen} onOpenChange={(e) => setIsResultsOpen(e.open)}>
         <Portal>
           <Drawer.Backdrop />
@@ -134,15 +140,21 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
           </Drawer.Positioner>
         </Portal>
       </Drawer.Root>
+
+      {/* HOD Result Approvals Drawer */}
+      <HODResultsDrawer
+        course={course}
+        isOpen={isHODResultsOpen}
+        onClose={() => setIsHODResultsOpen(false)}
+      />
     </>
   );
 };
 
-// Skeleton component for the entire page
+// Skeleton component
 const CoursesSkeleton = () => {
   return (
     <Box p="4" bg="bg" rounded="md">
-      {/* Filters row skeleton */}
       <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap">
         <Skeleton h="10" w={{ base: "100%", sm: "300px" }} rounded="md" />
         <Flex gap="3" align="center" wrap="wrap">
@@ -150,8 +162,6 @@ const CoursesSkeleton = () => {
           <Skeleton h="10" w="180px" rounded="md" />
         </Flex>
       </Flex>
-
-      {/* Table skeleton */}
       <Table.ScrollArea>
         <Table.Root size="lg" variant="outline" stickyHeader>
           <Table.Header>
@@ -176,8 +186,6 @@ const CoursesSkeleton = () => {
           </Table.Body>
         </Table.Root>
       </Table.ScrollArea>
-
-      {/* Pagination skeleton */}
       <Flex justify="flex-end" mt={4}>
         <Skeleton h="8" w="40" rounded="md" />
       </Flex>
@@ -230,7 +238,6 @@ const Courses = () => {
 
   const columns = ["S/N", "Code", "Title", "Units", "Level", "Semester", "Course Type", "Actions"];
 
-  // Show skeleton while loading
   if (isLoading) {
     return <CoursesSkeleton />;
   }

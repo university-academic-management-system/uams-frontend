@@ -1,298 +1,237 @@
-import { Box, Table, Text, Flex, Button, CloseButton, Dialog, Drawer, Portal, Card, Input, Textarea, Stack, Field, Select, createListCollection, useDisclosure } from "@chakra-ui/react";
-import type { ProjectTopic } from "@type/project.type";
-import { ProjectHook } from "@hooks/project.hook";
+// src/components/shared/ProjectsTable.tsx
+import { useMemo, useState } from "react";
+import {
+  Box,
+  Table,
+  Text,
+  Flex,
+  Button,
+  CloseButton,
+  Dialog,
+  Portal,
+  Card,
+  Input,
+  Textarea,
+  Stack,
+  Field,
+  Select,
+  createListCollection,
+  useDisclosure,
+  Skeleton,
+  Badge,
+  Menu,
+  IconButton,
+} from "@chakra-ui/react";
+import { LuEllipsis } from "react-icons/lu";
+import { useUpdateProjectTopic } from "@hooks/project.hook";
 import { toaster } from "@components/ui/toaster";
-import ProjectWriter from "./ProjectWriter";
-import type { StudentProjects } from "@pages/projects/Projects";
 import useUpdateProjectForm from "@forms/update-project.form";
 import type { UpdateProjectSchema } from "@schemas/project/update-project.schema";
+import type { ProjectTopic, StudentProjects } from "@type/project.type";
 
-const StatusBadge = ({ status }: { status: "pending" | "approved" | string }) => {
-    const isPending = status === "pending" || status === "Pending";
-    return (
-        <Flex
-            align="center"
-            gap="1"
-            px="3"
-            py="1"
-            borderRadius="full"
-            bg={isPending ? "orange.50" : "green.50"}
-            color={isPending ? "orange.500" : "green.500"}
-            fontSize="11px"
-            fontWeight="600"
-            w="fit-content"
-            textTransform="capitalize"
-        >
-            {status}
-        </Flex>
-    );
+// StatusBadge component (for topics only, keep it)
+const StatusBadge = ({ status }: { status: string }) => {
+  const isPending = status === "pending" || status === "PENDING" || status === "NOT_STARTED";
+  const isApproved = status === "approved" || status === "APPROVED" || status === "IN_PROGRESS";
+  return (
+    <Badge
+      bg={isPending ? "orange.50" : isApproved ? "green.50" : "gray.50"}
+      color={isPending ? "orange.500" : isApproved ? "green.500" : "gray.500"}
+    >
+      {status.toLowerCase()}
+    </Badge>
+  );
 };
 
+// TopicDialog (kept because it's used inside the topics display? Actually topics display removed.
+// But we keep it in case it's needed elsewhere – but we'll remove TopicsContent.
+// Since TopicsContent is removed, we can also remove TopicDialog. But let's keep it if you plan to reuse.
+// For now, we'll keep it but it's unused after removal. We'll comment out or remove entire topics section.
+// We'll remove all topics-related code since "View Topics" is gone.
+// So remove TopicDialog, TopicsContent, etc.
 const statusCollection = createListCollection({
-    items: [
-        { label: "Pending", value: "pending" },
-        { label: "Approved", value: "approved" },
-    ],
+  items: [
+    { label: "Pending", value: "pending" },
+    { label: "Approved", value: "approved" },
+  ],
 });
 
-const TopicDialog = ({ topic }: { topic: ProjectTopic }) => {
-    const { mutate: updateProject, isPending } = ProjectHook.useUpdateProject();
-    const { open, onClose, setOpen } = useDisclosure();
+// TopicDialog is no longer needed because View Topics is removed.
+// We'll remove it to clean up.
 
-    const {
-        register,
-        handleSubmit,
-        watch,
-        setValue,
-        formState: { errors },
-    } = useUpdateProjectForm({
-        title: topic.title,
-        status: topic.status,
-        description: topic.description,
-    });
+// ----- RowActions component (only View Project) -----
+const RowActions = ({ record }: { record: StudentProjects }) => {
+  const activeProject = record.projects.find(p => p.googleDocUrl);
 
-    const currentStatus = watch("status");
+  const handleViewProject = () => {
+    if (activeProject?.googleDocUrl) {
+      window.open(activeProject.googleDocUrl, "_blank");
+    } else {
+      toaster.warning({ description: "No project document available." });
+    }
+  };
 
-    const onSubmit = (data: UpdateProjectSchema) => {
-        updateProject({
-            id: topic.id,
-            payload: data,
-        }, {
-            onSuccess() {
-                toaster.success({ description: "Changes saved!", closable: true })
-                onClose();
-            }
-        });
-    };
+  return (
+    <Menu.Root>
+      <Menu.Trigger asChild>
+        <IconButton size="sm" variant="ghost">
+          <LuEllipsis />
+        </IconButton>
+      </Menu.Trigger>
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item value="project" onClick={handleViewProject}>
+              View Project
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
+    </Menu.Root>
+  );
+};
 
-    return (
-        <Dialog.Root role="alertdialog" open={open} onOpenChange={(d) => setOpen(d.open)}>
-            <Dialog.Trigger asChild>
-                <Button size="sm">Update Options</Button>
-            </Dialog.Trigger>
-            <Portal>
-                <Dialog.Backdrop />
-                <Dialog.Positioner>
-                    <Dialog.Content>
-                        <Dialog.Header>
-                            <Dialog.Title>Update Project Topic</Dialog.Title>
-                        </Dialog.Header>
-                        <Dialog.Body>
-                            <form id="update-project-form" onSubmit={handleSubmit(onSubmit)}>
-                                <Stack gap="4" align="stretch">
-                                    <Field.Root invalid={!!errors.title}>
-                                        <Field.Label>Title</Field.Label>
-                                        <Input
-                                            type="text"
-                                            {...register("title")}
-                                        />
-                                        {errors.title && (
-                                            <Field.ErrorText>{errors.title.message}</Field.ErrorText>
-                                        )}
-                                    </Field.Root>
-
-                                    <Field.Root invalid={!!errors.status}>
-                                        <Field.Label>Status</Field.Label>
-                                        <Select.Root
-                                            collection={statusCollection}
-                                            size="sm"
-                                            value={[currentStatus]}
-                                            onValueChange={(e) => setValue("status", e.value[0] as "pending" | "approved", { shouldValidate: true })}
-                                        >
-                                            <Select.HiddenSelect />
-                                            <Select.Control>
-                                                <Select.Trigger>
-                                                    <Select.ValueText placeholder="Select status" />
-                                                </Select.Trigger>
-                                                <Select.IndicatorGroup>
-                                                    <Select.Indicator />
-                                                </Select.IndicatorGroup>
-                                            </Select.Control>
-                                            <Portal>
-                                                <Select.Positioner>
-                                                    <Select.Content>
-                                                        {statusCollection.items.map((item: any) => (
-                                                            <Select.Item item={item} key={item.value}>
-                                                                {item.label}
-                                                                <Select.ItemIndicator />
-                                                            </Select.Item>
-                                                        ))}
-                                                    </Select.Content>
-                                                </Select.Positioner>
-                                            </Portal>
-                                        </Select.Root>
-                                        {errors.status && (
-                                            <Field.ErrorText>{errors.status.message}</Field.ErrorText>
-                                        )}
-                                    </Field.Root>
-
-                                    <Field.Root invalid={!!errors.description}>
-                                        <Field.Label>Description</Field.Label>
-                                        <Textarea
-                                            rows={4}
-                                            {...register("description")}
-                                        />
-                                        {errors.description && (
-                                            <Field.ErrorText>{errors.description.message}</Field.ErrorText>
-                                        )}
-                                    </Field.Root>
-                                </Stack>
-                            </form>
-                        </Dialog.Body>
-                        <Dialog.Footer>
-                            <Dialog.ActionTrigger asChild>
-                                <Button variant="outline">Cancel</Button>
-                            </Dialog.ActionTrigger>
-                            <Button type="submit" form="update-project-form" w="40" loading={isPending} loadingText="Saving..." disabled={isPending}>Save</Button>
-                        </Dialog.Footer>
-                        <Dialog.CloseTrigger asChild>
-                            <CloseButton size="sm" />
-                        </Dialog.CloseTrigger>
-                    </Dialog.Content>
-                </Dialog.Positioner>
-            </Portal>
-        </Dialog.Root>
-    )
-}
-
-const TopicsDrawer = ({ studentProjects }: { studentProjects: StudentProjects }) => {
-    return (
-        <Drawer.Root>
-            <Drawer.Trigger asChild>
-                <Button size="sm" variant="outline">View Topics</Button>
-            </Drawer.Trigger>
-            <Portal>
-                <Drawer.Backdrop />
-                <Drawer.Positioner>
-                    <Drawer.Content style={{ maxWidth: "450px" }}>
-                        <Drawer.Header>
-                            <Drawer.Title>Topics for {studentProjects.student.name}</Drawer.Title>
-                        </Drawer.Header>
-                        <Drawer.Body>
-                            <Flex direction="column" gap="4">
-                                {studentProjects.projects.map(topic => (
-                                    <Card.Root key={topic.id} width="100%">
-                                        <Card.Body gap="2">
-                                            <Flex justify="space-between" align="start">
-                                                <Card.Title mt="2" fontSize="md">{topic.title}</Card.Title>
-                                                <StatusBadge status={topic.status} />
-                                            </Flex>
-                                            <Card.Description fontSize="sm" mt="2" color="gray.600">
-                                                {topic.description}
-                                            </Card.Description>
-                                            <Flex mt="3" gap="4" fontSize="xs" color="gray.500">
-                                                <Text>Created: {new Date(topic.createdAt).toLocaleDateString()}</Text>
-                                                <Text>Updated: {new Date(topic.updatedAt).toLocaleDateString()}</Text>
-                                            </Flex>
-                                        </Card.Body>
-                                        <Card.Footer justifyContent="flex-end">
-                                            <TopicDialog topic={topic} />
-                                        </Card.Footer>
-                                    </Card.Root>
-                                ))}
-                                {studentProjects.projects.length === 0 && (
-                                    <Text fontSize="sm" color="gray.500">No topics found.</Text>
-                                )}
-                            </Flex>
-                        </Drawer.Body>
-
-                        <Drawer.CloseTrigger asChild>
-                            <CloseButton size="sm" />
-                        </Drawer.CloseTrigger>
-                    </Drawer.Content>
-                </Drawer.Positioner>
-            </Portal>
-        </Drawer.Root>
-    )
-}
-
-interface ProjectsTableProps {
-    studentProjects: StudentProjects[];
-    isLoading?: boolean;
-}
-
+// ----- Table columns -----
 const COLUMNS = [
-    { key: "sn", label: "S/N", width: "50px" },
-    { key: "studentName", label: "Student", width: "200px" },
-    { key: "matricNumber", label: "Matric number", width: "160px" },
-    { key: "action", label: "Action", width: "120px" },
+  { key: "sn", label: "S/N", width: "50px" },
+  { key: "studentName", label: "Student", width: "200px" },
+  { key: "matricNumber", label: "Matric number", width: "160px" },
+  { key: "status", label: "Status", width: "120px" },
+  { key: "action", label: "Action", width: "60px" },
 ] as const;
 
+// Helper to format status for display
+const formatProjectStatus = (status?: string) => {
+  if (!status) return "No Project";
+  return status.replace(/_/g, " ").toLowerCase();
+};
+
+// Helper to get color palette based on status
+const getStatusColorPalette = (status?: string) => {
+  if (!status) return "gray";
+  const s = status.toUpperCase();
+  if (s === "IN_PROGRESS") return "blue";
+  if (s === "COMPLETED") return "green";
+  if (s === "GRADED") return "purple";
+  if (s === "NOT_STARTED") return "yellow";
+  return "gray";
+};
+
+const TableSkeleton = () => {
+  return (
+    <Box rounded="md" borderColor="border.muted" overflowX="auto">
+      <Table.Root size="sm" variant="outline">
+        <Table.Header>
+          <Table.Row>
+            {COLUMNS.map((col) => (
+              <Table.ColumnHeader
+                key={col.key}
+                fontSize="md"
+                fontWeight="600"
+                color="bg.subtle"
+                textTransform="none"
+                minW={col.width}
+                px="4"
+                py="3"
+                whiteSpace="nowrap"
+                textAlign={col.key === "action" ? "center" : "left"}
+              >
+                {col.label}
+              </Table.ColumnHeader>
+            ))}
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <Table.Row key={idx}>
+              <Table.Cell px="4" py="3.5"><Skeleton h="4" w="8" /></Table.Cell>
+              <Table.Cell px="4" py="3.5"><Skeleton h="4" w="32" /></Table.Cell>
+              <Table.Cell px="4" py="3.5"><Skeleton h="4" w="24" /></Table.Cell>
+              <Table.Cell px="4" py="3.5"><Skeleton h="6" w="20" /></Table.Cell>
+              <Table.Cell px="4" py="3.5"><Flex justify="center"><Skeleton h="8" w="8" rounded="md" /></Flex></Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table.Root>
+    </Box>
+  );
+};
+
+// ----- Main Table component -----
+interface ProjectsTableProps {
+  studentProjects: StudentProjects[];
+  isLoading?: boolean;
+}
+
 const ProjectsTable = ({ studentProjects, isLoading }: ProjectsTableProps) => {
-    if (isLoading) {
-        return (
-            <Flex justify="center" py="12">
-                <Text color="gray.500" fontSize="sm">Loading projects...</Text>
-            </Flex>
-        );
-    }
+  const safeProjects = Array.isArray(studentProjects) ? studentProjects : [];
 
-    if (studentProjects.length === 0) {
-        return (
-            <Flex justify="center" py="12">
-                <Text color="gray.500" fontSize="sm">No students found.</Text>
-            </Flex>
-        );
-    }
-
+  if (isLoading) return <TableSkeleton />;
+  if (safeProjects.length === 0) {
     return (
-        <Box borderRadius="lg" border="1px solid" borderColor="gray.100" bg="white" overflowX="auto">
-            <Table.Root size="sm" variant="line">
-                <Table.Header>
-                    <Table.Row bg="gray.50">
-                        {COLUMNS.map((col) => (
-                            <Table.ColumnHeader
-                                key={col.key}
-                                fontSize="xs"
-                                fontWeight="600"
-                                color="gray.600"
-                                textTransform="none"
-                                minW={col.width}
-                                px="4"
-                                py="3"
-                                whiteSpace="nowrap"
-                                textAlign={col.key === "action" ? "center" : "left"} 
-                            >
-                                {col.label}
-                            </Table.ColumnHeader>
-                        ))}
-                    </Table.Row>
-                </Table.Header>
-
-                <Table.Body>
-                    {studentProjects.map((record, index) => {
-                        const approvedProject = record.projects.find(p => p.status === "approved");
-                        return (
-                            <Table.Row
-                                key={record.student.id}
-                                _hover={{ bg: "gray.50" }}
-                                transition="background 0.15s"
-                            >
-                                <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.600">
-                                    {index + 1}
-                                </Table.Cell>
-                                <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.700">
-                                    {record.student.name}
-                                </Table.Cell>
-                                <Table.Cell px="4" py="3.5" fontSize="xs" color="gray.700">
-                                    {record.student.matricNumber}
-                                </Table.Cell>
-                                <Table.Cell px="4" py="3.5">
-                                     <Flex justify="center" width="100%">
-                                    {approvedProject ? (
-                                        <ProjectWriter project={approvedProject} />
-                                    ) : (
-                                        <TopicsDrawer studentProjects={record} />
-                                    )}
-                                    </Flex>
-                                </Table.Cell>
-                            </Table.Row>
-                        );
-                    })}
-                </Table.Body>
-            </Table.Root>
-        </Box>
+      <Flex justify="center" py="12">
+        <Text color="gray.500" fontSize="sm">No students with active projects found.</Text>
+      </Flex>
     );
+  }
+
+  return (
+    <Box rounded="md" borderColor="border.muted" bg="white" overflowX="auto">
+      <Table.Root size="sm" variant="outline">
+        <Table.Header>
+          <Table.Row>
+            {COLUMNS.map((col) => (
+              <Table.ColumnHeader
+                key={col.key}
+                fontSize="sm"
+                color="fg.muted"
+                textTransform="none"
+                minW={col.width}
+                px="4"
+                py="3"
+                whiteSpace="nowrap"
+                textAlign={col.key === "action" ? "center" : "left"}
+              >
+                {col.label}
+              </Table.ColumnHeader>
+            ))}
+          </Table.Row>
+        </Table.Header>
+
+        <Table.Body>
+          {safeProjects.map((record, index) => {
+            const activeProject = record.projects.find(p => p.googleDocUrl);
+            const status = activeProject?.status;
+            const formattedStatus = formatProjectStatus(status);
+            const colorPalette = getStatusColorPalette(status);
+            return (
+              <Table.Row key={record.student.id}>
+                <Table.Cell px="4" py="3.5" fontSize="xs" color="fg.muted">
+                  {index + 1}
+                </Table.Cell>
+                <Table.Cell px="4" py="3.5" fontSize="xs" color="fg.muted">
+                  {`${record.student.surname} ${record.student.firstName} ${record.student.otherName || ""}`.trim()}
+                </Table.Cell>
+                <Table.Cell px="4" py="3.5" fontSize="xs" color="fg.muted">
+                  {record.student.matricNumber}
+                </Table.Cell>
+                <Table.Cell px="4" py="3.5">
+                  <Badge colorPalette={colorPalette} variant="subtle">
+                    {formattedStatus}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell px="4" py="3.5">
+                  <Flex justify="center" width="100%">
+                    <RowActions record={record} />
+                  </Flex>
+                </Table.Cell>
+              </Table.Row>
+            );
+          })}
+        </Table.Body>
+      </Table.Root>
+    </Box>
+  );
 };
 
 export default ProjectsTable;
