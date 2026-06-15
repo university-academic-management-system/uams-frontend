@@ -183,7 +183,7 @@ const Lecturers = () => {
   }
 
   return (
-    <Box maxW="100vw" overflowX="hidden">
+    <Box maxW="100vw" overflowX="hidden" p="4">
       <Box bg="bg" rounded="md" p="4">
         <Flex
           align="center"
