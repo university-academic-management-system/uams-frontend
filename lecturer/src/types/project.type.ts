@@ -99,10 +99,8 @@ export interface ApproveTopicPayload {
 }
 
 export interface BulkAssignPayload {
-  assignments: {
-    studentId: string;
-    supervisorId: string;
-  }[];
+  studentIds: string[];
+  supervisorId: string;
 }
 
 export interface GradeProjectPayload {

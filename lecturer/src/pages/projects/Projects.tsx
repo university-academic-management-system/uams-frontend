@@ -36,7 +36,6 @@ const Projects = () => {
 
   return (
     <Box bg="bg">
-      {/* Header removed */}
 
       {!isLoading && studentProjects.length === 0 ? (
         <Box

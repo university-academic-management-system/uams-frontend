@@ -17,8 +17,8 @@ export interface ProfileResponse {
 }
 
 export interface UserData {
-    id: string;
-    staffProfile: {
+     staffProfile: {
+        id: string;
         userId: string;
         title: string;
         firstName: string;

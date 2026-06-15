@@ -9,7 +9,6 @@ const Courses = lazy(() => import("@pages/courses/Courses"));
 const Projects = lazy(() => import("@pages/projects/Projects"));
 const Announcement = lazy(() => import("@pages/announcement/Announcement"));
 const Profile = lazy(() => import("@pages/profile/Profile"));
-import Settings from "@pages/settings/Settings";
 import { AuthMiddleware } from "middleware/auth.middleware";
 
 const router = createBrowserRouter([
@@ -26,7 +25,6 @@ const router = createBrowserRouter([
             { path: "timetable", element: <TimeTable /> },
             { path: "announcement", element: <Announcement /> },
             { path: "profile", element: <Profile /> },
-            { path: "settings", element: <Settings /> },
         ],
     },
     {
