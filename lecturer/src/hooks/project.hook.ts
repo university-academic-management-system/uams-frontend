@@ -10,6 +10,7 @@ import {
   gradeProject,
   bulkAssignSupervisors,
   unassignStudent,
+  deleteProjectTopic,
 } from "@services/project.service";
 import type {
   ProjectTopicFilters,
@@ -111,6 +112,16 @@ export const useUnassignStudent = () => {
     mutationFn: (studentId: string) => unassignStudent(studentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
+    },
+  });
+};
+
+export const useDeleteProjectTopic = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (topicId: string) => deleteProjectTopic(topicId),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
     },
   });

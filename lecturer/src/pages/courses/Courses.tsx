@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Box,
   Flex,
@@ -6,7 +6,6 @@ import {
   Input,
   Select,
   createListCollection,
-  VStack,
   Table,
   IconButton,
   Pagination,
@@ -17,6 +16,12 @@ import {
   Drawer,
   CloseButton,
   Skeleton,
+  Button,
+  Dialog,
+  Field,
+  Stack,
+  Text,
+  Grid,
 } from "@chakra-ui/react";
 import {
   LuSearch,
@@ -28,6 +33,9 @@ import {
   LuEllipsis,
   LuChartBar,
   LuClipboardCheck,
+  LuDownload,
+  LuUpload,
+  LuFileText,
 } from "react-icons/lu";
 import { useAllCourses } from "@hooks/course.hook";
 import { useCurrentUser } from "@hooks/currentUser.hook";
@@ -37,6 +45,8 @@ import CourseStudentsTable from "@components/shared/CourseStudentsTable";
 import CourseResultsView from "@components/shared/CourseResultsView";
 import EmptyStateView from "@components/shared/empty-state";
 import { HODResultsDrawer } from "@components/shared/HODResultsDrawer";
+import { ResultHook } from "@hooks/result.hook";
+import { toaster } from "@components/ui/toaster";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -70,11 +80,328 @@ const normalizeSemester = (semester: string) => {
   return semester.charAt(0) + semester.slice(1).toLowerCase() + " Semester";
 };
 
-// Action cell component with three drawers
+// Helper: generate academic years from 1999/2000 to next academic year
+const generateSessionOptions = (): string[] => {
+  const currentYear = new Date().getFullYear();
+  const startYear = 1999;
+  const sessions: string[] = [];
+  for (let year = currentYear + 1; year >= startYear; year--) {
+    sessions.push(`${year}/${year + 1}`);
+  }
+  return sessions;
+};
+
+// ─── Upload Results Dialog (fully functional) ────────────────────────────────
+const GlobalUploadDialog = ({
+  isOpen,
+  onClose,
+  courses,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  courses: Course[];
+}) => {
+  const [selectedLevel, setSelectedLevel] = useState("");
+  const [selectedSession, setSelectedSession] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedCourseId, setSelectedCourseId] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const sessionOptions = useMemo(() => generateSessionOptions(), []);
+
+  const levelCollectionSelect = useMemo(
+    () =>
+      createListCollection({
+        items: [
+          { label: "Select level", value: "" },
+          ...COURSE_LEVELS.map((l) => ({ label: normalizeLevel(l), value: l })),
+        ],
+      }),
+    []
+  );
+
+  const sessionCollection = useMemo(
+    () =>
+      createListCollection({
+        items: [
+          { label: "Select session", value: "" },
+          ...sessionOptions.map((s) => ({ label: s, value: s })),
+        ],
+      }),
+    [sessionOptions]
+  );
+
+  const semesterCollectionSelect = useMemo(
+    () =>
+      createListCollection({
+        items: [
+          { label: "Select semester", value: "" },
+          ...COURSE_SEMESTERS.map((s) => ({ label: normalizeSemester(s), value: s })),
+        ],
+      }),
+    []
+  );
+
+  const filteredCourses = useMemo(() => {
+    let filtered = courses;
+    if (selectedLevel) filtered = filtered.filter((c) => c.level === selectedLevel);
+    if (selectedSemester) filtered = filtered.filter((c) => c.semester === selectedSemester);
+    return filtered;
+  }, [courses, selectedLevel, selectedSemester]);
+
+  const courseCollection = useMemo(
+    () =>
+      createListCollection({
+        items: [
+          { label: "Select a course", value: "" },
+          ...filteredCourses.map((c) => ({ label: `${c.code} – ${c.title}`, value: c.id })),
+        ],
+      }),
+    [filteredCourses]
+  );
+
+  useEffect(() => {
+    setSelectedCourseId("");
+  }, [selectedLevel, selectedSemester]);
+
+  const { mutate: upload, isPending } = ResultHook.useUploadDraft({
+    onSuccess: (data) => { // FIX: accept the data argument
+      console.log("Upload success:", data);
+      toaster.success({ title: "Upload successful", description: "Results have been uploaded." });
+      onClose();
+      setSelectedLevel("");
+      setSelectedSession("");
+      setSelectedSemester("");
+      setSelectedCourseId("");
+      setSelectedFile(null);
+    },
+    onError: (err: any) => {
+      console.error("Upload error:", err);
+      toaster.error({ title: "Upload failed", description: err?.response?.data?.message || err.message });
+    },
+  });
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
+  };
+
+  const handleSubmit = () => {
+    if (!selectedLevel || !selectedSession || !selectedSemester || !selectedCourseId || !selectedFile) {
+      toaster.warning({
+        title: "Missing data",
+        description: "Please fill all fields and select a file.",
+      });
+      return;
+    }
+
+    console.log("Upload payload:", {
+      courseId: selectedCourseId,
+      session: selectedSession,
+      semester: selectedSemester,
+      level: selectedLevel,
+      file: selectedFile.name,
+    });
+
+    upload({
+      courseId: selectedCourseId,
+      session: selectedSession,
+      semester: selectedSemester,
+      level: selectedLevel,
+      file: selectedFile,
+    });
+  };
+
+  const templateUrl = "result_sample_bf95f2d8-1da1-4cb9-853b-bec3f8455815.xlsx";
+  const downloadTemplate = () => window.open(templateUrl, "_blank");
+
+  return (
+    <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="lg">
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Upload Results</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              <Stack gap="5">
+                <Flex justify="flex-end">
+                  <Button size="sm" colorPalette="accent" onClick={downloadTemplate}>
+                    <LuDownload /> Download Template
+                  </Button>
+                </Flex>
+
+                <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="4">
+                  <Field.Root>
+                    <Field.Label>Level</Field.Label>
+                    <Select.Root
+                      collection={levelCollectionSelect}
+                      value={[selectedLevel]}
+                      onValueChange={(e) => setSelectedLevel(e.value[0])}
+                    >
+                      <Select.HiddenSelect />
+                      <Select.Control>
+                        <Select.Trigger>
+                          <Select.ValueText />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                          <Select.Indicator />
+                        </Select.IndicatorGroup>
+                      </Select.Control>
+                      <Select.Positioner>
+                        <Select.Content>
+                          {levelCollectionSelect.items.map((item) => (
+                            <Select.Item key={item.value} item={item}>
+                              {item.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Positioner>
+                    </Select.Root>
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label>Session</Field.Label>
+                    <Select.Root
+                      collection={sessionCollection}
+                      value={[selectedSession]}
+                      onValueChange={(e) => setSelectedSession(e.value[0])}
+                    >
+                      <Select.HiddenSelect />
+                      <Select.Control>
+                        <Select.Trigger>
+                          <Select.ValueText />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                          <Select.Indicator />
+                        </Select.IndicatorGroup>
+                      </Select.Control>
+                      <Select.Positioner>
+                        <Select.Content>
+                          {sessionCollection.items.map((item) => (
+                            <Select.Item key={item.value} item={item}>
+                              {item.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Positioner>
+                    </Select.Root>
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label>Semester</Field.Label>
+                    <Select.Root
+                      collection={semesterCollectionSelect}
+                      value={[selectedSemester]}
+                      onValueChange={(e) => setSelectedSemester(e.value[0])}
+                    >
+                      <Select.HiddenSelect />
+                      <Select.Control>
+                        <Select.Trigger>
+                          <Select.ValueText />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                          <Select.Indicator />
+                        </Select.IndicatorGroup>
+                      </Select.Control>
+                      <Select.Positioner>
+                        <Select.Content>
+                          {semesterCollectionSelect.items.map((item) => (
+                            <Select.Item key={item.value} item={item}>
+                              {item.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Positioner>
+                    </Select.Root>
+                  </Field.Root>
+
+                  <Field.Root>
+                    <Field.Label>Course</Field.Label>
+                    <Select.Root
+                      collection={courseCollection}
+                      value={[selectedCourseId]}
+                      onValueChange={(e) => setSelectedCourseId(e.value[0])}
+                      disabled={filteredCourses.length === 0}
+                    >
+                      <Select.HiddenSelect />
+                      <Select.Control>
+                        <Select.Trigger>
+                          <Select.ValueText placeholder="Select a course" />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                          <Select.Indicator />
+                        </Select.IndicatorGroup>
+                      </Select.Control>
+                      <Select.Positioner>
+                        <Select.Content>
+                          {courseCollection.items.map((item) => (
+                            <Select.Item key={item.value} item={item}>
+                              {item.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Positioner>
+                    </Select.Root>
+                  </Field.Root>
+                </Grid>
+
+                <Field.Root>
+                  <Field.Label>Upload Filled Template</Field.Label>
+                  <Button
+                    variant="outline"
+                    justifyContent="center"
+                    width="full"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Text color="accent.500" display="flex" alignItems="center" gap={2}>
+                      <LuFileText /> Select File
+                    </Text>
+                  </Button>
+                  {selectedFile && (
+                    <Text fontSize="sm" color="fg.muted" mt={2}>
+                      {selectedFile.name}
+                    </Text>
+                  )}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    accept=".xlsx, .xls"
+                    onChange={handleFileSelect}
+                  />
+                </Field.Root>
+
+                <Text fontSize="xs" color="fg.muted">
+                  Ensure the file follows the template format.
+                </Text>
+              </Stack>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="outline" onClick={onClose}>Cancel</Button>
+              <Button colorPalette="blue" onClick={handleSubmit} loading={isPending}>
+                <LuUpload /> Upload
+              </Button>
+            </Dialog.Footer>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton size="sm" />
+            </Dialog.CloseTrigger>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  );
+};
+
+// ─── Action Cell (Result Approvals only for ERO) ────────────────────────────
 const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; courseId: string; courseTitle: string }) => {
+  const { user } = useAuthStore();
   const [isStudentsOpen, setIsStudentsOpen] = useState(false);
   const [isResultsOpen, setIsResultsOpen] = useState(false);
   const [isHODResultsOpen, setIsHODResultsOpen] = useState(false);
+
+  const isERO = user?.role?.toUpperCase() === "ERO" || user?.roles?.some(r => r.toUpperCase() === "ERO");
 
   return (
     <>
@@ -93,15 +420,16 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
               <Menu.Item value="results" onClick={() => setIsResultsOpen(true)}>
                 <LuChartBar /> Results
               </Menu.Item>
-              <Menu.Item value="hod-results" onClick={() => setIsHODResultsOpen(true)}>
-                <LuClipboardCheck /> Result Approvals
-              </Menu.Item>
+              {isERO && (
+                <Menu.Item value="hod-results" onClick={() => setIsHODResultsOpen(true)}>
+                  <LuClipboardCheck /> Result Approvals
+                </Menu.Item>
+              )}
             </Menu.Content>
           </Menu.Positioner>
         </Portal>
       </Menu.Root>
 
-      {/* Students Drawer */}
       <Drawer.Root size="xl" open={isStudentsOpen} onOpenChange={(e) => setIsStudentsOpen(e.open)}>
         <Portal>
           <Drawer.Backdrop />
@@ -121,7 +449,6 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
         </Portal>
       </Drawer.Root>
 
-      {/* Results Drawer */}
       <Drawer.Root size="full" open={isResultsOpen} onOpenChange={(e) => setIsResultsOpen(e.open)}>
         <Portal>
           <Drawer.Backdrop />
@@ -141,17 +468,18 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
         </Portal>
       </Drawer.Root>
 
-      {/* HOD Result Approvals Drawer */}
-      <HODResultsDrawer
-        course={course}
-        isOpen={isHODResultsOpen}
-        onClose={() => setIsHODResultsOpen(false)}
-      />
+      {isERO && (
+        <HODResultsDrawer
+          course={course}
+          isOpen={isHODResultsOpen}
+          onClose={() => setIsHODResultsOpen(false)}
+        />
+      )}
     </>
   );
 };
 
-// Skeleton component
+// ─── Skeleton ────────────────────────────────────────────────────────────────
 const CoursesSkeleton = () => {
   return (
     <Box p="4" bg="bg" rounded="md">
@@ -160,6 +488,7 @@ const CoursesSkeleton = () => {
         <Flex gap="3" align="center" wrap="wrap">
           <Skeleton h="10" w="140px" rounded="md" />
           <Skeleton h="10" w="180px" rounded="md" />
+          <Skeleton h="10" w="130px" rounded="md" />
         </Flex>
       </Flex>
       <Table.ScrollArea>
@@ -193,6 +522,7 @@ const CoursesSkeleton = () => {
   );
 };
 
+// ─── Main Courses Component ─────────────────────────────────────────────────
 const Courses = () => {
   const { user } = useAuthStore();
   const { isHOD } = useCurrentUser();
@@ -202,6 +532,7 @@ const Courses = () => {
   const [level, setLevel] = useState("All");
   const [semester, setSemester] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const { data: allCourses = [], isLoading: allLoading, error: allError } = useAllCourses();
   const { data: assignedCourses = [], isLoading: assignedLoading, error: assignedError } = useAllCourses();
@@ -244,7 +575,6 @@ const Courses = () => {
 
   return (
     <Box p="4" bg="bg" rounded="md">
-      {/* Filters row */}
       <Flex align="center" justify="space-between" gap="3" mb="5" wrap="wrap" colorPalette="accent">
         <InputGroup startElement={<LuSearch />} width={{ base: "100%", sm: "300px" }}>
           <Input
@@ -309,10 +639,13 @@ const Courses = () => {
               </Select.Content>
             </Select.Positioner>
           </Select.Root>
+
+          <Button size="lg" colorPalette="blue" onClick={() => setUploadDialogOpen(true)}>
+            <LuUpload /> Upload Results
+          </Button>
         </Flex>
       </Flex>
 
-      {/* Table */}
       <Table.ScrollArea>
         <Table.Root size="lg" variant="outline" stickyHeader>
           <Table.Header>
@@ -366,7 +699,11 @@ const Courses = () => {
                     <Badge colorPalette="gray">{course.courseType}</Badge>
                   </Table.Cell>
                   <Table.Cell>
-                    <CourseActionCell course={course} courseId={course.id} courseTitle={`${course.title} (${course.code})`} />
+                    <CourseActionCell
+                      course={course}
+                      courseId={course.id}
+                      courseTitle={`${course.title} (${course.code})`}
+                    />
                   </Table.Cell>
                 </Table.Row>
               ))}
@@ -374,7 +711,6 @@ const Courses = () => {
         </Table.Root>
       </Table.ScrollArea>
 
-      {/* Pagination */}
       {filteredCourses.length > ITEMS_PER_PAGE && (
         <Flex justify="flex-end" mt={4}>
           <Pagination.Root
@@ -405,6 +741,12 @@ const Courses = () => {
           </Pagination.Root>
         </Flex>
       )}
+
+      <GlobalUploadDialog
+        isOpen={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+        courses={filteredCourses}
+      />
     </Box>
   );
 };

@@ -59,3 +59,7 @@ export const bulkAssignSupervisors = async (payload: BulkAssignPayload): Promise
 export const unassignStudent = async (studentId: string): Promise<void> => {
   await axiosClient.delete(`/projects/students/${studentId}/unassign`);
 };
+
+export const deleteProjectTopic = async (topicId: string): Promise<void> => {
+  await axiosClient.delete(`/projects/topics/${topicId}`);
+};
