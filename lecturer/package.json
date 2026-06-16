@@ -21,6 +21,7 @@
     "@tiptap/starter-kit": "^3.20.0",
     "@zumer/snapdom": "^2.12.2",
     "axios": "^1.13.2",
+    "check-password-strength": "^3.0.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.26",
     "html2canvas": "^1.4.1",

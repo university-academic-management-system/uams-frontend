@@ -1,12 +1,13 @@
 import axiosClient from "@configs/axios.config";
+import type { ChangePasswordPayload, ChangePasswordResponse, UpdateContactPayload, UpdateContactResponse } from "@type/auth.type";
 
 export const UserServices = {
-    changePassword: async (payload: { currentPassword: string; newPassword: string }) => {
-        const { data } = await axiosClient.patch("/user/update-password", payload);
+    changePassword: async (payload: ChangePasswordPayload): Promise<ChangePasswordResponse> => {
+        const { data } = await axiosClient.post("/auth/change-password", payload);
         return data;
     },
-    updateProfile: async (id: string, payload: any) => {
-        const { data } = await axiosClient.patch(`/users/${id}`, payload);
+    updateProfile: async (payload: UpdateContactPayload): Promise<UpdateContactResponse> => {
+        const { data } = await axiosClient.patch("/auth/update-contact", payload);
         return data;
     },
 };
