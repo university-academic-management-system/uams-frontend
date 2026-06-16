@@ -55,4 +55,21 @@ export const IDCardServices = {
         );
         return data;
     },
+
+    // Upload or update an ID card template file (front, back, or signature)
+    uploadTemplate: async (file: File, type: string) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", type);
+        const { data } = await axiosClient.put("/id-cards/templates", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return data;
+    },
+
+    // Get presigned URLs for ID card template files
+    getTemplates: async () => {
+        const { data } = await axiosClient.get("/id-cards/templates");
+        return data;
+    },
 }

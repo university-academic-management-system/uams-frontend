@@ -10,7 +10,7 @@ const SettingsPage = () => {
     return (
         <Box maxW="1400px" mx="auto">
             <Tabs.Root defaultValue="id-card" variant="enclosed">
-                <Tabs.List mb="8">
+                <Tabs.List>
                     <Tabs.Trigger value="id-card">
                         <UserSquare size={16} /> ID Card
                     </Tabs.Trigger>
