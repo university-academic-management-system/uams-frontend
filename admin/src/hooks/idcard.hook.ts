@@ -1,5 +1,27 @@
 import { IDCardServices } from "@services/idcard.service"
-import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query"
+import { toaster } from "@components/ui/toaster"
+import type { IDCardRequest, IDCardRequestsQuery } from "@type/idCard.type"
+
+interface TemplateUrls {
+    frontUrl: string;
+    backUrl: string;
+    signatureUrl: string;
+}
+
+interface UploadTemplateResponse {
+    status: string;
+    message: string;
+    data: {
+        type: string;
+        key: string;
+        templates: {
+            frontKey: string;
+            backKey: string;
+            signatureKey: string;
+        };
+    };
+}
 
 export const IDCardHooks = {
     useIDCard: (options?: Partial<UseQueryOptions<unknown>>) => useQuery<unknown>({
@@ -16,4 +38,36 @@ export const IDCardHooks = {
 
     useBulkDownloadBanner: (options?: UseMutationOptions<unknown, Error, string[]>) =>
         useMutation({ mutationFn: IDCardServices.bulkDownloadBanner, ...options }),
+
+    // Get presigned URLs for ID card template files
+    useIDCardTemplates: (options?: Partial<UseQueryOptions<{ status: string; message: string; data: TemplateUrls }>>) =>
+        useQuery<{ status: string; message: string; data: TemplateUrls }>({
+            queryKey: ["idcard-templates"],
+            queryFn: IDCardServices.getTemplates,
+            ...options,
+        }),
+
+    // Upload or update an ID card template file
+    useUploadIDCardTemplate: (options?: UseMutationOptions<UploadTemplateResponse, Error, { file: File; type: string }>) => {
+        const queryClient = useQueryClient();
+        return useMutation({
+            mutationFn: ({ file, type }) => IDCardServices.uploadTemplate(file, type),
+            onSuccess: () => {
+                toaster.success({ title: "Template updated successfully" });
+                queryClient.invalidateQueries({ queryKey: ["idcard-templates"] });
+            },
+            onError: () => {
+                toaster.error({ title: "Failed to update template" });
+            },
+            ...options,
+        });
+    },
+
+    // Get ID card requests with optional filters
+    useIDCardRequests: (params?: IDCardRequestsQuery, options?: Partial<UseQueryOptions<{ status: string; message: string; data: IDCardRequest[] }>>) =>
+        useQuery<{ status: string; message: string; data: IDCardRequest[] }>({
+            queryKey: ["idcard-requests", params],
+            queryFn: () => IDCardServices.getIDCardRequests(params),
+            ...options,
+        }),
 }

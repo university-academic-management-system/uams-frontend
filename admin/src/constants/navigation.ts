@@ -1,4 +1,4 @@
-import { LuHouse, LuLibrary, LuUser, LuBanknote, LuCalendarDays, LuSettings, LuMegaphone, LuIdCard, LuUsers } from "react-icons/lu";
+import { LuHouse, LuLibrary, LuUser, LuBanknote, LuCalendarDays, LuSettings, LuMegaphone, LuUsers, LuIdCard } from "react-icons/lu";
 import { PiAddressBook } from "react-icons/pi";
 import type { ElementType } from "react";
 
@@ -14,7 +14,7 @@ export const navigationLinks: NavigationLink[] = [
     { label: "Lecturers", href: "/staff", icon: PiAddressBook },
     { label: "Students", href: "/students", icon: LuUsers },
     { label: "Payments", href: "/payments", icon: LuBanknote },
-    { label: "ID Cards", href: "/id-card", icon: LuIdCard },
+    { label: "Applications", href: "/applications", icon: LuIdCard },
     { label: "Timetable", href: "/timetable", icon: LuCalendarDays },
     { label: "Announcements", href: "/announcements", icon: LuMegaphone },
     { label: "Settings", href: "/settings", icon: LuSettings },

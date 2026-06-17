@@ -1,16 +1,17 @@
 import axiosClient from "@configs/axios.config"
+import { ConfigServices } from "@services/config.service"
 import type { PaymentsResponse } from "@type/payment.type"
 
 export const PaymentServices = {
 
-    getPaymentConfig: async (programTypeId: string) => {
-        const { data } = await axiosClient.get(`/university-admin/payment-config?program_type_id=${programTypeId}`);
-        return data;
+    /** GET /configs/payments?programmeId=... */
+    getPaymentConfig: async (programmeId: string) => {
+        return ConfigServices.getConfig("payments", programmeId);
     },
 
-    patchPaymentConfig: async (payload: any) => {
-        const { data } = await axiosClient.patch("/university-admin/payment-config", payload);
-        return data;
+    /** PUT /configs/payments */
+    updatePaymentConfig: async (payload: Record<string, unknown>) => {
+        return ConfigServices.updateConfig("payments", payload);
     },
 
     getPaymentReceipt: async (paymentId: string) => {

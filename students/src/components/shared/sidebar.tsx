@@ -195,6 +195,8 @@ export const LogoutButton = () => {
                 colorPalette={"red"}
                 color="red.500"
                 onClick={() => { location.replace(`/auth/login`);  clearAuth(); }}
+
+                aria-label="Logout"
             >
                 <Icon as={LuLogOut} size="md" />
             </IconButton>

@@ -1,4 +1,5 @@
 import axiosClient from "@configs/axios.config"
+import type { IDCardRequestsQuery } from "@type/idCard.type"
 
 export const IDCardServices = {
 
@@ -53,6 +54,35 @@ export const IDCardServices = {
             { studentIds, format: "pdf" },
             { responseType: "blob" }
         );
+        return data;
+    },
+
+    // Upload or update an ID card template file (front, back, or signature)
+    uploadTemplate: async (file: File, type: string) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", type);
+        const { data } = await axiosClient.put("/id-cards/templates", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return data;
+    },
+
+    // Get presigned URLs for ID card template files
+    getTemplates: async () => {
+        const { data } = await axiosClient.get("/id-cards/templates");
+        return data;
+    },
+
+    // Get ID card requests with optional filters
+    getIDCardRequests: async (params?: IDCardRequestsQuery) => {
+        const { data } = await axiosClient.get("/id-cards", {
+            params: {
+                status: params?.status,
+                studentId: params?.studentId,
+                department: params?.department,
+            },
+        });
         return data;
     },
 }
