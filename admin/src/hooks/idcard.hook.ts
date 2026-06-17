@@ -1,6 +1,7 @@
 import { IDCardServices } from "@services/idcard.service"
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query"
 import { toaster } from "@components/ui/toaster"
+import type { IDCardRequest, IDCardRequestsQuery } from "@type/idCard.type"
 
 interface TemplateUrls {
     frontUrl: string;
@@ -61,4 +62,12 @@ export const IDCardHooks = {
             ...options,
         });
     },
+
+    // Get ID card requests with optional filters
+    useIDCardRequests: (params?: IDCardRequestsQuery, options?: Partial<UseQueryOptions<{ status: string; message: string; data: IDCardRequest[] }>>) =>
+        useQuery<{ status: string; message: string; data: IDCardRequest[] }>({
+            queryKey: ["idcard-requests", params],
+            queryFn: () => IDCardServices.getIDCardRequests(params),
+            ...options,
+        }),
 }
