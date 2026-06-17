@@ -21,12 +21,17 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 11
+
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm install --frozen-lockfile
         working-directory: ./admin
 
       - name: Build project
-        run: npm run build
+        run: pnpm run build
         working-directory: ./admin
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
