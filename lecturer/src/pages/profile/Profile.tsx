@@ -1,265 +1,273 @@
-import { useState, useEffect, useMemo } from "react";
-import { Box, Flex, Text, Button, Field, Stack, Spinner, DataList, Skeleton, SkeletonText } from "@chakra-ui/react";
+import {
+  Button,
+  DataList,
+  Field,
+  Heading,
+  SimpleGrid,
+  Skeleton,
+  Stack,
+} from "@chakra-ui/react";
 import { PasswordInput, PasswordStrengthMeter } from "@components/ui/password-input";
-import { Lock, CheckCircle } from "lucide-react";
-import useAuthStore from "@stores/auth.store";
-import { UserServices } from "@services/user.service";
-import { AuthServices } from "@services/auth.service";
+import { type Options, passwordStrength } from "check-password-strength";
+import { useCallback, useMemo, useState } from "react";
+import { Editable, IconButton } from "@chakra-ui/react";
+import { LuCheck, LuPencilLine, LuX } from "react-icons/lu";
+import { useChangePassword, useMe, useUpdateContact } from "@hooks/auth.hook";
+import { useChangePasswordForm } from "@forms/auth.form";
+import type { ChangePasswordFormData } from "@schemas/auth.schema";
 import { toaster } from "@components/ui/toaster";
+import moment from "moment";
 
-const calcPasswordStrength = (password: string): number => {
-  if (!password) return 0;
-  let score = 0;
-  if (password.length >= 6) score++;
-  if (password.length >= 10) score++;
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
-  if (/[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password)) score++;
-  return score;
-};
+const strengthOptions: Options<string> = [
+  { id: 1, value: "weak", minDiversity: 0, minLength: 0 },
+  { id: 2, value: "medium", minDiversity: 2, minLength: 6 },
+  { id: 3, value: "strong", minDiversity: 3, minLength: 8 },
+  { id: 4, value: "very-strong", minDiversity: 4, minLength: 10 },
+];
 
 const ProfilePage = () => {
-    const { user, setAuth } = useAuthStore();
-    const [isLoadingProfile, setIsLoadingProfile] = useState(!user?.staffProfile);
+  const { data: me, isLoading } = useMe();
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const res = await AuthServices.getProfile();
-                if (res.status === "success" && res.data) {
-                    const sp = res.data.staffProfile;
-                    const staffRoles = sp?.staffRoles ?? [];
-                    const name = [sp?.firstName, sp?.otherName, sp?.surname]
-                        .filter(Boolean)
-                        .join(" ");
-                    setAuth({
-                        user: {
-                            ...user,
-                            ...res.data,
-                            name: name || user?.name,
-                            roles: staffRoles,
-                            role: staffRoles[0],
-                        },
-                    });
-                }
-            } catch (error) {
-                console.error("Error fetching profile:", error);
-            } finally {
-                setIsLoadingProfile(false);
-            }
-        };
-
-        fetchProfile();
-    }, [setAuth]);
-
-    // Password change state
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [isChangingPassword, setIsChangingPassword] = useState(false);
-
-    const roleDisplay = (user?.role || "User").replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
-
-    const handleChangePassword = async () => {
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            toaster.error({ title: "Please fill in all password fields" });
-            return;
-        }
-        if (newPassword.length < 6) {
-            toaster.error({ title: "New password must be at least 6 characters" });
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            toaster.error({ title: "Passwords do not match" });
-            return;
-        }
-
-        try {
-            setIsChangingPassword(true);
-            await UserServices.changePassword({ currentPassword, newPassword });
-            toaster.success({ title: "Password changed successfully!" });
-            setCurrentPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
-        } catch (error: any) {
-            // Error toast handled by axios interceptor
-        } finally {
-            setIsChangingPassword(false);
-        }
-    };
-
-    const strength = useMemo(() => calcPasswordStrength(newPassword), [newPassword]);
-
-    if (isLoadingProfile) {
-        return (
-            <Box>
-                <Text fontSize="2xl" fontWeight="bold" color="fg.muted" mb="6">Profile</Text>
-                <Flex direction={{ base: "column", xl: "row" }} gap="6" alignItems="flex-start">
-                    {/* Account Details Skeleton */}
-                    <Box flex="5" bg="white" borderRadius="md" border="xs" borderColor="border.muted" p="8">
-                        <Skeleton h="6" w="32" mb="6" />
-                        <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
-                            {Array.from({ length: 11 }).map((_, i) => (
-                                <Flex key={i} justify="space-between" align="center">
-                                    <Skeleton h="4" w="24" />
-                                    <Skeleton h="4" w="32" />
-                                </Flex>
-                            ))}
-                        </SimpleGrid>
-                    </Box>
-
-                    {/* Password Change Skeleton */}
-                    <Box flex="4" bg="white" borderRadius="md" border="xs" borderColor="border.muted" p="8">
-                        <Skeleton h="6" w="48" mb="2" />
-                        <Skeleton h="4" w="64" mb="6" />
-                        <Stack gap="5">
-                            <Skeleton h="10" w="full" />
-                            <Skeleton h="10" w="full" />
-                            <Skeleton h="10" w="full" />
-                        </Stack>
-                        <Flex mt="6" justifyContent="flex-end">
-                            <Skeleton h="10" w="32" />
-                        </Flex>
-                    </Box>
-                </Flex>
-            </Box>
-        );
-    }
-
+  if (isLoading) {
     return (
-        <Box>
-            <Text fontSize="2xl" fontWeight="bold" color="fg.muted" mb="6">Profile</Text>
-
-            <Flex direction={{ base: "column", xl: "row" }} gap="6" alignItems="flex-start">
-                {/* Account Details Card */}
-                <Box flex="5" bg="white" borderRadius="md" border="xs" borderColor="border.muted" p="8">
-                    <Flex alignItems="center" gap="2" mb="6">
-                        <Text fontSize="lg" fontWeight="bold" color="fg.muted">Account Details</Text>
-                    </Flex>
-
-                    <DataList.Root size="lg" display="grid" gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="5">
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Title</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.title || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">First Name</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.firstName || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Surname</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.surname || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Other Names</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.otherName || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Staff ID</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.staffNumber || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Email Address</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{user?.email || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Phone Number</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.phone || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Gender</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.gender || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Department</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.department || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Faculty</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{(user as any)?.staffProfile?.faculty || "—"}</DataList.ItemValue>
-                        </DataList.Item>
-                        <DataList.Item>
-                            <DataList.ItemLabel color="fg.subtle" textTransform="uppercase" fontSize="xs" fontWeight="bold" letterSpacing="wider">Role</DataList.ItemLabel>
-                            <DataList.ItemValue color="fg.muted" fontSize="sm" fontWeight="medium">{((user as any)?.staffProfile?.staffRoles?.[0] || roleDisplay).replace(/_/g, " ")}</DataList.ItemValue>
-                        </DataList.Item>
-                    </DataList.Root>
-                </Box>
-
-                {/* Password Change Card */}
-                <Box flex="4" bg="white" borderRadius="md" border="xs" borderColor="border.muted" p="8">
-                    <Flex alignItems="center" gap="2" mb="2">
-                        <Text fontSize="lg" fontWeight="bold" color="fg.muted">Change Password</Text>
-                    </Flex>
-                    <Text fontSize="sm" color="fg.subtle" mb="6">Update your password to keep your account secure.</Text>
-
-                    <Stack gap="5" colorPalette={"accent"}>
-                        {/* Current Password */}
-                        <Field.Root>
-                            <Field.Label>Current Password</Field.Label>
-                            <PasswordInput
-                                placeholder="Enter current password"
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword(e.target.value)}
-                                disabled={isChangingPassword}
-                                size="xl"
-                            />
-                        </Field.Root>
-
-                        {/* New Password */}
-                        <Field.Root>
-                            <Field.Label>New Password</Field.Label>
-                            <PasswordInput
-                                placeholder="Enter new password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                disabled={isChangingPassword}
-                                size="xl"
-                            />
-                            {newPassword && (
-                                <PasswordStrengthMeter value={strength} mt="2" width="full" />
-                            )}
-                        </Field.Root>
-
-                        {/* Confirm Password */}
-                        <Field.Root>
-                            <Field.Label>Confirm New Password</Field.Label>
-                            <PasswordInput
-                                placeholder="Re-enter new password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                disabled={isChangingPassword}
-                                size="xl"
-                            />
-                            {confirmPassword && newPassword && (
-                                <Flex alignItems="center" gap="1" mt="1">
-                                    {confirmPassword === newPassword ? (
-                                        <>
-                                            <CheckCircle size={12} color="#22c55e" />
-                                            <Text fontSize="xs" color="#22c55e" fontWeight="bold">Passwords match</Text>
-                                        </>
-                                    ) : (
-                                        <Text fontSize="xs" color="#ef4444" fontWeight="bold">Passwords do not match</Text>
-                                    )}
-                                </Flex>
-                            )}
-                        </Field.Root>
-                    </Stack>
-
-                    <Flex mt="6" justifyContent="flex-end">
-                        <Button
-                            onClick={handleChangePassword}
-                            loading={isChangingPassword}
-                            loadingText="Changing..."
-                            disabled={isChangingPassword}
-                            size="lg"
-                            colorPalette="accent" 
-                        >
-                            <Lock size={16} /> Update Password
-                        </Button>
-                    </Flex>
-                </Box>
-            </Flex>
-        </Box>
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
+        <Skeleton h="400px" />
+        <Skeleton h="400px" />
+        <Skeleton h="400px" />
+      </SimpleGrid>
     );
+  }
+
+  const sp = me?.staffProfile;
+
+  return (
+    <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
+      {/* Bio data */}
+      <Stack bg="bg" border="xs" borderColor="border.muted" rounded="md" p="4">
+        <Heading>Bio data</Heading>
+        <DataList.Root size="md">
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
+            <DataList.Item>
+              <DataList.ItemLabel>Title</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">{sp?.title || "—"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Surname</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">{sp?.surname || "—"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>First name</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">{sp?.firstName || "—"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Other name</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">{sp?.otherName || "—"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Email</DataList.ItemLabel>
+              <EmailEditable email={me?.email || ""} />
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Phone number</DataList.ItemLabel>
+              <PhoneNumberEditable phone={sp?.phone || ""} />
+            </DataList.Item>
+          </SimpleGrid>
+        </DataList.Root>
+      </Stack>
+
+      {/* Staff data – replaces "Academic data" for students */}
+      <Stack bg="bg" border="xs" borderColor="border.muted" rounded="md" p="4">
+        <Heading>Staff data</Heading>
+        <DataList.Root size="md">
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
+            <DataList.Item>
+              <DataList.ItemLabel>Staff number</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">{sp?.staffNumber || "—"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Department</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">{sp?.department || "—"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Faculty</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">{sp?.faculty || "—"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Gender</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">{sp?.gender || "—"}</DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Roles</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">
+                {sp?.staffRoles?.join(", ") || "—"}
+              </DataList.ItemValue>
+            </DataList.Item>
+            <DataList.Item>
+              <DataList.ItemLabel>Member since</DataList.ItemLabel>
+              <DataList.ItemValue fontWeight="semibold">
+                {sp?.createdAt ? moment(sp.createdAt).format("MMMM YYYY") : "—"}
+              </DataList.ItemValue>
+            </DataList.Item>
+          </SimpleGrid>
+        </DataList.Root>
+      </Stack>
+
+      {/* Security settings */}
+      <PasswordUpdate />
+    </SimpleGrid>
+  );
+};
+
+
+const PasswordUpdate = () => {
+  const { register, handleSubmit, formState: { errors }, watch, reset } = useChangePasswordForm();
+  const newPassword = watch("newPassword");
+  const confirmPassword = watch("confirmPassword");
+  const currentPassword = watch("currentPassword");
+
+  const strength = useMemo(() => {
+    if (!newPassword) return 0;
+    const result = passwordStrength(newPassword, strengthOptions);
+    return result.id;
+  }, [newPassword]);
+
+  const isDisabled =
+    !newPassword ||
+    !confirmPassword ||
+    strength < 2 ||
+    !currentPassword ||
+    newPassword !== confirmPassword;
+
+  const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword({
+    onSuccess: () => {
+      toaster.success({ description: "Password changed successfully" });
+      reset();
+    },
+  });
+
+  const onSubmit = (data: ChangePasswordFormData) => {
+    changePassword({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+    });
+  };
+
+  return (
+    <Stack bg="bg" border="xs" borderColor="border.muted" rounded="md" p="4">
+      <Heading>Security settings</Heading>
+      <Stack asChild gap="4" colorPalette="accent">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Field.Root invalid={!!errors.currentPassword}>
+            <Field.Label>Current password</Field.Label>
+            <PasswordInput size="xl" {...register("currentPassword")} />
+            <Field.ErrorText>{errors.currentPassword?.message}</Field.ErrorText>
+          </Field.Root>
+          <Field.Root invalid={!!errors.newPassword}>
+            <Field.Label>New password</Field.Label>
+            <PasswordInput size="xl" {...register("newPassword")} />
+            <PasswordStrengthMeter value={strength} />
+            <Field.ErrorText>{errors.newPassword?.message}</Field.ErrorText>
+          </Field.Root>
+          <Field.Root invalid={!!errors.confirmPassword}>
+            <Field.Label>Confirm password</Field.Label>
+            <PasswordInput size="xl" {...register("confirmPassword")} />
+            <Field.ErrorText>{errors.confirmPassword?.message}</Field.ErrorText>
+          </Field.Root>
+          <Button type="submit" size="xl" loading={isChangingPassword} disabled={isDisabled}>
+            Change Password
+          </Button>
+        </form>
+      </Stack>
+    </Stack>
+  );
+};
+
+const EmailEditable = ({ email }: { email: string }) => {
+  const [emailAddress, setEmailAddress] = useState(email);
+  const { mutate: updateContact } = useUpdateContact({
+    onSuccess: () => {
+      toaster.success({ description: "Email updated successfully" });
+    },
+  });
+
+  const handleSubmit = useCallback(() => {
+    if (emailAddress === email) return;
+    updateContact({ email: emailAddress });
+  }, [emailAddress, updateContact, email]);
+
+  return (
+    <Editable.Root
+      submitMode="none"
+      colorPalette="accent"
+      value={emailAddress}
+      onValueCommit={handleSubmit}
+      onValueChange={(e) => setEmailAddress(e.value)}
+    >
+      <Editable.Preview fontWeight="semibold" />
+      <Editable.Input fontWeight="semibold" />
+      <Editable.Control>
+        <Editable.EditTrigger asChild>
+          <IconButton variant="ghost" size="xs">
+            <LuPencilLine />
+          </IconButton>
+        </Editable.EditTrigger>
+        <Editable.CancelTrigger asChild>
+          <IconButton colorPalette="gray" variant="outline" size="xs">
+            <LuX />
+          </IconButton>
+        </Editable.CancelTrigger>
+        <Editable.SubmitTrigger asChild>
+          <IconButton size="xs">
+            <LuCheck />
+          </IconButton>
+        </Editable.SubmitTrigger>
+      </Editable.Control>
+    </Editable.Root>
+  );
+};
+
+const PhoneNumberEditable = ({ phone }: { phone: string }) => {
+  const [phoneNumber, setPhoneNumber] = useState(phone);
+  const { mutate: updateContact } = useUpdateContact({
+    onSuccess: () => {
+      toaster.success({ description: "Phone number updated successfully" });
+    },
+  });
+
+  const handleSubmit = useCallback(() => {
+    if (phoneNumber === phone) return;
+    updateContact({ phone: phoneNumber });
+  }, [phoneNumber, updateContact, phone]);
+
+  return (
+    <Editable.Root
+      colorPalette="accent"
+      onValueCommit={handleSubmit}
+      submitMode="enter"
+      value={phoneNumber}
+      onValueChange={(e) => setPhoneNumber(e.value)}
+    >
+      <Editable.Preview fontWeight="semibold" />
+      <Editable.Input fontWeight="semibold" />
+      <Editable.Control>
+        <Editable.EditTrigger asChild>
+          <IconButton variant="ghost" size="xs">
+            <LuPencilLine />
+          </IconButton>
+        </Editable.EditTrigger>
+        <Editable.CancelTrigger asChild>
+          <IconButton colorPalette="gray" variant="outline" size="xs">
+            <LuX />
+          </IconButton>
+        </Editable.CancelTrigger>
+        <Editable.SubmitTrigger asChild>
+          <IconButton colorPalette="accent" size="xs">
+            <LuCheck />
+          </IconButton>
+        </Editable.SubmitTrigger>
+      </Editable.Control>
+    </Editable.Root>
+  );
 };
 
 export default ProfilePage;

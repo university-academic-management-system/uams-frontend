@@ -144,7 +144,7 @@ const UserPersona = () => {
     const { user } = useAuthStore();
     const { isCollapsed } = sidebarStore();
     return (
-        <HStack key={user?.email} gap="2" justify={isCollapsed ? "center" : "start"}>
+        <HStack key={user?.email} gap="2" pb="4" justify={isCollapsed ? "center" : "start"}>
             <Avatar.Root size="xs">
                 <Avatar.Fallback name={user?.name} />
             </Avatar.Root>

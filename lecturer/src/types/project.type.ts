@@ -1,43 +1,93 @@
+export interface ProjectTopic {
+  title: string;
+  description: string;
+}
 
-export interface UserBasic {
-  email: string;
+export interface SuggestedProject extends ProjectTopic {
+    id: string;
+    studentId: string;
+    supervisorId: string;
+    session: string;
+    status: "PENDING" | "APPROVED" | "REJECTED";
+    approvedById: string | null;
+    approvedAt: string | null;
+    rejectedAt: string | null;
+    rejectionReason: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface AssignedSupervisor {
+  supervisorId: string[];
+  studentId: string;
+}
+
+export interface AssignSupervisorPayload {
+  studentId: string[];
+  supervisorId: string;
+}
+
+export interface AssignSupervisorResponse {
+  status: string;
+  message: string;
+  data: string;
+}
+
+export interface UnassignStudent {
+  studentId: string;
+}
+
+export interface UnassignStudentPayload {
+  studentId: string;
+}
+
+export interface UnassignStudentResponse {
+  status: string;
+  message: string;
+  data: string;
+}
+
+export interface ApproveProjectTopicPayload {
+  topicId: string;
+  approved: boolean;
+}
+
+export interface ApproveProjectTopicResponse {
+  status: string;
+  message: string;
+  data: string;
+}
+
+export type UpdateProjectTopicPayload = ProjectTopic
+
+export interface UpdateProjectTopicResponse {
+    status: string;
+    message: string;
+    data: string;
+}
+
+export interface Supervisor {
+    firstName: string;
+    surname: string;
+    title: string;
+    otherName: string;
+    faculty: string;
+    department: string;
+    user: {
+        email: string;
+    };
 }
 
 export interface Student {
-  id: string;
-  matricNumber: string;
-  firstName: string;
-  surname: string;
-  otherName?: string;
-  user?: UserBasic;
-}
-
-export interface SupervisorBasic {
-  firstName: string;
-  surname: string;
-  title: string;
-  otherName?: string;
-  faculty?: string;
-  department?: string;
-  user?: UserBasic;
-}
-
-export interface ProjectTopic {
-  id: string;
-  studentId: string;
-  supervisorId: string;
-  session: string;
-  title: string;
-  description: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  approvedById?: string;
-  approvedAt?: string;
-  rejectedAt?: string | null;
-  rejectionReason?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  student?: Student;
-  supervisor?: SupervisorBasic;
+    firstName: string;
+    surname: string;
+    otherName: string;
+    matricNumber: string;
+    faculty: string;
+    department: string;
+    user: {
+        email: string;
+    };
 }
 
 export interface Project {
@@ -46,7 +96,7 @@ export interface Project {
   supervisorId: string;
   approvedTopicId: string;
   session: string;
-  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "GRADED";
+  status: string;
   googleDriveFileId?: string;
   googleDocUrl?: string;
   googleDocEmail?: string;
@@ -65,7 +115,7 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   student?: Student;
-  supervisor?: SupervisorBasic;
+  supervisor?: Supervisor;
   approvedTopic?: ProjectTopic;
 }
 
@@ -83,26 +133,13 @@ export interface ProjectTopicFilters {
   session?: string;
 }
 
-export interface CreateProjectTopicPayload {
-  title: string;
-  description: string;
-}
-
-export interface UpdateProjectTopicPayload {
-  title?: string;
-  description?: string;
-}
-
 export interface ApproveTopicPayload {
   approved: boolean;
   rejectionReason?: string;
 }
 
-export interface BulkAssignPayload {
-  assignments: {
-    studentId: string;
-    supervisorId: string;
-  }[];
+export interface GradeProject{
+  projectId: string;
 }
 
 export interface GradeProjectPayload {
@@ -111,3 +148,10 @@ export interface GradeProjectPayload {
   documentationScore: number;
   defenseScore: number;
 }
+
+export interface GradeProjectResponse {
+  status: string;
+  message: string;
+  data: Project;
+}
+

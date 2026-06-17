@@ -1,117 +1,100 @@
-// @hooks/project.hook.ts
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+// hooks/project.hook.ts
+import {
+  useQuery,
+  useMutation,
+  type UseQueryOptions,
+  type UseMutationOptions,
+} from "@tanstack/react-query";
 import {
   getProjectTopics,
   createProjectTopic,
   updateProjectTopic,
   approveProjectTopic,
-  getProjects,
-  startProject,
-  gradeProject,
-  bulkAssignSupervisors,
+  assignSupervisor,
   unassignStudent,
+  getProjects,
+  gradeProject,
 } from "@services/project.service";
 import type {
-  ProjectTopicFilters,
-  CreateProjectTopicPayload,
-  UpdateProjectTopicPayload,
+  ProjectTopic,
+  Project,
+  AssignSupervisorPayload,
+  AssignSupervisorResponse,
+  UnassignStudentPayload,
+  UnassignStudentResponse,
   ApproveTopicPayload,
-  ProjectFilters,
+  UpdateProjectTopicPayload,
   GradeProjectPayload,
-  BulkAssignPayload,
+  GradeProjectResponse,
+  ProjectFilters,
+  ProjectTopicFilters,
+  ApproveProjectTopicResponse,
 } from "@type/project.type";
 
-const PROJECT_TOPICS_KEY = "project-topics";
-const PROJECTS_KEY = "projects";
-
-// Project Topics
-export const useProjectTopics = (filters?: ProjectTopicFilters) => {
-  return useQuery({
-    queryKey: [PROJECT_TOPICS_KEY, filters],
+// ---------- Project Topics ----------
+export const useProjectTopics = (
+  filters?: ProjectTopicFilters,
+  options?: UseQueryOptions<ProjectTopic[], Error>
+) =>
+  useQuery<ProjectTopic[], Error>({
+    queryKey: ["project-topics", filters],
     queryFn: () => getProjectTopics(filters),
+    ...options,
   });
-};
 
-export const useCreateProjectTopic = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: CreateProjectTopicPayload) => createProjectTopic(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
-    },
+export const useCreateProjectTopic = (
+  options?: UseMutationOptions<ProjectTopic, Error, { title: string; description: string }>
+) =>
+  useMutation<ProjectTopic, Error, { title: string; description: string }>({
+    mutationFn: (payload) => createProjectTopic(payload),
+    ...options,
   });
-};
 
-export const useUpdateProjectTopic = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ topicId, payload }: { topicId: string; payload: UpdateProjectTopicPayload }) =>
-      updateProjectTopic(topicId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
-    },
+export const useUpdateProjectTopic = (
+  options?: UseMutationOptions<ProjectTopic, Error, { topicId: string; payload: UpdateProjectTopicPayload }>
+) =>
+  useMutation<ProjectTopic, Error, { topicId: string; payload: UpdateProjectTopicPayload }>({
+    mutationFn: ({ topicId, payload }) => updateProjectTopic(topicId, payload),
+    ...options,
   });
-};
 
-export const useApproveProjectTopic = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ topicId, payload }: { topicId: string; payload: ApproveTopicPayload }) =>
-      approveProjectTopic(topicId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
-    },
+export const useApproveProjectTopic = (
+  options?: UseMutationOptions<ApproveProjectTopicResponse, Error, { topicId: string; payload: ApproveTopicPayload }>
+) =>
+  useMutation<ApproveProjectTopicResponse, Error, { topicId: string; payload: ApproveTopicPayload }>({
+    mutationFn: ({ topicId, payload }) => approveProjectTopic(topicId, payload),
+    ...options,
   });
-};
 
-// Projects 
-export const useProjects = (filters?: ProjectFilters) => {
-  return useQuery({
-    queryKey: [PROJECTS_KEY, filters],
+// ---------- Supervisor Assignment ----------
+export const useAssignSupervisor = (
+  options?: UseMutationOptions<AssignSupervisorResponse, Error, AssignSupervisorPayload>
+) =>
+  useMutation<AssignSupervisorResponse, Error, AssignSupervisorPayload>({
+    mutationFn: (payload) => assignSupervisor(payload),
+    ...options,
+  });
+
+export const useUnassignStudent = (
+  options?: UseMutationOptions<UnassignStudentResponse, Error, UnassignStudentPayload>
+) =>
+  useMutation<UnassignStudentResponse, Error, UnassignStudentPayload>({
+    mutationFn: (payload) => unassignStudent(payload),
+    ...options,
+  });
+
+// ---------- Projects ----------
+export const useProjects = (filters?: ProjectFilters, options?: UseQueryOptions<Project[], Error>) =>
+  useQuery<Project[], Error>({
+    queryKey: ["projects", filters],
     queryFn: () => getProjects(filters),
+    ...options,
   });
-};
 
-export const useStartProject = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => startProject(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
-    },
+export const useGradeProject = (
+  options?: UseMutationOptions<GradeProjectResponse, Error, { projectId: string; payload: GradeProjectPayload }>
+) =>
+  useMutation<GradeProjectResponse, Error, { projectId: string; payload: GradeProjectPayload }>({
+    mutationFn: ({ projectId, payload }) => gradeProject(projectId, payload),
+    ...options,
   });
-};
-
-export const useGradeProject = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ projectId, payload }: { projectId: string; payload: GradeProjectPayload }) =>
-      gradeProject(projectId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
-    },
-  });
-};
-
-// Assignment (Admin/HOD) 
-export const useBulkAssignSupervisors = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: BulkAssignPayload) => bulkAssignSupervisors(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
-      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
-    },
-  });
-};
-
-export const useUnassignStudent = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (studentId: string) => unassignStudent(studentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
-      queryClient.invalidateQueries({ queryKey: [PROJECT_TOPICS_KEY] });
-    },
-  });
-};

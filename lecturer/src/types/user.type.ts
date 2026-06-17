@@ -1,19 +1,12 @@
-export type AuthUser = {
-    id: string;
+export interface UserState {
     name: string;
     email: string;
-    role: string;
-    roles: string[];
-};
-
-export type AuthPermissions = string[];
-
-export interface UserState {
-    user: AuthUser | null;
-    permissions: AuthPermissions | null;
+    password: string;
 }
 
 export interface UserActions {
-    setUser: (user: AuthUser, permissions: AuthPermissions) => void;
+    setUser: (user: UserState) => void;
     clearUser: () => void;
 }
+
+export type UserStoreType = UserState & UserActions;

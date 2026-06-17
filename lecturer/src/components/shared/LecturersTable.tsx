@@ -1,4 +1,5 @@
 // src/components/shared/LecturersTable.tsx
+import { useState, useMemo } from "react";
 import {
   Box,
   Table,
@@ -16,39 +17,30 @@ import {
   Pagination,
   Badge,
   Menu,
+  Input,
+  InputGroup,
 } from "@chakra-ui/react";
-import { MoreHorizontal, Users } from "lucide-react";
-import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { MoreHorizontal, Users, Trash2 } from "lucide-react";
+import { LuChevronLeft, LuChevronRight, LuSearch } from "react-icons/lu";
 import type { Staff, LecturersTableProps } from "@type/lecturer.type";
 import { LECTURERS_TABLE_COLUMNS } from "@type/lecturer.type";
 import { formatRole } from "@utils/function.util";
 import EmptyStateView from "@components/shared/empty-state";
+import { useStudents } from "@hooks/student.hook";
+import { useProjects, useAssignSupervisor, useUnassignStudent } from "@hooks/project.hook";
+import { toaster } from "@components/ui/toaster";
+import { Checkbox } from "@components/ui/checkbox";
+import { useQueryClient } from "@tanstack/react-query";
 
-const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
+// ---------- Existing Drawers (CoursesDrawer, AssignStudentDrawer) ----------
+const CoursesDrawer = ({ open, setOpen, lecturer }: { open: boolean; setOpen: (open: boolean) => void; lecturer: Staff }) => {
   const courses = lecturer.courses || [];
   const name =
-    `${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.otherName || ""}`.trim() ||
+    `${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""} ${lecturer.staffProfile?.otherName || ""}`.trim() ||
     "Staff";
 
   return (
-    <Drawer.Root size="md">
-      <Menu.Root>
-        <Menu.Trigger asChild>
-          <Button variant="ghost" size="xs">
-            <MoreHorizontal />
-          </Button>
-        </Menu.Trigger>
-        <Portal>
-          <Menu.Positioner>
-            <Menu.Content>
-              <Drawer.Trigger asChild>
-                <Menu.Item value="courses">Courses</Menu.Item>
-              </Drawer.Trigger>
-            </Menu.Content>
-          </Menu.Positioner>
-        </Portal>
-      </Menu.Root>
-
+    <Drawer.Root open={open} onOpenChange={(e) => setOpen(e.open)} size="md">
       <Portal>
         <Drawer.Backdrop />
         <Drawer.Positioner>
@@ -69,13 +61,7 @@ const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
                 }
               >
                 {(course) => (
-                  <Box
-                    key={course.id}
-                    border="1px solid"
-                    borderColor="border.muted"
-                    rounded="lg"
-                    p="4"
-                  >
+                  <Box key={course.id} border="1px solid" borderColor="border.muted" rounded="lg" p="4">
                     <Text color="fg.muted" fontSize="sm" mb="1">{course.code}</Text>
                     <Heading size="sm" color="fg.muted">{course.title}</Heading>
                   </Box>
@@ -92,6 +78,332 @@ const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
   );
 };
 
+const AssignStudentDrawer = ({
+  open,
+  setOpen,
+  lecturer,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  lecturer: Staff;
+}) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
+
+  const { data: students = [], isLoading: isLoadingStudents } = useStudents();
+  const { mutateAsync: assignSupervisors, isPending: isAssigning } = useAssignSupervisor();
+
+  const name =
+    `${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""} ${lecturer.staffProfile?.otherName || ""}`.trim() ||
+    "Staff";
+
+  const filteredStudents = useMemo(() => {
+    const levelStudents = students.filter((student) => student.studentProfile?.level === "L400");
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return levelStudents;
+    return levelStudents.filter((student) => {
+      const profile = student.studentProfile;
+      const fullName = `${profile?.firstName || ""} ${profile?.lastName || ""} ${profile?.otherName || ""}`.toLowerCase();
+      const matric = (profile?.matricNumber || "").toLowerCase();
+      const email = (student.email || "").toLowerCase();
+      return fullName.includes(query) || matric.includes(query) || email.includes(query);
+    });
+  }, [students, searchQuery]);
+
+  const levelStudentsCount = useMemo(() => students.filter((student) => student.studentProfile?.level === "L400").length, [students]);
+
+  const handleToggleStudent = (studentId: string) => {
+    setSelectedStudentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(studentId)) next.delete(studentId);
+      else next.add(studentId);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = filteredStudents.map((s) => s.id);
+      setSelectedStudentIds(new Set(allIds));
+    } else {
+      setSelectedStudentIds(new Set());
+    }
+  };
+
+  const isAllSelected = filteredStudents.length > 0 && filteredStudents.every((s) => selectedStudentIds.has(s.id));
+  const isSomeSelected = filteredStudents.length > 0 && filteredStudents.some((s) => selectedStudentIds.has(s.id)) && !isAllSelected;
+
+  const handleAssign = async () => {
+    if (selectedStudentIds.size === 0) return;
+    try {
+      await assignSupervisors({
+        studentId: Array.from(selectedStudentIds),
+        supervisorId: lecturer.id,
+      });
+      toaster.success({
+        title: "Assignment Successful",
+        description: `Successfully assigned ${selectedStudentIds.size} student(s) to ${name}.`,
+      });
+      setSelectedStudentIds(new Set());
+      setSearchQuery("");
+      setOpen(false);
+    } catch (error: any) {
+      toaster.error({
+        title: "Assignment Failed",
+        description: error?.response?.data?.message || error?.message || "An error occurred.",
+      });
+    }
+  };
+
+  return (
+    <Drawer.Root open={open} onOpenChange={(e) => setOpen(e.open)} size="md">
+      <Portal>
+        <Drawer.Backdrop />
+        <Drawer.Positioner>
+          <Drawer.Content>
+            <Drawer.Header>
+              <Drawer.Title fontSize="md">Assign Students to {name}</Drawer.Title>
+            </Drawer.Header>
+            <Drawer.Body spaceY="4" py="6" display="flex" flexDirection="column" maxH="calc(100vh - 120px)">
+              <InputGroup startElement={<LuSearch />}>
+                <Input
+                  placeholder="Search students by name, matric no, or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  size="md"
+                />
+              </InputGroup>
+
+              {isLoadingStudents ? (
+                <Flex justify="center" align="center" flex="1" py="10">
+                  <Spinner size="lg" color="accent.500" />
+                </Flex>
+              ) : levelStudentsCount === 0 ? (
+                <Flex justify="center" align="center" flex="1" py="10">
+                  <EmptyStateView
+                    icon={<Users />}
+                    title="No 400 Level students found"
+                    description="There are no 400 Level students available in this department."
+                  />
+                </Flex>
+              ) : (
+                <Flex flexDirection="column" flex="1" overflow="hidden" spaceY="3">
+                  <Box pb="2" borderBottom="1px solid" borderColor="border.muted">
+                    <Checkbox
+                      colorPalette="accent"
+                      checked={isAllSelected ? true : isSomeSelected ? "indeterminate" : false}
+                      onCheckedChange={(details) => handleSelectAll(!!details.checked)}
+                    >
+                      <Text fontWeight="600" fontSize="sm">Select All ({filteredStudents.length} students)</Text>
+                    </Checkbox>
+                  </Box>
+
+                  <Box overflowY="auto" flex="1" pr="1" spaceY="1">
+                    {filteredStudents.length === 0 ? (
+                      <Text color="fg.muted" fontSize="sm" textAlign="center" py="4">No students match your search.</Text>
+                    ) : (
+                      filteredStudents.map((student) => {
+                        const profile = student.studentProfile;
+                        const studentName = `${profile?.lastName || ""} ${profile?.firstName || ""} ${profile?.otherName || ""}`.trim() || student.email;
+                        return (
+                          <Flex key={student.id} p="3" rounded="md" _hover={{ bg: "bg.muted" }} borderBottom="1px solid" borderColor="border.muted" align="center">
+                            <Checkbox
+                              colorPalette="accent"
+                              checked={selectedStudentIds.has(student.id)}
+                              onCheckedChange={() => handleToggleStudent(student.id)}
+                            >
+                              <Box ml="2">
+                                <Text fontWeight="600" fontSize="sm">{studentName}</Text>
+                                <Text fontSize="xs" color="fg.muted">
+                                  {profile?.matricNumber || "No Matric No."} • {profile?.level || "Unknown Level"} • {student.email}
+                                </Text>
+                              </Box>
+                            </Checkbox>
+                          </Flex>
+                        );
+                      })
+                    )}
+                  </Box>
+                </Flex>
+              )}
+            </Drawer.Body>
+
+            <Drawer.Footer borderTop="1px solid" borderColor="border.muted" py="4" px="6" justifyContent="flex-end">
+              <Button
+                colorPalette="accent"
+                size="sm"
+                onClick={handleAssign}
+                disabled={selectedStudentIds.size === 0 || isAssigning}
+                loading={isAssigning}
+              >
+                Assign ({selectedStudentIds.size})
+              </Button>
+            </Drawer.Footer>
+
+            <Drawer.CloseTrigger asChild>
+              <CloseButton size="sm" pos="absolute" top="4" right="4" />
+            </Drawer.CloseTrigger>
+          </Drawer.Content>
+        </Drawer.Positioner>
+      </Portal>
+    </Drawer.Root>
+  );
+};
+
+//Unassign 
+const UnassignStudentDrawer = ({
+  open,
+  setOpen,
+  lecturer,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  lecturer: Staff;
+}) => {
+  const queryClient = useQueryClient();
+
+  const { data: allProjects, isLoading, refetch } = useProjects();
+  const { mutateAsync: unassignStudent, isPending } = useUnassignStudent();
+
+  const name =
+    `${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""} ${lecturer.staffProfile?.otherName || ""}`.trim() ||
+    "Staff";
+
+  // Extract unique students from projects where supervisorId matches lecturer.id
+  const assignedStudents = useMemo(() => {
+    if (!allProjects) return [];
+    const supervisorProjects = allProjects.filter((p) => p.supervisorId === lecturer.id);
+    const seen = new Set();
+    return supervisorProjects
+      .map((p) => p.student)
+      .filter(Boolean)
+      .filter((s) => {
+        if (seen.has(s.id)) return false;
+        seen.add(s.id);
+        return true;
+      });
+  }, [allProjects, lecturer.id]);
+
+  const handleUnassign = async (studentId: string) => {
+    try {
+      await unassignStudent({ studentId });
+      toaster.success({
+        title: "Student Unassigned",
+        description: `Successfully unassigned student from ${name}.`,
+      });
+      refetch(); // refresh the project list
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    } catch (error: any) {
+      toaster.error({
+        title: "Unassignment Failed",
+        description: error?.response?.data?.message || error?.message || "An error occurred.",
+      });
+    }
+  };
+
+  return (
+    <Drawer.Root open={open} onOpenChange={(e) => setOpen(e.open)} size="md">
+      <Portal>
+        <Drawer.Backdrop />
+        <Drawer.Positioner>
+          <Drawer.Content>
+            <Drawer.Header>
+              <Drawer.Title fontSize="md">Assigned Students for {name}</Drawer.Title>
+            </Drawer.Header>
+            <Drawer.Body spaceY="4" py="6" display="flex" flexDirection="column" maxH="calc(100vh - 120px)">
+              {isLoading ? (
+                <Flex justify="center" align="center" flex="1" py="10">
+                  <Spinner size="lg" color="accent.500" />
+                </Flex>
+              ) : assignedStudents.length === 0 ? (
+                <Flex justify="center" align="center" flex="1" py="10">
+                  <EmptyStateView
+                    icon={<Users />}
+                    title="No assigned students"
+                    description={`${name} currently has no students assigned.`}
+                  />
+                </Flex>
+              ) : (
+                <Box overflowY="auto" flex="1" pr="1" spaceY="1">
+                  {assignedStudents.map((student) => {
+                    const profile = student.studentProfile;
+                    const studentName = `${profile?.lastName || ""} ${profile?.firstName || ""} ${profile?.otherName || ""}`.trim() || student.email;
+                    return (
+                      <Flex
+                        key={student.id}
+                        p="3"
+                        rounded="md"
+                        _hover={{ bg: "bg.muted" }}
+                        borderBottom="1px solid"
+                        borderColor="border.muted"
+                        justify="space-between"
+                        align="center"
+                      >
+                        <Box>
+                          <Text fontWeight="600" fontSize="sm">{studentName}</Text>
+                          <Text fontSize="xs" color="fg.muted">
+                            {profile?.matricNumber || "No Matric No."} • {profile?.level || "Unknown Level"} • {student.email}
+                          </Text>
+                        </Box>
+                        <IconButton
+                          aria-label="Unassign student"
+                          size="xs"
+                          variant="ghost"
+                          colorPalette="red"
+                          onClick={() => handleUnassign(student.id)}
+                          loading={isPending}
+                        >
+                          <Trash2 size={16} />
+                        </IconButton>
+                      </Flex>
+                    );
+                  })}
+                </Box>
+              )}
+            </Drawer.Body>
+            <Drawer.CloseTrigger asChild>
+              <CloseButton size="sm" pos="absolute" top="4" right="4" />
+            </Drawer.CloseTrigger>
+          </Drawer.Content>
+        </Drawer.Positioner>
+      </Portal>
+    </Drawer.Root>
+  );
+};
+
+// ---------- Updated LecturerActionCell ----------
+const LecturerActionCell = ({ lecturer }: { lecturer: Staff }) => {
+  const [coursesOpen, setCoursesOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [unassignOpen, setUnassignOpen] = useState(false);
+
+  return (
+    <>
+      <Menu.Root>
+        <Menu.Trigger asChild>
+          <Button variant="ghost" size="xs">
+            <MoreHorizontal />
+          </Button>
+        </Menu.Trigger>
+        <Portal>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Menu.Item value="courses" onClick={() => setCoursesOpen(true)}>Courses</Menu.Item>
+              <Menu.Item value="assign" onClick={() => setAssignOpen(true)}>Assign Student</Menu.Item>
+              <Menu.Item value="unassign" onClick={() => setUnassignOpen(true)}>Unassign Students</Menu.Item>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Portal>
+      </Menu.Root>
+
+      <CoursesDrawer open={coursesOpen} setOpen={setCoursesOpen} lecturer={lecturer} />
+      <AssignStudentDrawer open={assignOpen} setOpen={setAssignOpen} lecturer={lecturer} />
+      <UnassignStudentDrawer open={unassignOpen} setOpen={setUnassignOpen} lecturer={lecturer} />
+    </>
+  );
+};
+
+// ---------- Main Table Component ----------
 interface LecturersTablePropsExtended extends LecturersTableProps {
   paginatedLecturers: Staff[];
   startIndex: number;
@@ -162,29 +474,19 @@ const LecturersTable = ({
                 const courseCount = lecturer.courses?.length ?? 0;
                 return (
                   <Table.Row key={lecturer.id}>
-                    <Table.Cell px="4" py="3.5" fontSize="md" color="gray.600" whiteSpace="nowrap">
-                      {startIndex + index + 1}
-                    </Table.Cell>
+                    <Table.Cell px="4" py="3.5" fontSize="md" color="gray.600" whiteSpace="nowrap">{startIndex + index + 1}</Table.Cell>
                     <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" whiteSpace="nowrap">
                       {lecturer.staffProfile?.staffNumber || "—"}
                     </Table.Cell>
                     <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" fontWeight="600" whiteSpace="nowrap">
                       {`${lecturer.staffProfile?.firstName || ""} ${lecturer.staffProfile?.lastName || ""} ${lecturer.staffProfile?.otherName || ""}`.trim() || "—"}
                     </Table.Cell>
-                    <Table.Cell px="4" py="3.5" fontSize="md" color="gray.500" whiteSpace="nowrap">
-                      {lecturer.email || "—"}
-                    </Table.Cell>
-                    <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" whiteSpace="nowrap">
-                      {lecturer.staffProfile?.phone || "—"}
-                    </Table.Cell>
+                    <Table.Cell px="4" py="3.5" fontSize="md" color="gray.500" whiteSpace="nowrap">{lecturer.email || "—"}</Table.Cell>
+                    <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" whiteSpace="nowrap">{lecturer.staffProfile?.phone || "—"}</Table.Cell>
                     <Table.Cell px="4" py="3.5" whiteSpace="nowrap">
-                      <Badge colorPalette="gray" variant="subtle" fontSize="sm" px="2" py="0.5">
-                        {formattedRole}
-                      </Badge>
+                      <Badge colorPalette="gray" variant="subtle" fontSize="sm" px="2" py="0.5">{formattedRole}</Badge>
                     </Table.Cell>
-                    <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" whiteSpace="nowrap">
-                      {courseCount}
-                    </Table.Cell>
+                    <Table.Cell px="4" py="3.5" fontSize="md" color="gray.700" whiteSpace="nowrap">{courseCount}</Table.Cell>
                     <Table.Cell px="4" py="3.5" whiteSpace="nowrap">
                       <LecturerActionCell lecturer={lecturer} />
                     </Table.Cell>
@@ -196,7 +498,6 @@ const LecturersTable = ({
         </Table.Root>
       </Table.ScrollArea>
 
-      {/* Pagination controls */}
       {!isLoading && lecturers.length > 0 && totalPages > 1 && (
         <Flex justify="center" mt="4">
           <Pagination.Root
@@ -207,21 +508,15 @@ const LecturersTable = ({
           >
             <ButtonGroup variant="ghost" size="sm">
               <Pagination.PrevTrigger asChild>
-                <IconButton>
-                  <LuChevronLeft />
-                </IconButton>
+                <IconButton><LuChevronLeft /></IconButton>
               </Pagination.PrevTrigger>
               <Pagination.Items
                 render={(page) => (
-                  <IconButton variant={{ base: "ghost", _selected: "outline" }}>
-                    {page.value}
-                  </IconButton>
+                  <IconButton variant={{ base: "ghost", _selected: "outline" }}>{page.value}</IconButton>
                 )}
               />
               <Pagination.NextTrigger asChild>
-                <IconButton>
-                  <LuChevronRight />
-                </IconButton>
+                <IconButton><LuChevronRight /></IconButton>
               </Pagination.NextTrigger>
             </ButtonGroup>
           </Pagination.Root>

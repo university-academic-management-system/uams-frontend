@@ -7,13 +7,13 @@ const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       token: "",
-      expireAt: "",
+      expiresIn: "",
       user: undefined,
       setAuth: (auth) => set((state) => ({ ...state, ...auth })),
       clearAuth: () => {
         set({
           token: "",
-          expireAt: "",
+          expiresIn: "",
           user: undefined,
         });
       },
@@ -23,7 +23,7 @@ const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         token: state.token,
-        expireAt: state.expireAt,
+        expiresIn: state.expiresIn,
         user: state.user,
       }),
     }

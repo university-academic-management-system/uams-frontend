@@ -1,10 +1,7 @@
 // src/pages/projects/Projects.tsx
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Box,
-  Flex,
-  Text,
-  Heading,
   EmptyState,
   VStack,
 } from "@chakra-ui/react";
@@ -12,7 +9,7 @@ import { LuBookOpen } from "react-icons/lu";
 import { useProjects } from "@hooks/project.hook";
 import ProjectsTable from "@components/shared/ProjectsTable";
 import { Toaster } from "@components/ui/toaster";
-import type { Project, StudentProjects } from "@type/project.type";
+import type { StudentProjects } from "@type/project.type";
 
 const Projects = () => {
   const { data: projects = [], isLoading, error } = useProjects();
@@ -36,7 +33,6 @@ const Projects = () => {
 
   return (
     <Box bg="bg">
-      {/* Header removed */}
 
       {!isLoading && studentProjects.length === 0 ? (
         <Box
