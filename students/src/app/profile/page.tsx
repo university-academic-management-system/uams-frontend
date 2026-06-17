@@ -287,7 +287,6 @@ const PhoneNumberEditable = ({ phone }: { phone: string }) => {
 }
 
 
-
 const IDCardApplication = () => {
     const { data, isLoading } = useGetPayments();
     const { mutate: initializePayment, isPending } = useInitializePayment({

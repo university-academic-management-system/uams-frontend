@@ -13,13 +13,12 @@ import {
 } from "@chakra-ui/react";
 import {
   MoreHorizontal,
-  CheckCircle,
-  XCircle,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   CreditCard,
-  Eye,
+  Camera,
+  Download,
 } from "lucide-react";
 import type { IDCardRequest } from "@type/idCard.type";
 
@@ -32,9 +31,9 @@ interface IDCardsTableProps {
   requestSort: (key: string) => void;
   toggleSelectAll: () => void;
   toggleSelection: (id: string) => void;
-  onApprove?: (request: IDCardRequest) => void;
-  onReject?: (request: IDCardRequest) => void;
   onViewDetails?: (request: IDCardRequest) => void;
+  onIssueIDCard?: (request: IDCardRequest) => void;
+  onDownloadIDCard?: (request: IDCardRequest) => void;
   searchQuery?: string;
   serialStart: number;
 }
@@ -48,9 +47,9 @@ const IDCardsTable = ({
   requestSort,
   toggleSelectAll,
   toggleSelection,
-  onApprove,
-  onReject,
   onViewDetails,
+  onIssueIDCard,
+  onDownloadIDCard,
   searchQuery,
   serialStart,
 }: IDCardsTableProps) => {
@@ -105,6 +104,7 @@ const IDCardsTable = ({
       APPROVED: { bg: "green.50", color: "green.600" },
       REJECTED: { bg: "red.50", color: "red.600" },
       COMPLETED: { bg: "blue.50", color: "blue.600" },
+      ISSUED: { bg: "blue.50", color: "blue.600" },
     };
     const style = statusMap[status] || { bg: "gray.100", color: "gray.600" };
     return (
@@ -226,50 +226,36 @@ const IDCardsTable = ({
                   outline="none"
                 >
                   <Popover.Body p="1">
-                    <Button
-                      variant="ghost"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        setOpenPopoverId(null);
-                        onViewDetails?.(r);
-                      }}
-                      w="full"
-                      justifyContent="flex-start"
-                      size="sm"
-                    >
-                      <Eye size={16} /> View Details
-                    </Button>
                     {r.status === "PENDING" && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          onClick={(e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            setOpenPopoverId(null);
-                            onApprove?.(r);
-                          }}
-                          w="full"
-                          justifyContent="flex-start"
-                          size="sm"
-                          color="green.600"
-                        >
-                          <CheckCircle size={16} /> Approve
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          colorPalette="red"
-                          onClick={(e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            setOpenPopoverId(null);
-                            onReject?.(r);
-                          }}
-                          w="full"
-                          justifyContent="flex-start"
-                          size="sm"
-                        >
-                          <XCircle size={16} /> Reject
-                        </Button>
-                      </>
+                      <Button
+                        variant="ghost"
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          setOpenPopoverId(null);
+                          onIssueIDCard?.(r);
+                        }}
+                        w="full"
+                        justifyContent="flex-start"
+                        size="sm"
+                        color="blue.600"
+                      >
+                        <Camera size={16} /> Issue ID Card
+                      </Button>
+                    )}
+                    {r.status === "ISSUED" && (
+                      <Button
+                        variant="ghost"
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          setOpenPopoverId(null);
+                          onDownloadIDCard?.(r);
+                        }}
+                        w="full"
+                        justifyContent="flex-start"
+                        size="sm"
+                      >
+                        <Download size={16} /> Download ID Card
+                      </Button>
                     )}
                   </Popover.Body>
                 </Popover.Content>
@@ -283,9 +269,9 @@ const IDCardsTable = ({
     paginatedRequests,
     selectedIds,
     toggleSelection,
-    onApprove,
-    onReject,
     onViewDetails,
+    onIssueIDCard,
+    onDownloadIDCard,
     openPopoverId,
     serialStart,
   ]);
