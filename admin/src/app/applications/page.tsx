@@ -7,11 +7,18 @@ const Applications = () => {
             <Tabs.Trigger value="transcript">Transcript Applications</Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="applications">
+        <Tabs.Content value="id-card-applications">
+            <IDCardTabContent />
         </Tabs.Content>
-        <Tabs.Content value="transcript">
+        <Tabs.Content value="transcript-applications">
         </Tabs.Content>
     </Tabs.Root>
+};
+
+const IDCardTabContent = () => {
+    return <>
+    
+    </>
 };
 
 export default Applications;
