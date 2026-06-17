@@ -70,4 +70,24 @@ export const IDCardHooks = {
             queryFn: () => IDCardServices.getIDCardRequests(params),
             ...options,
         }),
+
+    // Upload file to storage
+    useUploadToStorage: (options?: UseMutationOptions<{ status: string; message: string; data: { key: string } }, Error, { file: File; folderName?: string }>) => {
+        return useMutation({
+            mutationFn: ({ file, folderName }) => IDCardServices.uploadToStorage(file, folderName),
+            ...options,
+        });
+    },
+
+    // Update ID card request status and file key
+    useUpdateIDCardRequest: (options?: UseMutationOptions<{ status: string; message: string; data: { request: IDCardRequest } }, Error, { id: string; data: { status: string; fileKey: string; paymentRef?: string } }>) => {
+        const queryClient = useQueryClient();
+        return useMutation({
+            mutationFn: ({ id, data }) => IDCardServices.updateIDCardRequest(id, data),
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ["idcard-requests"] });
+            },
+            ...options,
+        });
+    },
 }

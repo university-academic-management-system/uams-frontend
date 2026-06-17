@@ -85,4 +85,23 @@ export const IDCardServices = {
         });
         return data;
     },
+
+    // Upload file to storage
+    uploadToStorage: async (file: File, folderName?: string) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        if (folderName) {
+            formData.append("folderName", folderName);
+        }
+        const { data } = await axiosClient.post("/api/storage/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return data;
+    },
+
+    // Update ID card request status and file key
+    updateIDCardRequest: async (id: string, payload: { status: string; fileKey: string; paymentRef?: string }) => {
+        const { data } = await axiosClient.patch(`/api/id-cards/${id}`, payload);
+        return data;
+    },
 }

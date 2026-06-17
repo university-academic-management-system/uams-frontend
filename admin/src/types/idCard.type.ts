@@ -19,7 +19,7 @@ export interface IDCardSettings {
     signature?: string;
 }
 
-export type IDCardRequestStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED";
+export type IDCardRequestStatus = "PENDING" | "ISSUED";
 
 export interface IDCardStudent {
     id: string;
