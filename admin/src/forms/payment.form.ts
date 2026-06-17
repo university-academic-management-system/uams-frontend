@@ -7,7 +7,6 @@ export const usePaymentConfigForm = () => {
     mode: "onChange",
     resolver: zodResolver(paymentConfigSchema),
     defaultValues: {
-      program_type_id: "",
       paystack_public_key: "",
       paystack_secret_key: "",
       annual_access_fee: 0,
