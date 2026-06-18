@@ -47,7 +47,6 @@ const IDCardsTable = ({
   requestSort,
   toggleSelectAll,
   toggleSelection,
-  onViewDetails,
   onIssueIDCard,
   onDownloadIDCard,
   searchQuery,
@@ -131,8 +130,8 @@ const IDCardsTable = ({
   };
 
   const getStudentName = (request: IDCardRequest) => {
-    const { firstName, lastName, otherName } = request.student;
-    return `${firstName} ${otherName ? otherName + " " : ""}${lastName}`;
+    const { firstName, surname, otherName } = request.student;
+    return `${surname} ${firstName} ${otherName ? otherName + " " : ""}${surname}`;
   };
 
   const memoizedTableRows = useMemo(() => {
@@ -185,9 +184,6 @@ const IDCardsTable = ({
         <Table.Cell>
           {formatDate(r.createdAt)}
         </Table.Cell>
-        <Table.Cell>
-          {r.remarks || "—"}
-        </Table.Cell>
         <Table.Cell
           textAlign="right"
           position="sticky"
@@ -226,7 +222,7 @@ const IDCardsTable = ({
                   outline="none"
                 >
                   <Popover.Body p="1">
-                    {r.status === "PENDING" && (
+                    {r.status && (
                       <Button
                         variant="ghost"
                         onClick={(e: React.MouseEvent) => {
@@ -269,7 +265,6 @@ const IDCardsTable = ({
     paginatedRequests,
     selectedIds,
     toggleSelection,
-    onViewDetails,
     onIssueIDCard,
     onDownloadIDCard,
     openPopoverId,
@@ -430,16 +425,6 @@ const IDCardsTable = ({
               <Flex alignItems="center" gap="1">
                 Date Applied {renderSortIcon("createdAt")}
               </Flex>
-            </Table.ColumnHeader>
-            <Table.ColumnHeader
-              bg="bg.muted"
-              fontSize="11px"
-              fontWeight="bold"
-              color="fg.muted"
-              textTransform="uppercase"
-              letterSpacing="wider"
-            >
-              Remarks
             </Table.ColumnHeader>
             <Table.ColumnHeader
               textAlign="right"

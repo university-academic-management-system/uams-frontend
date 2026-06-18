@@ -25,12 +25,14 @@ export interface IDCardStudent {
     id: string;
     userId: string;
     firstName: string;
-    lastName: string;
+    surname: string;
     otherName: string;
     matricNumber: string;
     registrationNo: string;
     phone: string;
     level: string;
+    faculty: string;
+    department: string;
     admissionYear: number;
     admissionSession: string;
     currentSession: string;
@@ -49,7 +51,8 @@ export interface IDCardRequest {
     id: string;
     studentId: string;
     status: IDCardRequestStatus;
-    file: Record<string, unknown>;
+    fileUrl: string;
+    fileKey: string;
     paymentRef: string;
     remarks: string;
     student: IDCardStudent;

@@ -3,7 +3,7 @@ import { Tabs, Box, Flex, Text } from "@chakra-ui/react";
 import { exportToExcel } from "@utils/excel.util";
 import { IDCardHooks } from "@hooks/idcard.hook";
 import { TranscriptHooks } from "@hooks/transcript.hook";
-import type { IDCardRequest, IDCardRequestStatus } from "@type/idCard.type";
+import type { IDCardRequest, IDCardRequestStatus, IDCardStudent } from "@type/idCard.type";
 import type { TranscriptApplication, TranscriptStatus, DeliveryMethod } from "@type/transcript.type";
 import {
     PaginationRoot,
@@ -64,8 +64,8 @@ const IDCardTabContent = () => {
     }, [sortConfig]);
 
     const getStudentName = (r: IDCardRequest) => {
-        const { firstName, lastName, otherName } = r.student;
-        return `${firstName} ${otherName ? otherName + " " : ""}${lastName}`;
+        const { firstName, surname, otherName } = r.student;
+        return `${surname} ${firstName} ${otherName}`;
     };
 
     const filteredRequests = useMemo(() => {
@@ -113,19 +113,7 @@ const IDCardTabContent = () => {
     }, [requestsList, searchQuery, sortConfig]);
 
     const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
-    //   const paginatedRequests = filteredRequests.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-    const paginatedRequests: IDCardRequest[] = [
-        { id: "id-1", studentId: "s-1", status: "PENDING", file: {}, paymentRef: "PAY-2024-001", remarks: "Awaiting verification", createdAt: "2025-11-01T09:12:00Z", updatedAt: "2025-11-01T09:12:00Z", student: { id: "s-1", userId: "u-1", firstName: "ADEOLA", lastName: "OKAFOR", otherName: "CHINWE", matricNumber: "U2022/1001001", registrationNo: "2022100100AF", phone: "08031234567", level: "L200", admissionYear: 2022, admissionSession: "2021/2022", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 48, totalCreditsAttempted: 52, cgpa: 3.85, gpa: 3.9, sgpa: 4.0, createdAt: "2022-09-01T00:00:00Z", updatedAt: "2025-10-15T00:00:00Z" } },
-        { id: "id-2", studentId: "s-2", status: "ISSUED", file: {}, paymentRef: "PAY-2024-002", remarks: "", createdAt: "2025-10-28T14:30:00Z", updatedAt: "2025-10-29T08:00:00Z", student: { id: "s-2", userId: "u-2", firstName: "EMMANUEL", lastName: "NWANKWO", otherName: "", matricNumber: "U2021/2005003", registrationNo: "2021200500DF", phone: "08067891234", level: "L400", admissionYear: 2021, admissionSession: "2020/2021", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 112, totalCreditsAttempted: 118, cgpa: 4.12, gpa: 4.0, sgpa: 4.2, createdAt: "2021-09-01T00:00:00Z", updatedAt: "2025-09-20T00:00:00Z" } },
-        { id: "id-3", studentId: "s-3", status: "PENDING", file: {}, paymentRef: "PAY-2024-003", remarks: "Invalid photo uploaded", createdAt: "2025-10-20T11:45:00Z", updatedAt: "2025-10-22T16:20:00Z", student: { id: "s-3", userId: "u-3", firstName: "FATIMA", lastName: "BELLO", otherName: "HAUWA", matricNumber: "U2023/3007005", registrationNo: "2023300700AB", phone: "07045678901", level: "L100", admissionYear: 2023, admissionSession: "2022/2023", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 18, totalCreditsAttempted: 20, cgpa: 3.4, gpa: 3.5, sgpa: 3.4, createdAt: "2023-09-01T00:00:00Z", updatedAt: "2025-10-01T00:00:00Z" } },
-        { id: "id-4", studentId: "s-4", status: "ISSUED", file: {}, paymentRef: "PAY-2024-004", remarks: "Card printed and dispatched", createdAt: "2025-09-15T08:00:00Z", updatedAt: "2025-10-01T12:00:00Z", student: { id: "s-4", userId: "u-4", firstName: "DAVID", lastName: "ADEYEMI", otherName: "OLUWASEUN", matricNumber: "U2020/4012008", registrationNo: "2020401200CD", phone: "08123456789", level: "L500", admissionYear: 2020, admissionSession: "2019/2020", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 145, totalCreditsAttempted: 150, cgpa: 4.45, gpa: 4.5, sgpa: 4.6, createdAt: "2020-09-01T00:00:00Z", updatedAt: "2025-08-15T00:00:00Z" } },
-        { id: "id-5", studentId: "s-5", status: "PENDING", file: {}, paymentRef: "PAY-2024-005", remarks: "", createdAt: "2025-11-03T10:22:00Z", updatedAt: "2025-11-03T10:22:00Z", student: { id: "s-5", userId: "u-5", firstName: "GRACE", lastName: "OKEKE", otherName: "NGOZI", matricNumber: "U2022/1009012", registrationNo: "2022100900EF", phone: "09087654321", level: "L200", admissionYear: 2022, admissionSession: "2021/2022", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 50, totalCreditsAttempted: 54, cgpa: 3.7, gpa: 3.6, sgpa: 3.8, createdAt: "2022-09-01T00:00:00Z", updatedAt: "2025-10-20T00:00:00Z" } },
-        { id: "id-6", studentId: "s-6", status: "PENDING", file: {}, paymentRef: "PAY-2024-006", remarks: "Fee payment pending confirmation", createdAt: "2025-11-04T07:55:00Z", updatedAt: "2025-11-04T07:55:00Z", student: { id: "s-6", userId: "u-6", firstName: "IBRAHIM", lastName: "MUSA", otherName: "", matricNumber: "U2023/3015020", registrationNo: "2023301500GH", phone: "07098761234", level: "L100", admissionYear: 2023, admissionSession: "2022/2023", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 22, totalCreditsAttempted: 24, cgpa: 3.95, gpa: 4.0, sgpa: 3.95, createdAt: "2023-09-01T00:00:00Z", updatedAt: "2025-10-10T00:00:00Z" } },
-        { id: "id-7", studentId: "s-7", status: "PENDING", file: {}, paymentRef: "PAY-2024-007", remarks: "", createdAt: "2025-10-25T16:10:00Z", updatedAt: "2025-10-26T09:30:00Z", student: { id: "s-7", userId: "u-7", firstName: "BLESSING", lastName: "EZE", otherName: "CHIAMAKA", matricNumber: "U2021/2008015", registrationNo: "2021200800IJ", phone: "08134567890", level: "L400", admissionYear: 2021, admissionSession: "2020/2021", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 105, totalCreditsAttempted: 110, cgpa: 4.3, gpa: 4.2, sgpa: 4.4, createdAt: "2021-09-01T00:00:00Z", updatedAt: "2025-09-25T00:00:00Z" } },
-        { id: "id-8", studentId: "s-8", status: "PENDING", file: {}, paymentRef: "PAY-2024-008", remarks: "Photo background needs to be plain white", createdAt: "2025-11-05T13:40:00Z", updatedAt: "2025-11-05T13:40:00Z", student: { id: "s-8", userId: "u-8", firstName: "SAMUEL", lastName: "ADEDIRAN", otherName: "TUNDE", matricNumber: "U2022/1021030", registrationNo: "2022102100KL", phone: "09012345678", level: "L300", admissionYear: 2022, admissionSession: "2021/2022", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "PROBATION", totalCreditsEarned: 68, totalCreditsAttempted: 78, cgpa: 2.85, gpa: 2.9, sgpa: 3.0, createdAt: "2022-09-01T00:00:00Z", updatedAt: "2025-10-28T00:00:00Z" } },
-        { id: "id-9", studentId: "s-9", status: "ISSUED", file: {}, paymentRef: "PAY-2024-009", remarks: "", createdAt: "2025-08-10T09:00:00Z", updatedAt: "2025-09-05T11:15:00Z", student: { id: "s-9", userId: "u-9", firstName: "AMINAT", lastName: "YUSUF", otherName: "", matricNumber: "U2020/4003045", registrationNo: "2020400300MN", phone: "07056781234", level: "L500", admissionYear: 2020, admissionSession: "2019/2020", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 138, totalCreditsAttempted: 142, cgpa: 4.6, gpa: 4.7, sgpa: 4.65, createdAt: "2020-09-01T00:00:00Z", updatedAt: "2025-08-01T00:00:00Z" } },
-        { id: "id-10", studentId: "s-10", status: "ISSUED", file: {}, paymentRef: "PAY-2024-010", remarks: "Payment receipt mismatch", createdAt: "2025-11-02T15:18:00Z", updatedAt: "2025-11-04T10:45:00Z", student: { id: "s-10", userId: "u-10", firstName: "CHINEDU", lastName: "OKONKWO", otherName: "EMKA", matricNumber: "U2023/3022050", registrationNo: "2023302200OP", phone: "08076543210", level: "L100", admissionYear: 2023, admissionSession: "2022/2023", currentSession: "2024/2025", registrationStatus: "REGISTERED", academicStanding: "GOOD_STANDING", totalCreditsEarned: 15, totalCreditsAttempted: 18, cgpa: 3.2, gpa: 3.1, sgpa: 3.2, createdAt: "2023-09-01T00:00:00Z", updatedAt: "2025-11-01T00:00:00Z" } },
-    ];
+    const paginatedRequests = filteredRequests.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const toggleSelection = useCallback((id: string) => {
         setSelectedIds((prev) =>
@@ -170,8 +158,11 @@ const IDCardTabContent = () => {
     }, []);
 
     const handleDownloadIDCard = useCallback((request: IDCardRequest) => {
-        // TODO: Implement download functionality
-        console.log("Download ID Card:", request);
+        const a = document.createElement("a");
+        a.href = request.fileUrl || "";
+        a.target = "_blank";
+        a.download = `id-card-${request.student?.matricNumber}.pdf`;  
+        a.click();
     }, []);
 
     return (
@@ -214,6 +205,7 @@ const IDCardTabContent = () => {
 
             <Suspense fallback={null}>
                 <IDCardCaptureDialog
+                    student={selectedRequest?.student as IDCardStudent}
                     request={selectedRequest}
                     isOpen={isCaptureDialogOpen}
                     onClose={() => {
