@@ -93,7 +93,7 @@ export const IDCardServices = {
         if (folderName) {
             formData.append("folderName", folderName);
         }
-        const { data } = await axiosClient.post("/api/storage/upload", formData, {
+        const { data } = await axiosClient.post("/storage/upload", formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
         return data;
@@ -101,7 +101,7 @@ export const IDCardServices = {
 
     // Update ID card request status and file key
     updateIDCardRequest: async (id: string, payload: { status: string; fileKey: string; paymentRef?: string }) => {
-        const { data } = await axiosClient.patch(`/api/id-cards/${id}`, payload);
+        const { data } = await axiosClient.patch(`/id-cards/${id}`, payload);
         return data;
     },
 }

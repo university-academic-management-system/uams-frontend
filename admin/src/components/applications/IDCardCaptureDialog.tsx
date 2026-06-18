@@ -7,34 +7,153 @@ import {
   Spinner,
   Text,
   Box,
-  Image,
+  CloseButton,
 } from "@chakra-ui/react";
 import { Camera, Check, X } from "lucide-react";
 import { IDCardHooks } from "@hooks/idcard.hook";
 import { toaster } from "@components/ui/toaster";
-import type { IDCardRequest } from "@type/idCard.type";
-import jsPDF from "jspdf";
+import type { IDCardRequest, IDCardStudent } from "@type/idCard.type";
+import {
+  Document,
+  Page,
+  View,
+  Text as PDFText,
+  Image as PDFImage,
+  StyleSheet,
+  pdf,
+  Font,
+} from "@react-pdf/renderer";
+import { SettingsHooks } from "@hooks/settings.hook";
+import moment from "moment";
+import ENV from "@configs/env.config";
+import { sleep } from "@utils/function.util";
+
+
+Font.register({
+  family: 'Inter',
+  src: "/admin/assets/Inter_18pt-Bold.ttf",
+  fontWeight: "bold"
+});
+
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: "column",
+    backgroundColor: "#ffffff",
+    padding: 10,
+  },
+  cardContainer: {
+    position: "relative",
+    width: 500,
+    height: 295,
+    marginBottom: 20,
+  },
+  cardImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+  },
+  photo: {
+    position: "absolute",
+    left: 26,
+    top: 117,
+    width: 117,
+    height: 128,
+  },
+  text: {
+    position: "absolute",
+    color: "black",
+    fontWeight: "bold",
+    fontSize: 12,
+    fontFamily: "Inter",
+  },
+});
+
+interface IDCardDocumentProps {
+  frontUrl: string;
+  backUrl: string;
+  signatureUrl?: string;
+  student: IDCardStudent;
+  capturedImage: string;
+  expiryDate?: string;
+}
+
+const IDCardDocument = ({
+  frontUrl,
+  backUrl,
+  signatureUrl,
+  student,
+  capturedImage,
+  expiryDate,
+}: IDCardDocumentProps) => (
+  <Document>
+    {/* Front Page */}
+    <Page style={styles.page}>
+      <View style={styles.cardContainer}>
+        <PDFImage style={styles.cardImage} src={frontUrl} />
+        <PDFImage style={styles.photo} src={capturedImage} />
+        <PDFText style={{ ...styles.text, left: 225, top: 129 }}>
+          {student.surname} {student.firstName} {student.otherName}
+        </PDFText>
+        <PDFText style={{ ...styles.text, left: 270, top: 153 }}>
+          {student.matricNumber}
+        </PDFText>
+        <PDFText style={{ ...styles.text, left: 244, top: 174 }}>
+          {student.faculty?.toUpperCase()}
+        </PDFText>
+        <PDFText style={{ ...styles.text, left: 216, top: 197 }}>
+          {student.department?.toUpperCase()}
+        </PDFText>
+        <PDFText style={{ ...styles.text, left: 275, top: 220 }}>
+          {expiryDate}
+        </PDFText>
+      </View>
+
+      <View style={styles.cardContainer}>
+        <PDFImage style={styles.cardImage} src={backUrl} />
+        {signatureUrl && (
+          <PDFImage
+            style={{
+              position: "absolute",
+              height: 40,
+              bottom: 72,
+              left: "45%",
+              transform: "translateX(-45%)",
+            }}
+            src={signatureUrl}
+          />
+        )}
+      </View>
+    </Page>
+  </Document>
+);
 
 interface IDCardCaptureDialogProps {
   request: IDCardRequest | null;
   isOpen: boolean;
+  student: IDCardStudent;
   onClose: () => void;
 }
 
-const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogProps) => {
+const IDCardCaptureDialog = ({ request, isOpen, student, onClose }: IDCardCaptureDialogProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const templateImgRef = useRef<HTMLImageElement>(null);
+  const backTemplateImgRef = useRef<HTMLImageElement>(null);
+
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  // Added the missing state declaration here
+  const [, setPreviewImage] = useState<string | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const { data: templates } = IDCardHooks.useIDCardTemplates();
   const uploadMutation = IDCardHooks.useUploadToStorage();
   const updateMutation = IDCardHooks.useUpdateIDCardRequest();
+  const { data: settings } = SettingsHooks.useDepartmentSettings();
 
   const startCamera = useCallback(async () => {
     if (stream) return;
@@ -73,7 +192,6 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
     try {
       const templateImg = templateImgRef.current;
 
-      // Wait for template image to load if it's not already
       if (!templateImg.complete || templateImg.naturalWidth === 0) {
         await new Promise((resolve) => {
           const checkLoad = () => {
@@ -82,17 +200,19 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
             }
           };
           templateImg.onload = checkLoad;
-          templateImg.onerror = resolve; // Fall through even if error
-          checkLoad(); // Check if already loaded
+          templateImg.onerror = resolve;
+          checkLoad();
         });
       }
 
-      canvas.width = templateImg.naturalWidth  || templateImg.width;
+      canvas.width = templateImg.naturalWidth || templateImg.width;
       canvas.height = templateImg.naturalHeight || templateImg.height;
 
       ctx.drawImage(templateImg, 0, 0);
 
       const photoImg = new window.Image();
+      // Crucial fix: Assign crossOrigin anonymously for S3 compilation pipelines
+      photoImg.crossOrigin = "anonymous";
       await new Promise((resolve, reject) => {
         photoImg.onload = resolve;
         photoImg.onerror = (e) => {
@@ -102,12 +222,19 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
         photoImg.src = imageData;
       });
 
-      photoImg.style.objectFit = "cover";
       const photoX = 26;
       const photoY = 119;
       const photoWidth = 116;
       const photoHeight = 128;
       ctx.drawImage(photoImg, photoX, photoY, photoWidth, photoHeight);
+
+      ctx.fillStyle = "black";
+      ctx.font = "bold 12px Inter, sans-serif";
+      ctx.fillText(` ${student?.surname} ${student?.firstName} ${student?.otherName}`, 205, 140);
+      ctx.fillText(`${student.matricNumber}`, 248, 164);
+      ctx.fillText(`${student.faculty || ""}`, 228, 185);
+      ctx.fillText(`${student.department}`, 200, 208);
+      ctx.fillText(`${moment(settings?.data?.semester2StartDate).format("YYYY-MM-DD") || ""}`, 255, 231);
 
       const result = canvas.toDataURL("image/png");
       setPreviewImage(result);
@@ -115,9 +242,9 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
       console.error('Error generating preview:', e);
       toaster.error({ title: "Failed to generate preview" });
     }
-  }, []);
+  }, [student, settings]);
 
-  const capturePhoto = useCallback(() => {
+  const capturePhoto = useCallback(async () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -129,7 +256,7 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
         const imageData = canvas.toDataURL("image/png");
         setCapturedImage(imageData);
         stopCamera();
-        generatePreview(imageData);
+        await generatePreview(imageData);
       }
     }
   }, [stopCamera, generatePreview]);
@@ -141,60 +268,53 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
   }, [startCamera]);
 
   const generatePDF = useCallback(async () => {
-    if (!capturedImage || !templates?.data || !request) return;
+    if (
+      !capturedImage ||
+      !request ||
+      !student ||
+      !templates?.data?.frontUrl ||
+      !templates?.data?.backUrl
+    ) return;
 
     setIsProcessing(true);
     try {
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: [85.6, 53.98],
-      });
+      // Create the template URLs using the storage stream endpoint
+      const frontUrl = `${new URL("storage/stream?key=" + extractStoragePath(templates.data.frontUrl), ENV.API_BASE_URL + "/api").toString()}`;
+      const backUrl = `${new URL("storage/stream?key=" + extractStoragePath(templates.data.backUrl), ENV.API_BASE_URL + "/api").toString()}`;
+      const signatureUrl = templates.data.signatureUrl
+        ? `${new URL("storage/stream?key=" + extractStoragePath(templates.data.signatureUrl), ENV.API_BASE_URL + "/api").toString()}`
+        : undefined;
+      const expiryDate = moment(settings?.data?.semester2StartDate).format("YYYY-MM-DD");
 
-      const frontImg = new window.Image();
-      frontImg.crossOrigin = "anonymous";
+      // Generate the PDF using @react-pdf/renderer
+      const docInstance = pdf(
+        <IDCardDocument
+          frontUrl={frontUrl}
+          backUrl={backUrl}
+          signatureUrl={signatureUrl}
+          student={student}
+          capturedImage={capturedImage}
+          expiryDate={expiryDate}
+        />
+      );
 
-      await new Promise((resolve, reject) => {
-        frontImg.onload = resolve;
-        frontImg.onerror = reject;
-        frontImg.src = templates.data.frontUrl;
-      });
 
-      pdf.addImage(frontImg, "PNG", 0, 0, 85.6, 53.98);
-
-      const photoImg = new window.Image();
-      photoImg.src = capturedImage;
-
-      await new Promise((resolve, reject) => {
-        photoImg.onload = resolve;
-        photoImg.onerror = reject;
-      });
-
-      pdf.addImage(photoImg, "PNG", 5, 5, 25, 30);
-
-      pdf.setFontSize(8);
-      pdf.text(`${request.student.firstName} ${request.student.lastName}`, 35, 15);
-      pdf.text(request.student.matricNumber || "", 35, 22);
-      pdf.text(request.student.level || "", 35, 29);
-
-      pdf.addPage();
-
-      const backImg = new window.Image();
-      backImg.crossOrigin = "anonymous";
-
-      await new Promise((resolve, reject) => {
-        backImg.onload = resolve;
-        backImg.onerror = reject;
-        backImg.src = templates.data.backUrl;
-      });
-
-      pdf.addImage(backImg, "PNG", 0, 0, 85.6, 53.98);
-
-      const pdfBlob = pdf.output("blob");
-      const pdfFile = new File([pdfBlob], `id-card-${request.id}.pdf`, {
+      // Generate the blob for upload
+      const pdfBlob = await docInstance.toBlob();
+      const pdfFile = new File([pdfBlob], `id-card-${student?.matricNumber}.pdf`, {
         type: "application/pdf",
       });
 
+      // Download the PDF
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(pdfBlob);
+      a.download = `id-card-${student?.matricNumber}.pdf`;
+      a.click();
+
+      // Clean up the URL object
+      URL.revokeObjectURL(a.href);
+
+      // Upload
       uploadMutation.mutate(
         { file: pdfFile, folderName: "idcards" },
         {
@@ -210,10 +330,12 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
               },
               {
                 onSuccess: () => {
+                  setIsProcessing(false);
                   toaster.success({ title: "ID card issued successfully" });
                   onClose();
                 },
                 onError: () => {
+                  setIsProcessing(false);
                   toaster.error({ title: "Failed to update ID card request" });
                 },
               }
@@ -230,12 +352,11 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
       toaster.error({ title: "Failed to generate ID card" });
       setIsProcessing(false);
     }
-  }, [capturedImage, templates, request, uploadMutation, updateMutation, onClose]);
+  }, [capturedImage, request, student, templates, settings, uploadMutation, updateMutation, onClose]);
 
   useEffect(() => {
     if (isOpen && !capturedImage) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      startCamera();
+      sleep(0).then(() => startCamera());
     }
     return () => {
       stopCamera();
@@ -264,7 +385,7 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
         <Dialog.Positioner>
           <Dialog.Content colorPalette="accent">
             <Dialog.Header>
-              <Dialog.Title>Issue ID Card - {request?.student.firstName} {request?.student.lastName}</Dialog.Title>
+              <Dialog.Title>Issue ID Card - {student?.surname || ""} {student?.firstName || ""} {student?.otherName || ""}</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
               <Stack gap="4" alignItems="center">
@@ -274,7 +395,6 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
                       position="relative"
                       width="640px"
                       height="480px"
-                      // bg="black"
                       borderRadius="md"
                       overflow="hidden"
                     >
@@ -299,11 +419,19 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
                       />
                     </Box>
 
-                    {/* Hidden template image for canvas drawing - use local to avoid tainted canvas */}
-                    <Image
+                    {/* Hidden system templates explicitly appending crossOrigin parameters */}
+                    <img
                       ref={templateImgRef}
-                      src="/admin/assets/id-card-front-template.png"
+                      src={templates?.data?.frontUrl}
+                      crossOrigin="anonymous"
                       alt="ID card front template"
+                      style={{ display: 'none' }}
+                    />
+                    <img
+                      ref={backTemplateImgRef}
+                      src={templates?.data?.backUrl}
+                      crossOrigin="anonymous"
+                      alt="ID card back template"
                       style={{ display: 'none' }}
                     />
 
@@ -328,27 +456,65 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
                   </>
                 ) : (
                   <>
+                    {/* Visual Preview (for user) */}
                     <Box
-                      width="auto"
-                      maxWidth="100%"
+                      position="relative"
+                      width="463px"
+                      height="295px"
                       borderRadius="md"
                       overflow="hidden"
                       border="2px solid"
                       borderColor="border.muted"
+                      bg="white"
                     >
-                      {previewImage && (
+                      {templates?.data?.frontUrl && (
                         <img
-                          src={previewImage}
-                          alt="ID card preview"
-                          style={{ width: "80em", height: "auto" }}
+                          crossOrigin="anonymous"
+                          src={`${new URL("storage/stream?key=" + extractStoragePath(templates.data.frontUrl || ""), ENV.API_BASE_URL + "/api").toString()}`}
+                          alt="Front template layer"
+                          style={{ width: "100%", height: "100%", objectFit: "contain", position: "absolute", inset: 0 }}
                         />
                       )}
+
+                      {capturedImage && (
+                        <Box
+                          position="absolute"
+                          left="26px"
+                          top="117px"
+                          width="117px"
+                          height="128px"
+                          overflow="hidden"
+                        >
+                          <img
+                            src={capturedImage}
+                            alt="Student"
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        </Box>
+                      )}
+
+                      <Box position="absolute" left="205px" top="125px" color="black" fontWeight="bold" fontSize="12px" fontFamily="Inter, sans-serif">
+                        <Text>{student?.surname} {student?.firstName} {student?.otherName}</Text>
+                      </Box>
+                      <Box position="absolute" left="248px" top="148px" color="black" fontWeight="bold" fontSize="12px" fontFamily="Inter, sans-serif">
+                        <Text>{student?.matricNumber || ""}</Text>
+                      </Box>
+                      <Box position="absolute" left="228px" top="169px" color="black" fontWeight="bold" fontSize="12px" fontFamily="Inter, sans-serif">
+                        <Text>{student?.faculty?.toLocaleUpperCase() || ""}</Text>
+                      </Box>
+                      <Box position="absolute" left="200px" top="191px" color="black" fontWeight="bold" fontSize="12px" fontFamily="Inter, sans-serif">
+                        <Text>{student?.department?.toLocaleUpperCase() || ""}</Text>
+                      </Box>
+                      <Box position="absolute" left="255px" top="215px" color="black" fontWeight="bold" fontSize="12px" fontFamily="Inter, sans-serif">
+                        <Text>{moment(settings?.data?.semester2StartDate).format("YYYY-MM-DD") || ""}</Text>
+                      </Box>
                     </Box>
+
                     <Stack direction="row" gap="4">
                       <Button
                         size="xl"
                         onClick={generatePDF}
-                        disabled={isProcessing}
+                        disabled={isProcessing || !capturedImage}
                         loading={isProcessing}
                         loadingText="Processing..."
                         colorPalette="green"
@@ -375,15 +541,30 @@ const IDCardCaptureDialog = ({ request, isOpen, onClose }: IDCardCaptureDialogPr
                     </Stack>
                   </>
                 )}
+
                 <canvas ref={canvasRef} style={{ display: "none" }} />
                 <canvas ref={previewCanvasRef} style={{ display: "none" }} />
               </Stack>
             </Dialog.Body>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton />
+            </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>
-    </Dialog.Root>
+    </Dialog.Root >
   );
 };
 
 export default IDCardCaptureDialog;
+
+
+function extractStoragePath(urlStr: string) {
+  try {
+    const url = new URL(urlStr);
+    return url.pathname.slice(1);
+  } catch (error) {
+    console.error("Invalid URL passed", error);
+    return "";
+  }
+}
