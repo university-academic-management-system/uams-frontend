@@ -46,8 +46,8 @@ const BulkUploadStudentsModal = ({ isOpen, onClose, onUploaded }: Props) => {
 
     const handleDownloadSample = () => {
         const link = document.createElement("a");
-        link.href = "/admin/sample-students.csv";
-        link.download = "sample-students.csv";
+        link.href = "/admin/documents/student-upload-template.xlsx";
+        link.download = "student-upload-template.xlsx";
         link.click();
     };
 

@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import type { Staff } from "@type/staff.type";
+import AssignedCoursesDrawer from "./assigned-courses-drawer";
 
 interface LecturersTableProps {
   paginatedStaff: Staff[];
@@ -128,29 +129,29 @@ const LecturersTable = ({
           </Checkbox.Root>
         </Table.Cell>
         <Table.Cell fontWeight="medium">
-          {s.staffNumber || "—"}
+          {s.staffProfile?.staffNumber || "—"}
         </Table.Cell>
         <Table.Cell fontWeight="bold">
-          {s.fullName}
+          {`${s.staffProfile?.surname || ''} ${s.staffProfile?.firstName || ''} ${s.staffProfile?.otherName || ''}`}
         </Table.Cell>
         <Table.Cell textTransform="capitalize">
-          {s.gender?.toLowerCase() || "—"}
+          {s.staffProfile?.gender?.toLowerCase() || "—"}
         </Table.Cell>
         <Table.Cell>
           {s.email}
         </Table.Cell>
         <Table.Cell>
-          {s.phone || "—"}
+          {s.staffProfile?.phone || "—"}
         </Table.Cell>
         <Table.Cell>
-          {s.department || "—"}
+          {s.staffProfile?.department || "—"}
         </Table.Cell>
         <Table.Cell>
-          {s.level ? s.level.replace(/^L/i, "") : "—"}
+          {s.staffProfile?.title || "—"}
         </Table.Cell>
         <Table.Cell>
           <Flex gap="1.5" wrap="wrap" maxW="150px">
-            {s.staffRoles?.map((role, idx) => (
+            {s.staffProfile?.staffRoles?.map((role, idx) => (
               <Badge
                 key={idx}
                 px="2"
@@ -180,17 +181,10 @@ const LecturersTable = ({
           </Badge>
         </Table.Cell>
         <Table.Cell>
-          <Badge
-            px="2"
-            py="1"
-            fontSize="10px"
-            fontWeight="bold"
-            textAlign="center"
-            bg="gray.100"
-            color="gray.600"
-          >
-            {s.totalAssignedCourses ?? 0} {(s.totalAssignedCourses ?? 0) === 1 ? "Course" : "Courses"}
-          </Badge>
+          <AssignedCoursesDrawer
+            lecturedCourses={s.staffProfile!.lecturedCourses}
+            staffName={[s.staffProfile?.surname, s.staffProfile?.firstName,s.staffProfile?.otherName].filter(Boolean).join(" ")}
+          />
         </Table.Cell>
         <Table.Cell
           textAlign="right"
@@ -435,7 +429,7 @@ const LecturersTable = ({
             <Table.ColumnHeader
               bg="bg.muted"
               cursor="pointer"
-              onClick={() => requestSort("level")}
+              onClick={() => requestSort("title")}
               userSelect="none"
               _hover={{ bg: "slate.100" }}
               fontSize="11px"
@@ -445,7 +439,7 @@ const LecturersTable = ({
               letterSpacing="wider"
             >
               <Flex alignItems="center" gap="1">
-                Rank {renderSortIcon("level")}
+                Title {renderSortIcon("title")}
               </Flex>
             </Table.ColumnHeader>
             <Table.ColumnHeader 

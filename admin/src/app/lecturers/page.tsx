@@ -61,15 +61,16 @@ const StaffPage = () => {
     setSortConfig({ key, direction });
   }, [sortConfig]);
 
+  const staffs: Staff[] = useMemo(() => staffList?.data || [] as Staff[], [staffList]);
   const filteredStaff = useMemo(() => {
-    let result = staffList;
+    let result = staffs;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
         (s) =>
-          s.fullName.toLowerCase().includes(q) ||
+          `${s.staffProfile?.surname || ''} ${s.staffProfile?.firstName || ''} ${s.staffProfile?.otherName || ''}`.toLowerCase().includes(q) ||
           s.email.toLowerCase().includes(q) ||
-          s.staffNumber?.toLowerCase().includes(q)
+          s.staffProfile?.staffNumber?.toLowerCase().includes(q)
       );
     }
 
@@ -78,20 +79,32 @@ const StaffPage = () => {
         (s) => s.status?.toUpperCase() === selectedStatus.toUpperCase()
       );
     }
-    
+
     if (sortConfig !== null) {
       result = [...result].sort((a, b) => {
-        const aValue = (a as unknown as Record<string, unknown>)[sortConfig.key] ?? "";
-        const bValue = (b as unknown as Record<string, unknown>)[sortConfig.key] ?? "";
-        
+        const getValue = (staff: Staff) => {
+          // Handle nested staffProfile properties
+          const nestedMap: Record<string, string> = {
+            'fullName': `${staff.staffProfile?.surname || ''} ${staff.staffProfile?.firstName || ''} ${staff.staffProfile?.otherName || ''}`,
+            'staffNumber': staff.staffProfile?.staffNumber || '',
+            'phone': staff.staffProfile?.phone || '',
+            'department': staff.staffProfile?.department || '',
+            'faculty': staff.staffProfile?.faculty || '',
+          };
+          return nestedMap[sortConfig.key] ?? (staff as unknown as Record<string, unknown>)[sortConfig.key] ?? "";
+        };
+
+        const aValue = getValue(a);
+        const bValue = getValue(b);
+
         if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
       });
     }
-    
+
     return result;
-  }, [staffList, searchQuery, selectedStatus, sortConfig]);
+  }, [staffs, searchQuery, selectedStatus, sortConfig]);
 
   const totalPages = Math.ceil(filteredStaff.length / ITEMS_PER_PAGE);
   const paginatedStaff = filteredStaff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -123,7 +136,8 @@ const StaffPage = () => {
   }, [selectedIds, bulkDeleteMutation]);
 
   const handleDelete = useCallback((staff: Staff) => {
-    setConfirmText(`This action cannot be undone. This will permanently delete lecturer "${staff.fullName}" and remove their data from our systems.`);
+    const fullName = `${staff.staffProfile?.surname || ''} ${staff.staffProfile?.firstName || ''} ${staff.staffProfile?.otherName || ''}`;
+    setConfirmText(`This action cannot be undone. This will permanently delete lecturer "${fullName}" and remove their data from our systems.`);
     setConfirmCallback(() => async () => {
       try {
         await deleteMutation.mutateAsync(staff.id);
@@ -136,34 +150,32 @@ const StaffPage = () => {
 
   const handleBulkDownload = useCallback(() => {
     exportToExcel(
-      staffList
+      staffs
         .filter((s) => selectedIds.includes(s.id))
         .map((s) => ({
-          "Staff ID": s.staffNumber,
-          Name: s.fullName,
+          "Staff ID": s.staffProfile?.staffNumber,
+          Name: `${s.staffProfile?.surname || ''} ${s.staffProfile?.firstName || ''} ${s.staffProfile?.otherName || ''}`,
           Email: s.email,
-          Phone: s.phone || "N/A",
-          Department: s.department,
-          Level: s.level,
-          Courses: s.courses,
+          Phone: s.staffProfile?.phone || "N/A",
+          Department: s.staffProfile?.department,
+          Faculty: s.staffProfile?.faculty,
+          Title: s.staffProfile?.title,
+          "Total Assigned Courses": s.staffProfile?.lecturedCourses?.length || 0,
         })),
       "selected_lecturers",
       "Lecturers"
     );
-  }, [staffList, selectedIds]);
+  }, [staffs, selectedIds]);
 
   const handleAssignCourse = useCallback(async (data: { courseIds: string[]; session: string }) => {
     if (!selectedStaff) return;
     try {
-      await Promise.all(
-        data.courseIds.map((courseId) =>
-          assignCourseMutation.mutateAsync({
-            courseId,
-            lecturerId: selectedStaff.id,
-            session: data.session
-          })
-        )
-      );
+      await assignCourseMutation.mutateAsync({
+        courseIds: data.courseIds,
+        lecturerId: selectedStaff?.staffProfile?.id || '',
+        session: data.session
+      });
+
       setShowAssignCourse(false);
       setSelectedStaff(null);
     } catch {
@@ -193,13 +205,14 @@ const StaffPage = () => {
 
   const handleExport = useCallback(() => {
     const exportData = filteredStaff.map((s) => ({
-      "Staff ID": s.staffNumber,
-      Name: s.fullName,
+      "Staff ID": s.staffProfile?.staffNumber,
+      Name: `${s.staffProfile?.surname || ''} ${s.staffProfile?.firstName || ''} ${s.staffProfile?.otherName || ''}`,
       Email: s.email,
-      Phone: s.phone || "N/A",
-      Department: s.department,
-      Level: s.level,
-      Courses: s.courses,
+      Phone: s.staffProfile?.phone || "N/A",
+      Department: s.staffProfile?.department,
+      Faculty: s.staffProfile?.faculty,
+      Title: s.staffProfile?.title,
+      "Total Assigned Courses": s.staffProfile?.lecturedCourses?.length || 0,
     }));
     exportToExcel(exportData, "Lecturers_List", "Lecturers");
   }, [filteredStaff]);
@@ -216,67 +229,67 @@ const StaffPage = () => {
       >
         <Flex alignItems="center" gap="3" flexWrap="wrap">
           <Menu.Root>
-          <Menu.Trigger asChild>
-            <Button
-              size="xl"
-              flexShrink={0}
-              bg="accent"
-              color="white"
-              cursor="pointer"
-              border="none"
-              display="flex"
-              alignItems="center"
-              borderRadius="md"
-            >
-              <Plus size={16} /> Add Lecturer
-            </Button>
-          </Menu.Trigger>
-          <Portal>
-            <Menu.Positioner>
-              <Menu.Content
-                bg="white"
+            <Menu.Trigger asChild>
+              <Button
+                size="xl"
+                flexShrink={0}
+                bg="accent"
+                color="white"
+                cursor="pointer"
+                border="none"
+                display="flex"
+                alignItems="center"
                 borderRadius="md"
-                boxShadow="none"
-                border="xs"
-                borderColor="border.muted"
-                minW="150px"
-                overflow="hidden"
-                py="1"
-                zIndex="popover"
               >
-                <Menu.Item
-                  value="single"
-                  onClick={() => {
-                    setStaffToEdit(null);
-                    setShowAddEditForm(true);
-                  }}
-                  cursor="pointer"
-                  px="4"
-                  py="2.5"
-                  fontSize="sm"
-                  fontWeight="medium"
-                  color="fg.muted"
-                  _hover={{ bg: "slate.50" }}
+                <Plus size={16} /> Add Lecturer
+              </Button>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content
+                  bg="white"
+                  borderRadius="md"
+                  boxShadow="none"
+                  border="xs"
+                  borderColor="border.muted"
+                  minW="150px"
+                  overflow="hidden"
+                  py="1"
+                  zIndex="popover"
                 >
-                  <UserCog size={16} /> Single
-                </Menu.Item>
-                <Menu.Item
-                  value="bulk"
-                  onClick={() => setShowUploadModal(true)}
-                  cursor="pointer"
-                  px="4"
-                  py="2.5"
-                  fontSize="sm"
-                  fontWeight="medium"
-                  color="fg.muted"
-                  _hover={{ bg: "slate.50" }}
-                >
-                  <FileUp size={16} /> Bulk
-                </Menu.Item>
-              </Menu.Content>
-            </Menu.Positioner>
-          </Portal>
-        </Menu.Root>
+                  <Menu.Item
+                    value="single"
+                    onClick={() => {
+                      setStaffToEdit(null);
+                      setShowAddEditForm(true);
+                    }}
+                    cursor="pointer"
+                    px="4"
+                    py="2.5"
+                    fontSize="sm"
+                    fontWeight="medium"
+                    color="fg.muted"
+                    _hover={{ bg: "slate.50" }}
+                  >
+                    <UserCog size={16} /> Single
+                  </Menu.Item>
+                  <Menu.Item
+                    value="bulk"
+                    onClick={() => setShowUploadModal(true)}
+                    cursor="pointer"
+                    px="4"
+                    py="2.5"
+                    fontSize="sm"
+                    fontWeight="medium"
+                    color="fg.muted"
+                    _hover={{ bg: "slate.50" }}
+                  >
+                    <FileUp size={16} /> Bulk
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu.Root>
         </Flex>
       </Flex>
 
@@ -371,7 +384,7 @@ const StaffPage = () => {
           isOpen={showAssignCourse}
           onClose={() => { setShowAssignCourse(false); setSelectedStaff(null); }}
           onAssign={handleAssignCourse}
-          staffName={selectedStaff?.fullName}
+          staffName={`${selectedStaff?.staffProfile?.surname || ''} ${selectedStaff?.staffProfile?.firstName || ''} ${selectedStaff?.staffProfile?.otherName || ''}`}
         />
 
         <AddStaffForm

@@ -71,6 +71,7 @@ const LecturersFilters = ({
       </InputGroup>
 
       <Flex gap="3" alignItems="center" flexWrap="wrap">
+
         <Select.Root
           collection={STATUSES_COLLECTION}
           value={selectedStatus ? [selectedStatus] : []}

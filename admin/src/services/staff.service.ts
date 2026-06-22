@@ -12,9 +12,13 @@ export const StaffServices = {
         return data;
     },
 
-    assignCourse: async (payload: { courseId: string; lecturerId: string; session: string }) => {
+    assignCourse: async (payload: { courseIds: string[]; lecturerId: string; session: string }) => {
         const { data } = await axiosClient.post("/courses/assignments", payload);
         return data;
+    },
+
+    unassignCourse: async (assignmentId: string) => {
+        await axiosClient.delete(`/courses/assignments/${assignmentId}`);
     },
 
     

@@ -1,33 +1,13 @@
 import { StaffServices } from "@services/staff.service";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toaster } from "@components/ui/toaster";
-import type { CreateLecturerPayload, Staff } from "@type/staff.type";
+import type { CreateLecturerPayload } from "@type/staff.type";
 
 export const StaffHook = {
     useStaff: () =>
         useQuery({
             queryKey: ["staff"],
-            queryFn: async () => {
-                const response = await StaffServices.getDepartmentLecturers();
-                const data = response?.lecturers || response?.data || [];
-                return data.map((item: any) => ({
-                    ...item,
-                    id: item.id,
-                    staffNumber: item.staffProfile?.staffNumber || "—",
-                    fullName: `${item.staffProfile?.firstName || ""} ${item.staffProfile?.surname || ""}`.trim() || "—",
-                    firstName: item.staffProfile?.firstName || "",
-                    surname: item.staffProfile?.surname || "",
-                    otherName: item.staffProfile?.otherName || "",
-                    email: item.email || "—",
-                    phone: item.staffProfile?.phone || "—",
-                    gender: item.staffProfile?.gender || "—",
-                    staffRoles: item.staffProfile?.staffRoles || [],
-                    status: item.status || "—",
-                    department: item.staffProfile?.department || "—",
-                    level: item.staffProfile?.title || "—",
-                    courses: item.courses?.map((course: any) => course.code).join(", ") || "—",
-                })) as Staff[];
-            },
+            queryFn: async () => StaffServices.getDepartmentLecturers()
         }),
 
     useAddStaff: () => {
@@ -104,11 +84,25 @@ export const StaffHook = {
     useAssignCourse: () => {
         const queryClient = useQueryClient();
         return useMutation({
-            mutationFn: (payload: { courseId: string; lecturerId: string; session: string }) =>
+            mutationFn: (payload: { courseIds: string[]; lecturerId: string; session: string }) =>
                 StaffServices.assignCourse(payload),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ["staff"] });
                 toaster.success({ title: "Course assigned successfully" });
+            },
+            onError: () => {
+                // Error toast handled by axios interceptor
+            },
+        });
+    },
+
+    useUnassignCourse: () => {
+        const queryClient = useQueryClient();
+        return useMutation({
+            mutationFn: (assignmentId: string) => StaffServices.unassignCourse(assignmentId),
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ["staff"] });
+                toaster.success({ title: "Course unassigned successfully" });
             },
             onError: () => {
                 // Error toast handled by axios interceptor

@@ -22,7 +22,7 @@ const useStudentForm = () => {
             department: "",
             degreeCourse: "",
             degreeAwardedCode: "",
-            degreeDuration: "4 Years",
+            degreeDuration: "4",
             admissionYear: 2026,
             admissionSession: "2025/2026",
         }

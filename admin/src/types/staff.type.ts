@@ -1,29 +1,55 @@
 export interface Staff {
     id: string;
-    staffNumber: string;
-    fullName: string;
-    firstName?: string;
-    surname?: string;
-    otherName?: string;
     email: string;
-    phone?: string | null;
-    gender?: string;
-    department?: string;
-    level?: string;
-    courses?: string;
     role?: string;
-    staffRoles?: string[];
     status?: string;
-    totalAssignedCourses?: number;
-    activeFeatures?: {
-        results: boolean;
-        finance: boolean;
-        timetable: boolean;
+    createdAt?: string;
+    studentProfile: null;
+    staffProfile?: {
+        id: string;
+        userId: string;
+        surname: string;
+        firstName: string;
+        otherName: string;
+        staffNumber: string;
+        phone: string;
+        department: string;
+        faculty: string;
+        staffRoles: string[];
+        title: string;
+        gender: string;
+        createdAt: string;
+        updatedAt: string;
+        lecturedCourses: Array<{
+            id: string;
+            courseId: string;
+            lecturerId: string;
+            session: string;
+            course: {
+                id: string;
+                code: string;
+                title: string;
+                description: string;
+                units: number;
+                level: string;
+                semester: string;
+                courseType: string;
+                status: string;
+                programmeId: string;
+                isCarryoverAllowed: boolean;
+                courseRepId: string | null;
+                assistantCourseRepId: string | null;
+                classRepId: string | null;
+                assistantClassRepId: string | null;
+                progressionRuleId: string | null;
+                createdAt: string;
+                updatedAt: string;
+            };
+        }>;
     };
 }
 
 export interface CreateLecturerPayload {
-    type: string;
     firstName: string;
     surname: string;
     otherName: string;
@@ -35,10 +61,5 @@ export interface CreateLecturerPayload {
     staffRoles: string[];
     faculty: string;
     department: string;
-    // Keep these for backward compatibility or extra data if needed
-    highestDegree?: string;
-    category?: string;
     password?: string;
-    departmentId?: string;
-    universityId?: string;
 }
