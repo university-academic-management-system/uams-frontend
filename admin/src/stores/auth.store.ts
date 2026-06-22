@@ -57,11 +57,11 @@ export default useAuthStore;
 
 
 // const useAuthStore = create<AuthState>()((set) => ({
-//   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwZmI1ZDVlLTcxYmEtNGZmYi1hMGZhLWY0NDYzMmVlYThjNiIsInJvbGUiOiJTVEFGRiIsImlhdCI6MTc4MDM1Njc4MCwiZXhwIjoxNzgwOTYxNTgwfQ.TOX2aU2qpiZkS37CKyUxAVCVLaNi2iu5SqQC3zh4vmI",
+//   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwZmI1ZDVlLTcxYmEtNGZmYi1hMGZhLWY0NDYzMmVlYThjNiIsInJvbGUiOiJTVEFGRiIsImlhdCI6MTc4MjExOTM2NiwiZXhwIjoxNzgyNzI0MTY2fQ.vT2iszw6h9i2TVETACquVFuoX93W2L8GK8aM_ZArdTs",
 //   expireAt: "7d",
 //   user: {
 //     id: "90fb5d5e-71ba-4ffb-a0fa-f44632eea8c6",
-//     email: "friday.joshua@speedlinkng.com",
+//     email: "admin@uams.com",
 //     name: "Admin Dept One",
 //     roles: ["STAFF", "DEPARTMENT_ADMIN"],
 //   },

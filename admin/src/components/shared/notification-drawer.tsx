@@ -2,9 +2,9 @@ import { useMemo, useCallback } from "react";
 import { Button, CloseButton, Drawer, IconButton, Portal, Box, Flex, Text, Spinner, EmptyState } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
 import { LuBell } from "react-icons/lu";
-import { Bell, Info, CheckCircle2, AlertTriangle, XCircle, Check, MoreHorizontal } from "lucide-react";
+import { Bell, Info, CheckCircle2, AlertTriangle, XCircle, Check } from "lucide-react";
 import { NotificationHook } from "@hooks/notification.hook";
-import type { NotificationType } from "@type/notification.type";
+import type { NotificationType, NotificationItem } from "@type/notification.type";
 import moment from "moment";
 
 const getIcon = (type: NotificationType) => {
@@ -17,22 +17,14 @@ const getIcon = (type: NotificationType) => {
     }
 };
 
-interface NotificationItem {
-    id: string;
-    recipientType: string;
-    read: boolean;
-    type: NotificationType;
-    title: string;
-    createdAt: string;
-    message: string;
-}
 
 const NotificationDrawer = () => {
     const { data: notifications = [], isLoading } = NotificationHook.useNotifications();
     const markAllAsRead = NotificationHook.useMarkAllAsRead();
+    const markAsRead = NotificationHook.useMarkAsRead();
 
     const filteredNotifications = useMemo(
-        () => notifications.filter((n: NotificationItem) => n.recipientType === "SINGLE"),
+        () => notifications.filter((n: NotificationItem) => n.recipientType === "ALL"),
         [notifications]
     );
 
@@ -44,6 +36,10 @@ const NotificationDrawer = () => {
     const handleMarkAllAsRead = useCallback(() => {
         markAllAsRead.mutate();
     }, [markAllAsRead]);
+
+    const handleMarkAsRead = useCallback((id: string) => {
+        markAsRead.mutate(id);
+    }, [markAsRead]);
 
     const formatTime = useCallback((dateString: string) => {
         return moment(dateString).fromNow();
@@ -119,11 +115,22 @@ const NotificationDrawer = () => {
                                                 </Flex>
                                                 <Text fontSize="xs" color="fg.subtle" lineHeight="relaxed">{n.message}</Text>
                                             </Box>
-                                            <Flex opacity="0" _groupHover={{ opacity: 1 }} transition="all 0.2s" alignItems="center">
-                                                <Box as="button" p="1" _hover={{ bg: "fg.subtle" }} borderRadius="md" color="fg.subtle" cursor="pointer" border="none" bg="transparent">
-                                                    <MoreHorizontal size={16} />
-                                                </Box>
-                                            </Flex>
+                                            {!n.read && (
+                                                <Flex alignItems="center">
+                                                    <Tooltip content="Mark as read">
+                                                        <IconButton 
+                                                            size="xs"
+                                                            variant="ghost"
+                                                            onClick={() => handleMarkAsRead(n.id)} 
+                                                            color="fg.subtle"
+                                                            _hover={{ bg: "blue.50", color: "blue.500" }} 
+                                                            disabled={markAsRead.isPending}
+                                                        >
+                                                            <Check size={16} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Flex>
+                                            )}
                                         </Flex>
                                     ))}
                                 </Box>

@@ -9,6 +9,11 @@ export const useSystemSettingsForm = () => {
     defaultValues: {
       caPercentage: 30,
       examPercentage: 70,
+      siwesRequired: false,
+      suspensionThreshold: 2,
+      totalCreditUnit: 48,
+      semester1CreditUnit: 24,
+      semester2CreditUnit: 24,
     }
   });
 };

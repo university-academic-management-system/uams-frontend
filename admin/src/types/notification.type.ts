@@ -30,3 +30,13 @@ export interface CreateNotificationPayload {
     message: string;
     type: NotificationType;
 }
+
+export interface NotificationItem {
+    id: string;
+    recipientType: string;
+    read: boolean;
+    type: NotificationType;
+    title: string;
+    createdAt: string;
+    message: string;
+}

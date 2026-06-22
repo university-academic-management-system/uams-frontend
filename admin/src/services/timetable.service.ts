@@ -1,5 +1,5 @@
 import axiosClient from "@configs/axios.config";
-import type { TimetableData, TimetableResponse, TimetableParams, CreateTimetableEntryPayload, UpdateTimetableEntryPayload } from "@type/timetable.type";
+import type { TimetableData, TimetableResponse, CreateTimetableEntryPayload, UpdateTimetableEntryPayload } from "@type/timetable.type";
 
 export const TimetableService = {
     getTimetable: async (params: { session: string; semester: string }): Promise<TimetableData> => {
@@ -28,10 +28,5 @@ export const TimetableService = {
 
     deleteTimetableEntry: async (id: string): Promise<void> => {
         await axiosClient.delete(`/timetables/${id}`);
-    },
-
-    getTimetableParams: async (): Promise<TimetableParams> => {
-        const { data } = await axiosClient.get<{ data: TimetableParams }>(`/timetables/params`);
-        return data.data;
     },
 };
