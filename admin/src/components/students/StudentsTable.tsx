@@ -13,7 +13,6 @@ import {
 } from "@chakra-ui/react";
 import {
   MoreHorizontal,
-  UserCog,
   Pencil,
   Trash2,
   ArrowUpDown,
@@ -22,6 +21,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import type { Student } from "@type/student.type";
+import { toTitleCase } from "@utils/function.util";
 
 interface StudentsTableProps {
   paginatedStudents: Student[];
@@ -48,7 +48,6 @@ const StudentsTable = ({
   toggleSelectAll,
   toggleSelection,
   handleSingleDelete,
-  setSelectedStudent,
   setStudentToEdit,
   setShowAddForm,
 }: StudentsTableProps) => {
@@ -126,9 +125,10 @@ const StudentsTable = ({
         <Table.Cell fontWeight="medium">
           {s.registrationNo || "—"}
         </Table.Cell>
-        <Table.Cell>{s.matricNumber || "—"}</Table.Cell>
-        <Table.Cell fontWeight="bold">{s.surname}</Table.Cell>
-        <Table.Cell fontWeight="medium">{s.otherName || "—"}</Table.Cell>
+        <Table.Cell fontWeight="bold">{s.matricNumber || "—"}</Table.Cell>
+        <Table.Cell fontWeight="bold">{toTitleCase(s.surname || "")}</Table.Cell>
+        <Table.Cell fontWeight="bold">{toTitleCase(s.firstName || "")}</Table.Cell>
+        <Table.Cell fontWeight="bold">{toTitleCase(s.otherName || "") || "—"}</Table.Cell>
         <Table.Cell>{s.email}</Table.Cell>
         <Table.Cell>{s.phone || "—"}</Table.Cell>
         <Table.Cell textTransform="capitalize">{s.gender || "—"}</Table.Cell>
@@ -199,19 +199,6 @@ const StudentsTable = ({
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         setOpenPopoverId(null);
-                        setSelectedStudent(s);
-                      }}
-                      w="full"
-                      justifyContent="flex-start"
-                      size="sm"
-                    >
-                      <UserCog size={16} /> Assign Role
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        setOpenPopoverId(null);
                         setStudentToEdit(s);
                         setShowAddForm(true);
                       }}
@@ -248,7 +235,6 @@ const StudentsTable = ({
     selectedIds,
     toggleSelection,
     handleSingleDelete,
-    setSelectedStudent,
     setStudentToEdit,
     setShowAddForm,
     openPopoverId,
@@ -357,7 +343,27 @@ const StudentsTable = ({
               _hover={{ bg: "slate.100" }}
             >
               <Flex alignItems="center" gap="1">
-                First Name {renderSortIcon("surname")}
+                Surname {renderSortIcon("surname")}
+              </Flex>
+            </Table.ColumnHeader>
+            <Table.ColumnHeader
+              bg="bg.muted"
+              px="6"
+              py="4"
+              minW="150px"
+              fontSize="11px"
+              fontWeight="bold"
+              color="fg.muted"
+              textTransform="uppercase"
+              letterSpacing="wider"
+              whiteSpace="nowrap"
+              cursor="pointer"
+              onClick={() => requestSort("firstname")}
+              userSelect="none"
+              _hover={{ bg: "slate.100" }}
+            >
+              <Flex alignItems="center" gap="1">
+                Firstname {renderSortIcon("firstname")}
               </Flex>
             </Table.ColumnHeader>
             <Table.ColumnHeader

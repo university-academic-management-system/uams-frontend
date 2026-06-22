@@ -54,8 +54,8 @@ const BulkUploadStaffModal = ({ isOpen, onClose, onUploaded }: Props) => {
                         <Text fontSize="lg" fontWeight="bold" color="fg.muted" mb="2">Upload Lecturers</Text>
                         <Text fontSize="sm" color="fg.muted" mb="4">Upload a CSV file containing the lecturers data. Download the sample file below to see the required format.</Text>
                         
-                        <a href="/admin/documents/Lecturer_Sample_File.csv" download="Lecturer_Sample_File.csv" style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", fontWeight: 600, color: "#2563eb", textDecoration: "none", transition: "color 0.2s" }}>
-                            <FileUp size={16} /> Download Sample CSV Template
+                        <a href="/admin/documents/lecturer-upload-template.xlsx" download="Lecturer_Upload_Template.xlsx" style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", fontWeight: 600, color: "#2563eb", textDecoration: "none", transition: "color 0.2s" }}>
+                            <FileUp size={16} /> Download Upload Excel Template
                         </a>
                     </Box>
 

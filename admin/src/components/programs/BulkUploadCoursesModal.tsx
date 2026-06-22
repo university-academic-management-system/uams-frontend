@@ -50,8 +50,8 @@ const BulkUploadCoursesModal = ({ children }: Props) => {
                                     <Dialog.Description fontSize="sm" color="fg.muted">
                                         Upload an Excel file containing courses data. Download the sample file below to see the required format.
                                         <br />
-                                        <a href="/admin/documents/course-sample.xlsx" download="Course_Sample_File.xlsx" style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", fontWeight: 600, color: "#2563eb", textDecoration: "none", transition: "color 0.2s", marginTop: "16px" }}>
-                                            <FileUp size={16} /> Download Sample Excel Template
+                                        <a href="/admin/documents/course-upload-template.xlsx" download="Course_Upload_Template.xlsx" style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", fontWeight: 600, color: "#2563eb", textDecoration: "none", transition: "color 0.2s", marginTop: "16px" }}>
+                                            <FileUp size={16} /> Download Upload Excel Template
                                         </a>
                                     </Dialog.Description>
                                 </VStack>

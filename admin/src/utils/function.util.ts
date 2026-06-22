@@ -14,7 +14,7 @@ export const formatCurrency = (amount: number) => {
     }).format(amount);
 }
 
-export const toTitleCase = (str: string) => str[0].toUpperCase() + str.slice(1).toLowerCase().replaceAll("_", " ");
+export const toTitleCase = (str: string) => str.length > 1 && (str[0].toUpperCase() + str.slice(1).toLowerCase().replaceAll("_", " "));
 
 
 export const formatTime = (isoString: string, referenceStart?: string) => {

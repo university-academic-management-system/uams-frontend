@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { X, ChevronDown } from "lucide-react";
-import { 
-    Flex, 
-    Text, 
-    Spinner, 
-    Button, 
-    Dialog, 
+import {
+    Flex,
+    Text,
+    Spinner,
+    Button,
+    Dialog,
     Input,
     Field,
     SimpleGrid,
@@ -26,11 +26,11 @@ const GENDER_COLLECTION = createListCollection({
 });
 
 const LEVELS_COLLECTION = createListCollection({
-    items: ['L100', 'L200', 'L300', 'L400', 'L500', 'L600', 'L700', 'L800'].map(l => ({ label: l, value: l }))
+    items: ['100', '200', '300', '400', '500', '600', '700', '800'].map(l => ({ label: l, value: `L${l}` }))
 });
 
 const DURATION_COLLECTION = createListCollection({
-    items: ['1 Year', '2 Years', '3 Years', '4 Years', '5 Years', '6 Years', '7 Years'].map(l => ({ label: l, value: l }))
+    items: [1, 2, 3, 4, 5, 6, 7].map(l => ({ label: l, value: l.toString() }))
 });
 
 interface AddStudentFormProps {
@@ -65,8 +65,8 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                 faculty: initialData.faculty || "",
                 department: initialData.department || "",
                 degreeCourse: initialData.degreeCourse || "",
-                degreeAwardedCode: initialData.degreeAwardedCode || "",
-                degreeDuration: initialData.degreeDuration || initialData.courseDuration || "4 Years",
+                degreeAwardedCode: initialData.degreeAwardedCode || initialData?.degreeAwarded || "",
+                degreeDuration: initialData.degreeDuration || initialData.courseDuration || "4",
                 admissionYear: initialData.admissionYear || 2023,
                 admissionSession: initialData.admissionSession || "2023/2024",
             });
@@ -86,7 +86,7 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                 department: "",
                 degreeCourse: "",
                 degreeAwardedCode: "",
-                degreeDuration: "4 Years",
+                degreeDuration: "4",
                 admissionYear: 2023,
                 admissionSession: "2023/2024",
             });
@@ -112,8 +112,8 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                             {initialData ? "Edit Student" : "Add Student"}
                         </Text>
                         <Dialog.CloseTrigger asChild>
-                            <Button  variant="ghost" size="xl" colorPalette="grey">
-                                <X size={24} color="grey"/>
+                            <Button variant="ghost" size="xl" colorPalette="grey">
+                                <X size={24} color="grey" />
                             </Button>
                         </Dialog.CloseTrigger>
                     </Flex>
@@ -126,7 +126,7 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                                 <Input size="lg" border="xs" borderColor="border.muted" {...register("registrationNo")} placeholder="UAMS/2023/001" bg="white" />
                                 <Field.ErrorText>{errors.registrationNo?.message}</Field.ErrorText>
                             </Field.Root>
-                            
+
                             <Field.Root required invalid={!!errors.matricNumber}>
                                 <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Mat No. <Field.RequiredIndicator /></Field.Label>
                                 <Input size="lg" border="xs" borderColor="border.muted" {...register("matricNumber")} placeholder="2023/12345" bg="white" />
@@ -163,10 +163,10 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                                 render={({ field }) => (
                                     <Field.Root required invalid={!!errors.gender}>
                                         <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Gender <Field.RequiredIndicator /></Field.Label>
-                                        <Select.Root 
-                                            collection={GENDER_COLLECTION} 
-                                            value={field.value ? [field.value] : []} 
-                                            onValueChange={(e) => field.onChange(e.value[0] || "")} 
+                                        <Select.Root
+                                            collection={GENDER_COLLECTION}
+                                            value={field.value ? [field.value] : []}
+                                            onValueChange={(e) => field.onChange(e.value[0] || "")}
                                             size="lg"
                                         >
                                             <Select.HiddenSelect />
@@ -204,10 +204,10 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                                 render={({ field }) => (
                                     <Field.Root required invalid={!!errors.level}>
                                         <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Level <Field.RequiredIndicator /></Field.Label>
-                                        <Select.Root 
-                                            collection={LEVELS_COLLECTION} 
-                                            value={field.value ? [field.value] : []} 
-                                            onValueChange={(e) => field.onChange(e.value[0] || "")} 
+                                        <Select.Root
+                                            collection={LEVELS_COLLECTION}
+                                            value={field.value ? [field.value] : []}
+                                            onValueChange={(e) => field.onChange(e.value[0] || "")}
                                             size="lg"
                                         >
                                             <Select.HiddenSelect />
@@ -293,10 +293,10 @@ const AddStudentForm = ({ isOpen, onClose, onSubmit, initialData }: AddStudentFo
                                 render={({ field }) => (
                                     <Field.Root required invalid={!!errors.degreeDuration}>
                                         <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted">Degree Duration <Field.RequiredIndicator /></Field.Label>
-                                        <Select.Root 
-                                            collection={DURATION_COLLECTION} 
-                                            value={field.value ? [field.value] : []} 
-                                            onValueChange={(e) => field.onChange(e.value[0] || "")} 
+                                        <Select.Root
+                                            collection={DURATION_COLLECTION}
+                                            value={field.value ? [field.value] : []}
+                                            onValueChange={(e) => field.onChange(e.value[0] || "")}
                                             size="lg"
                                         >
                                             <Select.HiddenSelect />
