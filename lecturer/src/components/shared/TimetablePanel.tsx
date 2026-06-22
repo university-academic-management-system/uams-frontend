@@ -23,7 +23,6 @@ import {
 import { useState, useMemo } from "react";
 import { LuGlobe, LuClock, LuMapPin, LuBookOpen } from "react-icons/lu";
 import { useTimetable } from "@hooks/timetable.hooks";
-import useAuthStore from "@stores/auth.store";
 import moment from "moment";
 import { formatMonthDay, formatTime, formatWeekday } from "@utils/function.util";
 import { EmptyStateView } from "@components/shared/empty-state";
@@ -32,22 +31,20 @@ const tz = getLocalTimeZone();
 type DateValue = DatePicker.DateValue;
 
 interface TimetablePanelProps {
-  onViewFullTimetable: () => void;
+  currentSession?: string;
+  currentSemester?: string;
 }
 
-const TimetablePanel = ({ onViewFullTimetable }: TimetablePanelProps) => {
-  const { user } = useAuthStore();
-  const currentYear = new Date().getFullYear();
-  const fallbackSession = `${currentYear}/${currentYear + 1}`;
-  const session = user?.currentSession || fallbackSession;
-  const semester = user?.currentSemester || "FIRST";
+const TimetablePanel = ({ currentSession, currentSemester }: TimetablePanelProps) => {
+  const session = currentSession || ""
+  const semester = currentSemester || ""
 
-  const { data: timetableData, isLoading: isQueryLoading, error } = useTimetable(
+  const { data: timetableData, isLoading: isQueryLoading } = useTimetable(
     { session, semester },
     !!session && !!semester
   );
 
-  const entries = timetableData?.entries ?? [];
+  const entries = useMemo(() => timetableData?.entries ?? [], [timetableData]);
   const semesterStartDate = timetableData?.semesterStartDate;
   const semesterEndDate = timetableData?.semesterEndDate;
 

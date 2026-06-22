@@ -12,6 +12,7 @@ import {
 import { useMemo, useState, lazy, Suspense } from "react";
 import { CalendarX } from "lucide-react";
 import { useTimetable } from "@hooks/timetable.hooks";
+import { useTotals } from "@hooks/dashboard.hook";
 
 const TimetableCalendarView = lazy(() => import("@components/shared/timetable-calendarview"));
 
@@ -26,6 +27,7 @@ const generateSessionOptions = () => {
 
 const TimeTable = () => {
   const sessionList = useMemo(() => generateSessionOptions(), []);
+  const { data: settings } = useTotals();
   const sessionCollection = createListCollection({
     items: sessionList.map((s) => ({ label: s, value: s })),
   });
@@ -38,8 +40,8 @@ const TimeTable = () => {
     ],
   });
 
-  const [selectedSession, setSelectedSession] = useState(sessionList[0] || "2025/2026");
-  const [selectedSemester, setSelectedSemester] = useState("FIRST");
+  const [selectedSession, setSelectedSession] = useState(() => settings?.currentSession || "");
+  const [selectedSemester, setSelectedSemester] = useState(() => settings?.currentSemester || "FIRST");
 
   const { data: timetableData, isLoading, error } = useTimetable(
     { session: selectedSession, semester: selectedSemester },
@@ -129,7 +131,7 @@ const TimeTable = () => {
         </EmptyState.Root>
       ) : (
         <Suspense fallback={<Spinner size="xl" color="accent" />}>
-          <TimetableCalendarView timetableData={timetableData} />
+          <TimetableCalendarView timetableData={timetableData!} />
         </Suspense>
       )}
     </Stack>

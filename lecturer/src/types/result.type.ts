@@ -59,3 +59,49 @@ export interface TranscriptResponse {
     }>;
   }>;
 }
+
+export interface Result {
+  id: string;
+  studentId: string;
+  courseId: string;
+  session: string;
+  semester: string;
+  level: string;
+  ca: number | null;
+  examScore: number | null;
+  totalScore: number | null;
+  grade: string | null;
+  gradePoint: number;
+  status: string;
+  isCarryover: boolean;
+  retakeCount: number;
+  previousAttemptGrade: string | null;
+  createdAt: string;
+  updatedAt: string;
+  student: {
+    id: string;
+    firstName: string;
+    surname: string;
+    otherName: string;
+    matricNumber: string;
+  };
+  course: {
+    code: string;
+    title: string;
+    units: number;
+    courseType: string;
+  };
+  gradePointCredit: number;
+}
+
+export interface CourseResultsResponse {
+  results: Result[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}

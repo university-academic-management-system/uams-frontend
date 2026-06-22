@@ -22,6 +22,7 @@ import {
   Stack,
   Text,
   Grid,
+  useDisclosure,
 } from "@chakra-ui/react";
 import {
   LuSearch,
@@ -36,6 +37,7 @@ import {
   LuDownload,
   LuUpload,
   LuFileText,
+  LuCalendarDays,
 } from "react-icons/lu";
 import { useAllCourses } from "@hooks/course.hook";
 import { useCurrentUser } from "@hooks/currentUser.hook";
@@ -47,6 +49,7 @@ import EmptyStateView from "@components/shared/empty-state";
 import { HODResultsDrawer } from "@components/shared/HODResultsDrawer";
 import { ResultHook } from "@hooks/result.hook";
 import { toaster } from "@components/ui/toaster";
+import AttendanceDrawer from "@components/shared/attendance-drawer";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -175,11 +178,7 @@ const GlobalUploadDialog = ({
       setSelectedSemester("");
       setSelectedCourseId("");
       setSelectedFile(null);
-    },
-    onError: (err: any) => {
-      console.error("Upload error:", err);
-      toaster.error({ title: "Upload failed", description: err?.response?.data?.message || err.message });
-    },
+    }
   });
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,14 +194,6 @@ const GlobalUploadDialog = ({
       return;
     }
 
-    console.log("Upload payload:", {
-      courseId: selectedCourseId,
-      session: selectedSession,
-      semester: selectedSemester,
-      level: selectedLevel,
-      file: selectedFile.name,
-    });
-
     upload({
       courseId: selectedCourseId,
       session: selectedSession,
@@ -212,8 +203,13 @@ const GlobalUploadDialog = ({
     });
   };
 
-  const templateUrl = "result_sample_bf95f2d8-1da1-4cb9-853b-bec3f8455815.xlsx";
-  const downloadTemplate = () => window.open(templateUrl, "_blank");
+  const templateUrl = "/lecturer/result-template.xlsx";
+  const downloadTemplate = () => {
+    const a = document.createElement('a');
+    a.href = templateUrl;
+    a.download = 'result-template.xlsx';
+    a.click();
+  }
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="lg">
@@ -400,6 +396,7 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
   const [isStudentsOpen, setIsStudentsOpen] = useState(false);
   const [isResultsOpen, setIsResultsOpen] = useState(false);
   const [isHODResultsOpen, setIsHODResultsOpen] = useState(false);
+  const attendanceDisclosure = useDisclosure();
 
   const isERO = user?.role?.toUpperCase() === "ERO" || user?.roles?.some(r => r.toUpperCase() === "ERO");
 
@@ -416,6 +413,9 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
             <Menu.Content>
               <Menu.Item value="students" onClick={() => setIsStudentsOpen(true)}>
                 <LuUsers /> Students
+              </Menu.Item>
+              <Menu.Item value="attendance" onClick={() => attendanceDisclosure.setOpen(true)}>
+                <LuCalendarDays /> Attendance
               </Menu.Item>
               <Menu.Item value="results" onClick={() => setIsResultsOpen(true)}>
                 <LuChartBar /> Results
@@ -467,6 +467,8 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
           </Drawer.Positioner>
         </Portal>
       </Drawer.Root>
+
+      {attendanceDisclosure.open && <AttendanceDrawer course={course} setOpen={attendanceDisclosure.setOpen} open={attendanceDisclosure.open} />}
 
       {isERO && (
         <HODResultsDrawer
@@ -524,7 +526,6 @@ const CoursesSkeleton = () => {
 
 // ─── Main Courses Component ─────────────────────────────────────────────────
 const Courses = () => {
-  const { user } = useAuthStore();
   const { isHOD } = useCurrentUser();
 
   const [search, setSearch] = useState("");

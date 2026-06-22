@@ -7,3 +7,8 @@ export const AcademicService = {
         return data;
     },
 };
+
+export const getSystemSettings = async () => {
+    const { data } = await axiosClient.get("/settings");
+    return data.data;
+};

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Box,
   Flex,
@@ -15,11 +15,11 @@ import { Chart, useChart } from "@chakra-ui/charts";
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, LabelList } from "recharts";
 import { LuUsers } from "react-icons/lu";
 import { useCourseStudents } from "@hooks/course.hook";
-import useAuthStore from "@stores/auth.store";
+import { ResultHook } from "@hooks/result.hook";
 import type { Course } from "@type/course.type";
-import type { Student } from "@type/student.type";
 import EmptyStateView from "@components/shared/empty-state";
 import { CourseResultsDownloader } from "@components/shared/course-result-downloader";
+import { useTotals } from "@hooks/dashboard.hook";
 
 interface CourseResultsViewProps {
   courseId: string;
@@ -38,42 +38,42 @@ const gradeColor = (grade: string) => {
   }
 };
 
-const getDeterministicResult = (student: Student, courseUnits: number) => {
-  let hash = 0;
-  const str = student.id || "";
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  hash = Math.abs(hash);
-  const ca = 18 + (hash % 13);
-  const examScore = 32 + ((hash >> 4) % 39);
-  const totalScore = ca + examScore;
-  let grade = "F";
-  let gradePoint = 0;
-  if (totalScore >= 70) { grade = "A"; gradePoint = 5; }
-  else if (totalScore >= 60) { grade = "B"; gradePoint = 4; }
-  else if (totalScore >= 50) { grade = "C"; gradePoint = 3; }
-  else if (totalScore >= 45) { grade = "D"; gradePoint = 2; }
-  else if (totalScore >= 40) { grade = "E"; gradePoint = 1; }
-  else { grade = "F"; gradePoint = 0; }
-  const gradePointCredit = gradePoint * courseUnits;
-  const profile = student.studentProfile;
-  const studentName = profile
-    ? `${profile.firstName || ""} ${profile.lastName || ""} ${profile.otherName || ""}`.trim()
-    : student.email || "N/A";
-  return {
-    id: student.id,
-    studentName: studentName || "N/A",
-    matricNo: profile?.matricNumber || "N/A",
-    ca,
-    examScore,
-    total: totalScore,
-    grade,
-    gradePoint,
-    gradePointCredit,
-  };
-};
+// const getDeterministicResult = (student: Student, courseUnits: number) => {
+//   let hash = 0;
+//   const str = student.id || "";
+//   for (let i = 0; i < str.length; i++) {
+//     hash = (hash << 5) - hash + str.charCodeAt(i);
+//     hash |= 0;
+//   }
+//   hash = Math.abs(hash);
+//   const ca = 18 + (hash % 13);
+//   const examScore = 32 + ((hash >> 4) % 39);
+//   const totalScore = ca + examScore;
+//   let grade = "F";
+//   let gradePoint = 0;
+//   if (totalScore >= 70) { grade = "A"; gradePoint = 5; }
+//   else if (totalScore >= 60) { grade = "B"; gradePoint = 4; }
+//   else if (totalScore >= 50) { grade = "C"; gradePoint = 3; }
+//   else if (totalScore >= 45) { grade = "D"; gradePoint = 2; }
+//   else if (totalScore >= 40) { grade = "E"; gradePoint = 1; }
+//   else { grade = "F"; gradePoint = 0; }
+//   const gradePointCredit = gradePoint * courseUnits;
+//   const profile = student.studentProfile;
+//   const studentName = profile
+//     ? `${profile.firstName || ""} ${profile.lastName || ""} ${profile.otherName || ""}`.trim()
+//     : student.email || "N/A";
+//   return {
+//     id: student.id,
+//     studentName: studentName || "N/A",
+//     matricNo: profile?.matricNumber || "N/A",
+//     ca,
+//     examScore,
+//     total: totalScore,
+//     grade,
+//     gradePoint,
+//     gradePointCredit,
+//   };
+// };
 
 // Skeleton components
 const DetailsSkeleton = () => (
@@ -122,13 +122,16 @@ const TableSkeleton = () => (
 );
 
 export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) => {
-  const { user } = useAuthStore();
+  const { data: settings, isLoading: settingsLoading } = useTotals();
   const { data: students, isLoading: studentsLoading } = useCourseStudents(courseId);
+  const { data: resultsData, isLoading: resultsLoading } = ResultHook.useCourseResults(
+    courseId,
+    course?.level,
+    course?.semester
+  );
 
-  const [showDownloadElements, setShowDownloadElements] = useState(false);
-
-  const department = user?.staffProfile?.department || "N/A";
-  const faculty = user?.staffProfile?.faculty || "N/A";
+  const department = useMemo(() => settings?.department || "N/A", [settings]);
+  const faculty = useMemo(() => settings?.faculty || "N/A", [settings]);
 
   const courseCode = course?.code || "N/A";
   const courseTitle = course?.title || "N/A";
@@ -139,9 +142,8 @@ export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) 
   const mutedBorder = "var(--chakra-colors-border-muted)";
 
   const results = useMemo(() => {
-    if (!students) return [];
-    return students.map((student) => getDeterministicResult(student, course?.units || 0));
-  }, [students, course?.units]);
+    return resultsData?.results || [];
+  }, [resultsData]);
 
   const gradeDistribution = useMemo(() => {
     const counts = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
@@ -165,10 +167,7 @@ export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) 
     series: [{ name: "count", label: "Students", color: "accent" }],
   });
 
-  const handleBeforeCapture = () => setShowDownloadElements(true);
-  const handleAfterCapture = () => setShowDownloadElements(false);
-
-  if (studentsLoading) {
+  if (studentsLoading || settingsLoading || resultsLoading) {
     return (
       <Stack gap="4" colorPalette="accent">
         <DetailsSkeleton />
@@ -189,20 +188,18 @@ export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) 
         <CourseResultsDownloader
           targetId="course-results-content"
           filename={`${courseCode}_${courseLevel}_results`}
-          onBeforeCapture={handleBeforeCapture}
-          onAfterCapture={handleAfterCapture}
         />
       </Flex>
 
       {/* Content to be downloaded */}
       <Box id="course-results-content">
-          <Stack w="full" align="center" mb="6" pt="4">
-            <Image src="./assets/sidebar-collapsed-logo.png" alt="UPHCSC Logo" h="auto" w="36" />
-            <Heading size="3xl" w="full" textAlign="center" fontSize="2xl">
-              {courseTitle} Result
-            </Heading>
-          </Stack>
-      
+        <Stack w="full" align="center" mb="6" pt="4">
+          <Image src="./assets/sidebar-collapsed-logo.png" alt="UPHCSC Logo" h="auto" w="36" />
+          <Heading size="3xl" w="full" textAlign="center" fontSize="2xl">
+            {courseTitle} Result
+          </Heading>
+        </Stack>
+
 
         {/* Course Details Grid */}
         <DataList.Root size="sm" width="full" p="6">
@@ -314,14 +311,14 @@ export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) 
                     return (
                       <Table.Row key={r.id} bg={rowBg}>
                         <Table.Cell>{index + 1}</Table.Cell>
-                        <Table.Cell fontWeight="medium">{r.studentName}</Table.Cell>
-                        <Table.Cell>{r.matricNo}</Table.Cell>
-                        <Table.Cell>{r.ca}</Table.Cell>
-                        <Table.Cell>{r.examScore}</Table.Cell>
-                        <Table.Cell fontWeight="bold">{r.total}</Table.Cell>
-                        <Table.Cell><Badge colorPalette={gradeColor(r.grade)}>{r.grade}</Badge></Table.Cell>
-                        <Table.Cell>{r.gradePoint}</Table.Cell>
-                        <Table.Cell>{r.gradePointCredit}</Table.Cell>
+                        <Table.Cell fontWeight="medium">{r?.student?.surname} {r?.student?.firstName} {r?.student?.otherName}</Table.Cell>
+                        <Table.Cell>{r?.student?.matricNumber}</Table.Cell>
+                        <Table.Cell>{r?.ca || 0}</Table.Cell>
+                        <Table.Cell>{r?.examScore || 0}</Table.Cell>
+                        <Table.Cell fontWeight="bold">{r?.totalScore || 0}</Table.Cell>
+                        <Table.Cell><Badge colorPalette={gradeColor(r?.grade || "-")}>{r?.grade}</Badge></Table.Cell>
+                        <Table.Cell>{r?.gradePoint || 0}</Table.Cell>
+                        <Table.Cell>{r?.gradePointCredit || 0}</Table.Cell>
                       </Table.Row>
                     );
                   })

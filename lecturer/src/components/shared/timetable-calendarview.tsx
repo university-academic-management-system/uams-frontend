@@ -4,7 +4,6 @@ import {
   Flex,
   For,
   HStack,
-  IconButton,
   ScrollArea,
   Stack,
   Text,
@@ -12,7 +11,6 @@ import {
   parseDate,
   DatePicker,
 } from "@chakra-ui/react";
-import { LuPen } from "react-icons/lu";
 import type { TimetableData, TimetableEntry } from "@type/timetable.type";
 import { memo, useEffect, useMemo, useState } from "react";
 import { Clock, BookOpen, MapPin, Globe } from "lucide-react";
@@ -225,17 +223,7 @@ const TimetableCalendarView = memo(({ timetableData }: TimetableCalendarViewProp
                                         </Text>
                                       </HStack>
                                     </Box>
-                                    <IconButton
-                                      aria-label="Edit course"
-                                      size="xs"
-                                      variant="ghost"
-                                      onClick={() => {
-                                        // Implement edit logic if needed
-                                        console.log("Edit", item.id);
-                                      }}
-                                    >
-                                      <LuPen />
-                                    </IconButton>
+                                   
                                   </Flex>
                                   <HStack gap="4">
                                     <HStack gap="1" color="fg.subtle">
