@@ -356,10 +356,10 @@ const AuditLogs = () => {
                                     </TimelineRoot>
 
                                     {/* Standardized Pagination */}
-                                    {pagination && pagination.totalPages > 1 && (
+                                    {pagination && pagination.pages > 1 && (
                                         <Flex direction={{ base: "column", sm: "row" }} alignItems="center" justifyContent="space-between" gap="4" bg="bg.subtle" p="4" mt="8" borderRadius="md" border="1px solid" borderColor="border.muted">
                                             <Text fontSize="xs" color="fg.muted">
-                                                Page <Text as="span" fontWeight="bold">{pagination.page}</Text> of <Text as="span" fontWeight="bold">{pagination.totalPages}</Text>
+                                                Page <Text as="span" fontWeight="bold">{pagination.page}</Text> of <Text as="span" fontWeight="bold">{pagination.pages}</Text>
                                             </Text>
                                             
                                             <PaginationRoot

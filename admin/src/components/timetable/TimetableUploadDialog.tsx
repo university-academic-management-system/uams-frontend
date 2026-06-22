@@ -25,7 +25,6 @@ import SingleTimetableEntryDialog from "./SingleTimetableEntryDialog";
 const TimetableUploadDialog = () => {
     const { mutate: uploadTimetable, isPending } =
         TimetableHook.useUploadTimetable();
-    const { data: params } = TimetableHook.useTimetableParams();
     const [file, setFile] = useState<File | null>(null);
     const [selectedSession, setSelectedSession] = useState<string | null>(
         null
@@ -104,13 +103,12 @@ const TimetableUploadDialog = () => {
     const sessions = useMemo(
         () =>
             createListCollection({
-                items:
-                    params?.sessions?.map((session) => ({
-                        label: session.name,
-                        value: session.id,
-                    })) || [],
+                items: [
+                    { label: "2024/2025", value: "2024/2025" },
+                    { label: "2025/2026", value: "2025/2026" },
+                ],
             }),
-        [params]
+        []
     );
 
     const levels = useMemo(

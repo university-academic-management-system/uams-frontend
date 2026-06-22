@@ -1,5 +1,5 @@
 import axiosClient from "@configs/axios.config"
-import type { LoginData, LoginResponse, ProfileResponse } from "@type/auth.type"
+import type { LoginData, LoginResponse, ProfileResponse, ChangePasswordResponse, ChangePasswordData } from "@type/auth.type"
 
 export const AuthServices = {
     login: async (payload: LoginData) => {
@@ -7,11 +7,14 @@ export const AuthServices = {
         return data;
     },
     logout: async () => {
-        // Server-side logout if endpoint exists
-        // await axiosClient.post("/auth/logout");
+        await axiosClient.post("/auth/logout");
     },
     getProfile: async () => {
         const { data } = await axiosClient.get<ProfileResponse>("/auth/me");
+        return data;
+    },
+    changePassword: async (payload: ChangePasswordData) => {
+        const { data } = await axiosClient.post<ChangePasswordResponse>("/auth/change-password", payload);
         return data;
     },
 }

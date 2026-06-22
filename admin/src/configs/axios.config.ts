@@ -132,8 +132,9 @@ axiosClient.interceptors.response.use(
       });
     }
 
-    // 🟠 Unauthorized (Token expired) - Skip for public endpoints
-    if (error.response?.status === 401 && !originalRequest._retry && !isPublicEndpoint(originalRequest.url)) {
+    // 🟠 Unauthorized (Token expired) - Skip for public endpoints and change-password
+    const isChangePassword = originalRequest.url?.includes("/auth/change-password");
+    if (error.response?.status === 401 && !originalRequest._retry && !isPublicEndpoint(originalRequest.url) && !isChangePassword) {
       console.warn("🟠 Unauthorized (Token expired):", error.config?.url);
 
       toaster.error({

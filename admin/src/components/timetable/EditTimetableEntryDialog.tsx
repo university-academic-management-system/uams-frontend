@@ -19,7 +19,6 @@ import type { TimetableEntry } from "@type/timetable.type";
 
 const EditTimetableEntryDialog = ({ entry, isOpen, onClose }: { entry: TimetableEntry | null, isOpen: boolean, onClose: () => void }) => {
     const { mutate: updateEntry, isPending } = TimetableHook.useUpdateTimetableEntry();
-    const { data: params } = TimetableHook.useTimetableParams();
     const { data: courses = [] } = CourseHook.useCourses({});
     const qc = useQueryClient();
 
@@ -31,10 +30,16 @@ const EditTimetableEntryDialog = ({ entry, isOpen, onClose }: { entry: Timetable
         FRIDAY: "5",
     }), []);
 
+    const extractTime = (timeStr?: string) => {
+        if (!timeStr) return "";
+        if (timeStr.includes("T")) return timeStr.split("T")[1].substring(0, 5);
+        return timeStr.substring(0, 5);
+    };
+
     const [selectedCourse, setSelectedCourse] = useState<string | null>(entry?.course.id ?? null);
     const [selectedDay, setSelectedDay] = useState<string | null>(entry ? (dayMap[entry.dayOfWeek.toUpperCase()] || null) : null);
-    const [startTime, setStartTime] = useState(entry?.startTime ?? "");
-    const [endTime, setEndTime] = useState(entry?.endTime ?? "");
+    const [startTime, setStartTime] = useState(extractTime(entry?.startTime));
+    const [endTime, setEndTime] = useState(extractTime(entry?.endTime));
     const [venue, setVenue] = useState(entry?.venue ?? "");
     const [selectedSession, setSelectedSession] = useState<string | null>(entry?.session ?? null);
     const [selectedLevel, setSelectedLevel] = useState<string | null>(entry?.level ?? null);
@@ -46,8 +51,8 @@ const EditTimetableEntryDialog = ({ entry, isOpen, onClose }: { entry: Timetable
         if (entry) {
             setSelectedCourse(entry.course.id);
             setSelectedDay(dayMap[entry.dayOfWeek.toUpperCase()] || null);
-            setStartTime(entry.startTime);
-            setEndTime(entry.endTime);
+            setStartTime(extractTime(entry.startTime));
+            setEndTime(extractTime(entry.endTime));
             setVenue(entry.venue || "");
             setSelectedSession(entry.session);
             setSelectedSemester(entry.semester);
@@ -59,13 +64,12 @@ const EditTimetableEntryDialog = ({ entry, isOpen, onClose }: { entry: Timetable
     const sessions = useMemo(
         () =>
             createListCollection({
-                items:
-                    params?.sessions?.map((session) => ({
-                        label: session.name,
-                        value: session.name,
-                    })) || [],
+                items: [
+                    { label: "2024/2025", value: "2024/2025" },
+                    { label: "2025/2026", value: "2025/2026" },
+                ],
             }),
-        [params]
+        []
     );
 
     const levels = useMemo(
@@ -139,8 +143,8 @@ const EditTimetableEntryDialog = ({ entry, isOpen, onClose }: { entry: Timetable
                 payload: {
                     courseId: selectedCourse as string,
                     dayOfWeek: Number(selectedDay),
-                    startTime,
-                    endTime,
+                    startTime: startTime.substring(0, 5),
+                    endTime: endTime.substring(0, 5),
                     venue: venue || undefined,
                     session: selectedSession as string,
                     semester: selectedSemester as string,

@@ -19,19 +19,15 @@ const TimetableUploadDialog = lazy(() => import("@components/timetable/Timetable
 const TimetableCalendarView = lazy(() => import("@components/timetable/TimetableCalendarView"));
 
 const TimeTable = () => {
-    const { data: params } = TimetableHook.useTimetableParams();
-
-    // Build collections from params
     const sessionCollection = useMemo(
         () =>
             createListCollection({
-                items:
-                    params?.sessions?.map((s) => ({
-                        label: s.name,
-                        value: s.name,
-                    })) || [],
+                items: [
+                    { label: "2024/2025", value: "2024/2025" },
+                    { label: "2025/2026", value: "2025/2026" },
+                ],
             }),
-        [params]
+        []
     );
 
     const semesterCollection = useMemo(
