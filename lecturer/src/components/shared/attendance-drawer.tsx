@@ -4,7 +4,7 @@ import type { Course } from "@type/course.type"
 
 const AttendanceDrawer = ({ course, open, setOpen }: { course: Course, open: boolean, setOpen: (s: boolean) => void }) => {
     return (
-        <Drawer.Root open={open} onOpenChange={(d) => setOpen(d.open)}>
+        <Drawer.Root open={open} onOpenChange={(d) => setOpen(d.open)} size="xl">
             <Portal>
                 <Drawer.Backdrop />
                 <Drawer.Positioner>

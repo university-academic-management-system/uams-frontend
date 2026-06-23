@@ -30,8 +30,6 @@ export type ResultUploadsResponse = ApiResponse<ResultUpload[]>;
 export interface UploadDraftPayload {
   courseId: string;
   session: string;
-  semester: string;
-  level: string;
   file: File;
 }
 

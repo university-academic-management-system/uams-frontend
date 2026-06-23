@@ -38,42 +38,7 @@ const gradeColor = (grade: string) => {
   }
 };
 
-// const getDeterministicResult = (student: Student, courseUnits: number) => {
-//   let hash = 0;
-//   const str = student.id || "";
-//   for (let i = 0; i < str.length; i++) {
-//     hash = (hash << 5) - hash + str.charCodeAt(i);
-//     hash |= 0;
-//   }
-//   hash = Math.abs(hash);
-//   const ca = 18 + (hash % 13);
-//   const examScore = 32 + ((hash >> 4) % 39);
-//   const totalScore = ca + examScore;
-//   let grade = "F";
-//   let gradePoint = 0;
-//   if (totalScore >= 70) { grade = "A"; gradePoint = 5; }
-//   else if (totalScore >= 60) { grade = "B"; gradePoint = 4; }
-//   else if (totalScore >= 50) { grade = "C"; gradePoint = 3; }
-//   else if (totalScore >= 45) { grade = "D"; gradePoint = 2; }
-//   else if (totalScore >= 40) { grade = "E"; gradePoint = 1; }
-//   else { grade = "F"; gradePoint = 0; }
-//   const gradePointCredit = gradePoint * courseUnits;
-//   const profile = student.studentProfile;
-//   const studentName = profile
-//     ? `${profile.firstName || ""} ${profile.lastName || ""} ${profile.otherName || ""}`.trim()
-//     : student.email || "N/A";
-//   return {
-//     id: student.id,
-//     studentName: studentName || "N/A",
-//     matricNo: profile?.matricNumber || "N/A",
-//     ca,
-//     examScore,
-//     total: totalScore,
-//     grade,
-//     gradePoint,
-//     gradePointCredit,
-//   };
-// };
+
 
 // Skeleton components
 const DetailsSkeleton = () => (

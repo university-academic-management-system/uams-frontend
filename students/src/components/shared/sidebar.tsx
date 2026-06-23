@@ -194,7 +194,10 @@ export const LogoutButton = () => {
                 width="fit"
                 colorPalette={"red"}
                 color="red.500"
-                onClick={() => { location.replace(`/auth/login`);  clearAuth(); }}
+                onClick={() => {
+                    location.href = `${location.host}/auth/login`;
+                    clearAuth();
+                }}
 
                 aria-label="Logout"
             >

@@ -195,7 +195,7 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
               <Flex align="center" justify="space-between">
                 <Box>
                   <Heading size="md">Upload Draft Results</Heading>
-                  <Text size="sm" color="fg.muted">
+                  <Text color="fg.muted">
                     {course.title} ({course.code}) — {formatLevel(course.level)} Level
                   </Text>
                 </Box>

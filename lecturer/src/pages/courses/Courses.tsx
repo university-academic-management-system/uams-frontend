@@ -50,6 +50,9 @@ import { HODResultsDrawer } from "@components/shared/HODResultsDrawer";
 import { ResultHook } from "@hooks/result.hook";
 import { toaster } from "@components/ui/toaster";
 import AttendanceDrawer from "@components/shared/attendance-drawer";
+import moment from "moment";
+import { useTotals } from "@hooks/dashboard.hook";
+import { sleep } from "@utils/sleep.util";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -75,6 +78,23 @@ const semesterCollection = createListCollection({
   ],
 });
 
+const generateSessionOptions = (): string[] => {
+  const currentYear = moment().year();
+  const startYear = 1999;
+  const sessions: string[] = [];
+  for (let year = currentYear; year >= startYear; year--) {
+    sessions.push(`${year}/${year + 1}`);
+  }
+  return sessions;
+};
+
+const sessionCollection = createListCollection({
+  items: generateSessionOptions().map((session) => ({
+    label: session,
+    value: session,
+  })),
+});
+
 const normalizeLevel = (level: string) => {
   return level.replace(/^L/, "");
 };
@@ -83,16 +103,6 @@ const normalizeSemester = (semester: string) => {
   return semester.charAt(0) + semester.slice(1).toLowerCase() + " Semester";
 };
 
-// Helper: generate academic years from 1999/2000 to next academic year
-const generateSessionOptions = (): string[] => {
-  const currentYear = new Date().getFullYear();
-  const startYear = 1999;
-  const sessions: string[] = [];
-  for (let year = currentYear + 1; year >= startYear; year--) {
-    sessions.push(`${year}/${year + 1}`);
-  }
-  return sessions;
-};
 
 // ─── Upload Results Dialog (fully functional) ────────────────────────────────
 const GlobalUploadDialog = ({
@@ -104,25 +114,12 @@ const GlobalUploadDialog = ({
   onClose: () => void;
   courses: Course[];
 }) => {
-  const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedSession, setSelectedSession] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sessionOptions = useMemo(() => generateSessionOptions(), []);
-
-  const levelCollectionSelect = useMemo(
-    () =>
-      createListCollection({
-        items: [
-          { label: "Select level", value: "" },
-          ...COURSE_LEVELS.map((l) => ({ label: normalizeLevel(l), value: l })),
-        ],
-      }),
-    []
-  );
 
   const sessionCollection = useMemo(
     () =>
@@ -135,23 +132,9 @@ const GlobalUploadDialog = ({
     [sessionOptions]
   );
 
-  const semesterCollectionSelect = useMemo(
-    () =>
-      createListCollection({
-        items: [
-          { label: "Select semester", value: "" },
-          ...COURSE_SEMESTERS.map((s) => ({ label: normalizeSemester(s), value: s })),
-        ],
-      }),
-    []
-  );
-
   const filteredCourses = useMemo(() => {
-    let filtered = courses;
-    if (selectedLevel) filtered = filtered.filter((c) => c.level === selectedLevel);
-    if (selectedSemester) filtered = filtered.filter((c) => c.semester === selectedSemester);
-    return filtered;
-  }, [courses, selectedLevel, selectedSemester]);
+    return courses;
+  }, [courses]);
 
   const courseCollection = useMemo(
     () =>
@@ -165,17 +148,15 @@ const GlobalUploadDialog = ({
   );
 
   useEffect(() => {
-    setSelectedCourseId("");
-  }, [selectedLevel, selectedSemester]);
+    sleep(0).then(() => setSelectedCourseId(""));
+  }, []);
 
   const { mutate: upload, isPending } = ResultHook.useUploadDraft({
     onSuccess: (data) => { // FIX: accept the data argument
       console.log("Upload success:", data);
       toaster.success({ title: "Upload successful", description: "Results have been uploaded." });
       onClose();
-      setSelectedLevel("");
       setSelectedSession("");
-      setSelectedSemester("");
       setSelectedCourseId("");
       setSelectedFile(null);
     }
@@ -186,7 +167,7 @@ const GlobalUploadDialog = ({
   };
 
   const handleSubmit = () => {
-    if (!selectedLevel || !selectedSession || !selectedSemester || !selectedCourseId || !selectedFile) {
+    if (!selectedSession || !selectedCourseId || !selectedFile) {
       toaster.warning({
         title: "Missing data",
         description: "Please fill all fields and select a file.",
@@ -197,8 +178,6 @@ const GlobalUploadDialog = ({
     upload({
       courseId: selectedCourseId,
       session: selectedSession,
-      semester: selectedSemester,
-      level: selectedLevel,
       file: selectedFile,
     });
   };
@@ -230,34 +209,6 @@ const GlobalUploadDialog = ({
 
                 <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="4">
                   <Field.Root>
-                    <Field.Label>Level</Field.Label>
-                    <Select.Root
-                      collection={levelCollectionSelect}
-                      value={[selectedLevel]}
-                      onValueChange={(e) => setSelectedLevel(e.value[0])}
-                    >
-                      <Select.HiddenSelect />
-                      <Select.Control>
-                        <Select.Trigger>
-                          <Select.ValueText />
-                        </Select.Trigger>
-                        <Select.IndicatorGroup>
-                          <Select.Indicator />
-                        </Select.IndicatorGroup>
-                      </Select.Control>
-                      <Select.Positioner>
-                        <Select.Content>
-                          {levelCollectionSelect.items.map((item) => (
-                            <Select.Item key={item.value} item={item}>
-                              {item.label}
-                            </Select.Item>
-                          ))}
-                        </Select.Content>
-                      </Select.Positioner>
-                    </Select.Root>
-                  </Field.Root>
-
-                  <Field.Root>
                     <Field.Label>Session</Field.Label>
                     <Select.Root
                       collection={sessionCollection}
@@ -276,34 +227,6 @@ const GlobalUploadDialog = ({
                       <Select.Positioner>
                         <Select.Content>
                           {sessionCollection.items.map((item) => (
-                            <Select.Item key={item.value} item={item}>
-                              {item.label}
-                            </Select.Item>
-                          ))}
-                        </Select.Content>
-                      </Select.Positioner>
-                    </Select.Root>
-                  </Field.Root>
-
-                  <Field.Root>
-                    <Field.Label>Semester</Field.Label>
-                    <Select.Root
-                      collection={semesterCollectionSelect}
-                      value={[selectedSemester]}
-                      onValueChange={(e) => setSelectedSemester(e.value[0])}
-                    >
-                      <Select.HiddenSelect />
-                      <Select.Control>
-                        <Select.Trigger>
-                          <Select.ValueText />
-                        </Select.Trigger>
-                        <Select.IndicatorGroup>
-                          <Select.Indicator />
-                        </Select.IndicatorGroup>
-                      </Select.Control>
-                      <Select.Positioner>
-                        <Select.Content>
-                          {semesterCollectionSelect.items.map((item) => (
                             <Select.Item key={item.value} item={item}>
                               {item.label}
                             </Select.Item>
@@ -468,7 +391,7 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
         </Portal>
       </Drawer.Root>
 
-      {attendanceDisclosure.open && <AttendanceDrawer course={course} setOpen={attendanceDisclosure.setOpen} open={attendanceDisclosure.open} />}
+      <AttendanceDrawer course={course} setOpen={attendanceDisclosure.setOpen} open={attendanceDisclosure.open} />
 
       {isERO && (
         <HODResultsDrawer
@@ -527,16 +450,31 @@ const CoursesSkeleton = () => {
 // ─── Main Courses Component ─────────────────────────────────────────────────
 const Courses = () => {
   const { isHOD } = useCurrentUser();
-
+  const { data: settings } = useTotals();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [level, setLevel] = useState("All");
   const [semester, setSemester] = useState("All");
+  const [session, setSession] = useState(() => {
+    return settings?.currentSession || ""
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
-  const { data: allCourses = [], isLoading: allLoading, error: allError } = useAllCourses();
-  const { data: assignedCourses = [], isLoading: assignedLoading, error: assignedError } = useAllCourses();
+  useEffect(() => {
+    if (settings?.currentSession) {
+      sleep(0).then(() => setSession((prev) => prev || settings.currentSession));
+    }
+  }, [settings?.currentSession]);
+
+  const queryParams = useMemo(() => ({
+    level: level !== "All" ? level : undefined,
+    semester: semester !== "All" ? semester : undefined,
+    session: session || undefined,
+  }), [level, semester, session]);
+
+  const { data: allCourses = [], isLoading: allLoading, error: allError } = useAllCourses(queryParams);
+  const { data: assignedCourses = [], isLoading: assignedLoading, error: assignedError } = useAllCourses(queryParams);
 
   const courses = isHOD ? allCourses : assignedCourses;
   const isLoading = allLoading || assignedLoading;
@@ -548,8 +486,8 @@ const Courses = () => {
   }, [search]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, level, semester]);
+    sleep(0).then(() => setCurrentPage(1));
+  }, [debouncedSearch, level, semester, session]);
 
   const filteredCourses = useMemo(() => {
     let filtered = courses;
@@ -564,7 +502,7 @@ const Courses = () => {
     return filtered;
   }, [courses, debouncedSearch, level, semester]);
 
-  const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
+  // const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedCourses = filteredCourses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
@@ -587,6 +525,34 @@ const Courses = () => {
         </InputGroup>
 
         <Flex gap="3" align="center" wrap="wrap">
+
+          <Select.Root
+            collection={sessionCollection}
+            value={[session]}
+            onValueChange={(e) => setSession(e.value[0])}
+            size="lg"
+            width="180px"
+          >
+            <Select.HiddenSelect />
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText placeholder="All Sessions" />
+              </Select.Trigger>
+              <Select.IndicatorGroup>
+                <Select.Indicator />
+              </Select.IndicatorGroup>
+            </Select.Control>
+            <Select.Positioner>
+              <Select.Content>
+                {sessionCollection.items.map((item) => (
+                  <Select.Item key={item.value} item={item}>
+                    {item.label}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Select.Root>
+
           <Select.Root
             collection={levelCollection}
             value={[level]}
