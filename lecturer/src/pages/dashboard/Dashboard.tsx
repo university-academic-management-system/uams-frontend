@@ -1,5 +1,5 @@
 // Dashboard.tsx
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { Box, Heading, SimpleGrid, Flex, Text, Skeleton } from "@chakra-ui/react";
 import {
   LuBookOpen,
@@ -10,7 +10,6 @@ import {
   LuGraduationCap,
 } from "react-icons/lu";
 import { useTotals } from "@hooks/dashboard.hook";
-import { useNavigate } from "react-router";
 import useAuthStore from "@stores/auth.store";
 
 // Lazy load components
@@ -28,9 +27,7 @@ const CardSkeleton = () => (
 );
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [timetableFilter, setTimetableFilter] = useState<"today" | "tomorrow" | "week">("today");
 
   const { data: totals, isLoading } = useTotals();
 
@@ -123,9 +120,8 @@ const Dashboard = () => {
         <Box>
           <Suspense fallback={<Skeleton h="400px" w="full" />}>
             <TimetablePanel
-              selectedFilter={timetableFilter}
-              onFilterChange={setTimetableFilter}
-              onViewFullTimetable={() => navigate("/timetable")}
+              currentSession={totals?.currentSession ?? ""}
+              currentSemester={totals?.currentSemester ?? ""}
             />
           </Suspense>
         </Box>

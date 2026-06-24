@@ -6,6 +6,7 @@ import type {
   TranscriptResponse,
   UploadDraftPayload,
   RejectPayload,
+  CourseResultsResponse,
 } from "@type/result.type";
 
 export const ResultHook = {
@@ -42,13 +43,14 @@ export const ResultHook = {
     }),
 
   // Upload draft results (Lecturer)
-  useUploadDraft: () => {
+  useUploadDraft: (options?: { onSuccess?: (data: Record<string, string>) => void }) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: (payload: UploadDraftPayload) => ResultService.uploadDraftResults(payload),
-      onSuccess: () => {
+      onSuccess: (data) => {
         // Invalidate pending results list to show new upload
         queryClient.invalidateQueries({ queryKey: ["results", "pending"] });
+        options?.onSuccess?.(data);
       },
     });
   },
@@ -85,4 +87,19 @@ export const ResultHook = {
       },
     });
   },
+
+  // Get course results for a specific course (Lecturer)
+  useCourseResults: (
+    courseId: string,
+    level?: string,
+    semester?: string,
+    options?: Partial<UseQueryOptions<CourseResultsResponse>>
+  ) =>
+    useQuery<CourseResultsResponse>({
+      queryKey: ["results", "course", courseId, { level, semester }],
+      queryFn: async () => ResultService.getCourseResults(courseId, level, semester),
+      enabled: !!courseId,
+      staleTime: 5 * 60 * 1000,
+      ...options,
+    }),
 };

@@ -16,6 +16,7 @@ export interface StudentProfile {
   userId: string;
   firstName: string;
   lastName: string;
+  surname:string;
   otherName: string;
   matricNumber: string;
   gender: string;

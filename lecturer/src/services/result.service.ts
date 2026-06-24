@@ -6,6 +6,7 @@ import type {
   RejectPayload,
   ResultUpload,
   TranscriptResponse,
+  CourseResultsResponse,
 } from "@type/result.type";
 
 export const ResultService = {
@@ -81,6 +82,16 @@ export const ResultService = {
     if (semester) params.semester = semester;
 
     const { data } = await axiosClient.get<ResultUploadsResponse>("/results/approved", { params });
+    return data.data;
+  },
+
+  // Get course results for a specific course (Lecturer)
+  getCourseResults: async (courseId: string, level?: string, semester?: string): Promise<CourseResultsResponse> => {
+    const params: Record<string, string> = {};
+    if (level) params.level = level;
+    if (semester) params.semester = semester;
+
+    const { data } = await axiosClient.get<ApiResponse<CourseResultsResponse>>(`/results/${courseId}`, { params });
     return data.data;
   },
 };

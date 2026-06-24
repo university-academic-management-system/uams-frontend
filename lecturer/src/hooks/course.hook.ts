@@ -4,11 +4,11 @@ import { StudentServices } from "@services/student.service";
 import type { Course } from "@type/course.type";
 import type { Student } from "@type/student.type";
 
-export const useAllCourses = () => {
+export const useAllCourses = (filters?: { level?: string; semester?: string; session?: string }) => {
   return useQuery<Course[]>({
-    queryKey: ["courses"],
+    queryKey: ["courses", filters],
     queryFn: async () => {
-      const response = await CourseService.getAllCourses();
+      const response = await CourseService.getAllCourses(filters);
       return response.data;
     },
     staleTime: 5 * 60 * 1000,

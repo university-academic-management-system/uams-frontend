@@ -107,3 +107,38 @@ export interface UserSession {
 export interface LoginProps {
     onLogin: (authData: LoginResponse) => void;
 }
+
+// ── Change Password ──────────────────────────────────────────────────
+
+export interface ChangePasswordData {
+    currentPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+}
+
+export interface ChangePasswordResponse {
+    status: string;
+    message: string;
+}
+
+// ── Update Contact ───────────────────────────────────────────────────
+
+export interface UpdateContactPayload {
+    id: string;
+    email?: string;
+    phone?: string;
+    title?: string;
+    firstName?: string;
+    surname?: string;
+    otherName?: string;
+    staffNumber?: string;
+    gender?: string;
+    department?: string;
+    faculty?: string;
+}
+
+export interface UpdateContactResponse {
+    status: string;
+    message: string;
+    data: UserData;
+}

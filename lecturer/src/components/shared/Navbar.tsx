@@ -26,7 +26,7 @@ const Navbar = () => {
   const isActive = useCallback((href: string) => path.endsWith(href), [path]);
   const activeLink = links.find((link) => isActive(link.href));
   const { user } = useAuthStore();
-  const userRole = user?.role || (user?.roles && user.roles[0]) || "Staff";
+  const userRole = user?.role || (user?.roles && user.roles[1]) || "Staff";
 
   return (
     <>

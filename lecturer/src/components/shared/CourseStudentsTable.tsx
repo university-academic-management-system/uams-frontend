@@ -25,9 +25,9 @@ const CourseStudentsTable = ({ courseId: propCourseId }: CourseStudentsTableProp
 
             // Build full name including first, last, and other name
             const firstName = profile.firstName || "";
-            const lastName = profile.lastName || "";
+            const surname = profile.surname || "";
             const otherName = profile.otherName || "";
-            const fullName = `${firstName} ${lastName} ${otherName}`.trim().toLowerCase();
+            const fullName = `${surname} ${firstName} ${otherName}`.trim().toLowerCase();
 
             const matNo = (profile.matricNumber || "").toLowerCase();
             const regNo = (profile.registrationNo || "").toLowerCase();
@@ -135,7 +135,7 @@ const CourseStudentsTable = ({ courseId: propCourseId }: CourseStudentsTableProp
                             filteredStudents.map((student, index) => {
                                 const profile = student.studentProfile;
                                 const fullName = profile
-                                    ? `${profile.firstName || ""} ${profile.lastName || ""} ${profile.otherName || ""}`.trim()
+                                    ? `${profile.firstName || ""} ${profile.surname || ""} ${profile.otherName || ""}`.trim()
                                     : "";
                                 return (
                                     <Table.Row key={student.id}>

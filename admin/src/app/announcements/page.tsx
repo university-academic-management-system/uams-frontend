@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import { X, Plus, Megaphone } from "lucide-react";
-import { Box, Flex, Text, Spinner, EmptyState, Button, Portal } from "@chakra-ui/react";
+import { X, Plus, Megaphone, Check } from "lucide-react";
+import { Box, Flex, Text, Spinner, EmptyState, Button, Portal, IconButton } from "@chakra-ui/react";
 import CreateAnnouncementModal from "@components/announcements/CreateAnnouncementModal";
 import { NotificationHook } from "@hooks/notification.hook";
 import { LuCalendar } from "react-icons/lu";
@@ -20,21 +20,24 @@ import {
     DatePickerYearTable, 
     DatePickerPositioner
 } from "@components/ui/date-picker";
+import { Tooltip } from "@components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 
-const ADMIN_ROLES = ["SYSTEM_ADMIN", "ADMIN"];
+const ANNOUNCEMENT_ROLES = ["SYSTEM_ADMIN", "STAFF"];
 
 const AnnouncementsPage = () => {
     const { data: notifications = [], isLoading } = NotificationHook.useNotifications();
+    const markAllAsRead = NotificationHook.useMarkAllAsRead();
+    const markAsRead = NotificationHook.useMarkAsRead();
     const queryClient = useQueryClient();
 
     const [dateRange, setDateRange] = useState<DateValue[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Filter for ROLE recipientType with SYSTEM_ADMIN or ADMIN targetRole
+    // Filter for ROLE recipientType with SYSTEM_ADMIN or STAFF targetRole
     const announcements = useMemo(
         () => notifications.filter(
-            (n) => n.recipientType === "ROLE" && ADMIN_ROLES.includes(n.targetRole)
+            (n) => n.recipientType === "ROLE" && n.targetRole && ANNOUNCEMENT_ROLES.includes(n.targetRole)
         ),
         [notifications]
     );
@@ -66,6 +69,14 @@ const AnnouncementsPage = () => {
         setIsModalOpen(false);
     }, []);
 
+    const handleMarkAllAsRead = useCallback(() => {
+        markAllAsRead.mutate();
+    }, [markAllAsRead]);
+
+    const handleMarkAsRead = useCallback((id: string) => {
+        markAsRead.mutate(id);
+    }, [markAsRead]);
+
     const handleCreated = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }, [queryClient]);
@@ -82,17 +93,31 @@ const AnnouncementsPage = () => {
                     <Text fontSize="2xl" fontWeight="bold" color="fg.muted">Announcement</Text>
                     <Text color="fg.subtle" mt="1" fontSize="sm">Stay updated with the latest announcement across the department.</Text>
                 </Box>
-                <Button
-                    onClick={handleModalOpen}
-                    bg="accent"
-                    color="white"
-                    size="xl"
-                    borderRadius="md"
-                    fontSize="sm"
-                >
-                    <Plus size={18} />
-                    Create Announcement
-                </Button>
+                <Flex gap="3">
+                    <Button
+                        onClick={handleMarkAllAsRead}
+                        variant="outline"
+                        colorPalette="accent"
+                        size="xl"
+                        borderRadius="md"
+                        fontSize="sm"
+                        disabled={announcements.every(a => a.read) || markAllAsRead.isPending}
+                    >
+                        <Check size={18} />
+                        Mark all as read
+                    </Button>
+                    <Button
+                        onClick={handleModalOpen}
+                        bg="accent"
+                        color="white"
+                        size="xl"
+                        borderRadius="md"
+                        fontSize="sm"
+                    >
+                        <Plus size={18} />
+                        Create Announcement
+                    </Button>
+                </Flex>
             </Flex>
 
             {/* Date Filters */}
@@ -170,8 +195,27 @@ const AnnouncementsPage = () => {
                     filteredAnnouncements.map((item) => (
                         <Box key={item.id} bg="white" borderRadius="md" p="6" border="xs" borderColor="border.muted" transition="all 0.2s">
                             <Flex justifyContent="space-between" alignItems="flex-start" mb="2">
-                                <Text fontSize="sm" fontWeight="bold" color="fg.muted">{item.title}</Text>
-                                <Text fontSize="10px" fontWeight="medium" color="fg.subtle">{formatDate(item.createdAt)}</Text>
+                                <Flex alignItems="center" gap="2">
+                                    <Text fontSize="sm" fontWeight="bold" color="fg.muted">{item.title}</Text>
+                                    {!item.read && <Box w="2" h="2" bg="blue.600" borderRadius="full" />}
+                                </Flex>
+                                <Flex alignItems="center" gap="3">
+                                    {!item.read && (
+                                        <Tooltip content="Mark as read">
+                                            <IconButton 
+                                                size="xs"
+                                                variant="ghost"
+                                                onClick={() => handleMarkAsRead(item.id)} 
+                                                color="fg.subtle" 
+                                                _hover={{ bg: "blue.50", color: "blue.500" }} 
+                                                disabled={markAsRead.isPending}
+                                            >
+                                                <Check size={16} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
+                                    <Text fontSize="10px" fontWeight="medium" color="fg.subtle">{formatDate(item.createdAt)}</Text>
+                                </Flex>
                             </Flex>
                             <Text fontSize="xs" color="fg.muted" lineHeight="relaxed" lineClamp={2}>{item.message}</Text>
                         </Box>
