@@ -7,7 +7,12 @@ import {
   Menu,
   Button,
   Dialog,
+  Heading,
+  Pagination,
+  ButtonGroup,
+  IconButton,
 } from "@chakra-ui/react";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 const LecturersFilters = lazy(() => import("@components/lecturers/LecturersFilters"));
 const BulkUploadStaffModal = lazy(() => import("@components/lecturers/BulkUploadStaffModal"));
 const AssignCourseModal = lazy(() => import("@components/lecturers/AssignCourseModal"));
@@ -16,22 +21,8 @@ const LecturersTable = lazy(() => import("@components/lecturers/LecturersTable")
 const LecturersTableActionBar = lazy(() => import("@components/lecturers/LecturersTableActionBar"));
 import { StaffHook } from "@hooks/staff.hook";
 import type { Staff, CreateLecturerPayload } from "@type/staff.type";
-import {
-  PaginationRoot,
-  PaginationItems,
-  PaginationPrevTrigger,
-  PaginationNextTrigger
-} from "@components/ui/pagination";
-
-const ITEMS_PER_PAGE = 10;
 
 const StaffPage = () => {
-  const { data: staffList = [], isLoading: loading } = StaffHook.useStaff();
-  const deleteMutation = StaffHook.useDeleteStaff();
-  const bulkDeleteMutation = StaffHook.useBulkDeleteStaff();
-  const addStaffMutation = StaffHook.useAddStaff();
-  const updateStaffMutation = StaffHook.useUpdateStaff();
-  const assignCourseMutation = StaffHook.useAssignCourse();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,8 +40,6 @@ const StaffPage = () => {
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [staffToEdit, setStaffToEdit] = useState<Staff | null>(null);
 
-  // Removed fetchStaff and useEffect as TanStack Query handles it now
-
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
   const requestSort = useCallback((key: string) => {
@@ -61,53 +50,61 @@ const StaffPage = () => {
     setSortConfig({ key, direction });
   }, [sortConfig]);
 
-  const staffs: Staff[] = useMemo(() => staffList?.data || [] as Staff[], [staffList]);
+  const deleteMutation = StaffHook.useDeleteStaff();
+  const bulkDeleteMutation = StaffHook.useBulkDeleteStaff();
+  const addStaffMutation = StaffHook.useAddStaff();
+  const updateStaffMutation = StaffHook.useUpdateStaff();
+  const assignCourseMutation = StaffHook.useAssignCourse();
+
+  const apiFilters = useMemo(() => {
+    const filters: Record<string, string | number> = {};
+    if (selectedStatus) filters.status = selectedStatus;
+    filters.page = currentPage;
+    filters.limit = 50;
+    return filters;
+  }, [selectedStatus, currentPage]);
+
+  const { data, isLoading: loading } = StaffHook.useStaff(apiFilters);
+
+  const staffs: Staff[] = useMemo(() => data?.staff || [], [data?.staff]);
+  const pagination = useMemo(() => data?.pagination || { page: 1, limit: 50, total: 0, totalPages: 1, hasNext: false, hasPrev: false }, [data?.pagination]);
+
+  // Local search filtering on the current page results only
   const filteredStaff = useMemo(() => {
-    let result = staffs;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (s) =>
-          `${s.staffProfile?.surname || ''} ${s.staffProfile?.firstName || ''} ${s.staffProfile?.otherName || ''}`.toLowerCase().includes(q) ||
-          s.email.toLowerCase().includes(q) ||
-          s.staffProfile?.staffNumber?.toLowerCase().includes(q)
-      );
-    }
+    if (!searchQuery) return staffs;
+    const q = searchQuery.toLowerCase();
+    return staffs.filter(
+      (s) =>
+        `${s.staffProfile?.surname || ''} ${s.staffProfile?.firstName || ''} ${s.staffProfile?.otherName || ''}`.toLowerCase().includes(q) ||
+        s.email.toLowerCase().includes(q) ||
+        s.staffProfile?.staffNumber?.toLowerCase().includes(q)
+    );
+  }, [staffs, searchQuery]);
 
-    if (selectedStatus) {
-      result = result.filter(
-        (s) => s.status?.toUpperCase() === selectedStatus.toUpperCase()
-      );
-    }
-
-    if (sortConfig !== null) {
-      result = [...result].sort((a, b) => {
-        const getValue = (staff: Staff) => {
-          // Handle nested staffProfile properties
-          const nestedMap: Record<string, string> = {
-            'fullName': `${staff.staffProfile?.surname || ''} ${staff.staffProfile?.firstName || ''} ${staff.staffProfile?.otherName || ''}`,
-            'staffNumber': staff.staffProfile?.staffNumber || '',
-            'phone': staff.staffProfile?.phone || '',
-            'department': staff.staffProfile?.department || '',
-            'faculty': staff.staffProfile?.faculty || '',
-          };
-          return nestedMap[sortConfig.key] ?? (staff as unknown as Record<string, unknown>)[sortConfig.key] ?? "";
+  const sortedStaff = useMemo(() => {
+    const sorted = [...filteredStaff];
+    if (!sortConfig) return sorted;
+    return sorted.sort((a, b) => {
+      const getValue = (staff: Staff) => {
+        const nestedMap: Record<string, string> = {
+          'fullName': `${staff.staffProfile?.surname || ''} ${staff.staffProfile?.firstName || ''} ${staff.staffProfile?.otherName || ''}`,
+          'staffNumber': staff.staffProfile?.staffNumber || '',
+          'phone': staff.staffProfile?.phone || '',
+          'department': staff.staffProfile?.department || '',
+          'faculty': staff.staffProfile?.faculty || '',
         };
+        return nestedMap[sortConfig.key] ?? (staff as unknown as Record<string, unknown>)[sortConfig.key] ?? "";
+      };
+      const aValue = getValue(a);
+      const bValue = getValue(b);
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [filteredStaff, sortConfig]);
 
-        const aValue = getValue(a);
-        const bValue = getValue(b);
-
-        if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return result;
-  }, [staffs, searchQuery, selectedStatus, sortConfig]);
-
-  const totalPages = Math.ceil(filteredStaff.length / ITEMS_PER_PAGE);
-  const paginatedStaff = filteredStaff.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  // Use API pagination directly
+  const paginatedStaff = sortedStaff;
 
   const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) =>
@@ -222,11 +219,13 @@ const StaffPage = () => {
       {/* Header */}
       <Flex
         direction={{ base: "column", md: "row" }}
-        justifyContent="flex-end"
+        justifyContent="space-between"
         alignItems={{ base: "flex-start", md: "center" }}
         mb="10"
         gap="4"
       >
+        <Heading>{pagination?.total} Lecturers</Heading>
+
         <Flex alignItems="center" gap="3" flexWrap="wrap">
           <Menu.Root>
             <Menu.Trigger asChild>
@@ -332,7 +331,7 @@ const StaffPage = () => {
           />
         </Suspense>
 
-        {totalPages > 1 && (
+        {pagination?.totalPages > 1 && (
           <Flex
             alignItems="center"
             justifyContent="space-between"
@@ -342,24 +341,38 @@ const StaffPage = () => {
             borderColor="border.muted"
           >
             <Text fontSize="sm" color="fg.muted">
-              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
-              {Math.min(currentPage * ITEMS_PER_PAGE, filteredStaff.length)} of{" "}
-              {filteredStaff.length} lecturers
+              Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+              of {pagination.total} lecturers
             </Text>
-            <PaginationRoot
-              count={filteredStaff.length}
-              pageSize={ITEMS_PER_PAGE}
+            <Pagination.Root
+              count={pagination.total}
+              pageSize={pagination.limit}
               page={currentPage}
               onPageChange={(e) => setCurrentPage(e.page)}
-              variant="outline"
-              size="lg"
             >
-              <Flex gap="2">
-                <PaginationPrevTrigger />
-                <PaginationItems />
-                <PaginationNextTrigger />
-              </Flex>
-            </PaginationRoot>
+              <ButtonGroup variant="ghost" size="sm">
+                <Pagination.PrevTrigger asChild>
+                  <IconButton>
+                    <LuChevronLeft />
+                  </IconButton>
+                </Pagination.PrevTrigger>
+
+                <Pagination.Items
+                  render={(page) => (
+                    <IconButton variant={{ base: "ghost", _selected: "solid" }}>
+                      {page.value}
+                    </IconButton>
+                  )}
+                />
+
+                <Pagination.NextTrigger asChild>
+                  <IconButton>
+                    <LuChevronRight />
+                  </IconButton>
+                </Pagination.NextTrigger>
+              </ButtonGroup>
+            </Pagination.Root>
           </Flex>
         )}
       </Box>

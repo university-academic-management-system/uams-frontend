@@ -10,8 +10,9 @@ export const StudentHook = {
             queryFn: async () => {
                 const response = await StudentServices.getDepartmentStudents(filters);
                 const data = response?.data || [];
+                const pagination = response?.pagination || { page: 1, limit: 50, total: data.length, totalPages: 1, hasNext: false, hasPrev: false };
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                return data.map((item: any) => ({
+                const mappedData = data.map((item: any) => ({
                     ...item,
                     id: item.id,
                     email: item.email,
@@ -37,6 +38,7 @@ export const StudentHook = {
                     cgpa: item.studentProfile?.cgpa || null,
                     createdAt: item.createdAt,
                 })) as Student[];
+                return { students: mappedData, pagination };
             },
         }),
 
@@ -100,8 +102,8 @@ export const StudentHook = {
     useBulkDeleteStudents: () => {
         const queryClient = useQueryClient();
         return useMutation({
-            mutationFn: ({ ids, reason }: { ids: string[]; reason: string }) =>
-                StudentServices.bulkDeleteStudents(ids, reason),
+            mutationFn: ({ ids }: { ids: string[] }) =>
+                StudentServices.bulkDeleteStudents(ids),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ["students"] });
                 toaster.success({ title: "Selected students deleted successfully" });

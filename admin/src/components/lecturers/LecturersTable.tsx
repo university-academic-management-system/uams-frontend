@@ -103,7 +103,7 @@ const LecturersTable = ({
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
   const memoizedTableRows = useMemo(() => {
-    return paginatedStaff.map((s) => (
+    return paginatedStaff.map((s, index) => (
       <Table.Row
         key={s.id}
         _hover={{ bg: "slate.50" }}
@@ -127,6 +127,9 @@ const LecturersTable = ({
             <Checkbox.HiddenInput />
             <Checkbox.Control />
           </Checkbox.Root>
+        </Table.Cell>
+        <Table.Cell textAlign="center" fontWeight="medium">
+          {index + 1}
         </Table.Cell>
         <Table.Cell fontWeight="medium">
           {s.staffProfile?.staffNumber || "—"}
@@ -329,6 +332,18 @@ const LecturersTable = ({
                 <Checkbox.HiddenInput />
                 <Checkbox.Control />
               </Checkbox.Root>
+            </Table.ColumnHeader>
+            <Table.ColumnHeader
+              bg="bg.muted"
+              fontSize="11px"
+              fontWeight="bold"
+              color="fg.muted"
+              textTransform="uppercase"
+              letterSpacing="wider"
+              textAlign="center"
+              w="60px"
+            >
+              S/N
             </Table.ColumnHeader>
             <Table.ColumnHeader
               bg="bg.muted"
@@ -541,6 +556,9 @@ const LecturersTable = ({
                 <Table.Cell>
                   <Skeleton h="4" w="full" />
                 </Table.Cell>
+                <Table.Cell>
+                  <Skeleton h="4" w="full" />
+                </Table.Cell>
                 <Table.Cell
                   position="sticky"
                   right="0"
@@ -555,7 +573,7 @@ const LecturersTable = ({
             ))
           ) : paginatedStaff.length === 0 ? (
             <Table.Row>
-              <Table.Cell colSpan={12} py="12">
+              <Table.Cell colSpan={13} py="12">
                 <EmptyState.Root>
                   <EmptyState.Content>
                     <EmptyState.Indicator>

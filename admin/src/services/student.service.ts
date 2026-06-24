@@ -43,12 +43,14 @@ export const StudentServices = {
         return data;
     },
 
-    bulkDeleteStudents: async (studentIds: string[], reason: string) => {
-        const { data } = await axiosClient.post(
-            "/university-admin/students/bulk-delete",
-            { studentIds, reason }
+    bulkDeleteStudents: async (studentIds: string[]) => {
+        // Delete each student individually using DELETE /api/users/{id}
+        const deletePromises = studentIds.map(id =>
+            axiosClient.delete(`/users/${id}`)
         );
-        return data;
+        const responses = await Promise.all(deletePromises);
+        // Return the last response as the consolidated response
+        return responses[responses.length - 1]?.data || { status: "success", message: "Students deleted" };
     },
 
     assignClassRepRole: async (userId: string, role: string) => {
