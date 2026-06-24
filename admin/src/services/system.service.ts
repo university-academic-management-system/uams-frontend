@@ -5,7 +5,7 @@ import type { ApiResponse } from "@type/common.type";
 export const SystemServices = {
     getSystemSettings: async () => {
         const { data } = await axiosClient.get("/settings");
-        return data;
+        return data.data;
     },
     updateSystemSettings: async (payload: any) => {
         const { data } = await axiosClient.patch("/settings", payload);

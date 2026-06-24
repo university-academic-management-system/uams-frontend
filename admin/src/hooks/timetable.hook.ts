@@ -1,6 +1,6 @@
 import { TimetableService } from "@services/timetable.service";
 import { useMutation, type UseMutationOptions, useQuery, type UseQueryOptions } from "@tanstack/react-query";
-import type { TimetableData, TimetableParams, CreateTimetableEntryPayload, UpdateTimetableEntryPayload } from "@type/timetable.type";
+import type { TimetableData, CreateTimetableEntryPayload, UpdateTimetableEntryPayload } from "@type/timetable.type";
 
 // ── Hooks ────────────────────────────────────────────────────────────
 
@@ -49,15 +49,6 @@ export const TimetableHook = {
         useMutation({
             mutationKey: ["delete-timetable-entry"],
             mutationFn: (id: string) => TimetableService.deleteTimetableEntry(id),
-            ...options,
-        }),
-
-    useTimetableParams: (
-        options?: Partial<UseQueryOptions<TimetableParams>>
-    ) =>
-        useQuery<TimetableParams>({
-            queryKey: ["timetable-params"],
-            queryFn: async () => TimetableService.getTimetableParams(),
             ...options,
         }),
 }

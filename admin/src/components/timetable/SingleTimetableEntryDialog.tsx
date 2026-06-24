@@ -20,9 +20,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 const SingleTimetableEntryDialog = () => {
     const { mutate: createEntry, isPending } = TimetableHook.useCreateSingleTimetableEntry();
-    const { data: params } = TimetableHook.useTimetableParams();
     const { data: courses = [] } = CourseHook.useCourses({});
     const qc = useQueryClient();
+
+    const [isOpen, setIsOpen] = useState(false);
 
     const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
     const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -36,13 +37,12 @@ const SingleTimetableEntryDialog = () => {
     const sessions = useMemo(
         () =>
             createListCollection({
-                items:
-                    params?.sessions?.map((session) => ({
-                        label: session.name,
-                        value: session.name,
-                    })) || [],
+                items: [
+                    { label: "2024/2025", value: "2024/2025" },
+                    { label: "2025/2026", value: "2025/2026" },
+                ],
             }),
-        [params]
+        []
     );
 
     const levels = useMemo(
@@ -114,8 +114,8 @@ const SingleTimetableEntryDialog = () => {
             {
                 courseId: selectedCourse as string,
                 dayOfWeek: Number(selectedDay),
-                startTime,
-                endTime,
+                startTime: startTime.substring(0, 5),
+                endTime: endTime.substring(0, 5),
                 venue: venue || undefined,
                 session: selectedSession as string,
                 semester: selectedSemester as string,
@@ -127,6 +127,15 @@ const SingleTimetableEntryDialog = () => {
                         description: "Timetable entry created successfully",
                     });
                     qc.invalidateQueries({ queryKey: ["timetables"] });
+                    setIsOpen(false);
+                    setSelectedCourse(null);
+                    setSelectedDay(null);
+                    setStartTime("");
+                    setEndTime("");
+                    setVenue("");
+                    setSelectedSession(null);
+                    setSelectedSemester(null);
+                    setSelectedLevel(null);
                 },
             }
         );
@@ -145,7 +154,7 @@ const SingleTimetableEntryDialog = () => {
     ]);
 
     return (
-        <Dialog.Root size="xl" placement="center" closeOnInteractOutside={false}>
+        <Dialog.Root size="xl" placement="center" closeOnInteractOutside={false} open={isOpen} onOpenChange={(e) => setIsOpen(e.open)}>
             <Dialog.Trigger asChild>
                 <Menu.Item value="single" closeOnSelect={false} cursor="pointer" py="3" px="4" _hover={{ bg: "slate.50" }}>
                     <LuPlus size={18} />

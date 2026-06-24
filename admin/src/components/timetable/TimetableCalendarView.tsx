@@ -46,6 +46,15 @@ const formatTime = (isoString: string, referenceStart?: string) => {
     return m.format("hh:mm A");
 };
 
+const calculateDuration = (startIso: string, endIso: string) => {
+    const start = moment.utc(startIso);
+    const end = moment.utc(endIso);
+    if (end.isBefore(start)) {
+        end.add(12, "hours");
+    }
+    return moment.duration(end.diff(start)).asHours();
+};
+
 const formatWeekday = (date: Date) => moment(date).format("dddd");
 const formatMonthDay = (date: Date) => moment(date).format("MMMM D");
 
@@ -366,13 +375,7 @@ const TimetableCalendarView = memo(
                                                                                     }
                                                                                 />
                                                                                 <Text textStyle="xs">
-                                                                                    {moment
-                                                                                        .duration(
-                                                                                            moment.utc(item.endTime).diff(
-                                                                                                moment.utc(item.startTime)
-                                                                                            )
-                                                                                        )
-                                                                                        .asHours()}{" "}
+                                                                                    {calculateDuration(item.startTime, item.endTime)}{" "}
                                                                                     Hours
                                                                                 </Text>
                                                                             </HStack>

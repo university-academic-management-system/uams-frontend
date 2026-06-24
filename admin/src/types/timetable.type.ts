@@ -29,12 +29,6 @@ export interface TimetableResponse {
   data: TimetableData;
 }
 
-export interface TimetableParams {
-  semesters: Array<{ id: string; name: string }>;
-  sessions: Array<{ id: string; name: string }>;
-  levels: Array<{ id: string; name: string }>;
-  programs: Array<{ id: string; name: string }>;
-}
 
 export interface CreateTimetableEntryPayload {
   courseId: string;
