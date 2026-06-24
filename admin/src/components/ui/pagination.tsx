@@ -36,7 +36,12 @@ export const PaginationEllipsis = React.forwardRef<
   ChakraPagination.EllipsisProps
 >(function PaginationEllipsis(props, ref) {
   return (
-    <ChakraPagination.Ellipsis ref={ref} {...props} asChild>
+    <ChakraPagination.Ellipsis 
+      ref={ref} 
+      {...props} 
+      asChild
+      sx={{ cursor: "default" }}
+    >
       <MoreHorizontal />
     </ChakraPagination.Ellipsis>
   )
@@ -48,7 +53,28 @@ export const PaginationItem = React.forwardRef<
 >(function PaginationItem(props, ref) {
   return (
     <ChakraPagination.Item ref={ref} {...props} asChild>
-      <Button variant="ghost" size="sm">
+      <Button 
+        variant="ghost" 
+        size="sm"
+        sx={{
+          "&[aria-current=page]": {
+            bg: "accent",
+            color: "white",
+            borderRadius: "md",
+            fontWeight: "semibold",
+            _hover: {
+              bg: "accent",
+              color: "white",
+            },
+          },
+          "&:not([aria-current=page])": {
+            _hover: {
+              bg: "slate.100",
+              borderRadius: "md",
+            },
+          },
+        }}
+      >
         {props.value}
       </Button>
     </ChakraPagination.Item>
@@ -61,7 +87,11 @@ export const PaginationPrevTrigger = React.forwardRef<
 >(function PaginationPrevTrigger(props, ref) {
   return (
     <ChakraPagination.PrevTrigger ref={ref} {...props} asChild>
-      <IconButton variant="ghost" size="sm">
+      <IconButton 
+        variant="ghost" 
+        size="sm"
+        _hover={{ bg: "slate.100", borderRadius: "md" }}
+      >
         <ChevronLeft />
       </IconButton>
     </ChakraPagination.PrevTrigger>
@@ -74,7 +104,11 @@ export const PaginationNextTrigger = React.forwardRef<
 >(function PaginationNextTrigger(props, ref) {
   return (
     <ChakraPagination.NextTrigger ref={ref} {...props} asChild>
-      <IconButton variant="ghost" size="sm">
+      <IconButton 
+        variant="ghost" 
+        size="sm"
+        _hover={{ bg: "slate.100", borderRadius: "md" }}
+      >
         <ChevronRight />
       </IconButton>
     </ChakraPagination.NextTrigger>

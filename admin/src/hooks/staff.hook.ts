@@ -1,13 +1,18 @@
 import { StaffServices } from "@services/staff.service";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toaster } from "@components/ui/toaster";
-import type { CreateLecturerPayload } from "@type/staff.type";
+import type { CreateLecturerPayload, StaffFilters } from "@type/staff.type";
 
 export const StaffHook = {
-    useStaff: () =>
+    useStaff: (filters?: StaffFilters) =>
         useQuery({
-            queryKey: ["staff"],
-            queryFn: async () => StaffServices.getDepartmentLecturers()
+            queryKey: ["staff", filters],
+            queryFn: async () => {
+                const response = await StaffServices.getDepartmentLecturers(filters);
+                const data = response?.data || [];
+                const pagination = response?.pagination || { page: 1, limit: 50, total: data.length, totalPages: 1, hasNext: false, hasPrev: false };
+                return { staff: data, pagination };
+            },
         }),
 
     useAddStaff: () => {

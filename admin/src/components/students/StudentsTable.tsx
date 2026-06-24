@@ -97,7 +97,7 @@ const StudentsTable = ({
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
   const memoizedTableRows = useMemo(() => {
-    return paginatedStudents.map((s) => (
+    return paginatedStudents.map((s, index) => (
       <Table.Row
         key={s.id}
         _hover={{ bg: "slate.50" }}
@@ -121,6 +121,9 @@ const StudentsTable = ({
             <Checkbox.HiddenInput />
             <Checkbox.Control />
           </Checkbox.Root>
+        </Table.Cell>
+        <Table.Cell textAlign="center" fontWeight="medium">
+          {index + 1}
         </Table.Cell>
         <Table.Cell fontWeight="medium">
           {s.registrationNo || "—"}
@@ -285,6 +288,21 @@ const StudentsTable = ({
                 <Checkbox.HiddenInput />
                 <Checkbox.Control />
               </Checkbox.Root>
+            </Table.ColumnHeader>
+            <Table.ColumnHeader
+              bg="bg.muted"
+              px="6"
+              py="4"
+              minW="60px"
+              fontSize="11px"
+              fontWeight="bold"
+              color="fg.muted"
+              textTransform="uppercase"
+              letterSpacing="wider"
+              whiteSpace="nowrap"
+              textAlign="center"
+            >
+              S/N
             </Table.ColumnHeader>
             <Table.ColumnHeader
               bg="bg.muted"
@@ -671,6 +689,7 @@ const StudentsTable = ({
                 <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
                 <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
                 <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
+                <Table.Cell><Skeleton h="4" w="full" /></Table.Cell>
                 <Table.Cell position="sticky" right="0" zIndex={0} bg="white" borderLeft="1px solid" borderColor="border.muted">
                   <Skeleton h="4" w="4" />
                 </Table.Cell>
@@ -678,7 +697,7 @@ const StudentsTable = ({
             ))
           ) : paginatedStudents.length === 0 ? (
             <Table.Row>
-              <Table.Cell colSpan={18} py="12">
+              <Table.Cell colSpan={19} py="12">
                 <EmptyState.Root>
                   <EmptyState.Content>
                     <EmptyState.Indicator>

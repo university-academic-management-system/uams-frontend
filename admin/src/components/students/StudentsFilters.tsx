@@ -15,11 +15,7 @@ const STUDENT_LEVELS: StudentLevel[] = [
   "L100",
   "L200",
   "L300",
-  "L400",
-  "L500",
-  "L600",
-  "L700",
-  "L800",
+  "L400"
 ];
 
 const STATUSES_COLLECTION = createListCollection({

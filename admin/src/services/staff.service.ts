@@ -1,5 +1,5 @@
 import axiosClient from "@configs/axios.config"
-import type { CreateLecturerPayload } from "@type/staff.type"
+import type { CreateLecturerPayload, StaffFilters } from "@type/staff.type"
 
 export const StaffServices = {
     addLecturer: async (payload: CreateLecturerPayload) => {
@@ -30,8 +30,10 @@ export const StaffServices = {
         return data;
     },
 
-    getDepartmentLecturers: async () => {
-        const { data } = await axiosClient.get("/users?role=STAFF");
+    getDepartmentLecturers: async (filters?: StaffFilters) => {
+        const { data } = await axiosClient.get("/users", {
+            params: { role: "STAFF", ...filters },
+        });
         return data;
     },
 

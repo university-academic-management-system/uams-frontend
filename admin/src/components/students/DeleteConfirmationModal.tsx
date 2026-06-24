@@ -5,21 +5,19 @@ import { Dialog, Button, Box, Text, Textarea } from "@chakra-ui/react";
 interface DeleteConfirmationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (reason: string) => Promise<void>;
+    onConfirm: () => Promise<void>;
     title: string;
     description: string;
     itemCount: number;
 }
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, title, description, itemCount }: DeleteConfirmationModalProps) => {
-    const [reason, setReason] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleConfirm = async () => {
-        if (!reason.trim()) return;
         try {
             setIsDeleting(true);
-            await onConfirm(reason);
+            await onConfirm();
         } catch (error) {
             console.error("Delete failed", error);
         } finally {
@@ -48,28 +46,6 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, title, descriptio
                         <Text fontSize="sm" color="fg.muted" mb="4">
                             {description} You are about to delete <Box as="span" fontWeight="bold" color="fg.muted">{itemCount}</Box> items.
                         </Text>
-
-                        <Box>
-                            <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="2">
-                                Reason for deletion <Box as="span" color="red.500">*</Box>
-                            </Text>
-                            <Textarea 
-                                value={reason}
-                                onChange={(e) => setReason(e.target.value)}
-                                placeholder="e.g. Students graduated and left the university"
-                                w="full"
-                                p="3"
-                                fontSize="sm"
-                                border="1px solid"
-                                borderColor="border.muted"
-                                borderRadius="md"
-                                outline="none"
-                                minH="100px"
-                                resize="none"
-                                color="fg.muted"
-                                _focus={{ borderColor: "accent", boxShadow: "0 0 0 1px var(--chakra-colors-accent)" }}
-                            />
-                        </Box>
                     </Dialog.Body>
 
                     <Dialog.Footer p="0" display="flex" justifyContent="flex-end" gap="3">
@@ -78,7 +54,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, title, descriptio
                         </Button>
                         <Button 
                             onClick={handleConfirm} 
-                            disabled={!reason.trim() || isDeleting} 
+                            disabled={isDeleting} 
                             size="xl" 
                             bg="red.500" 
                             color="white" 

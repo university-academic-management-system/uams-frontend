@@ -13,6 +13,10 @@ import {
   Portal,
   Button,
   Menu,
+  Heading,
+  Pagination,
+  ButtonGroup,
+  IconButton,
 } from "@chakra-ui/react";
 const BulkUploadStudentsModal = lazy(() => import("@components/students/BulkUploadStudentsModal"));
 const StudentDetailsSidebar = lazy(() => import("@components/students/StudentDetailsSidebar"));
@@ -21,14 +25,8 @@ const DeleteConfirmationModal = lazy(() => import("@components/students/DeleteCo
 import { StudentHook } from "@hooks/student.hook";
 import type { Student, CreateStudentPayload } from "@type/student.type";
 import type { StudentFormData } from "@schemas/student.schema";
-import {
-  PaginationRoot,
-  PaginationItems,
-  PaginationPrevTrigger,
-  PaginationNextTrigger,
-} from "@components/ui/pagination";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
-const ITEMS_PER_PAGE = 20;
 
 const StudentsFilters = lazy(() => import("@components/students/StudentsFilters"));
 const StudentsTable = lazy(() => import("@components/students/StudentsTable"));
@@ -70,21 +68,37 @@ const StudentsPage = () => {
 
 
   const apiFilters = useMemo(() => {
-    const filters: Record<string, string> = {};
+    const filters: Record<string, string | number> = {
+      role: "STUDENT",
+    };
     if (selectedStatus) filters.status = selectedStatus;
     if (selectedLevel) filters.level = selectedLevel;
     if (selectedSession) filters.session = selectedSession;
-    return Object.keys(filters).length > 0 ? filters : undefined;
-  }, [selectedStatus, selectedLevel, selectedSession]);
+    filters.page = currentPage;
+    filters.limit = 50;
+    return filters;
+  }, [selectedStatus, selectedLevel, selectedSession, currentPage]);
 
-  const { data: students = [], isLoading: loading } =
+  const { data, isLoading: loading } =
     StudentHook.useStudents(apiFilters);
+
+  const students = useMemo(() => data?.students || [], [data?.students]);
+  const pagination = useMemo(() => data?.pagination || { page: 1, limit: 50, total: 0, totalPages: 1, hasNext: false, hasPrev: false }, [data?.pagination]);
   const addMutation = StudentHook.useAddStudent();
   const updateMutation = StudentHook.useUpdateStudent();
   const bulkDeleteMutation = StudentHook.useBulkDeleteStudents();
   const bulkDownloadMutation = StudentHook.useBulkDownloadStudents();
 
-  const filteredStudents = useMemo(() => {
+  const clearFilters = useCallback(() => {
+    setSearchQuery("");
+    setSelectedStatus("");
+    setSelectedLevel("");
+    setSelectedSession("");
+    setCurrentPage(1);
+  }, []);
+
+  // Local search filtering on the current page results only
+  const searchFilteredStudents = useMemo(() => {
     if (!searchQuery) return students;
 
     const q = searchQuery.toLowerCase();
@@ -100,16 +114,8 @@ const StudentsPage = () => {
     );
   }, [students, searchQuery]);
 
-  const clearFilters = useCallback(() => {
-    setSearchQuery("");
-    setSelectedStatus("");
-    setSelectedLevel("");
-    setSelectedSession("");
-    setCurrentPage(1);
-  }, []);
-
-  const sortedAndFilteredStudents = useMemo(() => {
-    const sorted = [...filteredStudents];
+  const sortedStudents = useMemo(() => {
+    const sorted = [...searchFilteredStudents];
     if (!sortConfig) return sorted;
 
     const { key, direction } = sortConfig;
@@ -135,15 +141,10 @@ const StudentsPage = () => {
             : -1;
       }
     });
-  }, [filteredStudents, sortConfig]);
+  }, [searchFilteredStudents, sortConfig]);
 
-  const totalPages = Math.ceil(
-    sortedAndFilteredStudents.length / ITEMS_PER_PAGE,
-  );
-  const paginatedStudents = sortedAndFilteredStudents.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  // Use API pagination directly, not calculated from filtered students
+  const paginatedStudents = sortedStudents;
 
   const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) =>
@@ -159,13 +160,13 @@ const StudentsPage = () => {
 
 
   const toggleSelectAll = useCallback(() => {
-    const allIds = filteredStudents.map((s) => s.id);
+    const allIds = paginatedStudents.map((s) => s.id);
     const allSelected = allIds.every((id) => selectedIds.includes(id));
     setSelectedIds(allSelected ? [] : allIds);
-  }, [filteredStudents, selectedIds]);
+  }, [paginatedStudents, selectedIds]);
 
   const handleExport = useCallback(() => {
-    const exportData = filteredStudents.map((s) => ({
+    const exportData = paginatedStudents.map((s) => ({
       "Full Name": s.fullName,
       Email: s.email,
       "Reg No": s.registrationNo || "—",
@@ -184,7 +185,7 @@ const StudentsPage = () => {
     }));
     exportToExcel(exportData, "Students_List", "Students");
     toaster.success({ title: "Exported successfully" });
-  }, [filteredStudents]);
+  }, [paginatedStudents]);
 
   const handleBulkDownload = useCallback(async () => {
     if (selectedIds.length === 0) return;
@@ -230,8 +231,8 @@ const StudentsPage = () => {
   );
 
   const handleConfirmDelete = useCallback(
-    async (reason: string) => {
-      await bulkDeleteMutation.mutateAsync({ ids: idsToDelete, reason });
+    async () => {
+      await bulkDeleteMutation.mutateAsync({ ids: idsToDelete });
       setIsDeleteModalOpen(false);
       setIdsToDelete([]);
       setSelectedIds((prev) => prev.filter((id) => !idsToDelete.includes(id)));
@@ -244,11 +245,12 @@ const StudentsPage = () => {
       {/* Header */}
       <Flex
         direction={{ base: "column", md: "row" }}
-        justifyContent="flex-end"
+        justifyContent="space-between"
         alignItems={{ base: "flex-start", md: "center" }}
         mb="10"
         gap="4"
       >
+        <Heading>{pagination?.total} Students</Heading>
         <Flex alignItems="center" gap="3" flexWrap="wrap">
           <Menu.Root>
             <Menu.Trigger asChild>
@@ -278,7 +280,7 @@ const StudentsPage = () => {
                   py="1"
                   zIndex="popover"
                 >
-                  <Menu.Item 
+                  <Menu.Item
                     value="single"
                     onClick={() => {
                       setStudentToEdit(null);
@@ -294,7 +296,7 @@ const StudentsPage = () => {
                   >
                     <UserCog size={16} /> Single
                   </Menu.Item>
-                  <Menu.Item 
+                  <Menu.Item
                     value="bulk"
                     onClick={() => setShowUpload(true)}
                     cursor="pointer"
@@ -336,12 +338,12 @@ const StudentsPage = () => {
             clearFilters={clearFilters}
             handleExport={handleExport}
             setCurrentPage={setCurrentPage}
-            isExportDisabled={filteredStudents.length === 0}
+            isExportDisabled={pagination?.total === 0}
           />
 
           <StudentsTable
             paginatedStudents={paginatedStudents}
-            filteredStudentsLength={filteredStudents.length}
+            filteredStudentsLength={pagination?.total || 0}
             selectedIds={selectedIds}
             loading={loading}
             sortConfig={sortConfig}
@@ -355,7 +357,7 @@ const StudentsPage = () => {
           />
         </Suspense>
 
-        {totalPages > 1 && (
+        {pagination?.totalPages > 1 && (
           <Flex
             alignItems="center"
             justifyContent="space-between"
@@ -365,24 +367,38 @@ const StudentsPage = () => {
             borderColor="border.muted"
           >
             <Text fontSize="sm" color="fg.muted">
-              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
-              {Math.min(currentPage * ITEMS_PER_PAGE, filteredStudents.length)}{" "}
-              of {filteredStudents.length} students
+              Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+              of {pagination.total} students
             </Text>
-            <PaginationRoot
-              count={filteredStudents.length}
-              pageSize={ITEMS_PER_PAGE}
+            <Pagination.Root
+              count={pagination.total}
+              pageSize={pagination.limit}
               page={currentPage}
               onPageChange={(e) => setCurrentPage(e.page)}
-              variant="outline"
-              size="lg"
             >
-              <Flex gap="2">
-                <PaginationPrevTrigger />
-                <PaginationItems />
-                <PaginationNextTrigger />
-              </Flex>
-            </PaginationRoot>
+              <ButtonGroup variant="ghost" size="sm">
+                <Pagination.PrevTrigger asChild>
+                  <IconButton>
+                    <LuChevronLeft />
+                  </IconButton>
+                </Pagination.PrevTrigger>
+
+                <Pagination.Items
+                  render={(page) => (
+                    <IconButton variant={{ base: "ghost", _selected: "solid" }}>
+                      {page.value}
+                    </IconButton>
+                  )}
+                />
+
+                <Pagination.NextTrigger asChild>
+                  <IconButton>
+                    <LuChevronRight />
+                  </IconButton>
+                </Pagination.NextTrigger>
+              </ButtonGroup>
+            </Pagination.Root>
           </Flex>
         )}
       </Box>
