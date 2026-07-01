@@ -26,7 +26,7 @@ const GENDER_COLLECTION = createListCollection({
 });
 
 const LEVELS_COLLECTION = createListCollection({
-    items: ['100', '200', '300', '400', '500', '600', '700', '800'].map(l => ({ label: l, value: `L${l}` }))
+    items: [100, 200, 300, 400, 'GRADUATED', 'WITHDRAWN'].map(l => ({ label: l.toString(), value: typeof l === "number" ? `L${l}` : l }))
 });
 
 const DURATION_COLLECTION = createListCollection({

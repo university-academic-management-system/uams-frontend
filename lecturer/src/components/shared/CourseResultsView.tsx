@@ -20,6 +20,7 @@ import type { Course } from "@type/course.type";
 import EmptyStateView from "@components/shared/empty-state";
 import { CourseResultsDownloader } from "@components/shared/course-result-downloader";
 import { useTotals } from "@hooks/dashboard.hook";
+import { useSearchParams } from "react-router";
 
 interface CourseResultsViewProps {
   courseId: string;
@@ -87,12 +88,12 @@ const TableSkeleton = () => (
 );
 
 export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) => {
+  const [sp] = useSearchParams();
   const { data: settings, isLoading: settingsLoading } = useTotals();
-  const { data: students, isLoading: studentsLoading } = useCourseStudents(courseId);
+  // const { data: students, isLoading: studentsLoading } = useCourseStudents(courseId);
   const { data: resultsData, isLoading: resultsLoading } = ResultHook.useCourseResults(
     courseId,
-    course?.level,
-    course?.semester
+    sp.get("session") || ""
   );
 
   const department = useMemo(() => settings?.department || "N/A", [settings]);
@@ -132,7 +133,7 @@ export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) 
     series: [{ name: "count", label: "Students", color: "accent" }],
   });
 
-  if (studentsLoading || settingsLoading || resultsLoading) {
+  if (settingsLoading || resultsLoading) {
     return (
       <Stack gap="4" colorPalette="accent">
         <DetailsSkeleton />
@@ -260,7 +261,7 @@ export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) 
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {!students || students.length === 0 ? (
+                {results?.length === 0 ? (
                   <Table.Row>
                     <Table.Cell colSpan={9} textAlign="center" py={10}>
                       <EmptyStateView

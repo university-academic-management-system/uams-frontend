@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { CourseService } from "@services/course.service";
-import { StudentServices } from "@services/student.service";
-import type { Course } from "@type/course.type";
-import type { Student } from "@type/student.type";
+import type { Course, CourseEnrollment } from "@type/course.type";
 
 export const useAllCourses = (filters?: { level?: string; semester?: string; session?: string }) => {
   return useQuery<Course[]>({
@@ -44,33 +42,24 @@ export const useCheckCourseOwnership = (courseId: string) => {
   });
 };
 
-export const useCourseStudents = (courseId: string) => {
-  return useQuery<Student[]>({
-    queryKey: ["courses", courseId, "students"],
+export const useCourseStudents = (courseId: string, session?: string) => {
+  return useQuery<CourseEnrollment[]>({
+    queryKey: ["courses", courseId, "students", session],
     queryFn: async () => {
-      const coursesResponse = await CourseService.getAllCourses();
-      const course = coursesResponse.data.find((c) => c.id === courseId);
-      if (!course) return [];
-
-      const studentsResponse = await StudentServices.getDepartmentStudents();
-      const allStudents = (studentsResponse?.data || []) as Student[];
-
-      return allStudents.filter(
-        (student) => student.studentProfile?.level === course.level
-      );
+      const response = await CourseService.getStudentsForCourse(courseId, session);
+      return response.data;
     },
     enabled: !!courseId,
     staleTime: 5 * 60 * 1000,
   });
 };
 
-export const useCourseStudent = (courseId: string, studentId: string) => {
-  return useQuery<Student>({
-    queryKey: ["courses", courseId, "students", studentId],
+export const useCourseStudent = (courseId: string, studentId: string, session?: string) => {
+  return useQuery<CourseEnrollment>({
+    queryKey: ["courses", courseId, "students", session, studentId],
     queryFn: async () => {
-      const studentsResponse = await StudentServices.getDepartmentStudents();
-      const allStudents = (studentsResponse?.data || []) as Student[];
-      const student = allStudents.find((s) => s.id === studentId);
+      const response = await CourseService.getStudentsForCourse(courseId, session);
+      const student = response.data.find((s) => s.student.id === studentId);
       if (!student) {
         throw new Error("Student not found");
       }

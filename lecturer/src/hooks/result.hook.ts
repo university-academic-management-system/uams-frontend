@@ -79,8 +79,8 @@ export const ResultHook = {
   useUploadFinal: () => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: ({ id, file }: { id: string; file: File }) =>
-        ResultService.uploadFinalResults(id, file),
+      mutationFn: ({ resultUploadId, file, session, courseId }: { resultUploadId: string; file: File, session: string, courseId: string }) =>
+        ResultService.uploadFinalResults(resultUploadId, file, session, courseId),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["results", "pending"] });
         queryClient.invalidateQueries({ queryKey: ["results", "approved"] });
@@ -91,13 +91,12 @@ export const ResultHook = {
   // Get course results for a specific course (Lecturer)
   useCourseResults: (
     courseId: string,
-    level?: string,
-    semester?: string,
+    session: string,
     options?: Partial<UseQueryOptions<CourseResultsResponse>>
   ) =>
     useQuery<CourseResultsResponse>({
-      queryKey: ["results", "course", courseId, { level, semester }],
-      queryFn: async () => ResultService.getCourseResults(courseId, level, semester),
+      queryKey: ["results", "course", courseId, { session }],
+      queryFn: async () => ResultService.getCourseResults(courseId, session),
       enabled: !!courseId,
       staleTime: 5 * 60 * 1000,
       ...options,

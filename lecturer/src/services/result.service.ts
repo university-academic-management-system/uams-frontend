@@ -23,8 +23,6 @@ export const ResultService = {
     const formData = new FormData();
     formData.append("courseId", payload.courseId);
     formData.append("session", payload.session);
-    formData.append("semester", payload.semester);
-    formData.append("level", payload.level);
     formData.append("file", payload.file);
 
     const { data } = await axiosClient.post<ApiResponse<{ message: string }>>(
@@ -55,12 +53,15 @@ export const ResultService = {
   },
 
   // Upload final approved results (ERO/Admin)
-  uploadFinalResults: async (resultUploadId: string, file: File): Promise<{ message: string }> => {
+  uploadFinalResults: async (resultUploadId: string, file: File, session: string, courseId: string): Promise<{ message: string }> => {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("session", session);
+    formData.append("courseId", courseId);
+    formData.append("resultUploadId", resultUploadId);
 
     const { data } = await axiosClient.post<ApiResponse<{ message: string }>>(
-      `/results/${resultUploadId}/final-upload`,
+      `/results/final-upload`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
@@ -86,10 +87,9 @@ export const ResultService = {
   },
 
   // Get course results for a specific course (Lecturer)
-  getCourseResults: async (courseId: string, level?: string, semester?: string): Promise<CourseResultsResponse> => {
+  getCourseResults: async (courseId: string, session: string): Promise<CourseResultsResponse> => {
     const params: Record<string, string> = {};
-    if (level) params.level = level;
-    if (semester) params.semester = semester;
+    if (session) params.session = session;
 
     const { data } = await axiosClient.get<ApiResponse<CourseResultsResponse>>(`/results/${courseId}`, { params });
     return data.data;

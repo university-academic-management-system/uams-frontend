@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, memo } from "react";
 import {
   Box,
   Flex,
@@ -23,6 +23,8 @@ import {
   Text,
   Grid,
   useDisclosure,
+  DataList,
+  FileUpload,
 } from "@chakra-ui/react";
 import {
   LuSearch,
@@ -33,11 +35,12 @@ import {
   LuUsers,
   LuEllipsis,
   LuChartBar,
-  LuClipboardCheck,
   LuDownload,
   LuUpload,
   LuFileText,
   LuCalendarDays,
+  LuFileDown,
+  LuFileUp,
 } from "react-icons/lu";
 import { useAllCourses } from "@hooks/course.hook";
 import { useCurrentUser } from "@hooks/currentUser.hook";
@@ -46,13 +49,14 @@ import type { Course, CourseLevel, Semester as CourseSemester } from "../../type
 import CourseStudentsTable from "@components/shared/CourseStudentsTable";
 import CourseResultsView from "@components/shared/CourseResultsView";
 import EmptyStateView from "@components/shared/empty-state";
-import { HODResultsDrawer } from "@components/shared/HODResultsDrawer";
 import { ResultHook } from "@hooks/result.hook";
 import { toaster } from "@components/ui/toaster";
+import axiosClient from "@configs/axios.config";
 import AttendanceDrawer from "@components/shared/attendance-drawer";
 import moment from "moment";
 import { useTotals } from "@hooks/dashboard.hook";
 import { sleep } from "@utils/sleep.util";
+import { useSearchParams } from "react-router";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -314,12 +318,64 @@ const GlobalUploadDialog = ({
 };
 
 // ─── Action Cell (Result Approvals only for ERO) ────────────────────────────
-const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; courseId: string; courseTitle: string }) => {
+const CourseActionCell = memo(({ course, courseId, courseTitle }: { course: Course; courseId: string; courseTitle: string }) => {
   const { user } = useAuthStore();
   const [isStudentsOpen, setIsStudentsOpen] = useState(false);
   const [isResultsOpen, setIsResultsOpen] = useState(false);
-  const [isHODResultsOpen, setIsHODResultsOpen] = useState(false);
   const attendanceDisclosure = useDisclosure();
+  const uploadFinalResultsDisclosure = useDisclosure();
+
+  const downloadDraftResult = useCallback(async () => {
+    const key = course?.resultUpload?.draftFile?.key;
+    if (!key) {
+      toaster.error({
+        title: "Download Failed",
+        description: "No draft file key found for this course.",
+      });
+      return;
+    }
+
+    const toastId = toaster.create({
+      title: "Downloading...",
+      description: "Fetching the draft file from storage.",
+      type: "info",
+    });
+
+    try {
+      const response = await axiosClient.get(`/storage/stream/${encodeURIComponent(key)}`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], { type: response.headers["content-type"] });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      let filename = key.split("/").pop() || "draft-result.xlsx";
+      const contentDisposition = response.headers["content-disposition"];
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toaster.dismiss(toastId);
+      toaster.success({
+        title: "Success",
+        description: "Draft result downloaded successfully.",
+      });
+    } catch (error) {
+      toaster.dismiss(toastId);
+      console.error("Failed to download draft result:", error);
+    }
+  }, [course]);
 
   const isERO = user?.role?.toUpperCase() === "ERO" || user?.roles?.some(r => r.toUpperCase() === "ERO");
 
@@ -344,9 +400,16 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
                 <LuChartBar /> Results
               </Menu.Item>
               {isERO && (
-                <Menu.Item value="hod-results" onClick={() => setIsHODResultsOpen(true)}>
-                  <LuClipboardCheck /> Result Approvals
-                </Menu.Item>
+                <>
+                  {course?.resultUpload?.draftFile && <Menu.Item value="download-draft-result" onClick={downloadDraftResult}>
+                    <LuFileDown /> Downlaod draft result
+                  </Menu.Item>}
+                  {!course?.resultUpload?.finalFile && (<Menu.Item
+                    value="upload-final-result"
+                    onClick={uploadFinalResultsDisclosure.onOpen}>
+                    <LuFileUp /> Upload final result
+                  </Menu.Item>)}
+                </>
               )}
             </Menu.Content>
           </Menu.Positioner>
@@ -392,15 +455,103 @@ const CourseActionCell = ({ course, courseId, courseTitle }: { course: Course; c
       </Drawer.Root>
 
       <AttendanceDrawer course={course} setOpen={attendanceDisclosure.setOpen} open={attendanceDisclosure.open} />
-
-      {isERO && (
-        <HODResultsDrawer
-          course={course}
-          isOpen={isHODResultsOpen}
-          onClose={() => setIsHODResultsOpen(false)}
-        />
-      )}
+      <UploadFinalResultsDialog course={course} open={uploadFinalResultsDisclosure.open} setOpen={uploadFinalResultsDisclosure.setOpen} />
     </>
+  );
+});
+
+const UploadFinalResultsDialog = ({ course, open, setOpen }: { course: Course; open: boolean; setOpen: (open: boolean) => void }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const { mutate: uploadFinal, isPending } = ResultHook.useUploadFinal();
+  const [sp] = useSearchParams();
+
+  const handleUpload = useCallback(() => {
+    const uploadId = course?.resultUpload?.id;
+    if (!file) {
+      toaster.error({
+        title: "Upload Failed",
+        description: "Please select an Excel file to upload.",
+      });
+      return;
+    }
+
+    uploadFinal(
+      { resultUploadId: uploadId || "", file, session: sp.get("session") || "", courseId: course.id },
+      {
+        onSuccess: () => {
+          toaster.success({
+            title: "Success",
+            description: "Final result uploaded and queued for processing successfully.",
+          });
+          setFile(null);
+          setOpen(false);
+        },
+      }
+    );
+  }, [course, file, uploadFinal, setOpen]);
+
+  return (
+    <Dialog.Root placement={"center"} open={open} onOpenChange={(e) => setOpen(e.open)}>
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Upload Final Results</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              <DataList.Root>
+                <DataList.Item>
+                  <DataList.ItemLabel>Course</DataList.ItemLabel>
+                  <DataList.ItemValue>{course?.title} - {course?.code}</DataList.ItemValue>
+                </DataList.Item>
+                <DataList.Item>
+                  <DataList.ItemLabel>Session</DataList.ItemLabel>
+                  <DataList.ItemValue>{sp.get("session")}</DataList.ItemValue>
+                </DataList.Item>
+              </DataList.Root>
+
+              <FileUpload.Root
+                w="full"
+                mt="6"
+                maxFiles={1}
+                accept={[
+                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                  "application/vnd.ms-excel",
+                ]}
+                onFileAccept={(details) => {
+                  setFile(details.files[0] || null);
+                }}
+              >
+                <FileUpload.HiddenInput />
+                <FileUpload.Trigger asChild>
+                  <Button variant="outline" size="sm" w="full">
+                    <LuUpload /> Select final result Excel file
+                  </Button>
+                </FileUpload.Trigger>
+                <FileUpload.List showSize clearable />
+              </FileUpload.Root>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Dialog.ActionTrigger asChild>
+                <Button variant="outline" disabled={isPending}>Cancel</Button>
+              </Dialog.ActionTrigger>
+              <Button
+                onClick={handleUpload}
+                disabled={isPending || !file}
+                loading={isPending}
+                loadingText="Submitting..."
+              >
+                Submit
+              </Button>
+            </Dialog.Footer>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton size="sm" />
+            </Dialog.CloseTrigger>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   );
 };
 
@@ -449,23 +600,53 @@ const CoursesSkeleton = () => {
 
 // ─── Main Courses Component ─────────────────────────────────────────────────
 const Courses = () => {
-  const { isHOD } = useCurrentUser();
+  const { isHOD, isERO } = useCurrentUser();
+  const [sp, setSp] = useSearchParams();
   const { data: settings } = useTotals();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [level, setLevel] = useState("All");
-  const [semester, setSemester] = useState("All");
+  const [level, setLevel] = useState(() => {
+    return sp.get("level") || "All"
+  });
+  const [semester, setSemester] = useState(() => {
+    return sp.get("semester") || "All"
+  });
   const [session, setSession] = useState(() => {
-    return settings?.currentSession || ""
+    return sp.get("session") || settings?.currentSession || ""
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   useEffect(() => {
     if (settings?.currentSession) {
-      sleep(0).then(() => setSession((prev) => prev || settings.currentSession));
+      setSession((prev) => prev || settings.currentSession)
+      setSp({ session: settings.currentSession });
     }
   }, [settings?.currentSession]);
+
+  useEffect(() => {
+    sleep(0).then(() => {
+      if (session) {
+        setSp({ session });
+      }
+    })
+  }, [session]);
+
+  useEffect(() => {
+    sleep(0).then(() => {
+      if (level) {
+        setSp({ level });
+      }
+    })
+  }, [level]);
+
+  useEffect(() => {
+    sleep(0).then(() => {
+      if (semester) {
+        setSp({ semester });
+      }
+    })
+  }, [semester]);
 
   const queryParams = useMemo(() => ({
     level: level !== "All" ? level : undefined,
@@ -547,6 +728,7 @@ const Courses = () => {
                 {sessionCollection.items.map((item) => (
                   <Select.Item key={item.value} item={item}>
                     {item.label}
+                    <Select.ItemIndicator />
                   </Select.Item>
                 ))}
               </Select.Content>
@@ -574,6 +756,7 @@ const Courses = () => {
                 {levelCollection.items.map((item) => (
                   <Select.Item key={item.value} item={item}>
                     {item.label}
+                    <Select.ItemIndicator />
                   </Select.Item>
                 ))}
               </Select.Content>
@@ -601,6 +784,7 @@ const Courses = () => {
                 {semesterCollection.items.map((item) => (
                   <Select.Item key={item.value} item={item}>
                     {item.label}
+                    <Select.ItemIndicator />
                   </Select.Item>
                 ))}
               </Select.Content>

@@ -13,7 +13,6 @@ import {
   Portal,
   Heading,
   Stack,
-  IconButton,
 } from "@chakra-ui/react";
 import { useCourseStudents } from "@hooks/course.hook";
 import { ResultHook } from "@hooks/result.hook";
@@ -40,7 +39,7 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
     if (students && isOpen) {
       const initialScores: Record<string, { ca: string; exam: string }> = {};
       students.forEach((s) => {
-        initialScores[s.id] = { ca: "", exam: "" };
+        initialScores[s.student.id] = { ca: "", exam: "" };
       });
       setScores(initialScores);
     }
@@ -99,7 +98,7 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
     const mockScores: Record<string, { ca: string; exam: string }> = {};
     students.forEach((s) => {
       let hash = 0;
-      const str = s.id || "";
+      const str = s.student.id || "";
       for (let i = 0; i < str.length; i++) {
         hash = (hash << 5) - hash + str.charCodeAt(i);
         hash |= 0;
@@ -107,20 +106,20 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
       hash = Math.abs(hash);
       const ca = 18 + (hash % 13);
       const examScore = 32 + ((hash >> 4) % 39);
-      mockScores[s.id] = { ca: String(ca), exam: String(examScore) };
+      mockScores[s.student.id] = { ca: String(ca), exam: String(examScore) };
     });
     setScores(mockScores);
     toaster.success({ description: "Autofilled scores with mock data." });
   };
 
   const handleUpload = async () => {
-    const activeSessionName = course.session || "2024/2025";
+    const activeSessionName = course.resultUpload?.session || "2024/2025";
     
     let hasError = false;
     let emptyCount = 0;
 
     const excelData = students?.map((student) => {
-      const studentScores = scores[student.id] || { ca: "", exam: "" };
+      const studentScores = scores[student.student.id] || { ca: "", exam: "" };
       
       if (studentScores.ca === "" || studentScores.exam === "") {
         emptyCount++;
@@ -135,10 +134,10 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
       
       const total = caVal + examVal;
       const grade = getGrade(total);
-      const profile = student.studentProfile;
+      const profile = student.student;
       const studentName = profile
-        ? `${profile.firstName || ""} ${profile.lastName || ""} ${profile.otherName || ""}`.trim()
-        : student.email || "N/A";
+        ? `${profile.firstName || ""} ${profile.surname || ""} ${profile.otherName || ""}`.trim()
+        : "N/A";
         
       return {
         "Matric Number": profile?.matricNumber || "N/A",
@@ -173,8 +172,6 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
       await uploadMutation.mutateAsync({
         courseId: course.id,
         session: activeSessionName,
-        semester: course.semester,
-        level: course.level,
         file,
       });
       
@@ -221,8 +218,8 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
                 <Stack gap="4">
                   {/* Actions Toolbar */}
                   <Flex justify="space-between" align="center" bg="bg.muted" p="3" rounded="md">
-                    <Text size="sm" fontWeight="medium" color="fg.subtle">
-                      Active Session: <Badge colorPalette="teal">{course.session || "2024/2025"}</Badge>
+                    <Text fontSize="sm" fontWeight="medium" color="fg.subtle">
+                      Active Session: <Badge colorPalette="teal">{course.resultUpload?.session || "2024/2025"}</Badge>
                     </Text>
                     <Flex gap="3">
                       <Button
@@ -230,8 +227,8 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
                         variant="subtle"
                         colorPalette="purple"
                         onClick={handleAutofillMock}
-                        leftElement={<LuSparkles />}
                       >
+                        <LuSparkles />
                         Autofill Mock Scores
                       </Button>
                       <Button
@@ -239,8 +236,8 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
                         colorPalette="accent"
                         onClick={handleUpload}
                         loading={uploadMutation.isPending}
-                        leftElement={<LuUpload />}
                       >
+                        <LuUpload />
                         Upload Results
                       </Button>
                     </Flex>
@@ -263,20 +260,20 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
                       </Table.Header>
                       <Table.Body>
                         {students.map((student, idx) => {
-                          const sScores = scores[student.id] || { ca: "", exam: "" };
+                          const sScores = scores[student.student.id] || { ca: "", exam: "" };
                           const caVal = getScoreValue(sScores.ca);
                           const examVal = getScoreValue(sScores.exam);
                           const total = caVal + examVal;
                           const grade = getGrade(total);
                           const isCaError = caInvalid(sScores.ca);
                           const isExamError = examInvalid(sScores.exam);
-                          const profile = student.studentProfile;
+                          const profile = student.student;
                           const fullName = profile
-                            ? `${profile.firstName || ""} ${profile.lastName || ""} ${profile.otherName || ""}`.trim()
-                            : student.email || "—";
+                            ? `${profile.firstName || ""} ${profile.surname || ""} ${profile.otherName || ""}`.trim()
+                            : "—";
 
                           return (
-                            <Table.Row key={student.id}>
+                            <Table.Row key={student.student.id}>
                               <Table.Cell>{idx + 1}</Table.Cell>
                               <Table.Cell>{profile?.matricNumber || "—"}</Table.Cell>
                               <Table.Cell fontWeight="medium">{fullName}</Table.Cell>
@@ -287,7 +284,7 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
                                   placeholder="0-40"
                                   value={sScores.ca}
                                   borderColor={isCaError ? "red.500" : undefined}
-                                  onChange={(e) => handleScoreChange(student.id, "ca", e.target.value)}
+                                  onChange={(e) => handleScoreChange(student.student.id, "ca", e.target.value)}
                                   textAlign="center"
                                 />
                               </Table.Cell>
@@ -297,7 +294,7 @@ export const UploadResultsDrawer = ({ course, isOpen, onClose }: UploadResultsDr
                                   placeholder="0-60"
                                   value={sScores.exam}
                                   borderColor={isExamError ? "red.500" : undefined}
-                                  onChange={(e) => handleScoreChange(student.id, "exam", e.target.value)}
+                                  onChange={(e) => handleScoreChange(student.student.id, "exam", e.target.value)}
                                   textAlign="center"
                                 />
                               </Table.Cell>

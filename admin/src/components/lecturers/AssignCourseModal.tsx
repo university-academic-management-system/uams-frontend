@@ -58,7 +58,8 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
             items: courses?.map((c: Course) => ({
                 value: String(c.id),
                 label: `${c.code} - ${c.title}`,
-                code: c.code
+                code: c.code,
+                isAssigned: c.isAssigned
             }))
         });
     }, [courses]);
@@ -177,7 +178,7 @@ const AssignCourseModal = ({ isOpen, onClose, onAssign, staffName }: Props) => {
                                             <Select.Content>
                                                 {courseCollection.items.map((course) => (
                                                     <Select.Item asChild item={course} key={course.value}>
-                                                        <Button variant="ghost" size="xl" disabled={assignedCourseCodes.includes(course.code)} _disabled={{ opacity: 0.5, cursor: 'not-allowed' }}>
+                                                        <Button tabIndex={course.isAssigned ? -1 : 0} variant="ghost" size="xl" disabled={assignedCourseCodes.includes(course.code) || course.isAssigned} _disabled={{ opacity: 0.5, cursor: 'not-allowed' }}>
                                                             {course.label}
                                                             <Select.ItemIndicator />
                                                         </Button>
