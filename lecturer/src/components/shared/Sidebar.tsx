@@ -173,7 +173,10 @@ const LogoutButton = () => {
                 width="fit"
                 colorPalette={"red"}
                 color="red.500"
-                onClick={() => { location.replace(`${location.origin}/auth/login`);  clearAuth(); }}
+                onClick={() => {
+                    window.location.replace('/auth/login');
+                    clearAuth();
+                }}
             >
                 <Icon as={LuLogOut} size="md" />
             </IconButton>
