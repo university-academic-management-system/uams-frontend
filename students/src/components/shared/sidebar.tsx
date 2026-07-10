@@ -184,7 +184,11 @@ export const LogoutButton = () => {
     const { isCollapsed } = sidebarStore();
     const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
 
-    return (isDesktop && !isCollapsed) || !isDesktop ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
+    return (isDesktop && !isCollapsed) || !isDesktop ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost"
+        onClick={() => {
+            window.location.replace('/auth/login'); clearAuth();
+        }
+        }>
         <Icon as={LuLogOut} size="md" /> Logout
     </Button> :
         <Tooltip content={"Logout"} positioning={{ placement: "right" }}>
@@ -195,8 +199,7 @@ export const LogoutButton = () => {
                 colorPalette={"red"}
                 color="red.500"
                 onClick={() => {
-                    window.location.href = `${location.host}/auth/login`;
-                    // clearAuth();
+                    window.location.replace('/auth/login'); clearAuth();
                 }}
                 aria-label="Logout"
             >

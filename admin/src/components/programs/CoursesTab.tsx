@@ -188,11 +188,6 @@ const CoursesTab = () => {
     });
   }, [form]);
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (window.confirm("Delete this course?")) {
-      deleteCourse(id);
-    }
-  }, [deleteCourse]);
 
   const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) =>
@@ -1029,20 +1024,6 @@ const CoursesTab = () => {
                                   size="sm"
                                 >
                                   <Pencil size={16} /> Edit details
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  colorPalette="red"
-                                  onClick={(e: React.MouseEvent) => {
-                                    e.stopPropagation();
-                                    setOpenPopoverId(null);
-                                    handleDelete(course.id);
-                                  }}
-                                  w="full"
-                                  justifyContent="flex-start"
-                                  size="sm"
-                                >
-                                  <Trash2 size={16} /> Delete course
                                 </Button>
                               </Popover.Body>
                             </Popover.Content>

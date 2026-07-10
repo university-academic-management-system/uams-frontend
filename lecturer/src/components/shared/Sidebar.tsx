@@ -163,9 +163,13 @@ const LogoutButton = () => {
     const { clearAuth } = useAuthStore();
     const { isCollapsed } = sidebarStore();
 
-    return !isCollapsed ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost" onClick={() => clearAuth()}>
+    return !isCollapsed ? <Button justifyContent="start" pl="2" size={"xl"} colorPalette={"red"} color="red.500" variant="ghost"
+        onClick={() => {
+            window.location.replace('/auth/login'); clearAuth();
+        }
+        }>
         <Icon as={LuLogOut} size="md" /> Logout
-    </Button> :
+    </Button > :
         <Tooltip content={"Logout"} positioning={{ placement: "right" }}>
             <IconButton
                 size={"xl"}
@@ -174,8 +178,7 @@ const LogoutButton = () => {
                 colorPalette={"red"}
                 color="red.500"
                 onClick={() => {
-                    window.location.replace('/auth/login');
-                    clearAuth();
+                    window.location.replace('/auth/login'); clearAuth();
                 }}
             >
                 <Icon as={LuLogOut} size="md" />
