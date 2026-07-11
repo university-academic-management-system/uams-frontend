@@ -73,6 +73,7 @@ export interface StudentProfile {
     phone: string;
     gender: string;
     level: string;
+    passportS3Key: string | null;
     admissionYear: number;
     admissionSession: string;
     currentSession: string;
