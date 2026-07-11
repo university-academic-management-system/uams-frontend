@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toaster } from "@components/ui/toaster";
-import { Calendar, Percent, GraduationCap, BookOpen, ShieldAlert } from "lucide-react";
+import { Calendar, Percent, GraduationCap, BookOpen, ShieldAlert, Play, RotateCw, CheckCircle2, XCircle } from "lucide-react";
 import { SystemServices } from "@services/system.service";
+import { ProgressionServices } from "@services/progression.service";
 import type { UseFormWatch, UseFormSetValue, UseFormRegister } from "react-hook-form";
 import type { SystemSettingsData } from "@schemas/system.schema";
 import { useSystemSettingsForm } from "@forms/system.form";
@@ -16,6 +17,8 @@ import {
   Stack,
   Spinner,
   Portal,
+  Progress,
+  Badge,
   createListCollection,
   Select,
   SimpleGrid,
@@ -168,6 +171,295 @@ const NumberField = ({
     {error && <Field.ErrorText>{error.message}</Field.ErrorText>}
   </Field.Root>
 );
+
+const progressionLevelCollection = createListCollection({
+  items: [
+    { label: "Select level", value: "" },
+    { label: "100", value: "L100" },
+    { label: "200", value: "L200" },
+    { label: "300", value: "L300" },
+    { label: "400", value: "L400" },
+  ],
+});
+
+const generateSessionCollection = () => {
+  const currentYear = new Date().getFullYear();
+  const startYear = 1999;
+  const endYear = currentYear - 1;
+  const items: { label: string; value: string }[] = [
+    { label: "Select Session", value: "" },
+  ];
+  for (let y = endYear; y >= startYear; y--) {
+    items.push({ label: `${y}/${y + 1}`, value: `${y}/${y + 1}` });
+  }
+  return createListCollection({ items });
+};
+
+const PROGRESSION_TERMINAL_STATUSES = ["completed", "failed", "cancelled"];
+
+const ProgressionSection = ({ defaultSession }: { defaultSession?: string }) => {
+  const sessionCollection = useMemo(() => generateSessionCollection(), []);
+  const [session, setSession] = useState<string>(defaultSession ?? "");
+  const [newSession, setNewSession] = useState<string>("");
+  const [level, setLevel] = useState<string>("");
+  const [jobId, setJobId] = useState<string | null>(null);
+
+  const startMutation = useMutation({
+    mutationFn: (payload: { session?: string; newSession?: string; level?: string }) =>
+      ProgressionServices.startProgression(payload),
+    onSuccess: (res) => {
+      const id = res.data?.jobId;
+      if (id) {
+        setJobId(id);
+        toaster.success({ title: "Progression job started" });
+      } else {
+        toaster.error({ title: "Could not start progression", description: "No job id returned" });
+      }
+    },
+    onError: () => {
+      toaster.error({ title: "Failed to start progression" });
+    },
+  });
+
+  const progressQuery = useQuery({
+    queryKey: ["progression", jobId],
+    queryFn: () => ProgressionServices.getProgressionStatus(jobId as string),
+    enabled: !!jobId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.data?.status;
+      if (status && PROGRESSION_TERMINAL_STATUSES.includes(status.toLowerCase())) return false;
+      return 2000;
+    },
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: (id: string) => ProgressionServices.retryProgression(id),
+    onSuccess: () => {
+      toaster.success({ title: "Retry scheduled" });
+      progressQuery.refetch();
+    },
+    onError: () => {
+      toaster.error({ title: "Failed to schedule retry" });
+    },
+  });
+
+  const job = progressQuery.data?.data;
+  const jobStatus = job?.status?.toLowerCase();
+  const isRunning = job && !PROGRESSION_TERMINAL_STATUSES.includes(jobStatus ?? "");
+  const isFailed = jobStatus === "failed";
+  const isCompleted = jobStatus === "completed";
+  const percent = job?.percent ?? (job && job.total > 0 ? Math.round((job.processed / job.total) * 100) : 0);
+
+  const canRun = !startMutation.isPending;
+
+  const handleRun = () => {
+    if (!canRun) return;
+    setJobId(null);
+    startMutation.mutate({ session, newSession, level });
+  };
+
+  const statusColor = isCompleted ? "green" : isFailed ? "red" : isRunning ? "blue" : "gray";
+
+  return (
+    <Box>
+      <SectionHeader
+        icon={<Play size={18} color="#1D7AD9" />}
+        title="Student Progression"
+        subtitle="Promote undergraduate students one level into a new academic session (runs as a background job)"
+      />
+      <Box p="6" borderRadius="md" border="xs" borderColor="border.muted">
+        <Text fontSize="xs" color="fg.subtle" mb="5">
+          Selecting a session, new session and/or level will run progression only for those choices.
+          If no options are selected, progression will run for the current session and the new session across all levels.
+        </Text>
+        <Stack gap="6">
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap="6">
+            <Field.Root>
+              <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted" mb="2">Current Session</Field.Label>
+              <Select.Root
+                collection={sessionCollection}
+                value={session ? [session] : []}
+                onValueChange={(e) => setSession(e.value[0] ?? "")}
+                size="lg"
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger bg="white" border="xs" borderColor="border.muted">
+                    <Select.ValueText placeholder="Select session" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {sessionCollection.items.map((item) => (
+                        <Select.Item key={item.value} item={item}>{item.label}</Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </Field.Root>
+
+            <Field.Root>
+              <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted" mb="2">New Session</Field.Label>
+              <Select.Root
+                collection={sessionCollection}
+                value={newSession ? [newSession] : []}
+                onValueChange={(e) => setNewSession(e.value[0] ?? "")}
+                size="lg"
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger bg="white" border="xs" borderColor="border.muted">
+                    <Select.ValueText placeholder="Select new session" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {sessionCollection.items.map((item) => (
+                        <Select.Item key={item.value} item={item}>{item.label}</Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </Field.Root>
+
+            <Field.Root>
+              <Field.Label fontSize="sm" fontWeight="medium" color="fg.muted" mb="2">Level</Field.Label>
+              <Select.Root
+                collection={progressionLevelCollection}
+                value={level ? [level] : []}
+                onValueChange={(e) => setLevel(e.value[0] ?? "")}
+                size="lg"
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger bg="white" border="xs" borderColor="border.muted">
+                    <Select.ValueText placeholder="Select level" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {progressionLevelCollection.items.map((item) => (
+                        <Select.Item key={item.value} item={item}>{item.label}</Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </Field.Root>
+          </SimpleGrid>
+
+          <Flex align="center" gap="3">
+            <Button
+              colorPalette="accent"
+              onClick={handleRun}
+              loading={startMutation.isPending}
+              loadingText="Starting..."
+              disabled={!canRun}
+              size="xl"
+            >
+              <Play size={16} />
+              Run Progression
+            </Button>
+            {jobId && (
+              <Button
+                variant="ghost"
+                onClick={() => progressQuery.refetch()}
+                disabled={progressQuery.isFetching}
+                size="xl"
+              >
+                <RotateCw size={16} />
+                Refresh
+              </Button>
+            )}
+          </Flex>
+
+          {progressQuery.isLoading && jobId && (
+            <Flex align="center" gap="2" color="fg.subtle">
+              <Spinner size="sm" />
+              <Text fontSize="sm">Fetching job status…</Text>
+            </Flex>
+          )}
+
+          {job && (
+            <Box p="5" borderRadius="md" bg="bg.subtle" border="xs" borderColor="border.muted">
+              <Flex justify="space-between" align="center" mb="3">
+                <Flex align="center" gap="2">
+                  {isCompleted ? (
+                    <CheckCircle2 size={18} color="#2F855A" />
+                  ) : isFailed ? (
+                    <XCircle size={18} color="#E53E3E" />
+                  ) : (
+                    <Spinner size="sm" color="blue.500" />
+                  )}
+                  <Text fontWeight="semibold" fontSize="sm" color="fg.muted">
+                    Job {job.jobId}
+                  </Text>
+                </Flex>
+                <Badge colorPalette={statusColor} variant="subtle" textTransform="capitalize">
+                  {job.status}
+                </Badge>
+              </Flex>
+
+              <Progress.Root value={percent} size="sm" colorPalette={statusColor}>
+                <Progress.Track>
+                  <Progress.Range />
+                </Progress.Track>
+              </Progress.Root>
+
+              <Flex justify="space-between" mt="3" fontSize="xs" color="fg.subtle">
+                <Text>{percent}% complete</Text>
+                <Text>
+                  {job.processed ?? 0} / {job.total ?? 0} processed
+                  {job.failed ? ` · ${job.failed} failed` : ""}
+                </Text>
+              </Flex>
+
+              {isFailed && (
+                <Flex align="center" gap="3" mt="4">
+                  <Text fontSize="sm" color="fg.muted">
+                    The progression job failed. You can retry it (idempotent).
+                  </Text>
+                  <Button
+                    colorPalette="red"
+                    variant="solid"
+                    size="sm"
+                    onClick={() => jobId && retryMutation.mutate(jobId)}
+                    loading={retryMutation.isPending}
+                    loadingText="Retrying..."
+                  >
+                    <RotateCw size={14} />
+                    Retry
+                  </Button>
+                </Flex>
+              )}
+
+              {isCompleted && (
+                <Text fontSize="sm" color="green.600" mt="3">
+                  Progression completed successfully
+                  {job.failed ? ` with ${job.failed} failure(s).` : "."}
+                </Text>
+              )}
+            </Box>
+          )}
+        </Stack>
+      </Box>
+    </Box>
+  );
+};
 
 const SystemSettingsTab = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -509,6 +801,9 @@ const SystemSettingsTab = () => {
               </Stack>
             </Box>
           </Box>
+
+          {/* ── Progression ── */}
+          <ProgressionSection defaultSession={watch("currentSession")} />
 
         </Stack>
 

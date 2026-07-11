@@ -12,6 +12,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    
+      # Pick environment based on the branch
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

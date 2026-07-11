@@ -8,15 +8,34 @@ import {
     IconButton,
     Stack,
 } from "@chakra-ui/react";
-import { LuMenu, LuX } from "react-icons/lu";
-import { useState } from "react";
+import { LuMenu, LuUser, LuX } from "react-icons/lu";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import useAuthStore from "@stores/auth.store";
+import LinkButton from "./buttons/LinkButton";
 
 const LOGO_SRC = "/images/a7f14cb8262ed215ba9b9d5819404f20e896d5cc.png";
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
+    const { token, user } = useAuthStore();
+
+    const profileUrl = useMemo(() => {
+        const urlMap = new Map([
+            ["STUDENT", `${location.host}/students/`],
+            ["LECTURER", `${location.host}/lecturer/dashboard`],
+            ["ERO", `${location.host}/lecturer/dashboard`],
+            ["HOD", `${location.host}/lecturer/dashboard`],
+            ["ADMIN", `${location.host}/admin/`],
+            ["DEPARTMENT_ADMIN", `${location.host}/admin/`],
+            ["NONE", location.host]
+        ]);
+
+        const roles = [user?.role, ...user?.roles || []].filter(Boolean).filter(r => r !== "STAFF");
+        const key = roles[0] || "NONE" as const;
+        return urlMap.get(key) || location.host;
+    }, [user]);
 
     const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -66,12 +85,12 @@ const Navbar = () => {
                         {/* Desktop Nav Links */}
                         <HStack gap={8} display={{ base: "none", lg: "flex" }}>
                             {navLinks.map((item) => (
-                                <ChakraLink 
-                                    key={item.label} 
+                                <ChakraLink
+                                    key={item.label}
                                     onClick={() => handleNavClick(item.href)}
-                                    color="gray.600" 
-                                    _hover={{ color: "#2AB0E8", cursor: "pointer" }} 
-                                    fontSize="sm" 
+                                    color="gray.600"
+                                    _hover={{ color: "#2AB0E8", cursor: "pointer" }}
+                                    fontSize="sm"
                                     fontWeight="medium"
                                 >
                                     {item.label}
@@ -81,7 +100,7 @@ const Navbar = () => {
 
                         {/* Actions */}
                         <HStack gap={{ base: 2, md: 4 }}>
-                            <Link
+                            {!(token || user) ? (<Link
                                 to="/auth/login"
                                 style={{
                                     backgroundColor: "#2AB0E8",
@@ -99,7 +118,11 @@ const Navbar = () => {
                                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2AB0E8")}
                             >
                                 Login
-                            </Link>
+                            </Link>) : (
+                                <LinkButton colorPalette={"accent"} to={profileUrl}>
+                                    <LuUser />  Profile
+                                </LinkButton>
+                            )}
 
                             {/* Mobile Menu Toggle */}
                             <IconButton
@@ -131,18 +154,42 @@ const Navbar = () => {
                     >
                         <Stack gap={1} py={4}>
                             {navLinks.map((item) => (
-                                <ChakraLink 
-                                    key={item.label} 
+                                <ChakraLink
+                                    key={item.label}
                                     onClick={() => { setIsOpen(false); handleNavClick(item.href); }}
-                                    fontSize="md" 
-                                    fontWeight="medium" 
-                                    color="gray.700" 
+                                    fontSize="md"
+                                    fontWeight="medium"
+                                    color="gray.700"
                                     py={3}
                                     _hover={{ cursor: "pointer" }}
                                 >
                                     {item.label}
                                 </ChakraLink>
                             ))}
+
+                            {!(token || user) ? (<Link
+                                to="/auth/login"
+                                style={{
+                                    backgroundColor: "#2AB0E8",
+                                    color: "white",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontWeight: 500,
+                                    transition: "all 0.2s",
+                                    textDecoration: "none",
+                                    padding: "8px 24px",
+                                    fontSize: "14px",
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#23a1d5")}
+                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2AB0E8")}
+                            >
+                                Login
+                            </Link>) : (
+                                <LinkButton colorPalette={"accent"} to={profileUrl}>
+                                    <LuUser />  Profile
+                                </LinkButton>
+                            )}
                         </Stack>
                     </Box>
                 )}

@@ -3,14 +3,20 @@ name: Deploy Department App
 on:
   push:
     branches:
-      - main   # or your deploy branch
+      - main
       - staging
+      
     paths:
-      - 'admin/**'   # only run when departmental app changes
+      - "admin/**"
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on:
+      ubuntu-latest
+
+      # Pick environment based on the branch
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
 
     steps:
       - name: Checkout code
@@ -46,4 +52,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./admin/dist/
-          server-dir: /admin/   # adjust if needed
+          server-dir: /admin/ # adjust if needed

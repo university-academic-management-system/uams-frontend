@@ -14,8 +14,6 @@ import Footer from "@components/shared/Footer";
 
 const LandingPage = () => {
 
-
-  
   return (
     <>
       <Head />

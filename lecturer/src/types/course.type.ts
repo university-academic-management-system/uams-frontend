@@ -12,9 +12,10 @@ export interface Course {
     semester: "FIRST" | "SECOND" | "SUMMER";
     courseType: "CORE" | "ELECTIVE";
     programTypeId: string;
-    isCarryoverAllowed: boolean;
-    isAssigned: boolean;
-    createdAt: string;
+  isCarryoverAllowed: boolean;
+  isAssigned: boolean;
+  isOwn?: boolean;
+  createdAt: string;
     updatedAt: string;
     resultUpload: ResultUpload | null;
 }
@@ -60,6 +61,8 @@ export interface CourseStudentProfile {
   surname: string;
   otherName: string;
   matricNumber: string;
+  email: string;
+  passportS3Key:string | null;
   registrationNo: string;
   level: string;
   admissionSession: string;

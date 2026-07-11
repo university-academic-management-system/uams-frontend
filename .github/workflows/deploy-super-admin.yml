@@ -3,14 +3,19 @@ name: Deploy Super Admin App
 on:
   push:
     branches:
-      - main   # or your deploy branch
+      - main # or your deploy branch
       - staging
     paths:
-      - 'super-admin/**'   # only run when super-admin app changes
+      - "super-admin/**" # only run when super-admin app changes
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on:
+      ubuntu-latest
+
+      # Pick environment based on the branch
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
 
     steps:
       - name: Checkout code
@@ -41,4 +46,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./super-admin/dist/
-          server-dir: /super-admin/   # adjust if needed
+          server-dir: /super-admin/ # adjust if needed

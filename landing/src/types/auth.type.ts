@@ -2,64 +2,65 @@ import type React from 'react';
 
 // @type/auth.type.ts
 export interface Profile {
-    firstName: string;
-    surname: string;
-    otherName: string | null;
-    matricNumber: string;
-    registrationNo: string;
-    gender: string;
-    phone: string | null;
-    email: string | null;
-    faculty: string;
-    department: string;
-    level: string;
-    admissionMode: string;
-    entryQualification: string;
-    degreeAwarded: string;
-    programme: string;
+  firstName: string;
+  surname: string;
+  otherName: string | null;
+  matricNumber: string;
+  registrationNo: string;
+  gender: string;
+  phone: string | null;
+  email: string | null;
+  faculty: string;
+  department: string;
+  level: string;
+  admissionMode: string;
+  entryQualification: string;
+  degreeAwarded: string;
+  programme: string;
 }
 
 export interface User {
-    id?: string;
-    role?: string;
-    roles?: string[];
-    email?: string;
-    name?: string;
-    [key: string]: unknown;
-    profile?: Profile;
+  id?: string;
+  role?: string;
+  roles?: string[];
+  email?: string;
+  name?: string;
+  passportS3Key: string | null
+  [key: string]: unknown;
+  profile?: Profile;
 }
 
 export interface AuthState {
-    token: string;
-    refreshToken?: string;
-    expireAt: string;
-    user?: User;
-    setAuth: (auth: Partial<AuthState>) => void;
-    clearAuth: () => void;
+  token: string;
+  refreshToken?: string;
+  expireAt: string;
+  user?: User;
+  setAuth: (auth: Partial<AuthState>) => void;
+  clearAuth: () => void;
 }
 
 export interface LoginData {
-    email: string;
-    password?: string;
+  email: string;
+  password?: string;
 }
 
 export interface LoginResponse {
-    status: string;
-    message?: string;
-    data: {
-        token: string;
-        expiresIn: string;
-        user: User;
-    };
+  status: string;
+  message?: string;
+  data: {
+    token: string;
+    expiresIn: string;
+    user: User;
+  };
 }
 
 export interface VerifyStudentResponse {
-    status: string;
-    message?: string;
-    data: {
-        verificationToken: string;
-        profile: Profile;
-    };
+  status: string;
+  message?: string;
+  data: {
+    verificationToken: string;
+    profile: Profile;
+  };
 }
 
 export interface ActivateAccountRequest {
@@ -165,9 +166,9 @@ export interface ConfirmIdCardPaymentResponse {
 }
 
 export interface ResetPasswordData {
-    email: string;
-    token: string;
-    password?: string;
+  email: string;
+  token: string;
+  password?: string;
 }
 
 // Form Data Types
@@ -175,28 +176,28 @@ export interface ResetPasswordData {
 
 // Component Prop Types
 export interface ActivateAccountStepProps {
-    onNext: () => void;
-    onForgotPassword: () => void;
+  onNext: () => void;
+  onForgotPassword: () => void;
 }
 
 export interface ForgotPasswordFlowProps {
-    onBackToLogin: () => void;
+  onBackToLogin: () => void;
 }
 
 export type RecoveryStep = 'forgot-password' | 'verify-code' | 'reset-password' | 'reset-success';
 
 export interface PaymentStepProps {
-    onNext: () => void;
+  onNext: () => void;
 }
 
 export interface RegNumberStepProps {
-    onNext: () => void;
+  onNext: () => void;
 }
 
 export interface AuthCardProps {
-    children: React.ReactNode;
-    className?: string;
-    isPlainLogo?: boolean;
+  children: React.ReactNode;
+  className?: string;
+  isPlainLogo?: boolean;
 }
 
 export type { LoginFormData, ActivateAccountFormData, ForgotPasswordFormData, OtpFormData, ResetPasswordFormData, VerifyStudentFormData } from "@schemas/auth.schema"
