@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
 import TimeTable from "@pages/timetable/page";
+import ErrorPage from "@components/shared/ErrorPage";
 
 const Dashboard = lazy(() => import("@pages/dashboard/Dashboard"));
 const Students = lazy(() => import("@pages/students/Students"));
@@ -15,6 +16,7 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: <AuthMiddleware />,
+        errorElement: <ErrorPage />,
         children: [
             { index: true, element: <Navigate to="dashboard" replace /> },
             { path: "dashboard", element: <Dashboard /> },

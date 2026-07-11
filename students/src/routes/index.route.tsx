@@ -1,6 +1,7 @@
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { lazy, Suspense } from "react";
 import { AuthMiddleware } from "@middlewares/auth.middleware";
+import ErrorPage from "@components/shared/ErrorPage";
 
 const DashboardPage = lazy(() => import("@app/page"));
 const Registrations = lazy(() => import("@app/registrations/page"));
@@ -16,6 +17,7 @@ const AnnouncementsPage = lazy(() => import("@app/announcements/page"));
 const router = createBrowserRouter([
     {
         element: <AuthMiddleware />,
+        errorElement: <ErrorPage />,
         children: [
             {
                 path: "/", element: (
@@ -66,7 +68,11 @@ const router = createBrowserRouter([
                 )
             },
         ]
-    }
+    },
+    {
+        path: "*",
+        element: <Navigate to="/" replace />,
+    },
 ], {
     basename: "/students"
 });

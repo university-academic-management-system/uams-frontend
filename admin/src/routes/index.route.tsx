@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { lazy, Suspense } from "react";
 import { AuthMiddleware } from "@middlewares/auth.middleware";
+import ErrorPage from "@components/shared/ErrorPage";
 
 
 const DashboardPage = lazy(() => import("@app/dashboard/page"));
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: <AuthMiddleware />,
+        errorElement: <ErrorPage />,
         children: [
             {
                 index: true,
