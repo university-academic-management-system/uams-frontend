@@ -3,14 +3,19 @@ name: Deploy Landing page
 on:
   push:
     branches:
-      - main   # or your deploy branch
+      - main
       - staging
     paths:
-      - 'landing/**'   # only run when landing app changes
+      - "landing/**" # only run when landing app changes
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on:
+      ubuntu-latest
+
+      # Pick environment based on the branch
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
 
     steps:
       - name: Checkout code
@@ -25,8 +30,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
-          cache-dependency-path: './landing/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "./landing/pnpm-lock.yaml"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -48,4 +53,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./landing/dist/
-          server-dir: /   # adjust if needed
+          server-dir: / # adjust if needed

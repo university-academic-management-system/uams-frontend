@@ -6,7 +6,8 @@ export interface AuthState {
         id: string;
         email: string;
         name: string;
-        role: "STUDENT"
+        role: "STUDENT",
+        passportS3Key: string | null
     }
     setAuth: (auth: AuthState) => void;
     clearAuth: () => void;

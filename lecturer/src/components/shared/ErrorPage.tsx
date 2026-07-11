@@ -10,7 +10,7 @@ import {
     HStack,
     Separator,
 } from "@chakra-ui/react";
-import { LuAlertTriangle, LuHome, LuArrowLeft, LuRefreshCw } from "react-icons/lu";
+import {LuTriangleAlert, LuHouse,  LuArrowLeft, LuRefreshCw } from "react-icons/lu";
 
 const ErrorPage = () => {
     const error = useRouteError();
@@ -56,7 +56,7 @@ const ErrorPage = () => {
                         bg="red.50"
                         color="red.500"
                     >
-                        <LuAlertTriangle size={32} />
+                        <LuTriangleAlert  size={32} />
                     </Flex>
 
                     <Stack gap="2" align="center">
@@ -109,7 +109,7 @@ const ErrorPage = () => {
                             size="lg"
                             onClick={() => navigate("/")}
                         >
-                            <LuHome size={16} />
+                            <LuHouse size={16} />
                             Go Home
                         </Button>
                         <Button

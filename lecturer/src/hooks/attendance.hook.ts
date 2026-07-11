@@ -1,6 +1,6 @@
 import { AttendanceService } from "@services/attendance.service";
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import type { Attendance, CreateAttendancePayload, CourseAttendanceRecord, RecordAttendanceResult } from "@type/attendance.type";
+import type { Attendance, CreateAttendancePayload, CourseAttendanceRecord, RecordAttendanceResult, UpdateAttendancePayload } from "@type/attendance.type";
 
 export const AttendanceHook = {
     useLecturerAttendance: (
@@ -28,7 +28,7 @@ export const AttendanceHook = {
     useCreateAttendance: () => {
         const queryClient = useQueryClient();
         return useMutation<RecordAttendanceResult[], Error, CreateAttendancePayload>({
-            mutationFn: (payload: CreateAttendancePayload) => AttendanceService.createAttendance(payload),
+            mutationFn: (payload) => AttendanceService.createAttendance(payload),
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ["lecturerAttendance"] });
                 queryClient.invalidateQueries({ queryKey: ["courseAttendance"] });
@@ -36,8 +36,18 @@ export const AttendanceHook = {
         });
     },
 
+    useUpdateAttendance: () => {
+        const queryClient = useQueryClient();
+        return useMutation<RecordAttendanceResult, Error, { attendanceId: string; payload: UpdateAttendancePayload }>({
+            mutationFn: ({ attendanceId, payload }) => AttendanceService.updateAttendance(attendanceId, payload),
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ["courseAttendance"] });
+            },
+        });
+    },
+
     createAttendance: async (payload: CreateAttendancePayload) => {
         return AttendanceService.createAttendance(payload);
-    }
+    },
 };
 

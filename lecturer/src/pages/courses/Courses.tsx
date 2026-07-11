@@ -377,7 +377,7 @@ const CourseActionCell = memo(({ course, courseId, courseTitle }: { course: Cour
     }
   }, [course]);
 
-  const isERO = user?.role?.toUpperCase() === "ERO" || user?.roles?.some(r => r.toUpperCase() === "ERO");
+  const isERO = user?.role?.toUpperCase() === "ERO" || user?.roles?.some((r:string) => r.toUpperCase() === "ERO");
 
   return (
     <>
@@ -488,7 +488,7 @@ const UploadFinalResultsDialog = ({ course, open, setOpen }: { course: Course; o
         },
       }
     );
-  }, [course, file, uploadFinal, setOpen]);
+  }, [course, file, uploadFinal, setOpen,sp]);
 
   return (
     <Dialog.Root placement={"center"} open={open} onOpenChange={(e) => setOpen(e.open)}>
@@ -619,10 +619,11 @@ const Courses = () => {
 
   useEffect(() => {
     if (settings?.currentSession) {
-      setSession((prev) => prev || settings.currentSession)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSession((prev:string) => prev || settings.currentSession)
       setSp({ session: settings.currentSession });
     }
-  }, [settings?.currentSession]);
+  }, [settings?.currentSession,setSp]);
 
   useEffect(() => {
     sleep(0).then(() => {
@@ -654,10 +655,16 @@ const Courses = () => {
     session: session || undefined,
   }), [level, semester, session]);
 
-  const { data: allCourses = [], isLoading: allLoading, error: allError } = useAllCourses(queryParams);
-  const { data: assignedCourses = [], isLoading: assignedLoading, error: assignedError } = useAllCourses(queryParams);
+  const { data: allCourses, isLoading: allLoading, error: allError } = useAllCourses(queryParams);
+  const { data: assignedCourses, isLoading: assignedLoading, error: assignedError } = useAllCourses(queryParams);
 
-  const courses = isHOD ? allCourses : assignedCourses;
+  const courses = useMemo(() => {
+    if (isHOD || isERO) {
+      return allCourses ?? [];
+    }
+    return assignedCourses ?? [];
+  }, [isHOD, isERO, allCourses, assignedCourses]);
+
   const isLoading = allLoading || assignedLoading;
   const error = isHOD ? allError : assignedError;
 
@@ -685,7 +692,7 @@ const Courses = () => {
 
   // const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedCourses = filteredCourses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedCourses = filteredCourses?.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const columns = ["S/N", "Code", "Title", "Units", "Level", "Semester", "Course Type", "Actions"];
 
@@ -838,7 +845,7 @@ const Courses = () => {
             )}
 
             {!error && filteredCourses.length > 0 &&
-              paginatedCourses.map((course, idx) => (
+              paginatedCourses?.map((course, idx) => (
                 <Table.Row key={course.id}>
                   <Table.Cell>{startIndex + idx + 1}</Table.Cell>
                   <Table.Cell>{course.code}</Table.Cell>
@@ -862,7 +869,7 @@ const Courses = () => {
         </Table.Root>
       </Table.ScrollArea>
 
-      {filteredCourses.length > ITEMS_PER_PAGE && (
+      {filteredCourses?.length > ITEMS_PER_PAGE && (
         <Flex justify="flex-end" mt={4}>
           <Pagination.Root
             count={filteredCourses.length}

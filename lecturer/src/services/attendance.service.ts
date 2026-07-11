@@ -1,5 +1,6 @@
 import axiosClient from "@configs/axios.config";
-import type { Attendance, CreateAttendancePayload, AttendanceResponse, CourseAttendanceRecord, RecordAttendanceResult } from "@type/attendance.type";
+import type { Attendance, CreateAttendancePayload, AttendanceResponse, CourseAttendanceRecord, RecordAttendanceResult, UpdateAttendancePayload } from "@type/attendance.type";
+
 
 export const AttendanceService = {
     createAttendance: async (payload: CreateAttendancePayload): Promise<RecordAttendanceResult[]> => {
@@ -7,6 +8,10 @@ export const AttendanceService = {
         return data.data;
     },
 
+    updateAttendance: async (attendanceId: string, payload: UpdateAttendancePayload): Promise<RecordAttendanceResult> => {
+        const { data } = await axiosClient.patch<{ data: RecordAttendanceResult }>(`/attendance/${attendanceId}`, payload);
+        return data.data;
+    },
 
     getLecturerAttendance: async (params?: { courseId?: string; date?: string }): Promise<Attendance[]> => {
         const { data } = await axiosClient.get<AttendanceResponse>("/attendance/lecturer", { params });

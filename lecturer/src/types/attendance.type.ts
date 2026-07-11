@@ -61,6 +61,7 @@ export interface CourseAttendanceRecord {
             surname: string;
             otherName: string | null;
             matricNumber: string;
+            passportS3Key: string | null;
         };
         course: {
             id: string;
@@ -76,3 +77,7 @@ export interface CourseAttendanceRecord {
     } | null;
 }
 
+
+export interface UpdateAttendancePayload {
+    status: "PRESENT" | "ABSENT"
+}
