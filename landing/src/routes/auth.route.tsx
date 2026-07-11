@@ -1,6 +1,7 @@
 import ForgotPasswordPage from "@app/auth/forgot-password/page";
 import LoginPage from "@app/auth/login/page";
 import OtpPage from "@app/auth/otp/page";
+import PortalAccessPage from "@app/auth/portal-access/page";
 import ResetPasswordPage from "@app/auth/reset-password/page";
 import VerifyPage from "@app/auth/verify/page";
 import RootLayout from "@app/layout";
@@ -16,6 +17,8 @@ const authRoutes: RouteObject[] = [
             { path: "/auth/otp", element: <OtpPage /> },
             { path: "/auth/reset-password", element: <ResetPasswordPage /> },
             { path: "/auth/verify", element: <VerifyPage /> },
+            { path: "/auth/portal-access", element: <PortalAccessPage /> },
+
         ]
     }
 ]

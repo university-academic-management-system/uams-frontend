@@ -9,7 +9,7 @@ const RootLayout = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if ((!token || user) && path.startsWith("/auth")) {
+        if ((token && user) && path.startsWith("/auth")) {
             navigate("/");
         }
     }, [token, user, path,navigate]);
