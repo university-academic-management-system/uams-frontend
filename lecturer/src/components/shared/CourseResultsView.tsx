@@ -10,17 +10,18 @@ import {
   Stack,
   DataList,
   Image,
+  Avatar,
 } from "@chakra-ui/react";
 import { Chart, useChart } from "@chakra-ui/charts";
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, LabelList } from "recharts";
 import { LuUsers } from "react-icons/lu";
-import { useCourseStudents } from "@hooks/course.hook";
 import { ResultHook } from "@hooks/result.hook";
 import type { Course } from "@type/course.type";
 import EmptyStateView from "@components/shared/empty-state";
 import { CourseResultsDownloader } from "@components/shared/course-result-downloader";
 import { useTotals } from "@hooks/dashboard.hook";
 import { useSearchParams } from "react-router";
+import ENV from "@configs/env.config";
 
 interface CourseResultsViewProps {
   courseId: string;
@@ -277,7 +278,15 @@ export const CourseResultsView = ({ courseId, course }: CourseResultsViewProps) 
                     return (
                       <Table.Row key={r.id} bg={rowBg}>
                         <Table.Cell>{index + 1}</Table.Cell>
-                        <Table.Cell fontWeight="medium">{r?.student?.surname} {r?.student?.firstName} {r?.student?.otherName}</Table.Cell>
+                        <Table.Cell fontWeight="medium">
+                          <Flex align="center" gap="2">
+                            <Avatar.Root size="xs">
+                              <Avatar.Fallback name={`${r?.student?.surname || ""} ${r?.student?.firstName || ""} ${r?.student?.otherName || ""}`} />
+                              {r?.student?.passportS3Key && <Avatar.Image src={new URL("storage/stream/" + encodeURIComponent(r.student.passportS3Key), ENV.API_BASE_URL + "api").toString()} />}
+                            </Avatar.Root>
+                            <span>{r?.student?.surname} {r?.student?.firstName} {r?.student?.otherName}</span>
+                          </Flex>
+                        </Table.Cell>
                         <Table.Cell>{r?.student?.matricNumber}</Table.Cell>
                         <Table.Cell>{r?.ca || 0}</Table.Cell>
                         <Table.Cell>{r?.examScore || 0}</Table.Cell>

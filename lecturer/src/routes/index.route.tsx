@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
 import TimeTable from "@pages/timetable/page";
 import ErrorPage from "@components/shared/ErrorPage";
+import { AuthMiddleware } from "@middlewares/auth.middleware";
 
 const Dashboard = lazy(() => import("@pages/dashboard/Dashboard"));
 const Students = lazy(() => import("@pages/students/Students"));
@@ -10,7 +11,6 @@ const Courses = lazy(() => import("@pages/courses/Courses"));
 const Projects = lazy(() => import("@pages/projects/Projects"));
 const Announcement = lazy(() => import("@pages/announcement/Announcement"));
 const Profile = lazy(() => import("@pages/profile/Profile"));
-import { AuthMiddleware } from "middleware/auth.middleware";
 
 const router = createBrowserRouter([
     {

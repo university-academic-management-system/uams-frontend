@@ -1,4 +1,4 @@
-import { Box, CloseButton, Icon, Input, InputGroup, Table, Skeleton, Badge } from "@chakra-ui/react";
+import { Box, CloseButton, Icon, Input, InputGroup, Table, Skeleton, Badge, Avatar, Flex } from "@chakra-ui/react";
 import { useCourseStudents } from "@hooks/course.hook";
 import { SearchIcon } from "lucide-react";
 import { LuUsers } from "react-icons/lu";
@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import EmptyStateView from "@components/shared/empty-state";
 import { formatLevel } from "@utils/function.util";
+import ENV from "@configs/env.config";
 
 const gradeColor = (grade: string) => {
     switch (grade) {
@@ -168,7 +169,15 @@ const CourseStudentsTable = ({ courseId: propCourseId }: CourseStudentsTableProp
                                     <Table.Row key={enrollment.enrollmentId}>
                                         <Table.Cell>{index + 1}</Table.Cell>
                                         <Table.Cell>{profile?.matricNumber || "—"}</Table.Cell>
-                                        <Table.Cell>{fullName || "—"}</Table.Cell>
+                                        <Table.Cell>
+                                            <Flex align="center" gap="2">
+                                                <Avatar.Root size="xs">
+                                                    <Avatar.Fallback name={fullName} />
+                                                    {profile?.passportS3Key && <Avatar.Image src={new URL("storage/stream/" + encodeURIComponent(profile.passportS3Key), ENV.API_BASE_URL + "api").toString()} />}
+                                                </Avatar.Root>
+                                                <span>{fullName || "—"}</span>
+                                            </Flex>
+                                        </Table.Cell>
                                         <Table.Cell>{profile?.gender || "—"}</Table.Cell>
                                         <Table.Cell>{formatLevel(profile?.level)}</Table.Cell>
                                         <Table.Cell>{enrollment.ca !== null && enrollment.ca !== undefined ? enrollment.ca : "—"}</Table.Cell>
