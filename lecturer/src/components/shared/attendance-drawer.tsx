@@ -206,7 +206,7 @@ const RecordAttendanceDialog = ({
                                                     <Flex gap="2" align={"start"}>
                                                         <Avatar.Root size="lg" shape="rounded">
                                                             <Avatar.Fallback name={`${enrollment.student.firstName} ${enrollment.student.surname}`} />
-                                                            <Avatar.Image alt={"profile picture"} src={enrollment.student.passportS3Key || ""} />
+                                                            {enrollment.student.passportS3Key && <Avatar.Image alt={"profile picture"} src={new URL("storage/stream/" + encodeURIComponent(enrollment.student.passportS3Key), ENV.API_BASE_URL + "api").toString()} />}
                                                         </Avatar.Root>
                                                         <Stack gap="0">
                                                             <Card.Title textStyle={"sm"}>{enrollment.student.firstName} {enrollment.student.surname}</Card.Title>

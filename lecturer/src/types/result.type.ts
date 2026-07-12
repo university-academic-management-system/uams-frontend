@@ -82,6 +82,7 @@ export interface Result {
     surname: string;
     otherName: string;
     matricNumber: string;
+    passportS3Key: string | null
   };
   course: {
     code: string;

@@ -8,6 +8,7 @@ import { Link, useLocation } from "react-router";
 import { PiAddressBook } from "react-icons/pi";
 import { Tooltip } from "@components/ui/tooltip";
 import useAuthStore from "@stores/auth.store";
+import ENV from "@configs/env.config";
 
 const Sidebar = () => {
     const { isCollapsed } = sidebarStore();
@@ -167,6 +168,7 @@ export const UserPersona = () => {
         <HStack key={user?.email} gap="2" justify={isCollapsed ? "center" : "start"}>
             <Avatar.Root size="xs">
                 <Avatar.Fallback name={user?.name} />
+                {user?.passportS3Key && <Avatar.Image src={new URL("storage/stream/" + encodeURIComponent(user.passportS3Key), ENV.API_BASE_URL + "api").toString()} />}
             </Avatar.Root>
             {((!isCollapsed && isDesktop) || !isDesktop) && <Stack gap="0" w="80%" maxH="14" overflow="hidden" >
                 <Text fontWeight="md" textStyle="sm">{user?.name || ""}</Text>
